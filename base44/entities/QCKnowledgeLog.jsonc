@@ -1,0 +1,47 @@
+{
+  "name": "QCKnowledgeLog",
+  "type": "object",
+  "properties": {
+    "target_category": {
+      "type": "string",
+      "enum": [
+        "DRIP_BAG",
+        "SLEEVE",
+        "DESKTOP_LABELER",
+        "TUBE_SEALER"
+      ],
+      "description": "\ub300\uc0c1 \uc7a5\ube44 \uce74\ud14c\uace0\ub9ac"
+    },
+    "factory_id": {
+      "type": "string",
+      "description": "\uad00\ub828 \uacf5\uc7a5 ID"
+    },
+    "issue_case": {
+      "type": "string",
+      "description": "\uacb0\ud568 \uc0ac\ub840\uba85"
+    },
+    "root_cause": {
+      "type": "string",
+      "description": "\uadfc\ubcf8 \uc6d0\uc778"
+    },
+    "solution_parameter": {
+      "type": "string",
+      "description": "\ud574\uacb0 \ud30c\ub77c\ubbf8\ud130/\uc0ac\uc591 (JSON \ud14d\uc2a4\ud2b8)"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ],
+      "description": "\uc2ec\uac01\ub3c4"
+    }
+  },
+  "required": [
+    "target_category",
+    "issue_case",
+    "root_cause"
+  ]
+}

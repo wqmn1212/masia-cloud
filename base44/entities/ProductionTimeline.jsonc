@@ -1,0 +1,78 @@
+{
+  "name": "ProductionTimeline",
+  "type": "object",
+  "properties": {
+    "quotation_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0 \uacac\uc801 ID"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac ID"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac\uba85"
+    },
+    "factory_name": {
+      "type": "string",
+      "description": "\uacf5\uc7a5\uba85"
+    },
+    "machine_description": {
+      "type": "string",
+      "description": "\uc7a5\ube44 \uc124\uba85"
+    },
+    "current_stage": {
+      "type": "string",
+      "enum": [
+        "CONTRACT",
+        "MANUFACTURING",
+        "QC_PASS",
+        "SHIPPING",
+        "CUSTOMS",
+        "INSTALLATION"
+      ],
+      "description": "\ud604\uc7ac \ub2e8\uacc4"
+    },
+    "contract_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uacc4\uc57d \uc644\ub8cc\uc77c"
+    },
+    "manufacturing_start": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc81c\uc870 \uc2dc\uc791\uc77c"
+    },
+    "qc_pass_date": {
+      "type": "string",
+      "format": "date",
+      "description": "QC \ud1b5\uacfc\uc77c"
+    },
+    "shipping_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc120\uc801\uc77c"
+    },
+    "customs_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\ud1b5\uad00\uc77c"
+    },
+    "installation_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc124\uce58\uc77c"
+    },
+    "estimated_completion": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc608\uc0c1 \uc644\ub8cc\uc77c"
+    }
+  },
+  "required": [
+    "client_name",
+    "factory_name",
+    "current_stage"
+  ]
+}

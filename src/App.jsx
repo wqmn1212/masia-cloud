@@ -5,12 +5,20 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-// Add page imports here
+
+import AppLayout from '@/components/layout/AppLayout';
+import Dashboard from '@/pages/Dashboard';
+import Factories from '@/pages/Factories';
+import Clients from '@/pages/Clients';
+import Quotations from '@/pages/Quotations';
+import AgentQuotes from '@/pages/AgentQuotes';
+import Knowledge from '@/pages/Knowledge';
+import Timeline from '@/pages/Timeline';
+import ASRequests from '@/pages/ASRequests';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
-  // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
@@ -19,29 +27,33 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
       navigateToLogin();
       return null;
     }
   }
 
-  // Render the main app
   return (
     <Routes>
-      {/* Add your page Route elements here */}
+      <Route element={<AppLayout />}>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/factories" element={<Factories />} />
+        <Route path="/clients" element={<Clients />} />
+        <Route path="/quotations" element={<Quotations />} />
+        <Route path="/agent-quotes" element={<AgentQuotes />} />
+        <Route path="/knowledge" element={<Knowledge />} />
+        <Route path="/timeline" element={<Timeline />} />
+        <Route path="/as-requests" element={<ASRequests />} />
+      </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
 };
 
-
 function App() {
-
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>

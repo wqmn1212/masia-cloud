@@ -1,0 +1,127 @@
+{
+  "name": "Quotation",
+  "type": "object",
+  "properties": {
+    "factory_id": {
+      "type": "string",
+      "description": "\uacf5\uc7a5 ID"
+    },
+    "factory_name": {
+      "type": "string",
+      "description": "\uacf5\uc7a5\uba85"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac ID"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac\uba85"
+    },
+    "machine_template_id": {
+      "type": "string",
+      "description": "\uc7a5\ube44 \ud15c\ud50c\ub9bf ID"
+    },
+    "machine_category": {
+      "type": "string",
+      "enum": [
+        "DRIP_BAG",
+        "SLEEVE",
+        "DESKTOP_LABELER",
+        "TUBE_SEALER"
+      ],
+      "description": "\uc7a5\ube44 \uce74\ud14c\uace0\ub9ac"
+    },
+    "incoterms": {
+      "type": "string",
+      "enum": [
+        "EXW",
+        "FOB_SHANGHAI",
+        "FOB_GUANGZHOU",
+        "CIF"
+      ],
+      "description": "\uc778\ucf54\ud140\uc988"
+    },
+    "raw_file_url": {
+      "type": "string",
+      "description": "\uc6d0\ubcf8 \ud30c\uc77c URL"
+    },
+    "ai_status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "PROCESSING",
+        "SUCCESS",
+        "FAILED"
+      ],
+      "description": "AI \ud30c\uc2f1 \uc0c1\ud0dc"
+    },
+    "line_items": {
+      "type": "array",
+      "description": "\uacac\uc801 \ud56d\ubaa9 \ub9ac\uc2a4\ud2b8",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_name_cn": {
+            "type": "string"
+          },
+          "item_name_ko": {
+            "type": "string"
+          },
+          "specification": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_price_cny": {
+            "type": "number"
+          },
+          "total_cny": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "factory_total_cost": {
+      "type": "number",
+      "description": "\uacf5\uc7a5 \uc21c\uc218 \ucd1d\ube44\uc6a9 (CNY)"
+    },
+    "logistics_cost": {
+      "type": "number",
+      "description": "\ubb3c\ub958\ube44 \ud569\uc0b0 (CNY)"
+    },
+    "masir_fee_type": {
+      "type": "string",
+      "enum": [
+        "PERCENT",
+        "FIXED"
+      ],
+      "description": "\ub9c8\uc2dc\uc544 \uc218\uc218\ub8cc \uc720\ud615"
+    },
+    "masir_fee_value": {
+      "type": "number",
+      "description": "\ub9c8\uc2dc\uc544 \uc218\uc218\ub8cc \uac12"
+    },
+    "final_client_price": {
+      "type": "number",
+      "description": "\ucd5c\uc885 \uace0\uac1d\uc0ac \uc81c\uc548\uac00"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "REVIEW",
+        "APPROVED",
+        "SENT",
+        "ACCEPTED",
+        "REJECTED"
+      ],
+      "description": "\uacac\uc801 \uc0c1\ud0dc"
+    }
+  },
+  "required": [
+    "factory_id",
+    "factory_name"
+  ]
+}

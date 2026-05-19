@@ -1,0 +1,63 @@
+{
+  "name": "ASRequest",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac ID"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac\uba85"
+    },
+    "machine_category": {
+      "type": "string",
+      "enum": [
+        "DRIP_BAG",
+        "SLEEVE",
+        "DESKTOP_LABELER",
+        "TUBE_SEALER"
+      ],
+      "description": "\uc7a5\ube44 \uce74\ud14c\uace0\ub9ac"
+    },
+    "issue_title": {
+      "type": "string",
+      "description": "\uacb0\ud568 \uc81c\ubaa9"
+    },
+    "issue_description": {
+      "type": "string",
+      "description": "\uacb0\ud568 \uc0c1\uc138 \uc124\uba85"
+    },
+    "media_urls": {
+      "type": "array",
+      "description": "\uc0ac\uc9c4/\uc601\uc0c1 URL \ubaa9\ub85d",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "RECEIVED",
+        "IN_PROGRESS",
+        "RESOLVED",
+        "CLOSED"
+      ],
+      "description": "\ucc98\ub9ac \uc0c1\ud0dc"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "URGENT"
+      ],
+      "description": "\uc6b0\uc120\uc21c\uc704"
+    }
+  },
+  "required": [
+    "client_name",
+    "issue_title"
+  ]
+}

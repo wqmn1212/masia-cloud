@@ -1,0 +1,50 @@
+{
+  "name": "MachineTemplate",
+  "type": "object",
+  "properties": {
+    "category": {
+      "type": "string",
+      "enum": [
+        "DRIP_BAG",
+        "SLEEVE",
+        "DESKTOP_LABELER",
+        "TUBE_SEALER"
+      ],
+      "description": "\uc7a5\ube44 \uce74\ud14c\uace0\ub9ac"
+    },
+    "model_name": {
+      "type": "string",
+      "description": "\ubaa8\ub378\uba85"
+    },
+    "base_speed": {
+      "type": "number",
+      "description": "\ud45c\uc900 \uc0dd\uc0b0 \uc18d\ub3c4 (BPM)"
+    },
+    "hopper_count": {
+      "type": "number",
+      "description": "\ud22c\uc785 \ud638\ud37c \uc218"
+    },
+    "shrink_type": {
+      "type": "string",
+      "enum": [
+        "ELECTRIC",
+        "STEAM",
+        "NONE"
+      ],
+      "description": "\uc218\ucd95 \ubc29\uc2dd"
+    },
+    "printer_type": {
+      "type": "string",
+      "enum": [
+        "TIJ",
+        "CIJ",
+        "NONE"
+      ],
+      "description": "\ud504\ub9b0\ud130 \ud0c0\uc785"
+    }
+  },
+  "required": [
+    "category",
+    "model_name"
+  ]
+}
