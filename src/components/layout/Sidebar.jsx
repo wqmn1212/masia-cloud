@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Factory, FileText, Shield, Users,
-  Clock, Wrench, Package, ChevronLeft, ChevronRight, Cloud, Calculator
+  Clock, Wrench, Package, ChevronLeft, ChevronRight, Cloud, Calculator, ListChecks
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +21,7 @@ const navSections = [
     items: [
       { path: '/factories', icon: Factory, label: '공장 관리' },
       { path: '/agent-quotes', icon: Package, label: '견적 업로드' },
+      { path: '/requirements', icon: ListChecks, label: '요구사항 트래커' },
     ]
   },
   {

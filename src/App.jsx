@@ -16,6 +16,7 @@ import Knowledge from '@/pages/Knowledge';
 import Timeline from '@/pages/Timeline';
 import ASRequests from '@/pages/ASRequests';
 import Settlement from '@/pages/Settlement';
+import Requirements from '@/pages/Requirements';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -49,6 +50,7 @@ const AuthenticatedApp = () => {
         <Route path="/timeline" element={<Timeline />} />
         <Route path="/as-requests" element={<ASRequests />} />
         <Route path="/settlement" element={<Settlement />} />
+        <Route path="/requirements" element={<Requirements />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

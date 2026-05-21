@@ -78,17 +78,17 @@ export default function Factories() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>연간 매출액 (CNY)</Label>
-                  <Input type="number" value={form.annual_revenue} onChange={(e) => handleChange('annual_revenue', e.target.value)} placeholder="0" />
+                  <Label>연간 매출액 (CNY) *</Label>
+                  <Input type="number" value={form.annual_revenue} onChange={(e) => handleChange('annual_revenue', e.target.value)} placeholder="0" required />
                 </div>
                 <div>
-                  <Label>임직원 수</Label>
-                  <Input type="number" value={form.employee_count} onChange={(e) => handleChange('employee_count', e.target.value)} placeholder="0" />
+                  <Label>임직원 수 *</Label>
+                  <Input type="number" value={form.employee_count} required onChange={(e) => handleChange('employee_count', e.target.value)} placeholder="0" />
                 </div>
               </div>
               <div>
-                <Label>설립일</Label>
-                <Input type="date" value={form.establishment_date} onChange={(e) => handleChange('establishment_date', e.target.value)} />
+                <Label>설립일 *</Label>
+                <Input type="date" value={form.establishment_date} onChange={(e) => handleChange('establishment_date', e.target.value)} required />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
