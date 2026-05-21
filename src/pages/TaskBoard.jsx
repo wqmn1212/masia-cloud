@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, MessageSquare, Paperclip, LayoutGrid } from 'lucide-react';
 import CardModal from '@/components/taskcard/CardModal';
+import CategorySelect from '@/components/taskcard/CategorySelect';
 
 const COLUMNS = [
   { id: 'TODO',        label: '대기 중',    color: 'bg-muted/60',         dotColor: 'bg-muted-foreground' },
@@ -30,6 +31,10 @@ const PRIORITY_META = {
 const CAT_LABEL = {
   DRIP_BAG: '드립백', SLEEVE: '슬리브', DESKTOP_LABELER: '탁상 라벨러', TUBE_SEALER: '튜브 실링기',
 };
+
+function useCategoryLabel(key) {
+  return CAT_LABEL[key] || key || '';
+}
 
 const emptyForm = {
   title: '', status: 'TODO', target_machine_category: '',
@@ -182,12 +187,10 @@ export default function TaskBoard() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">장비 카테고리</Label>
-                <Select value={form.target_machine_category} onValueChange={(v) => setForm(p => ({ ...p, target_machine_category: v }))}>
-                  <SelectTrigger><SelectValue placeholder="선택" /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(CAT_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <CategorySelect
+                  value={form.target_machine_category}
+                  onValueChange={(v) => setForm(p => ({ ...p, target_machine_category: v }))}
+                />
               </div>
               <div>
                 <Label className="text-xs">우선순위</Label>

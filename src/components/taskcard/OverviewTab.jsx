@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { Save, Lightbulb, Plus } from 'lucide-react';
+import CategorySelect from './CategorySelect';
 
 const CATEGORY_LABELS = {
   DRIP_BAG: '드립백 포장기',
@@ -74,12 +75,10 @@ export default function OverviewTab({ card, kbAlerts }) {
         </div>
         <div>
           <Label className="text-xs">장비 카테고리</Label>
-          <Select value={form.target_machine_category} onValueChange={(v) => setForm(p => ({ ...p, target_machine_category: v }))}>
-            <SelectTrigger><SelectValue placeholder="선택" /></SelectTrigger>
-            <SelectContent>
-              {Object.entries(CATEGORY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <CategorySelect
+            value={form.target_machine_category}
+            onValueChange={(v) => setForm(p => ({ ...p, target_machine_category: v }))}
+          />
         </div>
         <div>
           <Label className="text-xs">고객사</Label>

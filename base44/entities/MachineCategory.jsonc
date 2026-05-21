@@ -1,0 +1,18 @@
+{
+  "name": "MachineCategory",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "\uc601\ubb38 \ud0a4 (\uc608: DRIP_BAG)"
+    },
+    "label_kr": {
+      "type": "string",
+      "description": "\ud55c\uad6d\uc5b4 \ud45c\uc2dc\uba85 (\uc608: \ub4dc\ub9bd\ubc31 \ud3ec\uc7a5\uae30)"
+    }
+  },
+  "required": [
+    "key",
+    "label_kr"
+  ]
+}
