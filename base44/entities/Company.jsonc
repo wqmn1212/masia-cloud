@@ -14,6 +14,10 @@
       "type": "string",
       "description": "\uc5c5\uccb4\uba85"
     },
+    "address": {
+      "type": "string",
+      "description": "\uc8fc\uc18c"
+    },
     "factory_address": {
       "type": "string",
       "description": "\uc911\uad6d \uacf5\uc7a5 \uc8fc\uc18c"
@@ -46,6 +50,14 @@
     "email": {
       "type": "string",
       "description": "\uc774\uba54\uc77c"
+    },
+    "business_registration_url": {
+      "type": "string",
+      "description": "\uc0ac\uc5c5\uc790\ub4f1\ub85d\uc99d \ud30c\uc77c URL"
+    },
+    "memo": {
+      "type": "string",
+      "description": "\uba54\ubaa8"
     }
   },
   "required": [
