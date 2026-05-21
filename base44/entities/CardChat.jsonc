@@ -1,0 +1,43 @@
+{
+  "name": "CardChat",
+  "type": "object",
+  "properties": {
+    "card_id": {
+      "type": "string",
+      "description": "\uc885\uc18d\ub41c TaskCard ID"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "\ubc1c\uc2e0\uc790 \uc774\ub984"
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "\ubc1c\uc2e0\uc790 \uc774\uba54\uc77c"
+    },
+    "sender_role": {
+      "type": "string",
+      "enum": [
+        "HQ",
+        "AGENT"
+      ],
+      "description": "\ubc1c\uc2e0\uc790 \uc5ed\ud560"
+    },
+    "message_text": {
+      "type": "string",
+      "description": "\uba54\uc2dc\uc9c0 \ub0b4\uc6a9"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "\ucca8\ubd80 \ud30c\uc77c URL (\uc120\ud0dd)"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "\ucca8\ubd80 \ud30c\uc77c\uba85 (\uc120\ud0dd)"
+    }
+  },
+  "required": [
+    "card_id",
+    "sender_name",
+    "message_text"
+  ]
+}

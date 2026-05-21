@@ -1,0 +1,50 @@
+{
+  "name": "CardSettlement",
+  "type": "object",
+  "properties": {
+    "card_id": {
+      "type": "string",
+      "description": "\uc885\uc18d\ub41c TaskCard ID"
+    },
+    "record_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc77c\uc790"
+    },
+    "description": {
+      "type": "string",
+      "description": "\ub0b4\uc5ed"
+    },
+    "hk_received_usd": {
+      "type": "number",
+      "description": "\ud64d\ucf69\uacc4\uc88c \uc218\uae08 (USD)"
+    },
+    "agency_fee_usd": {
+      "type": "number",
+      "description": "\ub300\ud589 \uc218\uc218\ub8cc (USD)"
+    },
+    "sent_amount_usd": {
+      "type": "number",
+      "description": "\uc1a1\uae08\uc561 (USD)"
+    },
+    "exchange_rate": {
+      "type": "number",
+      "description": "\ud658\uc728"
+    },
+    "agent_payout_rmb": {
+      "type": "number",
+      "description": "\uc5d0\uc774\uc804\ud2b8 \uc9c0\uae09\uc561 (RMB)"
+    },
+    "hq_margin_rmb": {
+      "type": "number",
+      "description": "HQ \ub9c8\uc9c4 (RMB)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "\ube44\uace0"
+    }
+  },
+  "required": [
+    "card_id"
+  ]
+}

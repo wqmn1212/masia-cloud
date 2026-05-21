@@ -1,0 +1,61 @@
+{
+  "name": "TaskCard",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "\uc18c\uc2f1 \uc5c5\ubb34 \uc81c\ubaa9"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "TODO",
+        "IN_PROGRESS",
+        "REVIEW",
+        "PRODUCTION",
+        "DONE"
+      ],
+      "description": "\uce78\ubc18 \uc0c1\ud0dc"
+    },
+    "target_machine_category": {
+      "type": "string",
+      "enum": [
+        "DRIP_BAG",
+        "SLEEVE",
+        "DESKTOP_LABELER",
+        "TUBE_SEALER"
+      ],
+      "description": "\ub300\uc0c1 \uc7a5\ube44 \uce74\ud14c\uace0\ub9ac"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "\uc5f0\ub3d9 \uace0\uac1d\uc0ac\uba85"
+    },
+    "factory_name": {
+      "type": "string",
+      "description": "\uc18c\uc2f1 \ud655\uc815 \uacf5\uc7a5\uba85"
+    },
+    "hq_requirements": {
+      "type": "string",
+      "description": "HQ \ubc0f \uace0\uac1d\uc0ac \uc694\uad6c\uc0ac\ud56d (\ub9c8\ud06c\ub2e4\uc6b4)"
+    },
+    "agent_meeting_notes": {
+      "type": "string",
+      "description": "\uc5d0\uc774\uc804\ud2b8 \ubbf8\ud305 \ubc0f \ud2b9\uc774\uc0ac\ud56d"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "URGENT"
+      ],
+      "description": "\uc6b0\uc120\uc21c\uc704"
+    }
+  },
+  "required": [
+    "title",
+    "status"
+  ]
+}

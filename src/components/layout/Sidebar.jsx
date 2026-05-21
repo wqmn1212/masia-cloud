@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Factory, FileText, Shield, Users,
-  Clock, Wrench, Package, ChevronLeft, ChevronRight, Cloud, Calculator, ListChecks
+  Clock, Wrench, Package, ChevronLeft, ChevronRight, Cloud, Calculator, ListChecks, Kanban
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +12,7 @@ const navSections = [
     items: [
       { path: '/', icon: LayoutDashboard, label: '대시보드' },
       { path: '/quotations', icon: FileText, label: '견적 관리' },
+      { path: '/task-board', icon: Kanban, label: '소싱 칸반 보드' },
       { path: '/settlement', icon: Calculator, label: '정산 대시보드' },
       { path: '/knowledge', icon: Shield, label: '나리지 베이스' },
     ]

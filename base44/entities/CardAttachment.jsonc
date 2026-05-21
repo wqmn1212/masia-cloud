@@ -1,0 +1,52 @@
+{
+  "name": "CardAttachment",
+  "type": "object",
+  "properties": {
+    "card_id": {
+      "type": "string",
+      "description": "\uc885\uc18d\ub41c TaskCard ID"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "\ud30c\uc77c\uba85"
+    },
+    "file_type": {
+      "type": "string",
+      "description": "\ud655\uc7a5\uc790 (pdf, xlsx, mp4, jpg \ub4f1)"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "\uc5c5\ub85c\ub4dc\ub41c \ud30c\uc77c URL"
+    },
+    "uploader_name": {
+      "type": "string",
+      "description": "\uc5c5\ub85c\ub354 \uc774\ub984"
+    },
+    "uploader_role": {
+      "type": "string",
+      "enum": [
+        "HQ",
+        "AGENT"
+      ],
+      "description": "\uc5c5\ub85c\ub354 \uc5ed\ud560"
+    },
+    "ai_parsed_text": {
+      "type": "string",
+      "description": "AI \ud30c\uc2f1 \uacb0\uacfc \ud14d\uc2a4\ud2b8"
+    },
+    "ai_parse_status": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "PENDING",
+        "DONE",
+        "FAILED"
+      ]
+    }
+  },
+  "required": [
+    "card_id",
+    "file_name",
+    "file_url"
+  ]
+}
