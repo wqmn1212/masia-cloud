@@ -28,7 +28,9 @@ export default function CategorySelect({ value, onValueChange, placeholder = 'ìž
 
   const handleAdd = () => {
     if (!newLabel.trim()) return;
-    const key = newLabel.trim().toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
+    // Generate key: try English-safe version, fallback to CAT_ + timestamp
+    let key = newLabel.trim().toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
+    if (!key) key = 'CAT_' + Date.now();
     createMutation.mutate({ key, label_kr: newLabel.trim() });
   };
 
