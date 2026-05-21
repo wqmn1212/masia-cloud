@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -102,6 +102,33 @@ export default function TaskBoard() {
         <Button onClick={() => setCreateOpen(true)} className="gap-2">
           <Plus className="w-4 h-4" />신규 카드 생성
         </Button>
+      </div>
+
+      {/* Status Summary Widget */}
+      <div className="grid grid-cols-5 gap-2">
+        {COLUMNS.map((col) => {
+          const count = columnCards(col.id).length;
+          const total = cards.length || 1;
+          const pct = Math.round((count / total) * 100);
+          return (
+            <div key={col.id} className={`rounded-xl border p-3 space-y-2 ${col.color}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-2 h-2 rounded-full ${col.dotColor}`} />
+                  <span className="text-xs font-medium">{col.label}</span>
+                </div>
+                <span className="text-lg font-bold">{count}</span>
+              </div>
+              <div className="h-1.5 bg-black/10 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${col.dotColor}`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground">{pct}% 점유</p>
+            </div>
+          );
+        })}
       </div>
 
       {/* Kanban Board */}
