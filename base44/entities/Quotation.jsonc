@@ -2,6 +2,10 @@
   "name": "Quotation",
   "type": "object",
   "properties": {
+    "card_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c TaskCard ID"
+    },
     "factory_id": {
       "type": "string",
       "description": "\uacf5\uc7a5 ID"
@@ -121,7 +125,6 @@
     }
   },
   "required": [
-    "factory_id",
     "factory_name"
   ]
 }

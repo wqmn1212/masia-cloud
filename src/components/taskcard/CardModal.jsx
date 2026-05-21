@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OverviewTab from './OverviewTab';
 import FilesTab from './FilesTab';
 import ChatTab from './ChatTab';
+import QuotationTab from './QuotationTab';
 import SettlementTab from './SettlementTab';
 
 const STATUS_META = {
@@ -60,15 +61,19 @@ export default function CardModal({ card, open, onClose }) {
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="mt-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">오버뷰</TabsTrigger>
-            <TabsTrigger value="files">파일 &amp; 견적</TabsTrigger>
+            <TabsTrigger value="quotation">견적</TabsTrigger>
+            <TabsTrigger value="files">파일</TabsTrigger>
             <TabsTrigger value="chat">채팅</TabsTrigger>
             <TabsTrigger value="settlement">정산</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-4">
             <OverviewTab card={card} kbAlerts={kbAlerts} />
+          </TabsContent>
+          <TabsContent value="quotation" className="mt-4">
+            <QuotationTab card={card} user={user} />
           </TabsContent>
           <TabsContent value="files" className="mt-4">
             <FilesTab card={card} user={user} />
