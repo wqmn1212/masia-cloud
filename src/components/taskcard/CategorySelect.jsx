@@ -58,7 +58,7 @@ export default function CategorySelect({ value, onValueChange, placeholder = '�
           <SelectValue placeholder={isLoading ? '로딩 중...' : placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {categories.map((c) => (
+          {categories.filter(c => !!c.key).map((c) => (
             <SelectItem key={c.id} value={c.key}>{c.label_kr}</SelectItem>
           ))}
           {categories.length === 0 && !isLoading && (
