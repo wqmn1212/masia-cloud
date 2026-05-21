@@ -48,6 +48,16 @@ export default function TaskBoard() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  const { data: categoryList = [] } = useQuery({
+    queryKey: ['machine-categories'],
+    queryFn: () => base44.entities.MachineCategory.list('label_kr', 100),
+  });
+  const catMap = React.useMemo(() => {
+    const m = { DRIP_BAG: '드립백', SLEEVE: '슬리브', DESKTOP_LABELER: '탁상 라벨러', TUBE_SEALER: '튜브 실링기' };
+    categoryList.forEach(c => { if (c.key) m[c.key] = c.label_kr; });
+    return m;
+  }, [categoryList]);
+
   const { data: cards = [], isLoading } = useQuery({
     queryKey: ['task-cards'],
     queryFn: () => base44.entities.TaskCard.list('-created_date', 200),
@@ -143,7 +153,7 @@ export default function TaskBoard() {
                                   </Badge>
                                 )}
                                 {card.target_machine_category && (
-                                  <Badge variant="outline" className="text-[9px] h-4 px-1">{CAT_LABEL[card.target_machine_category]}</Badge>
+                                  <Badge variant="outline" className="text-[9px] h-4 px-1">{catMap[card.target_machine_category] || card.target_machine_category}</Badge>
                                 )}
                               </div>
 
