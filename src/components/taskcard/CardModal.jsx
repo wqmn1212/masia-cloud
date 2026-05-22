@@ -9,6 +9,7 @@ import FilesTab from './FilesTab';
 import ChatTab from './ChatTab';
 import QuotationTab from './QuotationTab';
 import SettlementTab from './SettlementTab';
+import TaskItemsTab from './TaskItemsTab';
 
 const STATUS_META = {
   TODO:        { label: '대기 중',    color: 'bg-muted text-muted-foreground' },
@@ -61,14 +62,18 @@ export default function CardModal({ card, open, onClose }) {
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="mt-4">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">오버뷰</TabsTrigger>
+            <TabsTrigger value="tasks">업무 목록</TabsTrigger>
             <TabsTrigger value="quotation">견적</TabsTrigger>
             <TabsTrigger value="files">파일</TabsTrigger>
             <TabsTrigger value="chat">채팅</TabsTrigger>
             <TabsTrigger value="settlement">정산</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="tasks" className="mt-4">
+            <TaskItemsTab card={card} />
+          </TabsContent>
           <TabsContent value="overview" className="mt-4">
             <OverviewTab card={card} kbAlerts={kbAlerts} />
           </TabsContent>

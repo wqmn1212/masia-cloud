@@ -1,0 +1,51 @@
+{
+  "name": "TaskItem",
+  "type": "object",
+  "properties": {
+    "card_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c TaskCard ID"
+    },
+    "title": {
+      "type": "string",
+      "description": "\uc138\ubd80 \uc5c5\ubb34 \uc81c\ubaa9 (\uc608: \uacac\uc801 \uc694\uccad, \ubd80\ud488 \ud655\uc778, \ub3c4\uc0c9 \ubcc0\uacbd)"
+    },
+    "description": {
+      "type": "string",
+      "description": "\uc0c1\uc138 \ub0b4\uc6a9"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "TODO",
+        "IN_PROGRESS",
+        "DONE"
+      ],
+      "description": "\uc138\ubd80 \uc5c5\ubb34 \uc9c4\ud589 \uc0c1\ud0dc"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\ub9c8\uac10\uc77c"
+    },
+    "assignee_name": {
+      "type": "string",
+      "description": "\ub2f4\ub2f9\uc790 \uc774\ub984"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "URGENT"
+      ],
+      "description": "\uc6b0\uc120\uc21c\uc704"
+    }
+  },
+  "required": [
+    "card_id",
+    "title",
+    "status"
+  ]
+}
