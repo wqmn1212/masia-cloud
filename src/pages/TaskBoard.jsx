@@ -25,10 +25,10 @@ const COLUMNS = [
 ];
 
 const PRIORITY_META = {
-  LOW:    { label: '낮음',   className: 'bg-muted text-muted-foreground' },
-  MEDIUM: { label: '보통',   className: 'bg-chart-3/15 text-chart-3' },
-  HIGH:   { label: '높음',   className: 'bg-destructive/15 text-destructive' },
-  URGENT: { label: '긴급',   className: 'bg-destructive text-destructive-foreground' },
+  LOW:    { label: '낙음',   className: 'bg-muted text-muted-foreground',              borderColor: '#94a3b8' },
+  MEDIUM: { label: '보통',   className: 'bg-chart-3/15 text-chart-3',                 borderColor: '#f59e0b' },
+  HIGH:   { label: '높음',   className: 'bg-destructive/15 text-destructive',          borderColor: '#f97316' },
+  URGENT: { label: '긴급',   className: 'bg-destructive text-destructive-foreground', borderColor: '#ef4444' },
 };
 
 const CAT_LABEL = {
@@ -176,9 +176,10 @@ export default function TaskBoard() {
                               {...prov.draggableProps}
                               {...prov.dragHandleProps}
                               onClick={() => setSelectedCard(card)}
-                              className={`bg-card rounded-xl border p-3 cursor-pointer space-y-2 transition-shadow ${
+                              className={`bg-card rounded-xl border p-3 cursor-pointer space-y-2 transition-shadow overflow-hidden relative ${
                                 snap.isDragging ? 'shadow-xl ring-2 ring-primary/40' : 'hover:shadow-md'
                               }`}
+                              style={{ borderLeft: `4px solid ${PRIORITY_META[card.priority]?.borderColor || '#e2e8f0'}` }}
                             >
                               {/* Priority + category */}
                               <div className="flex items-center gap-1.5 flex-wrap">
