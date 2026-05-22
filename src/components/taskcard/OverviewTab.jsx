@@ -8,8 +8,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { Save, Lightbulb, Plus } from 'lucide-react';
+import { Save, Lightbulb, Plus, CheckCircle2 } from 'lucide-react';
 import CategorySelect from './CategorySelect';
+import ClientSelect from './ClientSelect';
+import FactoryMultiSelect from './FactoryMultiSelect';
 
 const CATEGORY_LABELS = {
   DRIP_BAG: '드립백 포장기',
@@ -22,12 +24,22 @@ export default function OverviewTab({ card, kbAlerts }) {
   const [form, setForm] = useState({
     title: card.title || '',
     client_name: card.client_name || '',
+    client_id: card.client_id || '',
     factory_name: card.factory_name || '',
+    factory_id: card.factory_id || '',
+    candidate_factory_names: card.candidate_factory_names || [],
+    candidate_factory_ids: card.candidate_factory_ids || [],
     target_machine_category: card.target_machine_category || '',
     hq_requirements: card.hq_requirements || '',
     agent_meeting_notes: card.agent_meeting_notes || '',
     priority: card.priority || 'MEDIUM',
   });
+  const [candidateFactories, setCandidateFactories] = useState(
+    (card.candidate_factory_names || []).map((name, i) => ({
+      id: (card.candidate_factory_ids || [])[i] || name,
+      name,
+    }))
+  );
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -80,13 +92,12 @@ export default function OverviewTab({ card, kbAlerts }) {
             onValueChange={(v) => setForm(p => ({ ...p, target_machine_category: v }))}
           />
         </div>
-        <div>
+        <div className="col-span-2">
           <Label className="text-xs">고객사</Label>
-          <Input value={form.client_name} onChange={(e) => setForm(p => ({ ...p, client_name: e.target.value }))} placeholder="고객사명" />
-        </div>
-        <div>
-          <Label className="text-xs">공장</Label>
-          <Input value={form.factory_name} onChange={(e) => setForm(p => ({ ...p, factory_name: e.target.value }))} placeholder="공장명" />
+          <ClientSelect
+            value={form.client_id}
+            onChange={({ id, name }) => setForm(p => ({ ...p, client_id: id, client_name: name }))}
+          />
         </div>
       </div>
 
@@ -100,8 +111,51 @@ export default function OverviewTab({ card, kbAlerts }) {
         <Textarea value={form.agent_meeting_notes} onChange={(e) => setForm(p => ({ ...p, agent_meeting_notes: e.target.value }))} rows={4} placeholder="공장 미팅 내용, 현장 확인 사항 등을 기록하세요" className="text-xs" />
       </div>
 
+      {/* 후보 공장 목록 */}
+      <div>
+        <Label className="text-xs">견적 요청 후보 공장 <span className="text-muted-foreground font-normal">(복수 선택)</span></Label>
+        <FactoryMultiSelect
+          selectedFactories={candidateFactories}
+          onChange={setCandidateFactories}
+        />
+      </div>
+
+      {/* 최종 확정 공장 */}
+      <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
+        <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
+          <CheckCircle2 className="w-3.5 h-3.5" /> 최종 확정 공장
+        </p>
+        {candidateFactories.length > 0 ? (
+          <Select
+            value={form.factory_id || ''}
+            onValueChange={(id) => {
+              const f = candidateFactories.find(x => x.id === id);
+              if (f) setForm(p => ({ ...p, factory_id: f.id, factory_name: f.name }));
+            }}
+          >
+            <SelectTrigger className="bg-background">
+              <SelectValue placeholder="후보 공장 중 최종 확정 선택" />
+            </SelectTrigger>
+            <SelectContent>
+              {candidateFactories.map(f => (
+                <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <p className="text-xs text-muted-foreground">위에서 후보 공장을 먼저 추가하세요</p>
+        )}
+        {form.factory_name && (
+          <p className="text-xs text-primary font-medium">✓ {form.factory_name} 확정됨</p>
+        )}
+      </div>
+
       <div className="flex justify-end">
-        <Button onClick={() => updateMutation.mutate(form)} disabled={updateMutation.isPending} className="gap-2">
+        <Button onClick={() => updateMutation.mutate({
+          ...form,
+          candidate_factory_names: candidateFactories.map(f => f.name),
+          candidate_factory_ids: candidateFactories.map(f => f.id),
+        })} disabled={updateMutation.isPending} className="gap-2">
           <Save className="w-4 h-4" />{updateMutation.isPending ? '저장 중...' : '저장'}
         </Button>
       </div>

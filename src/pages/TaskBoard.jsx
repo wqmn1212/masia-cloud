@@ -12,6 +12,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { Plus, MessageSquare, Paperclip, LayoutGrid } from 'lucide-react';
 import CardModal from '@/components/taskcard/CardModal';
 import CategorySelect from '@/components/taskcard/CategorySelect';
+import ClientSelect from '@/components/taskcard/ClientSelect';
+import FactoryMultiSelect from '@/components/taskcard/FactoryMultiSelect';
 
 const COLUMNS = [
   { id: 'TODO',        label: '대기 중',    color: 'bg-muted/60',         dotColor: 'bg-muted-foreground' },
@@ -38,12 +40,13 @@ function useCategoryLabel(key) {
 
 const emptyForm = {
   title: '', status: 'TODO', target_machine_category: '',
-  client_name: '', factory_name: '', priority: 'MEDIUM',
+  client_name: '', client_id: '', priority: 'MEDIUM',
 };
 
 export default function TaskBoard() {
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [candidateFactories, setCandidateFactories] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -69,6 +72,7 @@ export default function TaskBoard() {
       queryClient.invalidateQueries({ queryKey: ['task-cards'] });
       setCreateOpen(false);
       setForm(emptyForm);
+      setCandidateFactories([]);
       toast({ title: '카드 생성 완료' });
     },
   });
@@ -186,11 +190,16 @@ export default function TaskBoard() {
 
                               <p className="text-sm font-medium leading-snug line-clamp-2">{card.title}</p>
 
-                              {(card.client_name || card.factory_name) && (
-                                <p className="text-[10px] text-muted-foreground truncate">
-                                  {card.client_name}{card.client_name && card.factory_name && ' · '}{card.factory_name}
-                                </p>
-                              )}
+                              {(card.client_name || (card.candidate_factory_names?.length > 0) || card.factory_name) && (
+                                                     <p className="text-[10px] text-muted-foreground truncate">
+                                                       {card.client_name && `🏢 ${card.client_name}`}
+                                                       {card.factory_name
+                                                         ? ` · 🏭 ${card.factory_name}`
+                                                         : card.candidate_factory_names?.length > 0
+                                                           ? ` · 🏭 후보 ${card.candidate_factory_names.length}곳`
+                                                           : ''}
+                                                     </p>
+                                                   )}
 
                               <div className="flex items-center gap-2 text-[10px] text-muted-foreground pt-0.5">
                                 <MessageSquare className="w-3 h-3" />
@@ -216,7 +225,14 @@ export default function TaskBoard() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>신규 소싱 카드 생성</DialogTitle></DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-4">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            createMutation.mutate({
+              ...form,
+              candidate_factory_names: candidateFactories.map(f => f.name),
+              candidate_factory_ids: candidateFactories.map(f => f.id),
+            });
+          }} className="space-y-4">
             <div>
               <Label className="text-xs">업무 제목 *</Label>
               <Input value={form.title} onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))} placeholder="예: (주)카페로스팅 드립백 포장기 소싱" required />
@@ -239,15 +255,20 @@ export default function TaskBoard() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">고객사</Label>
-                <Input value={form.client_name} onChange={(e) => setForm(p => ({ ...p, client_name: e.target.value }))} placeholder="고객사명" />
-              </div>
-              <div>
-                <Label className="text-xs">공장 (선택)</Label>
-                <Input value={form.factory_name} onChange={(e) => setForm(p => ({ ...p, factory_name: e.target.value }))} placeholder="공장명" />
-              </div>
+            <div>
+              <Label className="text-xs">고객사</Label>
+              <ClientSelect
+                value={form.client_id}
+                onChange={({ id, name }) => setForm(p => ({ ...p, client_id: id, client_name: name }))}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">견적 요청 공장 <span className="text-muted-foreground font-normal">(복수 선택 가능)</span></Label>
+              <FactoryMultiSelect
+                selectedFactories={candidateFactories}
+                onChange={setCandidateFactories}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">* 최종 확정 공장은 카드 상세에서 나중에 지정할 수 있습니다</p>
             </div>
             <div className="flex justify-end gap-2 pt-1">
               <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>취소</Button>

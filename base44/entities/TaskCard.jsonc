@@ -31,9 +31,31 @@
       "type": "string",
       "description": "\uc5f0\ub3d9 \uace0\uac1d\uc0ac\uba85"
     },
+    "client_id": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac Company ID"
+    },
+    "candidate_factory_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\uacac\uc801 \uc694\uccad \ud6c4\ubcf4 \uacf5\uc7a5\uba85 \ubaa9\ub85d"
+    },
+    "candidate_factory_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\uacac\uc801 \uc694\uccad \ud6c4\ubcf4 \uacf5\uc7a5 ID \ubaa9\ub85d"
+    },
     "factory_name": {
       "type": "string",
-      "description": "\uc18c\uc2f1 \ud655\uc815 \uacf5\uc7a5\uba85"
+      "description": "\ucd5c\uc885 \ud655\uc815 \uacf5\uc7a5\uba85"
+    },
+    "factory_id": {
+      "type": "string",
+      "description": "\ucd5c\uc885 \ud655\uc815 \uacf5\uc7a5 Company ID"
     },
     "hq_requirements": {
       "type": "string",
