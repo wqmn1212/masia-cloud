@@ -4,6 +4,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { base44 } from '@/api/base44Client';
 import { Factory, FileText, Users, Wrench } from 'lucide-react';
 import StatCard from '@/components/dashboard/StatCard';
+import TaskCalendar from '@/components/calendar/TaskCalendar';
 import RecentQuotations from '@/components/dashboard/RecentQuotations';
 import PipelineChart from '@/components/dashboard/PipelineChart';
 
@@ -29,6 +30,10 @@ export default function Dashboard() {
     queryKey: ['timelines'],
     queryFn: () => base44.entities.ProductionTimeline.list('-created_date', 50),
   });
+  const { data: allCards = [] } = useQuery({
+    queryKey: ['task-cards'],
+    queryFn: () => base44.entities.TaskCard.list('-created_date', 200),
+  });
 
   const openAS = asRequests.filter(r => r.status !== 'CLOSED' && r.status !== 'RESOLVED');
 
@@ -50,6 +55,12 @@ export default function Dashboard() {
         <PipelineChart timelines={timelines} />
         <RecentQuotations quotations={quotations} />
       </div>
+
+      <TaskCalendar
+        cards={allCards}
+        onCardClick={() => {}}
+        onDateClick={() => {}}
+      />
     </div>
   );
 }

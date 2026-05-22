@@ -9,11 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, MessageSquare, Paperclip, LayoutGrid } from 'lucide-react';
+import { Plus, MessageSquare, Paperclip, LayoutGrid, CalendarDays } from 'lucide-react';
 import CardModal from '@/components/taskcard/CardModal';
 import CategorySelect from '@/components/taskcard/CategorySelect';
 import ClientSelect from '@/components/taskcard/ClientSelect';
 import FactoryMultiSelect from '@/components/taskcard/FactoryMultiSelect';
+import TaskCalendar from '@/components/calendar/TaskCalendar';
 
 const COLUMNS = [
   { id: 'TODO',        label: '대기 중',    color: 'bg-muted/60',         dotColor: 'bg-muted-foreground' },
@@ -45,6 +46,8 @@ const emptyForm = {
 
 export default function TaskBoard() {
   const [createOpen, setCreateOpen] = useState(false);
+  const [viewMode, setViewMode] = useState('board'); // 'board' | 'calendar'
+  const [calendarInitDate, setCalendarInitDate] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [candidateFactories, setCandidateFactories] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
@@ -64,6 +67,11 @@ export default function TaskBoard() {
   const { data: cards = [], isLoading } = useQuery({
     queryKey: ['task-cards'],
     queryFn: () => base44.entities.TaskCard.list('-created_date', 200),
+  });
+
+  const updateDueDateMutation = useMutation({
+    mutationFn: ({ id, due_date }) => base44.entities.TaskCard.update(id, { due_date }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['task-cards'] }),
   });
 
   const createMutation = useMutation({
@@ -94,6 +102,11 @@ export default function TaskBoard() {
 
   const columnCards = (colId) => cards.filter(c => c.status === colId);
 
+  const handleDateClick = (dateStr) => {
+    setCalendarInitDate(dateStr);
+    setCreateOpen(true);
+  };
+
   return (
     <div className="space-y-4 h-full">
       <div className="flex items-center justify-between">
@@ -103,10 +116,39 @@ export default function TaskBoard() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">업무 카드 기반 HQ ↔ 에이전트 협업 플랫폼</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center border rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode('board')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${
+                viewMode === 'board' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground'
+              }`}
+            >
+              <LayoutGrid className="w-4 h-4" /> 칸반
+            </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${
+                viewMode === 'calendar' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground'
+              }`}
+            >
+              <CalendarDays className="w-4 h-4" /> 달력
+            </button>
+          </div>
+          <Button onClick={() => setCreateOpen(true)} className="gap-2">
           <Plus className="w-4 h-4" />신규 카드 생성
-        </Button>
+          </Button>
+        </div>
       </div>
+
+      {/* Calendar View */}
+      {viewMode === 'calendar' && (
+        <TaskCalendar
+          cards={cards}
+          onCardClick={(card) => setSelectedCard(card)}
+          onDateClick={handleDateClick}
+        />
+      )}
 
       {/* Status Summary Widget */}
       <div className="grid grid-cols-5 gap-2">
@@ -136,7 +178,7 @@ export default function TaskBoard() {
       </div>
 
       {/* Kanban Board */}
-      <DragDropContext onDragEnd={onDragEnd}>
+      {viewMode === 'board' && <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex gap-3 overflow-x-auto pb-4" style={{ minHeight: '600px' }}>
           {COLUMNS.map((col) => {
             const colCards = columnCards(col.id);
@@ -219,7 +261,7 @@ export default function TaskBoard() {
             );
           })}
         </div>
-      </DragDropContext>
+      </DragDropContext>}
 
       {/* Create Card Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

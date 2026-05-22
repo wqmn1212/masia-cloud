@@ -74,6 +74,11 @@
         "URGENT"
       ],
       "description": "\uc6b0\uc120\uc21c\uc704"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\ub9c8\uac10\uc77c"
     }
   },
   "required": [
