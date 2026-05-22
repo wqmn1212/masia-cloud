@@ -11,11 +11,15 @@ const STATUS_COLOR = {
   DONE:        'bg-primary text-white',
 };
 
-const PRIORITY_COLOR = {
-  URGENT: 'bg-destructive text-white',
-  HIGH:   'bg-orange-500 text-white',
-  MEDIUM: null, // status color 사용
-  LOW:    'bg-muted-foreground/40 text-white',
+const PRIORITY_STYLE = {
+  URGENT: { bg: '#ef4444', label: '🔴 긴급' },
+  HIGH:   { bg: '#f97316', label: '🟠 높음' },
+  MEDIUM: { bg: null,      label: '' },
+  LOW:    { bg: '#94a3b8', label: '⚪ 낮음' },
+};
+
+const PRIORITY_BG_FALLBACK = {
+  URGENT: 'bg-red-500', HIGH: 'bg-orange-500', MEDIUM: '', LOW: 'bg-slate-400',
 };
 
 const STATUS_LABEL = {
@@ -186,14 +190,17 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
                       onClick={(e) => { e.stopPropagation(); onCardClick && onCardClick(entry); }}
                       onMouseEnter={() => setHoveredCard(entry.id)}
                       onMouseLeave={() => setHoveredCard(null)}
-                      className={`relative text-[10px] rounded px-1.5 py-0.5 truncate cursor-pointer font-medium transition-opacity
-                        ${PRIORITY_COLOR[entry.priority] || STATUS_COLOR[entry.status] || 'bg-muted text-foreground'}
+                      className={`relative text-[10px] rounded px-1.5 py-0.5 truncate cursor-pointer font-medium transition-opacity text-white
+                        ${!PRIORITY_STYLE[entry.priority]?.bg ? (STATUS_COLOR[entry.status] || 'bg-muted text-foreground') : ''}
                         ${hoveredCard === entry.id ? 'opacity-80' : 'opacity-100'}
                       `}
-                      title={entry.title}
+                      style={PRIORITY_STYLE[entry.priority]?.bg ? { backgroundColor: PRIORITY_STYLE[entry.priority].bg } : {}}
+                      title={`[${PRIORITY_STYLE[entry.priority]?.label || entry.priority}] ${entry.title}`}
                     >
                       {entry.priority && entry.priority !== 'MEDIUM' && (
-                        <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${PRIORITY_DOT[entry.priority]} opacity-80`} />
+                        <span className="mr-0.5 text-[9px] opacity-90">
+                          {entry.priority === 'URGENT' ? '🔴' : entry.priority === 'HIGH' ? '🟠' : '⚪'}
+                        </span>
                       )}
                       {entry.title}
                     </div>
@@ -222,12 +229,14 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
 
       {/* Legend */}
       <div className="flex items-center gap-4 px-6 py-3 border-t bg-muted/20 flex-wrap">
-        {Object.entries(STATUS_LABEL).map(([k, v]) => (
+        <span className="text-[10px] font-semibold text-muted-foreground mr-1">우선순위:</span>
+        {[['URGENT','#ef4444','긴급'], ['HIGH','#f97316','높음'], ['MEDIUM',null,'보통'], ['LOW','#94a3b8','낮음']].map(([k, color, v]) => (
           <div key={k} className="flex items-center gap-1.5">
-            <div className={`w-2.5 h-2.5 rounded-sm ${STATUS_COLOR[k]?.split(' ')[0]}`} />
+            <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color || '#6366f1' }} />
             <span className="text-[10px] text-muted-foreground">{v}</span>
           </div>
         ))}
+        <span className="text-[10px] font-semibold text-muted-foreground ml-2 mr-1">↳ 세부업무</span>
       </div>
     </div>
   );
