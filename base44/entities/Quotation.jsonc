@@ -125,7 +125,7 @@
     },
     "exchange_rate_usd": {
       "type": "number",
-      "description": "\uc1a1\uae08\uae30\uc900 \ud658\uc728: 1 KRW = ? USD (\uc608: 0.00072)"
+      "description": "\uc1a1\uae08\uae30\uc900 \ud658\uc728: 1 USD = ? KRW (\uc608: 1380)"
     },
     "exchange_rate_krw": {
       "type": "number",
