@@ -11,6 +11,13 @@ const STATUS_COLOR = {
   DONE:        'bg-primary text-white',
 };
 
+const PRIORITY_COLOR = {
+  URGENT: 'bg-destructive text-white',
+  HIGH:   'bg-orange-500 text-white',
+  MEDIUM: null, // status color 사용
+  LOW:    'bg-muted-foreground/40 text-white',
+};
+
 const STATUS_LABEL = {
   TODO: '대기', IN_PROGRESS: '소싱 중', REVIEW: '견적 검토', PRODUCTION: '발주·제작', DONE: '완료',
 };
@@ -180,7 +187,7 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
                       onMouseEnter={() => setHoveredCard(entry.id)}
                       onMouseLeave={() => setHoveredCard(null)}
                       className={`relative text-[10px] rounded px-1.5 py-0.5 truncate cursor-pointer font-medium transition-opacity
-                        ${STATUS_COLOR[entry.status] || 'bg-muted text-foreground'}
+                        ${PRIORITY_COLOR[entry.priority] || STATUS_COLOR[entry.status] || 'bg-muted text-foreground'}
                         ${hoveredCard === entry.id ? 'opacity-80' : 'opacity-100'}
                       `}
                       title={entry.title}
