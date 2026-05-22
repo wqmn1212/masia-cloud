@@ -179,7 +179,7 @@ export default function TaskBoard() {
                               className={`bg-card rounded-xl border p-3 cursor-pointer space-y-2 transition-shadow overflow-hidden relative ${
                                 snap.isDragging ? 'shadow-xl ring-2 ring-primary/40' : 'hover:shadow-md'
                               }`}
-                              style={{ borderLeft: `4px solid ${PRIORITY_META[card.priority]?.borderColor || '#e2e8f0'}` }}
+                              style={{ ...prov.draggableProps.style, borderLeft: `4px solid ${PRIORITY_META[card.priority]?.borderColor || '#e2e8f0'}` }}
                             >
                               {/* Priority + category */}
                               <div className="flex items-center gap-1.5 flex-wrap">
