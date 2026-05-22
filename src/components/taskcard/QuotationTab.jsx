@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, FileText, Trash2, Upload, Loader2, ExternalLink } from 'lucide-react';
+import { Plus, FileText, Trash2, Upload, Loader2, ExternalLink, Pencil } from 'lucide-react';
 
 const STATUS_META = {
   DRAFT:    { label: '초안',     color: 'bg-muted text-muted-foreground' },
@@ -68,6 +68,7 @@ export default function QuotationTab({ card, user }) {
   const [form, setForm] = useState({ ...emptyForm, factory_name: card.factory_name || '', client_name: card.client_name || '' });
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -76,14 +77,29 @@ export default function QuotationTab({ card, user }) {
     queryFn: () => base44.entities.Quotation.filter({ card_id: card.id }, '-created_date'),
   });
 
+  const resetForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setForm({ ...emptyForm, factory_name: card.factory_name || '', client_name: card.client_name || '' });
+  };
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Quotation.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotations-by-card', card.id] });
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
-      setShowForm(false);
-      setForm({ ...emptyForm, factory_name: card.factory_name || '', client_name: card.client_name || '' });
+      resetForm();
       toast({ title: '견적 등록 완료 — 견적관리에서도 확인하세요' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Quotation.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quotations-by-card', card.id] });
+      queryClient.invalidateQueries({ queryKey: ['quotations'] });
+      resetForm();
+      toast({ title: '견적 수정 완료' });
     },
   });
 
@@ -141,7 +157,7 @@ export default function QuotationTab({ card, user }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    createMutation.mutate({
+    const payload = {
       ...form,
       card_id: card.id,
       client_name: card.client_name || form.client_name,
@@ -154,22 +170,45 @@ export default function QuotationTab({ card, user }) {
       exchange_rate_date: form.exchange_rate_date,
       exchange_rate_usd: Number(form.exchange_rate_usd) || 0,
       exchange_rate_krw: Number(form.exchange_rate_krw) || 0,
+    };
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, data: payload });
+    } else {
+      createMutation.mutate(payload);
+    }
+  };
+
+  const handleEdit = (q) => {
+    setEditingId(q.id);
+    setForm({
+      factory_name: q.factory_name || '',
+      incoterms: q.incoterms || 'EXW',
+      factory_total_cost: q.factory_total_cost ?? '',
+      logistics_cost: q.logistics_cost ?? '',
+      masir_fee_type: q.masir_fee_type || 'PERCENT',
+      masir_fee_value: q.masir_fee_value ?? '',
+      exchange_rate_date: q.exchange_rate_date || new Date().toISOString().slice(0, 10),
+      exchange_rate_usd: q.exchange_rate_usd ?? '1380',
+      exchange_rate_krw: q.exchange_rate_krw ?? '190',
+      status: q.status || 'DRAFT',
+      raw_file_url: q.raw_file_url || '',
     });
+    setShowForm(true);
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">이 카드에 연결된 견적서 — 등록 즉시 견적관리 페이지와 동기화됩니다</p>
-        <Button size="sm" className="h-7 text-xs gap-1" onClick={() => setShowForm(v => !v)}>
-          <Plus className="w-3 h-3" />견적 추가
+        <Button size="sm" className="h-7 text-xs gap-1" onClick={() => { if (showForm) { resetForm(); } else { setShowForm(true); } }}>
+          <Plus className="w-3 h-3" />{editingId ? '수정 중' : '견적 추가'}
         </Button>
       </div>
 
       {/* 견적 추가 폼 */}
       {showForm && (
         <form onSubmit={handleSubmit} className="border rounded-xl p-4 space-y-3 bg-muted/20">
-          <p className="text-xs font-semibold">신규 견적 등록</p>
+          <p className="text-xs font-semibold">{editingId ? '견적 수정' : '신규 견적 등록'}</p>
 
           {/* 파일 업로드 */}
           <div>
@@ -266,8 +305,8 @@ export default function QuotationTab({ card, user }) {
           )}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => setShowForm(false)}>취소</Button>
-            <Button type="submit" size="sm" className="h-7 text-xs" disabled={createMutation.isPending}>등록</Button>
+            <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={resetForm}>취소</Button>
+            <Button type="submit" size="sm" className="h-7 text-xs" disabled={createMutation.isPending || updateMutation.isPending}>{editingId ? '수정 저장' : '등록'}</Button>
           </div>
         </form>
       )}
@@ -306,7 +345,10 @@ export default function QuotationTab({ card, user }) {
                         ))}
                       </SelectContent>
                     </Select>
-                    <button onClick={() => deleteMutation.mutate(q.id)} className="text-muted-foreground hover:text-destructive p-1">
+                    <button onClick={() => handleEdit(q)} className="text-muted-foreground hover:text-primary p-1" title="수정">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => deleteMutation.mutate(q.id)} className="text-muted-foreground hover:text-destructive p-1" title="삭제">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
