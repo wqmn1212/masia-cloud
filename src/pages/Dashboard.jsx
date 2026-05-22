@@ -34,6 +34,10 @@ export default function Dashboard() {
     queryKey: ['task-cards'],
     queryFn: () => base44.entities.TaskCard.list('-created_date', 200),
   });
+  const { data: allTaskItems = [] } = useQuery({
+    queryKey: ['task-items-all'],
+    queryFn: () => base44.entities.TaskItem.list('due_date', 500),
+  });
 
   const openAS = asRequests.filter(r => r.status !== 'CLOSED' && r.status !== 'RESOLVED');
 
@@ -58,6 +62,7 @@ export default function Dashboard() {
 
       <TaskCalendar
         cards={allCards}
+        taskItems={allTaskItems}
         onCardClick={() => {}}
         onDateClick={() => {}}
       />

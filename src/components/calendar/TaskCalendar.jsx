@@ -21,7 +21,13 @@ const PRIORITY_DOT = {
 
 const WEEK_DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
-export default function TaskCalendar({ cards = [], onCardClick, onDateClick }) {
+const ITEM_STATUS_COLOR = {
+  TODO:        'bg-muted-foreground/40 text-white',
+  IN_PROGRESS: 'bg-chart-3/70 text-white',
+  DONE:        'bg-primary/40 text-white line-through',
+};
+
+export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, onDateClick }) {
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth()); // 0-indexed
@@ -68,10 +74,22 @@ export default function TaskCalendar({ cards = [], onCardClick, onDateClick }) {
       if (!card.due_date) return;
       const key = card.due_date.slice(0, 10);
       if (!map[key]) map[key] = [];
-      map[key].push(card);
+      map[key].push({ ...card, _type: 'card' });
     });
     return map;
   }, [cards]);
+
+  // Map task items to date strings
+  const itemsByDate = useMemo(() => {
+    const map = {};
+    taskItems.forEach(item => {
+      if (!item.due_date) return;
+      const key = item.due_date.slice(0, 10);
+      if (!map[key]) map[key] = [];
+      map[key].push({ ...item, _type: 'item' });
+    });
+    return map;
+  }, [taskItems]);
 
   const formatDateKey = (date) => {
     const y = date.getFullYear();
@@ -86,6 +104,7 @@ export default function TaskCalendar({ cards = [], onCardClick, onDateClick }) {
     date.getDate() === today.getDate();
 
   const cardsWithDueDate = cards.filter(c => c.due_date).length;
+  const itemsWithDueDate = taskItems.filter(i => i.due_date).length;
 
   return (
     <div className="bg-card rounded-2xl border shadow-sm overflow-hidden">
@@ -96,7 +115,7 @@ export default function TaskCalendar({ cards = [], onCardClick, onDateClick }) {
           <h2 className="text-lg font-bold">
             {currentYear}년 {currentMonth + 1}월
           </h2>
-          <Badge variant="outline" className="text-xs">{cardsWithDueDate}개 업무</Badge>
+          <Badge variant="outline" className="text-xs">{cardsWithDueDate}개 카드 · {itemsWithDueDate}개 세부업무</Badge>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={goToday} className="text-xs h-7 px-3">
@@ -125,6 +144,8 @@ export default function TaskCalendar({ cards = [], onCardClick, onDateClick }) {
         {calendarDays.map((dayObj, idx) => {
           const key = formatDateKey(dayObj.date);
           const dayCards = cardsByDate[key] || [];
+          const dayItems = itemsByDate[key] || [];
+          const allDayEntries = [...dayCards, ...dayItems];
           const dayOfWeek = dayObj.date.getDay();
           const todayStyle = isToday(dayObj.date);
 
@@ -149,29 +170,41 @@ export default function TaskCalendar({ cards = [], onCardClick, onDateClick }) {
                 </span>
               </div>
 
-              {/* Cards */}
+              {/* Cards & Items */}
               <div className="space-y-0.5">
-                {dayCards.slice(0, 3).map(card => (
-                  <div
-                    key={card.id}
-                    onClick={(e) => { e.stopPropagation(); onCardClick && onCardClick(card); }}
-                    onMouseEnter={() => setHoveredCard(card.id)}
-                    onMouseLeave={() => setHoveredCard(null)}
-                    className={`relative text-[10px] rounded px-1.5 py-0.5 truncate cursor-pointer font-medium transition-opacity
-                      ${STATUS_COLOR[card.status] || 'bg-muted text-foreground'}
-                      ${hoveredCard === card.id ? 'opacity-80' : 'opacity-100'}
-                    `}
-                    title={card.title}
-                  >
-                    {card.priority && card.priority !== 'MEDIUM' && (
-                      <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${PRIORITY_DOT[card.priority]} opacity-80`} />
-                    )}
-                    {card.title}
-                  </div>
+                {allDayEntries.slice(0, 3).map(entry => (
+                  entry._type === 'card' ? (
+                    <div
+                      key={entry.id}
+                      onClick={(e) => { e.stopPropagation(); onCardClick && onCardClick(entry); }}
+                      onMouseEnter={() => setHoveredCard(entry.id)}
+                      onMouseLeave={() => setHoveredCard(null)}
+                      className={`relative text-[10px] rounded px-1.5 py-0.5 truncate cursor-pointer font-medium transition-opacity
+                        ${STATUS_COLOR[entry.status] || 'bg-muted text-foreground'}
+                        ${hoveredCard === entry.id ? 'opacity-80' : 'opacity-100'}
+                      `}
+                      title={entry.title}
+                    >
+                      {entry.priority && entry.priority !== 'MEDIUM' && (
+                        <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${PRIORITY_DOT[entry.priority]} opacity-80`} />
+                      )}
+                      {entry.title}
+                    </div>
+                  ) : (
+                    <div
+                      key={entry.id}
+                      className={`text-[10px] rounded px-1.5 py-0.5 truncate font-medium border border-dashed border-current/30
+                        ${ITEM_STATUS_COLOR[entry.status] || 'bg-muted/50 text-foreground'}
+                      `}
+                      title={`[세부업무] ${entry.title}`}
+                    >
+                      ↳ {entry.title}
+                    </div>
+                  )
                 ))}
-                {dayCards.length > 3 && (
+                {allDayEntries.length > 3 && (
                   <div className="text-[9px] text-muted-foreground px-1 font-medium">
-                    +{dayCards.length - 3}개 더
+                    +{allDayEntries.length - 3}개 더
                   </div>
                 )}
               </div>
