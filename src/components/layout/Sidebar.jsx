@@ -49,7 +49,7 @@ export default function Sidebar({ collapsed, onToggle }) {
         {!collapsed && (
           <div className="ml-3 overflow-hidden">
             <h1 className="text-base font-bold tracking-tight text-sidebar-foreground">마시아 클라우드</h1>
-            <p className="text-[10px] text-sidebar-foreground/50 tracking-widest uppercase">Masir Cloud</p>
+            <p className="text-[10px] text-sidebar-foreground/50 tracking-widest uppercase">Masia Cloud</p>
           </div>
         )}
       </div>
