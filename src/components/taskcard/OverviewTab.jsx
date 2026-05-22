@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { Save, Lightbulb, Plus, CheckCircle2 } from 'lucide-react';
+import { Save, Lightbulb, Plus, CheckCircle2, CalendarDays } from 'lucide-react';
 import CategorySelect from './CategorySelect';
 import ClientSelect from './ClientSelect';
 import FactoryMultiSelect from './FactoryMultiSelect';
@@ -33,6 +33,7 @@ export default function OverviewTab({ card, kbAlerts }) {
     hq_requirements: card.hq_requirements || '',
     agent_meeting_notes: card.agent_meeting_notes || '',
     priority: card.priority || 'MEDIUM',
+    due_date: card.due_date || '',
   });
   const [candidateFactories, setCandidateFactories] = useState(
     (card.candidate_factory_names || []).map((name, i) => ({
@@ -81,19 +82,39 @@ export default function OverviewTab({ card, kbAlerts }) {
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label className="text-xs">업무 제목 *</Label>
-          <Input value={form.title} onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))} />
-        </div>
-        <div>
-          <Label className="text-xs">장비 카테고리</Label>
-          <CategorySelect
-            value={form.target_machine_category}
-            onValueChange={(v) => setForm(p => ({ ...p, target_machine_category: v }))}
-          />
-        </div>
-        <div className="col-span-2">
-          <Label className="text-xs">고객사</Label>
+      <div>
+        <Label className="text-xs">업무 제목 *</Label>
+        <Input value={form.title} onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))} />
+      </div>
+      <div>
+        <Label className="text-xs">장비 카테고리</Label>
+        <CategorySelect
+          value={form.target_machine_category}
+          onValueChange={(v) => setForm(p => ({ ...p, target_machine_category: v }))}
+        />
+      </div>
+      <div>
+        <Label className="text-xs flex items-center gap-1"><CalendarDays className="w-3 h-3" /> 마감일</Label>
+        <Input
+          type="date"
+          value={form.due_date}
+          onChange={(e) => setForm(p => ({ ...p, due_date: e.target.value }))}
+        />
+      </div>
+      <div>
+        <Label className="text-xs">우선순위</Label>
+        <Select value={form.priority} onValueChange={(v) => setForm(p => ({ ...p, priority: v }))}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="LOW">낮음</SelectItem>
+            <SelectItem value="MEDIUM">보통</SelectItem>
+            <SelectItem value="HIGH">높음</SelectItem>
+            <SelectItem value="URGENT">긴급</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="col-span-2">
+        <Label className="text-xs">고객사</Label>
           <ClientSelect
             value={form.client_id}
             onChange={({ id, name }) => setForm(p => ({ ...p, client_id: id, client_name: name }))}
