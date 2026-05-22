@@ -14,6 +14,7 @@ import CardModal from '@/components/taskcard/CardModal';
 import CategorySelect from '@/components/taskcard/CategorySelect';
 import ClientSelect from '@/components/taskcard/ClientSelect';
 import FactoryMultiSelect from '@/components/taskcard/FactoryMultiSelect';
+import { translateFieldsToCN } from '@/lib/translate';
 
 
 const COLUMNS = [
@@ -70,13 +71,16 @@ export default function TaskBoard() {
 
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.TaskCard.create(data),
+    mutationFn: async (data) => {
+      const cn = await translateFieldsToCN({ title: data.title });
+      return base44.entities.TaskCard.create({ ...data, title_cn: cn.title || '' });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task-cards'] });
       setCreateOpen(false);
       setForm(emptyForm);
       setCandidateFactories([]);
-      toast({ title: '카드 생성 완료' });
+      toast({ title: '카드 생성 완료 · 중국어 번역 캡쳐됨' });
     },
   });
 

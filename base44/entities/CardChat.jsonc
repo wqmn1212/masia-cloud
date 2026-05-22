@@ -26,6 +26,10 @@
       "type": "string",
       "description": "\uba54\uc2dc\uc9c0 \ub0b4\uc6a9"
     },
+    "message_text_cn": {
+      "type": "string",
+      "description": "\uba54\uc2dc\uc9c0 \uc911\uad6d\uc5b4 \ubc88\uc5ed (\uc790\ub3d9)"
+    },
     "file_url": {
       "type": "string",
       "description": "\ucca8\ubd80 \ud30c\uc77c URL (\uc120\ud0dd)"

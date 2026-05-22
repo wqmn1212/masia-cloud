@@ -6,6 +6,10 @@
       "type": "string",
       "description": "\uc18c\uc2f1 \uc5c5\ubb34 \uc81c\ubaa9"
     },
+    "title_cn": {
+      "type": "string",
+      "description": "\uc81c\ubaa9 \uc911\uad6d\uc5b4 \ubc88\uc5ed (\uc790\ub3d9)"
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -61,9 +65,17 @@
       "type": "string",
       "description": "HQ \ubc0f \uace0\uac1d\uc0ac \uc694\uad6c\uc0ac\ud56d (\ub9c8\ud06c\ub2e4\uc6b4)"
     },
+    "hq_requirements_cn": {
+      "type": "string",
+      "description": "HQ \uc694\uad6c\uc0ac\ud56d \uc911\uad6d\uc5b4 \ubc88\uc5ed (\uc790\ub3d9)"
+    },
     "agent_meeting_notes": {
       "type": "string",
       "description": "\uc5d0\uc774\uc804\ud2b8 \ubbf8\ud305 \ubc0f \ud2b9\uc774\uc0ac\ud56d"
+    },
+    "agent_meeting_notes_cn": {
+      "type": "string",
+      "description": "\ubbf8\ud305 \ub178\ud2b8 \uc911\uad6d\uc5b4 \ubc88\uc5ed (\uc790\ub3d9)"
     },
     "priority": {
       "type": "string",

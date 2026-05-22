@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Trash2, CheckCircle2, Circle, Clock, CalendarDays, ChevronDown, ChevronUp } from 'lucide-react';
+import { translateFieldsToCN } from '@/lib/translate';
 
 const STATUS_META = {
   TODO:        { label: '대기',   icon: Circle,        className: 'text-muted-foreground' },
@@ -27,7 +28,7 @@ const STATUS_BORDER = { TODO: '#9ca3af', IN_PROGRESS: '#fbbf24', DONE: '#60a5fa'
 
 const emptyForm = { title: '', description: '', status: 'TODO', due_date: '', assignee_name: '', priority: 'MEDIUM' };
 
-export default function TaskItemsTab({ card }) {
+export default function TaskItemsTab({ card, viewLang = 'KR' }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [expandedId, setExpandedId] = useState(null);
@@ -40,7 +41,15 @@ export default function TaskItemsTab({ card }) {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.TaskItem.create({ ...data, card_id: card.id }),
+    mutationFn: async (data) => {
+      const cn = await translateFieldsToCN({ title: data.title, description: data.description });
+      return base44.entities.TaskItem.create({
+        ...data,
+        card_id: card.id,
+        title_cn: cn.title || '',
+        description_cn: cn.description || '',
+      });
+    },
     onSuccess: (newItem) => {
       queryClient.invalidateQueries({ queryKey: ['task-items', card.id] });
       setForm(emptyForm);
@@ -51,7 +60,18 @@ export default function TaskItemsTab({ card }) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.TaskItem.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      const extra = {};
+      if (data.title !== undefined) {
+        const cn = await translateFieldsToCN({ title: data.title });
+        extra.title_cn = cn.title || '';
+      }
+      if (data.description !== undefined) {
+        const cn = await translateFieldsToCN({ description: data.description });
+        extra.description_cn = cn.description || '';
+      }
+      return base44.entities.TaskItem.update(id, { ...data, ...extra });
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['task-items', card.id] }),
   });
 
@@ -122,7 +142,7 @@ export default function TaskItemsTab({ card }) {
 
                 {/* Title */}
                 <span className={`flex-1 text-sm font-medium ${item.status === 'DONE' ? 'line-through text-muted-foreground' : ''}`}>
-                  {item.title}
+                  {viewLang === 'CN' ? (item.title_cn || item.title) : item.title}
                 </span>
 
                 {/* Meta badges */}

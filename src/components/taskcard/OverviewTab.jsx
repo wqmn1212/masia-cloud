@@ -12,6 +12,7 @@ import { Save, Lightbulb, Plus, CheckCircle2, CalendarDays } from 'lucide-react'
 import CategorySelect from './CategorySelect';
 import ClientSelect from './ClientSelect';
 import FactoryMultiSelect from './FactoryMultiSelect';
+import { translateFieldsToCN } from '@/lib/translate';
 
 const CATEGORY_LABELS = {
   DRIP_BAG: '드립백 포장기',
@@ -20,7 +21,7 @@ const CATEGORY_LABELS = {
   TUBE_SEALER: '튜브 실링기',
 };
 
-export default function OverviewTab({ card, kbAlerts }) {
+export default function OverviewTab({ card, kbAlerts, viewLang = 'KR' }) {
   const [form, setForm] = useState({
     title: card.title || '',
     client_name: card.client_name || '',
@@ -45,10 +46,22 @@ export default function OverviewTab({ card, kbAlerts }) {
   const { toast } = useToast();
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.TaskCard.update(card.id, data),
+    mutationFn: async (data) => {
+      const cn = await translateFieldsToCN({
+        title: data.title,
+        hq_requirements: data.hq_requirements,
+        agent_meeting_notes: data.agent_meeting_notes,
+      });
+      return base44.entities.TaskCard.update(card.id, {
+        ...data,
+        title_cn: cn.title || '',
+        hq_requirements_cn: cn.hq_requirements || '',
+        agent_meeting_notes_cn: cn.agent_meeting_notes || '',
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task-cards'] });
-      toast({ title: '저장 완료' });
+      toast({ title: '저장 완료 · 중국어 번역도 캡쳐되었습니다' });
     },
   });
 
@@ -60,6 +73,31 @@ export default function OverviewTab({ card, kbAlerts }) {
         : `⚠️ [권장] ${suggestion}`,
     }));
   };
+
+  if (viewLang === 'CN') {
+    const hasAny = card.title_cn || card.hq_requirements_cn || card.agent_meeting_notes_cn;
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border bg-muted/30 p-4">
+          <Label className="text-[11px] text-muted-foreground">业务标题</Label>
+          <p className="text-base font-semibold mt-1">{card.title_cn || card.title || '-'}</p>
+        </div>
+        <div className="rounded-xl border bg-muted/30 p-4">
+          <Label className="text-[11px] text-muted-foreground">HQ 要求事项</Label>
+          <pre className="text-xs whitespace-pre-wrap font-sans mt-1 leading-relaxed">{card.hq_requirements_cn || card.hq_requirements || '-'}</pre>
+        </div>
+        <div className="rounded-xl border bg-muted/30 p-4">
+          <Label className="text-[11px] text-muted-foreground">代理会谈 / 工厂备注</Label>
+          <pre className="text-xs whitespace-pre-wrap font-sans mt-1 leading-relaxed">{card.agent_meeting_notes_cn || card.agent_meeting_notes || '-'}</pre>
+        </div>
+        {!hasAny && (
+          <p className="text-xs text-muted-foreground text-center py-2">
+            中文翻译尚未缓存 · 이 카드를 한국어 모드에서 한 번 저장하면 자동 번역됩니다.
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">

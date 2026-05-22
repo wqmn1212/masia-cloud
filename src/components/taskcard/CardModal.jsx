@@ -25,6 +25,7 @@ const CAT_LABEL = {
 
 export default function CardModal({ card, open, onClose }) {
   const [user, setUser] = useState(null);
+  const [viewLang, setViewLang] = useState('KR');
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -44,8 +45,18 @@ export default function CardModal({ card, open, onClose }) {
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
         <DialogHeader className="pb-0">
           <div className="flex items-start gap-3 flex-wrap">
-            <DialogTitle className="text-lg flex-1">{card.title}</DialogTitle>
+            <DialogTitle className="text-lg flex-1">
+              {viewLang === 'CN' ? (card.title_cn || card.title) : card.title}
+            </DialogTitle>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setViewLang(l => l === 'KR' ? 'CN' : 'KR')}
+                className="text-[11px] px-2 py-1 rounded-md border bg-background hover:bg-muted transition-colors font-medium"
+                title="한국어 / 중국어 보기 전환"
+              >
+                {viewLang === 'KR' ? '中文 보기' : '한국어 보기'}
+              </button>
               {card.target_machine_category && (
                 <Badge variant="outline" className="text-[10px]">{CAT_LABEL[card.target_machine_category]}</Badge>
               )}
@@ -72,10 +83,10 @@ export default function CardModal({ card, open, onClose }) {
           </TabsList>
 
           <TabsContent value="tasks" className="mt-4">
-            <TaskItemsTab card={card} />
+            <TaskItemsTab card={card} viewLang={viewLang} />
           </TabsContent>
           <TabsContent value="overview" className="mt-4">
-            <OverviewTab card={card} kbAlerts={kbAlerts} />
+            <OverviewTab card={card} kbAlerts={kbAlerts} viewLang={viewLang} />
           </TabsContent>
           <TabsContent value="quotation" className="mt-4">
             <QuotationTab card={card} user={user} />
@@ -84,7 +95,7 @@ export default function CardModal({ card, open, onClose }) {
             <FilesTab card={card} user={user} />
           </TabsContent>
           <TabsContent value="chat" className="mt-4">
-            <ChatTab card={card} user={user} />
+            <ChatTab card={card} user={user} viewLang={viewLang} />
           </TabsContent>
           <TabsContent value="settlement" className="mt-4">
             <SettlementTab card={card} user={user} />

@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Paperclip, Loader2 } from 'lucide-react';
+import { translateFieldsToCN } from '@/lib/translate';
 
 const ROLE_COLOR = {
   HQ: 'bg-primary text-primary-foreground',
@@ -16,7 +17,7 @@ function formatTime(iso) {
   return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
 }
 
-export default function ChatTab({ card, user }) {
+export default function ChatTab({ card, user, viewLang = 'KR' }) {
   const [text, setText] = useState('');
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef();
@@ -44,7 +45,10 @@ export default function ChatTab({ card, user }) {
   }, [messages]);
 
   const sendMutation = useMutation({
-    mutationFn: (msg) => base44.entities.CardChat.create(msg),
+    mutationFn: async (msg) => {
+      const cn = await translateFieldsToCN({ message_text: msg.message_text });
+      return base44.entities.CardChat.create({ ...msg, message_text_cn: cn.message_text || '' });
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['card-chat', card.id] }),
   });
 
@@ -94,7 +98,7 @@ export default function ChatTab({ card, user }) {
               <div className={`max-w-[72%] space-y-1 ${mine ? 'items-end' : 'items-start'} flex flex-col`}>
                 {!mine && <p className="text-[10px] text-muted-foreground px-1">{msg.sender_name} · {msg.sender_role}</p>}
                 <div className={`px-3 py-2 rounded-2xl text-sm leading-snug ${mine ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'}`}>
-                  {msg.message_text}
+                  {viewLang === 'CN' ? (msg.message_text_cn || msg.message_text) : msg.message_text}
                   {msg.file_url && (
                     <a href={msg.file_url} target="_blank" rel="noopener noreferrer"
                        className={`block text-xs mt-1 underline ${mine ? 'text-primary-foreground/80' : 'text-primary'}`}>

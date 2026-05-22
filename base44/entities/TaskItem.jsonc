@@ -10,9 +10,17 @@
       "type": "string",
       "description": "\uc138\ubd80 \uc5c5\ubb34 \uc81c\ubaa9 (\uc608: \uacac\uc801 \uc694\uccad, \ubd80\ud488 \ud655\uc778, \ub3c4\uc0c9 \ubcc0\uacbd)"
     },
+    "title_cn": {
+      "type": "string",
+      "description": "\uc81c\ubaa9 \uc911\uad6d\uc5b4 \ubc88\uc5ed (\uc790\ub3d9)"
+    },
     "description": {
       "type": "string",
       "description": "\uc0c1\uc138 \ub0b4\uc6a9"
+    },
+    "description_cn": {
+      "type": "string",
+      "description": "\uc0c1\uc138 \ub0b4\uc6a9 \uc911\uad6d\uc5b4 \ubc88\uc5ed (\uc790\ub3d9)"
     },
     "status": {
       "type": "string",
