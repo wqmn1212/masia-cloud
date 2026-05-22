@@ -41,10 +41,11 @@ export default function TaskItemsTab({ card }) {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.TaskItem.create({ ...data, card_id: card.id }),
-    onSuccess: () => {
+    onSuccess: (newItem) => {
       queryClient.invalidateQueries({ queryKey: ['task-items', card.id] });
       setForm(emptyForm);
       setShowForm(false);
+      if (newItem?.id) setExpandedId(newItem.id);
       toast({ title: '업무 추가 완료' });
     },
   });
