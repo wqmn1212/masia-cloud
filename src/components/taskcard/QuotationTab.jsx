@@ -25,7 +25,8 @@ const emptyForm = {
   logistics_cost: '',
   masir_fee_type: 'PERCENT',
   masir_fee_value: '',
-  exchange_rate_usd: '7.2',
+  exchange_rate_date: new Date().toISOString().slice(0, 10),
+  exchange_rate_usd: '0.138',
   exchange_rate_krw: '190',
   status: 'DRAFT',
   raw_file_url: '',
@@ -41,7 +42,7 @@ function calcQuote(factory_total_cost, logistics_cost, masir_fee_type, masir_fee
 }
 
 function CurrencyPanel({ cny, usdRate, krwRate }) {
-  const usd = usdRate ? (cny / usdRate).toFixed(2) : null;
+  const usd = usdRate ? (cny * usdRate).toFixed(2) : null;
   const krw = krwRate ? Math.round(cny * krwRate).toLocaleString() : null;
   return (
     <div className="grid grid-cols-3 gap-2 mt-2">
@@ -149,6 +150,7 @@ export default function QuotationTab({ card, user }) {
       masir_fee_value: Number(form.masir_fee_value) || 0,
       masir_fee_amount_cny: calc.fee,
       final_client_price: calc.total,
+      exchange_rate_date: form.exchange_rate_date,
       exchange_rate_usd: Number(form.exchange_rate_usd) || 0,
       exchange_rate_krw: Number(form.exchange_rate_krw) || 0,
     });
@@ -244,10 +246,14 @@ export default function QuotationTab({ card, user }) {
                 </div>
               </div>
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mt-1">환율 입력 → 통화 환산</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label className="text-[10px]">1 USD = ? CNY</Label>
-                  <Input type="number" step="0.01" value={form.exchange_rate_usd} onChange={e => setForm(f => ({ ...f, exchange_rate_usd: e.target.value }))} className="h-7 text-xs" placeholder="예: 7.2" />
+                  <Label className="text-[10px]">환율 기준일</Label>
+                  <Input type="date" value={form.exchange_rate_date} onChange={e => setForm(f => ({ ...f, exchange_rate_date: e.target.value }))} className="h-7 text-xs" />
+                </div>
+                <div>
+                  <Label className="text-[10px]">1 CNY = ? USD</Label>
+                  <Input type="number" step="0.0001" value={form.exchange_rate_usd} onChange={e => setForm(f => ({ ...f, exchange_rate_usd: e.target.value }))} className="h-7 text-xs" placeholder="예: 0.138" />
                 </div>
                 <div>
                   <Label className="text-[10px]">1 CNY = ? KRW</Label>

@@ -118,9 +118,14 @@
       "type": "number",
       "description": "\uace0\uac1d \uc81c\uc548\uac00 (CNY, \uc6d0\uac00+\ubb3c\ub958\ube44+\uc218\uc218\ub8cc)"
     },
+    "exchange_rate_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\ud658\uc728 \uae30\uc900 \ub0a0\uc9dc"
+    },
     "exchange_rate_usd": {
       "type": "number",
-      "description": "\ud658\uc728: 1 USD = ? CNY (\uc608: 7.2)"
+      "description": "\ud658\uc728: 1 CNY = ? USD (\uc608: 0.138)"
     },
     "exchange_rate_krw": {
       "type": "number",
