@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLanguage } from '@/lib/LanguageContext';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ const CATEGORY_LABELS = {
 };
 
 export default function AgentQuotes() {
+  const { t } = useLanguage();
   const [uploadedUrl, setUploadedUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
@@ -41,7 +43,7 @@ export default function AgentQuotes() {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     setUploadedUrl(file_url);
     setUploading(false);
-    toast({ title: '파일 업로드 완료' });
+    toast({ title: t('common.upload') });
   };
 
   const handleAIParse = async () => {
@@ -71,9 +73,9 @@ export default function AgentQuotes() {
     });
     if (result.status === 'success' && result.output?.items) {
       updateField('line_items', result.output.items);
-      toast({ title: 'AI 파싱 완료', description: `${result.output.items.length}개 항목 추출` });
+      toast({ title: t('agentquotes.ai') });
     } else {
-      toast({ title: 'AI 파싱 실패', description: '수동으로 입력해 주세요', variant: 'destructive' });
+      toast({ title: 'AI 파싱 실패', variant: 'destructive' });
     }
     setParsing(false);
   };
@@ -100,15 +102,15 @@ export default function AgentQuotes() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">견적 업로드</h1>
-        <p className="text-sm text-muted-foreground mt-1">에이전트 견적 파일 업로드 및 수동 편집</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t('agentquotes.title')}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t('agentquotes.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Upload Area */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">파일 업로드</CardTitle>
+            <CardTitle className="text-base">{t('agentquotes.upload.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <label className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center gap-3 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all">
@@ -121,7 +123,7 @@ export default function AgentQuotes() {
               )}
               <div className="text-center">
                 <p className="text-sm font-medium">
-                  {uploadedUrl ? '업로드 완료' : '클릭 또는 드래그'}
+                  {uploadedUrl ? t('agentquotes.upload.done') : t('agentquotes.upload.hint')}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   .xlsx, .docx, .pdf, .jpg, .png
@@ -133,31 +135,31 @@ export default function AgentQuotes() {
             {uploadedUrl && (
               <Button onClick={handleAIParse} disabled={parsing} className="w-full" variant="outline">
                 {parsing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileUp className="w-4 h-4 mr-2" />}
-                AI 자동 파싱
+                {t('agentquotes.ai')}
               </Button>
             )}
 
             <div className="space-y-3">
               <div>
-                <Label className="text-xs">공장 선택</Label>
+                <Label className="text-xs">{t('agentquotes.factory')}</Label>
                 <Select value={form.factory_id} onValueChange={(v) => {
                   const f = factories.find(x => x.id === v);
                   updateField('factory_id', v);
                   updateField('factory_name', f?.company_name || '');
                 }}>
-                  <SelectTrigger><SelectValue placeholder="공장 선택" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('agentquotes.factory')} /></SelectTrigger>
                   <SelectContent>
                     {factories.map(f => <SelectItem key={f.id} value={f.id}>{f.company_name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-xs">장비 카테고리</Label>
+                <Label className="text-xs">{t('agentquotes.category')}</Label>
                 <Select value={form.machine_category} onValueChange={(v) => updateField('machine_category', v)}>
-                  <SelectTrigger><SelectValue placeholder="카테고리" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('agentquotes.category')} /></SelectTrigger>
                   <SelectContent>
-                    {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                    {Object.entries(CATEGORY_LABELS).map(([k]) => (
+                      <SelectItem key={k} value={k}>{t(`cat.${k}`)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -170,7 +172,7 @@ export default function AgentQuotes() {
         <div className="lg:col-span-2 space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">견적 항목 편집기</CardTitle>
+              <CardTitle className="text-base">{t('agentquotes.editor')}</CardTitle>
             </CardHeader>
             <CardContent>
               <QuoteLineEditor items={form.line_items || []} onChange={(items) => updateField('line_items', items)} />
@@ -178,7 +180,7 @@ export default function AgentQuotes() {
           </Card>
           <div className="flex justify-end">
             <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !form.factory_id}>
-              {saveMutation.isPending ? '저장 중...' : '견적 제출'}
+              {saveMutation.isPending ? t('agentquotes.saving') : t('agentquotes.submit')}
             </Button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLanguage } from '@/lib/LanguageContext';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ const SEVERITY_MAP = {
 };
 
 export default function Knowledge() {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState('ALL');
   const queryClient = useQueryClient();
@@ -48,7 +50,7 @@ export default function Knowledge() {
       queryClient.invalidateQueries({ queryKey: ['qc-logs'] });
       setOpen(false);
       setForm({ target_category: '', issue_case: '', root_cause: '', solution_parameter: '', severity: 'MEDIUM' });
-      toast({ title: '나리지 등록 완료' });
+      toast({ title: t('knowledge.title') });
     },
   });
 
@@ -60,57 +62,57 @@ export default function Knowledge() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">나리지 베이스</h1>
-          <p className="text-sm text-muted-foreground mt-1">현장 결함 및 기술 노하우 데이터베이스</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('knowledge.title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('knowledge.subtitle')}</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />신규 등록</Button>
+            <Button><Plus className="w-4 h-4 mr-2" />{t('knowledge.add')}</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>결함 / 노하우 등록</DialogTitle>
+              <DialogTitle>{t('knowledge.form.title')}</DialogTitle>
             </DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>장비 카테고리 *</Label>
+                  <Label>{t('knowledge.form.category')}</Label>
                   <Select value={form.target_category} onValueChange={(v) => handleChange('target_category', v)}>
                     <SelectTrigger><SelectValue placeholder="선택" /></SelectTrigger>
                     <SelectContent>
-                      {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      {Object.entries(CATEGORY_LABELS).map(([k]) => (
+                        <SelectItem key={k} value={k}>{t(`cat.${k}`)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>심각도</Label>
+                  <Label>{t('knowledge.form.severity')}</Label>
                   <Select value={form.severity} onValueChange={(v) => handleChange('severity', v)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {Object.entries(SEVERITY_MAP).map(([k, v]) => (
-                        <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                      {Object.entries(SEVERITY_MAP).map(([k]) => (
+                        <SelectItem key={k} value={k}>{t(`severity.${k}`)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div>
-                <Label>결함 사례명 *</Label>
+                <Label>{t('knowledge.form.issue')}</Label>
                 <Input value={form.issue_case} onChange={(e) => handleChange('issue_case', e.target.value)} required />
               </div>
               <div>
-                <Label>근본 원인 *</Label>
+                <Label>{t('knowledge.form.cause')}</Label>
                 <Textarea value={form.root_cause} onChange={(e) => handleChange('root_cause', e.target.value)} rows={3} required />
               </div>
               <div>
-                <Label>해결 파라미터 / 사양</Label>
+                <Label>{t('knowledge.form.solution')}</Label>
                 <Textarea value={form.solution_parameter} onChange={(e) => handleChange('solution_parameter', e.target.value)} rows={3} />
               </div>
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setOpen(false)}>취소</Button>
-                <Button type="submit" disabled={createMutation.isPending}>등록</Button>
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+                <Button type="submit" disabled={createMutation.isPending}>{t('common.register')}</Button>
               </div>
             </form>
           </DialogContent>
@@ -126,7 +128,7 @@ export default function Knowledge() {
             size="sm"
             onClick={() => setFilter(cat)}
           >
-            {cat === 'ALL' ? '전체' : CATEGORY_LABELS[cat]}
+            {cat === 'ALL' ? t('common.all') : t(`cat.${cat}`)}
           </Button>
         ))}
       </div>
@@ -135,7 +137,7 @@ export default function Knowledge() {
       {filtered.length === 0 ? (
         <Card className="p-12 text-center">
           <Shield className="w-12 h-12 mx-auto text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-semibold">등록된 나리지가 없습니다</p>
+          <p className="mt-4 text-lg font-semibold">{t('knowledge.empty')}</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -150,8 +152,8 @@ export default function Knowledge() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="secondary" className="text-[10px]">{CATEGORY_LABELS[log.target_category]}</Badge>
-                        <Badge className={`${sev.className} border-0 text-[10px]`}>{sev.label}</Badge>
+                        <Badge variant="secondary" className="text-[10px]">{t(`cat.${log.target_category}`)}</Badge>
+                        <Badge className={`${sev.className} border-0 text-[10px]`}>{t(`severity.${log.severity}`)}</Badge>
                       </div>
                       <p className="font-semibold text-sm">{log.issue_case}</p>
                       <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{log.root_cause}</p>

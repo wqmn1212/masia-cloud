@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLanguage } from '@/lib/LanguageContext';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ const emptyClient = {
 };
 
 export default function Clients() {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [form, setForm] = useState(emptyClient);
@@ -39,7 +41,7 @@ export default function Clients() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       handleClose();
-      toast({ title: '고객사 등록 완료' });
+      toast({ title: t('clients.add') });
     },
   });
 
@@ -48,7 +50,7 @@ export default function Clients() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       handleClose();
-      toast({ title: '고객사 정보 수정 완료' });
+      toast({ title: t('clients.form.save') });
     },
   });
 
@@ -73,7 +75,7 @@ export default function Clients() {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     setForm(f => ({ ...f, business_registration_url: file_url }));
     setUploading(false);
-    toast({ title: '파일 업로드 완료' });
+    toast({ title: t('common.upload') });
   };
 
   const handleSubmit = (e) => {
@@ -91,11 +93,11 @@ export default function Clients() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">고객사 관리</h1>
-          <p className="text-sm text-muted-foreground mt-1">한국 바이어 고객사 정보 관리</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('clients.title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('clients.subtitle')}</p>
         </div>
         <Button onClick={() => setOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />신규 고객사 등록
+          <Plus className="w-4 h-4 mr-2" />{t('clients.add')}
         </Button>
       </div>
 
@@ -103,61 +105,61 @@ export default function Clients() {
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editTarget ? '고객사 정보 수정' : '신규 고객사 등록'}</DialogTitle>
+            <DialogTitle>{editTarget ? t('clients.form.edit') : t('clients.form.new')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 pt-1">
             <div>
-              <Label className="text-xs">상호명 *</Label>
-              <Input value={form.company_name} onChange={(e) => handleChange('company_name', e.target.value)} placeholder="(주)회사명" required />
+              <Label className="text-xs">{t('clients.form.company')}</Label>
+              <Input value={form.company_name} onChange={(e) => handleChange('company_name', e.target.value)} placeholder={t('clients.form.company.placeholder')} required />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">담당자명</Label>
+                <Label className="text-xs">{t('clients.form.contact')}</Label>
                 <Input value={form.contact_person} onChange={(e) => handleChange('contact_person', e.target.value)} placeholder="홍길동" />
               </div>
               <div>
-                <Label className="text-xs">연락처</Label>
+                <Label className="text-xs">{t('clients.form.phone')}</Label>
                 <Input value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="010-0000-0000" />
               </div>
             </div>
 
             <div>
-              <Label className="text-xs">이메일</Label>
+              <Label className="text-xs">{t('clients.form.email')}</Label>
               <Input type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="contact@company.com" />
             </div>
 
             <div>
-              <Label className="text-xs">주소</Label>
+              <Label className="text-xs">{t('clients.form.address')}</Label>
               <Input value={form.address} onChange={(e) => handleChange('address', e.target.value)} placeholder="서울특별시 강남구 ..." />
             </div>
 
             <div>
-              <Label className="text-xs">사업자등록증</Label>
+              <Label className="text-xs">{t('clients.form.brn')}</Label>
               <div className="flex items-center gap-2 mt-1">
                 <label className="flex items-center gap-1.5 cursor-pointer border rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors">
                   {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  {uploading ? '업로드 중...' : '파일 선택'}
+                  {uploading ? t('common.uploading') : t('clients.form.fileselect')}
                   <input type="file" className="hidden" onChange={handleFileUpload} accept=".pdf,.jpg,.jpeg,.png" />
                 </label>
                 {form.business_registration_url && (
                   <a href={form.business_registration_url} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1 text-xs text-primary hover:underline">
-                    <ExternalLink className="w-3.5 h-3.5" />파일 보기
+                    <ExternalLink className="w-3.5 h-3.5" />{t('clients.form.fileview')}
                   </a>
                 )}
               </div>
             </div>
 
             <div>
-              <Label className="text-xs">메모</Label>
-              <Input value={form.memo} onChange={(e) => handleChange('memo', e.target.value)} placeholder="특이사항, 관계 히스토리 등" />
+              <Label className="text-xs">{t('clients.form.memo')}</Label>
+              <Input value={form.memo} onChange={(e) => handleChange('memo', e.target.value)} placeholder={t('clients.form.memo.placeholder')} />
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={handleClose}>취소</Button>
+              <Button type="button" variant="outline" onClick={handleClose}>{t('common.cancel')}</Button>
               <Button type="submit" disabled={isPending || uploading}>
-                {editTarget ? '수정 완료' : '등록'}
+                {editTarget ? t('clients.form.save') : t('common.register')}
               </Button>
             </div>
           </form>
@@ -172,8 +174,8 @@ export default function Clients() {
       ) : clients.length === 0 ? (
         <Card className="p-12 text-center">
           <Users className="w-12 h-12 mx-auto text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-semibold">등록된 고객사가 없습니다</p>
-          <p className="text-sm text-muted-foreground mt-1">우측 상단 버튼으로 고객사를 등록하세요</p>
+          <p className="mt-4 text-lg font-semibold">{t('clients.empty')}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t('clients.empty.hint')}</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -184,11 +186,11 @@ export default function Clients() {
                   <div>
                     <CardTitle className="text-base">{c.company_name}</CardTitle>
                     {c.contact_person && (
-                      <p className="text-xs text-muted-foreground mt-0.5">담당: {c.contact_person}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{t('clients.contact')} {c.contact_person}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Badge variant="secondary" className="text-[10px]">고객사</Badge>
+                    <Badge variant="secondary" className="text-[10px]">{t('clients.badge')}</Badge>
                     <Button size="icon" variant="ghost" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => openEdit(c)}>
                       <Pencil className="w-3 h-3" />
@@ -219,7 +221,7 @@ export default function Clients() {
                   <a href={c.business_registration_url} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 text-primary hover:underline">
                     <FileText className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="text-xs">사업자등록증 보기</span>
+                    <span className="text-xs">{t('clients.brn.view')}</span>
                   </a>
                 )}
                 {c.memo && (

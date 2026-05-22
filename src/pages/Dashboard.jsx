@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLanguage } from '@/lib/LanguageContext';
 import { base44 } from '@/api/base44Client';
 import { Factory, FileText, Users, Wrench } from 'lucide-react';
 import StatCard from '@/components/dashboard/StatCard';
@@ -7,6 +8,7 @@ import RecentQuotations from '@/components/dashboard/RecentQuotations';
 import PipelineChart from '@/components/dashboard/PipelineChart';
 
 export default function Dashboard() {
+  const { t } = useLanguage();
   const { data: factories = [] } = useQuery({
     queryKey: ['factories'],
     queryFn: () => base44.entities.Company.filter({ company_type: 'FACTORY' }),
@@ -33,15 +35,15 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">대시보드</h1>
-        <p className="text-sm text-muted-foreground mt-1">마시아 클라우드 통합 현황</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t('dashboard.title')}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t('dashboard.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="등록 공장" value={factories.length} icon={Factory} trend="2건" trendUp />
-        <StatCard title="고객사" value={clients.length} icon={Users} />
-        <StatCard title="진행 견적" value={quotations.length} icon={FileText} trend="5건" trendUp />
-        <StatCard title="미결 AS" value={openAS.length} icon={Wrench} subtitle="접수 완료 기준" />
+        <StatCard title={t('dashboard.factories')} value={factories.length} icon={Factory} trend="2건" trendUp />
+        <StatCard title={t('dashboard.clients')} value={clients.length} icon={Users} />
+        <StatCard title={t('dashboard.quotations')} value={quotations.length} icon={FileText} trend="5건" trendUp />
+        <StatCard title={t('dashboard.openAS')} value={openAS.length} icon={Wrench} subtitle={t('dashboard.asSubtitle')} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
