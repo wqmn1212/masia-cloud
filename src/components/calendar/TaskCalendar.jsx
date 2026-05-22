@@ -3,24 +3,28 @@ import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-const STATUS_COLOR = {
-  TODO:        'bg-muted-foreground/70 text-white',
-  IN_PROGRESS: 'bg-chart-3 text-white',
-  REVIEW:      'bg-accent text-white',
-  PRODUCTION:  'bg-chart-4 text-white',
-  DONE:        'bg-primary text-white',
+// 인라인 스타일 기반 색상 (Tailwind 퍼지 문제 방지)
+const STATUS_BG = {
+  TODO:        '#6b7280',
+  IN_PROGRESS: '#f59e0b',
+  REVIEW:      '#14b8a6',
+  PRODUCTION:  '#a855f7',
+  DONE:        '#3b82f6',
 };
 
-const PRIORITY_STYLE = {
-  URGENT: { bg: '#ef4444', label: '🔴 긴급' },
-  HIGH:   { bg: '#f97316', label: '🟠 높음' },
-  MEDIUM: { bg: null,      label: '' },
-  LOW:    { bg: '#94a3b8', label: '⚪ 낮음' },
+const PRIORITY_BG = {
+  URGENT: '#ef4444',
+  HIGH:   '#f97316',
+  // MEDIUM → STATUS_BG 사용
+  LOW:    '#94a3b8',
 };
 
-const PRIORITY_BG_FALLBACK = {
-  URGENT: 'bg-red-500', HIGH: 'bg-orange-500', MEDIUM: '', LOW: 'bg-slate-400',
-};
+function getCardBg(priority, status) {
+  if (priority && PRIORITY_BG[priority]) return PRIORITY_BG[priority];
+  return STATUS_BG[status] || '#6b7280';
+}
+
+const PRIORITY_EMOJI = { URGENT: '🔴', HIGH: '🟠', LOW: '⚪' };
 
 const STATUS_LABEL = {
   TODO: '대기', IN_PROGRESS: '소싱 중', REVIEW: '견적 검토', PRODUCTION: '발주·제작', DONE: '완료',
@@ -191,16 +195,13 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
                       onMouseEnter={() => setHoveredCard(entry.id)}
                       onMouseLeave={() => setHoveredCard(null)}
                       className={`relative text-[10px] rounded px-1.5 py-0.5 truncate cursor-pointer font-medium transition-opacity text-white
-                        ${!PRIORITY_STYLE[entry.priority]?.bg ? (STATUS_COLOR[entry.status] || 'bg-muted text-foreground') : ''}
                         ${hoveredCard === entry.id ? 'opacity-80' : 'opacity-100'}
                       `}
-                      style={PRIORITY_STYLE[entry.priority]?.bg ? { backgroundColor: PRIORITY_STYLE[entry.priority].bg } : {}}
-                      title={`[${PRIORITY_STYLE[entry.priority]?.label || entry.priority}] ${entry.title}`}
+                      style={{ backgroundColor: getCardBg(entry.priority, entry.status) }}
+                      title={`[${entry.priority || '우선순위없음'}] ${entry.title}`}
                     >
-                      {entry.priority && entry.priority !== 'MEDIUM' && (
-                        <span className="mr-0.5 text-[9px] opacity-90">
-                          {entry.priority === 'URGENT' ? '🔴' : entry.priority === 'HIGH' ? '🟠' : '⚪'}
-                        </span>
+                      {PRIORITY_EMOJI[entry.priority] && (
+                        <span className="mr-0.5 text-[9px]">{PRIORITY_EMOJI[entry.priority]}</span>
                       )}
                       {entry.title}
                     </div>
