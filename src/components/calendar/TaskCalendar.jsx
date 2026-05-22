@@ -36,10 +36,10 @@ const PRIORITY_DOT = {
 
 const WEEK_DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
-const ITEM_STATUS_COLOR = {
-  TODO:        'bg-muted-foreground/40 text-white',
-  IN_PROGRESS: 'bg-chart-3/70 text-white',
-  DONE:        'bg-primary/40 text-white line-through',
+const ITEM_STATUS_BG = {
+  TODO:        '#9ca3af',
+  IN_PROGRESS: '#fbbf24',
+  DONE:        '#60a5fa',
 };
 
 export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, onDateClick }) {
@@ -208,12 +208,14 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
                   ) : (
                     <div
                       key={entry.id}
-                      className={`text-[10px] rounded px-1.5 py-0.5 truncate font-medium border border-dashed border-current/30
-                        ${ITEM_STATUS_COLOR[entry.status] || 'bg-muted/50 text-foreground'}
-                      `}
+                      className="text-[10px] rounded px-1.5 py-0.5 truncate font-medium text-white border border-white/20"
+                      style={{
+                        backgroundColor: PRIORITY_BG[entry.priority] || ITEM_STATUS_BG[entry.status] || '#9ca3af',
+                        opacity: 0.85,
+                      }}
                       title={`[세부업무] ${entry.title}`}
                     >
-                      ↳ {entry.title}
+                      ↳ {PRIORITY_EMOJI[entry.priority] || ''}{entry.title}
                     </div>
                   )
                 ))}
