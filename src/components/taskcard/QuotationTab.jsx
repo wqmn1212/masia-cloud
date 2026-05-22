@@ -22,7 +22,9 @@ const emptyForm = {
   factory_name: '',
   incoterms: 'EXW',
   factory_total_cost: '',
+  factory_cost_currency: 'CNY',
   logistics_cost: '',
+  logistics_cost_currency: 'CNY',
   masir_fee_type: 'PERCENT',
   masir_fee_value: '',
   exchange_rate_date: new Date().toISOString().slice(0, 10),
@@ -31,6 +33,22 @@ const emptyForm = {
   status: 'DRAFT',
   raw_file_url: '',
 };
+
+// 통화 변환 헬퍼 — 사용자 입력 환율(1 USD = ? KRW, 1 CNY = ? KRW) 기준으로 CNY 로 환산
+function toCNY(value, currency, usdToKrw, cnyToKrw) {
+  const v = Number(value) || 0;
+  if (!currency || currency === 'CNY') return v;
+  if (currency === 'KRW') return cnyToKrw > 0 ? v / cnyToKrw : 0;
+  if (currency === 'USD') return (cnyToKrw > 0 && usdToKrw > 0) ? (v * usdToKrw) / cnyToKrw : 0;
+  return v;
+}
+function fromCNY(cny, currency, usdToKrw, cnyToKrw) {
+  const v = Number(cny) || 0;
+  if (!currency || currency === 'CNY') return v;
+  if (currency === 'KRW') return cnyToKrw > 0 ? Math.round(v * cnyToKrw) : 0;
+  if (currency === 'USD') return (cnyToKrw > 0 && usdToKrw > 0) ? Number(((v * cnyToKrw) / usdToKrw).toFixed(2)) : 0;
+  return v;
+}
 
 // 견적 금액 계산 헬퍼
 function calcQuote(factory_total_cost, logistics_cost, masir_fee_type, masir_fee_value) {
@@ -151,8 +169,21 @@ export default function QuotationTab({ card, user }) {
     setParsing(false);
   };
 
-  const calc = useMemo(() => calcQuote(form.factory_total_cost, form.logistics_cost, form.masir_fee_type, form.masir_fee_value), [
-    form.factory_total_cost, form.logistics_cost, form.masir_fee_type, form.masir_fee_value
+  const { factoryCNY, logisticsCNY, calc } = useMemo(() => {
+    const usdR = Number(form.exchange_rate_usd) || 0;
+    const krwR = Number(form.exchange_rate_krw) || 0;
+    const fCNY = toCNY(form.factory_total_cost, form.factory_cost_currency, usdR, krwR);
+    const lCNY = toCNY(form.logistics_cost, form.logistics_cost_currency, usdR, krwR);
+    return {
+      factoryCNY: fCNY,
+      logisticsCNY: lCNY,
+      calc: calcQuote(fCNY, lCNY, form.masir_fee_type, form.masir_fee_value),
+    };
+  }, [
+    form.factory_total_cost, form.factory_cost_currency,
+    form.logistics_cost, form.logistics_cost_currency,
+    form.masir_fee_type, form.masir_fee_value,
+    form.exchange_rate_usd, form.exchange_rate_krw,
   ]);
 
   const handleSubmit = (e) => {
@@ -162,8 +193,10 @@ export default function QuotationTab({ card, user }) {
       card_id: card.id,
       client_name: card.client_name || form.client_name,
       machine_category: card.target_machine_category,
-      factory_total_cost: Number(form.factory_total_cost) || 0,
-      logistics_cost: Number(form.logistics_cost) || 0,
+      factory_total_cost: factoryCNY,
+      factory_cost_currency: form.factory_cost_currency || 'CNY',
+      logistics_cost: logisticsCNY,
+      logistics_cost_currency: form.logistics_cost_currency || 'CNY',
       masir_fee_value: Number(form.masir_fee_value) || 0,
       masir_fee_amount_cny: calc.fee,
       final_client_price: calc.total,
@@ -179,12 +212,20 @@ export default function QuotationTab({ card, user }) {
   };
 
   const handleEdit = (q) => {
+    const fCur = q.factory_cost_currency || 'CNY';
+    const lCur = q.logistics_cost_currency || 'CNY';
+    const usdR = Number(q.exchange_rate_usd) || 0;
+    const krwR = Number(q.exchange_rate_krw) || 0;
+    const fDisp = q.factory_total_cost != null ? fromCNY(q.factory_total_cost, fCur, usdR, krwR) : '';
+    const lDisp = q.logistics_cost != null ? fromCNY(q.logistics_cost, lCur, usdR, krwR) : '';
     setEditingId(q.id);
     setForm({
       factory_name: q.factory_name || '',
       incoterms: q.incoterms || 'EXW',
-      factory_total_cost: q.factory_total_cost ?? '',
-      logistics_cost: q.logistics_cost ?? '',
+      factory_total_cost: fDisp === 0 ? '' : fDisp,
+      factory_cost_currency: fCur,
+      logistics_cost: lDisp === 0 ? '' : lDisp,
+      logistics_cost_currency: lCur,
       masir_fee_type: q.masir_fee_type || 'PERCENT',
       masir_fee_value: q.masir_fee_value ?? '',
       exchange_rate_date: q.exchange_rate_date || new Date().toISOString().slice(0, 10),
@@ -241,12 +282,38 @@ export default function QuotationTab({ card, user }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">공장 원가 (CNY ¥)</Label>
-              <Input type="number" value={form.factory_total_cost} onChange={e => setForm(f => ({ ...f, factory_total_cost: e.target.value }))} className="h-8 text-xs" placeholder="¥" />
+              <Label className="text-xs">공장 원가</Label>
+              <div className="flex gap-1">
+                <Input type="number" value={form.factory_total_cost} onChange={e => setForm(f => ({ ...f, factory_total_cost: e.target.value }))} className="h-8 text-xs flex-1" placeholder={form.factory_cost_currency === 'KRW' ? '₩' : form.factory_cost_currency === 'USD' ? '$' : '¥'} />
+                <Select value={form.factory_cost_currency} onValueChange={v => setForm(f => ({ ...f, factory_cost_currency: v }))}>
+                  <SelectTrigger className="h-8 w-[78px] text-xs px-2"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CNY" className="text-xs">¥ CNY</SelectItem>
+                    <SelectItem value="USD" className="text-xs">$ USD</SelectItem>
+                    <SelectItem value="KRW" className="text-xs">₩ KRW</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {form.factory_cost_currency !== 'CNY' && factoryCNY > 0 && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">≈ ¥{Math.round(factoryCNY).toLocaleString()} CNY</p>
+              )}
             </div>
             <div>
-              <Label className="text-xs">물류비 (CNY ¥)</Label>
-              <Input type="number" value={form.logistics_cost} onChange={e => setForm(f => ({ ...f, logistics_cost: e.target.value }))} className="h-8 text-xs" placeholder="¥" />
+              <Label className="text-xs">물류비</Label>
+              <div className="flex gap-1">
+                <Input type="number" value={form.logistics_cost} onChange={e => setForm(f => ({ ...f, logistics_cost: e.target.value }))} className="h-8 text-xs flex-1" placeholder={form.logistics_cost_currency === 'KRW' ? '₩' : form.logistics_cost_currency === 'USD' ? '$' : '¥'} />
+                <Select value={form.logistics_cost_currency} onValueChange={v => setForm(f => ({ ...f, logistics_cost_currency: v }))}>
+                  <SelectTrigger className="h-8 w-[78px] text-xs px-2"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CNY" className="text-xs">¥ CNY</SelectItem>
+                    <SelectItem value="USD" className="text-xs">$ USD</SelectItem>
+                    <SelectItem value="KRW" className="text-xs">₩ KRW</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {form.logistics_cost_currency !== 'CNY' && logisticsCNY > 0 && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">≈ ¥{Math.round(logisticsCNY).toLocaleString()} CNY</p>
+              )}
             </div>
           </div>
 
