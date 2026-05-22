@@ -2,6 +2,10 @@
   "name": "ProductionTimeline",
   "type": "object",
   "properties": {
+    "card_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c TaskCard ID"
+    },
     "quotation_id": {
       "type": "string",
       "description": "\uc5f0\uacb0 \uacac\uc801 ID"
@@ -71,8 +75,6 @@
     }
   },
   "required": [
-    "client_name",
-    "factory_name",
     "current_stage"
   ]
 }

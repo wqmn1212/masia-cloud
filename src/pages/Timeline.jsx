@@ -32,17 +32,38 @@ export default function Timeline() {
     queryFn: () => base44.entities.ProductionTimeline.list('-created_date', 50),
   });
 
+  const { data: cards = [] } = useQuery({
+    queryKey: ['task-cards'],
+    queryFn: () => base44.entities.TaskCard.list('-created_date', 200),
+  });
+  const cardsById = React.useMemo(() => {
+    const m = new Map();
+    cards.forEach(c => m.set(c.id, c));
+    return m;
+  }, [cards]);
+
   const [form, setForm] = useState({
-    client_name: '', factory_name: '', machine_description: '',
+    card_id: '',
     current_stage: 'CONTRACT', estimated_completion: '',
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.ProductionTimeline.create(data),
+    mutationFn: (data) => {
+      const card = cardsById.get(data.card_id);
+      return base44.entities.ProductionTimeline.create({
+        card_id: data.card_id,
+        client_id: card?.client_id || '',
+        client_name: card?.client_name || '',
+        factory_name: card?.factory_name || '',
+        machine_description: card?.title || '',
+        current_stage: data.current_stage,
+        estimated_completion: data.estimated_completion || undefined,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['timelines'] });
       setOpen(false);
-      setForm({ client_name: '', factory_name: '', machine_description: '', current_stage: 'CONTRACT', estimated_completion: '' });
+      setForm({ card_id: '', current_stage: 'CONTRACT', estimated_completion: '' });
       toast({ title: t('timeline.title') });
     },
   });
@@ -69,18 +90,33 @@ export default function Timeline() {
             <DialogHeader>
               <DialogTitle>{t('timeline.form.title')}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-4">
+            <form onSubmit={(e) => { e.preventDefault(); if (!form.card_id) return; createMutation.mutate(form); }} className="space-y-4">
               <div>
-                <Label>{t('timeline.form.client')}</Label>
-                <Input value={form.client_name} onChange={(e) => handleChange('client_name', e.target.value)} required />
-              </div>
-              <div>
-                <Label>{t('timeline.form.factory')}</Label>
-                <Input value={form.factory_name} onChange={(e) => handleChange('factory_name', e.target.value)} required />
-              </div>
-              <div>
-                <Label>{t('timeline.form.machine')}</Label>
-                <Input value={form.machine_description} onChange={(e) => handleChange('machine_description', e.target.value)} />
+                <Label>연결 태스크 카드 *</Label>
+                <Select value={form.card_id} onValueChange={(v) => handleChange('card_id', v)}>
+                  <SelectTrigger><SelectValue placeholder="태스크 카드 선택" /></SelectTrigger>
+                  <SelectContent>
+                    {cards.length === 0 ? (
+                      <div className="px-3 py-2 text-xs text-muted-foreground">등록된 태스크 카드가 없습니다</div>
+                    ) : (
+                      cards.map(c => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.title}{c.client_name ? ` · ${c.client_name}` : ''}{c.factory_name ? ` ← ${c.factory_name}` : ''}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                {form.card_id && (() => {
+                  const c = cardsById.get(form.card_id);
+                  if (!c) return null;
+                  return (
+                    <div className="text-xs text-muted-foreground mt-1.5 space-y-0.5">
+                      <div>고객사: {c.client_name || '-'}</div>
+                      <div>공장: {c.factory_name || '-'}</div>
+                    </div>
+                  );
+                })()}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -115,13 +151,18 @@ export default function Timeline() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {timelines.map((tl) => (
+          {timelines.map((tl) => {
+            const card = cardsById.get(tl.card_id);
+            const clientName = card?.client_name || tl.client_name;
+            const factoryName = card?.factory_name || tl.factory_name;
+            const title = card?.title || tl.machine_description;
+            return (
             <Card key={tl.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <p className="font-semibold">{tl.client_name} ← {tl.factory_name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{tl.machine_description || t('timeline.noinfo')}</p>
+                    <p className="font-semibold">{clientName || '-'} ← {factoryName || '-'}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{title || t('timeline.noinfo')}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Select
@@ -145,7 +186,8 @@ export default function Timeline() {
                 )}
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
