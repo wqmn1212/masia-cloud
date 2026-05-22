@@ -3,7 +3,7 @@ export const translations = {
     // Sidebar sections
     'nav.hq': '본사 관리', 'nav.agent': '에이전트', 'nav.client': '고객사',
     'nav.dashboard': '대시보드', 'nav.quotations': '견적 관리', 'nav.taskboard': '소싱 칸반 보드',
-    'nav.settlement': '정산 대시보드', 'nav.knowledge': '나리지 베이스', 'nav.factories': '공장 관리',
+    'nav.settlement': '정산 대시보드', 'nav.knowledge': '지식 베이스', 'nav.factories': '공장 관리',
     'nav.agentquotes': '견적 업로드', 'nav.requirements': '요구사항 트래커', 'nav.clients': '고객사 관리',
     'nav.timeline': '생산 타임라인', 'nav.asrequests': 'AS 접수',
     'brand.name': '마시아 클라우드',
@@ -88,11 +88,11 @@ export const translations = {
     'agentquotes.factory': '공장 선택', 'agentquotes.category': '장비 카테고리',
     'agentquotes.editor': '견적 항목 편집기', 'agentquotes.submit': '견적 제출', 'agentquotes.saving': '저장 중...',
     // Knowledge
-    'knowledge.title': '나리지 베이스', 'knowledge.subtitle': '현장 결함 및 기술 노하우 데이터베이스',
+    'knowledge.title': '지식 베이스', 'knowledge.subtitle': '현장 결함 및 기술 노하우 데이터베이스',
     'knowledge.add': '신규 등록', 'knowledge.form.title': '결함 / 노하우 등록',
     'knowledge.form.category': '장비 카테고리 *', 'knowledge.form.severity': '심각도',
     'knowledge.form.issue': '결함 사례명 *', 'knowledge.form.cause': '근본 원인 *',
-    'knowledge.form.solution': '해결 파라미터 / 사양', 'knowledge.empty': '등록된 나리지가 없습니다',
+    'knowledge.form.solution': '해결 파라미터 / 사양', 'knowledge.empty': '등록된 지식이 없습니다',
     // Timeline
     'timeline.title': '생산 타임라인', 'timeline.subtitle': '주문별 제조·물류 진행 현황 추적',
     'timeline.add': '신규 타임라인', 'timeline.form.title': '타임라인 생성',
