@@ -156,16 +156,40 @@ export default function TaskItemsTab({ card }) {
               {/* Expanded detail */}
               {isExpanded && (
                 <div className="border-t px-3 py-3 space-y-3 bg-muted/20">
-                  {item.description && (
-                    <p className="text-xs text-muted-foreground">{item.description}</p>
-                  )}
-                  <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <Label className="text-[10px]">업무 제목</Label>
+                    <Input
+                      defaultValue={item.title}
+                      className="h-7 text-xs"
+                      onBlur={(e) => e.target.value !== item.title && e.target.value.trim() && updateMutation.mutate({ id: item.id, data: { title: e.target.value } })}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px]">상세 내용</Label>
+                    <Textarea
+                      defaultValue={item.description}
+                      placeholder="업무 상세 설명 (선택)"
+                      rows={2}
+                      className="text-xs"
+                      onBlur={(e) => e.target.value !== (item.description || '') && updateMutation.mutate({ id: item.id, data: { description: e.target.value } })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
                     <div>
                       <Label className="text-[10px]">상태</Label>
                       <Select value={item.status} onValueChange={(v) => updateMutation.mutate({ id: item.id, data: { status: v } })}>
                         <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {Object.entries(STATUS_META).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-[10px]">우선순위</Label>
+                      <Select value={item.priority || 'MEDIUM'} onValueChange={(v) => updateMutation.mutate({ id: item.id, data: { priority: v } })}>
+                        <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(PRIORITY_META).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
