@@ -1,42 +1,45 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useLanguage } from '@/lib/LanguageContext';
 import {
   LayoutDashboard, Factory, FileText, Shield, Users,
   Clock, Wrench, Package, ChevronLeft, ChevronRight, Cloud, Calculator, ListChecks, Kanban
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const navSections = [
+const navSectionDefs = [
   {
-    label: '본사 관리',
+    labelKey: 'nav.hq',
     items: [
-      { path: '/', icon: LayoutDashboard, label: '대시보드' },
-      { path: '/quotations', icon: FileText, label: '견적 관리' },
-      { path: '/task-board', icon: Kanban, label: '소싱 칸반 보드' },
-      { path: '/settlement', icon: Calculator, label: '정산 대시보드' },
-      { path: '/knowledge', icon: Shield, label: '나리지 베이스' },
+      { path: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
+      { path: '/quotations', icon: FileText, labelKey: 'nav.quotations' },
+      { path: '/task-board', icon: Kanban, labelKey: 'nav.taskboard' },
+      { path: '/settlement', icon: Calculator, labelKey: 'nav.settlement' },
+      { path: '/knowledge', icon: Shield, labelKey: 'nav.knowledge' },
     ]
   },
   {
-    label: '에이전트',
+    labelKey: 'nav.agent',
     items: [
-      { path: '/factories', icon: Factory, label: '공장 관리' },
-      { path: '/agent-quotes', icon: Package, label: '견적 업로드' },
-      { path: '/requirements', icon: ListChecks, label: '요구사항 트래커' },
+      { path: '/factories', icon: Factory, labelKey: 'nav.factories' },
+      { path: '/agent-quotes', icon: Package, labelKey: 'nav.agentquotes' },
+      { path: '/requirements', icon: ListChecks, labelKey: 'nav.requirements' },
     ]
   },
   {
-    label: '고객사',
+    labelKey: 'nav.client',
     items: [
-      { path: '/clients', icon: Users, label: '고객사 관리' },
-      { path: '/timeline', icon: Clock, label: '생산 타임라인' },
-      { path: '/as-requests', icon: Wrench, label: 'AS 접수' },
+      { path: '/clients', icon: Users, labelKey: 'nav.clients' },
+      { path: '/timeline', icon: Clock, labelKey: 'nav.timeline' },
+      { path: '/as-requests', icon: Wrench, labelKey: 'nav.asrequests' },
     ]
   }
 ];
 
 export default function Sidebar({ collapsed, onToggle }) {
   const location = useLocation();
+  const { t } = useLanguage();
+  const navSections = navSectionDefs;
 
   return (
     <aside className={cn(
@@ -48,7 +51,7 @@ export default function Sidebar({ collapsed, onToggle }) {
         <Cloud className="w-7 h-7 text-sidebar-primary flex-shrink-0" />
         {!collapsed && (
           <div className="ml-3 overflow-hidden">
-            <h1 className="text-base font-bold tracking-tight text-sidebar-foreground">마시아 클라우드</h1>
+            <h1 className="text-base font-bold tracking-tight text-sidebar-foreground">{t('brand.name')}</h1>
             <p className="text-[10px] text-sidebar-foreground/50 tracking-widest uppercase">Masia Cloud</p>
           </div>
         )}
@@ -60,7 +63,7 @@ export default function Sidebar({ collapsed, onToggle }) {
           <div key={section.label} className="mb-5">
             {!collapsed && (
               <p className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40 px-3 mb-2">
-                {section.label}
+                {t(section.labelKey)}
               </p>
             )}
             <div className="space-y-0.5">
@@ -78,7 +81,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                     )}
                   >
                     <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
-                    {!collapsed && <span className="font-medium truncate">{item.label}</span>}
+                    {!collapsed && <span className="font-medium truncate">{t(item.labelKey)}</span>}
                   </Link>
                 );
               })}
