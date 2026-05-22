@@ -32,8 +32,8 @@ export default function Factories() {
   const { toast } = useToast();
 
   const { data: factories = [], isLoading } = useQuery({
-    queryKey: ['factories'],
-    queryFn: () => base44.entities.Company.filter({ company_type: 'FACTORY' }),
+    queryKey: ['companies-factory'],
+    queryFn: () => base44.entities.Company.filter({ company_type: 'FACTORY' }, 'company_name'),
   });
 
   const createMutation = useMutation({
@@ -43,7 +43,7 @@ export default function Factories() {
       employee_count: data.employee_count ? Number(data.employee_count) : undefined,
     }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['factories'] });
+      queryClient.invalidateQueries({ queryKey: ['companies-factory'] });
       setOpen(false);
       setForm(emptyFactory);
       toast({ title: '공장 등록 완료', description: '신규 공장이 성공적으로 등록되었습니다.' });
