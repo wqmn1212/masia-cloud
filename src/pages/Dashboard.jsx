@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/lib/LanguageContext';
 import { base44 } from '@/api/base44Client';
@@ -7,6 +7,8 @@ import StatCard from '@/components/dashboard/StatCard';
 import TaskCalendar from '@/components/calendar/TaskCalendar';
 import RecentQuotations from '@/components/dashboard/RecentQuotations';
 import PipelineChart from '@/components/dashboard/PipelineChart';
+import DayDetailDialog from '@/components/calendar/DayDetailDialog';
+import CardModal from '@/components/taskcard/CardModal';
 
 export default function Dashboard() {
   const { t } = useLanguage();
@@ -41,6 +43,14 @@ export default function Dashboard() {
 
   const openAS = asRequests.filter(r => r.status !== 'CLOSED' && r.status !== 'RESOLVED');
 
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedCard, setSelectedCard] = useState(null);
+
+  const handleSelectCardFromDay = (card) => {
+    setSelectedDate(null);
+    setSelectedCard(card);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -63,9 +73,26 @@ export default function Dashboard() {
       <TaskCalendar
         cards={allCards}
         taskItems={allTaskItems}
-        onCardClick={() => {}}
-        onDateClick={() => {}}
+        onCardClick={(card) => setSelectedCard(card)}
+        onDateClick={(key) => setSelectedDate(key)}
       />
+
+      <DayDetailDialog
+        open={!!selectedDate}
+        onClose={() => setSelectedDate(null)}
+        dateKey={selectedDate}
+        cards={allCards}
+        taskItems={allTaskItems}
+        onSelectCard={handleSelectCardFromDay}
+      />
+
+      {selectedCard && (
+        <CardModal
+          card={selectedCard}
+          open={!!selectedCard}
+          onClose={() => setSelectedCard(null)}
+        />
+      )}
     </div>
   );
 }
