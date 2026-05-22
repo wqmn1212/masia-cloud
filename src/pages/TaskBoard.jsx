@@ -25,7 +25,7 @@ const COLUMNS = [
 ];
 
 const PRIORITY_META = {
-  LOW:    { label: '낙음',   className: 'bg-muted text-muted-foreground',              borderColor: '#94a3b8' },
+  LOW:    { label: '낮음',   className: 'bg-muted text-muted-foreground',              borderColor: '#94a3b8' },
   MEDIUM: { label: '보통',   className: 'bg-chart-3/15 text-chart-3',                 borderColor: '#f59e0b' },
   HIGH:   { label: '높음',   className: 'bg-destructive/15 text-destructive',          borderColor: '#f97316' },
   URGENT: { label: '긴급',   className: 'bg-destructive text-destructive-foreground', borderColor: '#ef4444' },
