@@ -161,16 +161,16 @@ export default function QuotationTab({ card, user }) {
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label className="text-xs">공장 원가 (CNY)</Label>
-              <Input type="number" value={form.factory_total_cost} onChange={e => setForm(f => ({ ...f, factory_total_cost: e.target.value }))} className="h-8 text-xs" />
+              <Label className="text-xs">공장 원가 (CNY ¥)</Label>
+              <Input type="number" value={form.factory_total_cost} onChange={e => setForm(f => ({ ...f, factory_total_cost: e.target.value }))} className="h-8 text-xs" placeholder="¥" />
             </div>
             <div>
-              <Label className="text-xs">물류비 (CNY)</Label>
-              <Input type="number" value={form.logistics_cost} onChange={e => setForm(f => ({ ...f, logistics_cost: e.target.value }))} className="h-8 text-xs" />
+              <Label className="text-xs">물류비 (CNY ¥)</Label>
+              <Input type="number" value={form.logistics_cost} onChange={e => setForm(f => ({ ...f, logistics_cost: e.target.value }))} className="h-8 text-xs" placeholder="¥" />
             </div>
             <div>
-              <Label className="text-xs">고객 제안가 (CNY)</Label>
-              <Input type="number" value={form.final_client_price} onChange={e => setForm(f => ({ ...f, final_client_price: e.target.value }))} className="h-8 text-xs" />
+              <Label className="text-xs">고객 제안가 (USD $)</Label>
+              <Input type="number" value={form.final_client_price} onChange={e => setForm(f => ({ ...f, final_client_price: e.target.value }))} className="h-8 text-xs" placeholder="$" />
             </div>
           </div>
 
@@ -180,16 +180,23 @@ export default function QuotationTab({ card, user }) {
               <Select value={form.masir_fee_type} onValueChange={v => setForm(f => ({ ...f, masir_fee_type: v }))}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="PERCENT">%</SelectItem>
-                  <SelectItem value="FIXED">고정 (CNY)</SelectItem>
+                  <SelectItem value="PERCENT">% (고객 제안가 기준)</SelectItem>
+                  <SelectItem value="FIXED">고정 (USD $)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs">수수료 값</Label>
+              <Label className="text-xs">수수료 {form.masir_fee_type === 'PERCENT' ? '(%)' : '(값 USD)'}</Label>
               <Input type="number" value={form.masir_fee_value} onChange={e => setForm(f => ({ ...f, masir_fee_value: e.target.value }))} className="h-8 text-xs" />
             </div>
           </div>
+          {form.masir_fee_type === 'PERCENT' && Number(form.masir_fee_value) > 0 && Number(form.final_client_price) > 0 && (
+            <div className="rounded-lg bg-accent/10 border border-accent/20 px-3 py-2 text-xs flex items-center gap-2">
+              <span className="text-muted-foreground">수수료 예상값:</span>
+              <strong className="text-accent">${(Number(form.final_client_price) * Number(form.masir_fee_value) / 100).toFixed(2)} USD</strong>
+              <span className="text-muted-foreground">({form.masir_fee_value}% of ${Number(form.final_client_price).toLocaleString()})</span>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => setShowForm(false)}>취소</Button>
@@ -238,9 +245,10 @@ export default function QuotationTab({ card, user }) {
                   </div>
                 </div>
                 <div className="flex gap-4 text-[11px] text-muted-foreground">
-                  {q.factory_total_cost > 0 && <span>공장원가: <strong className="text-foreground">¥{q.factory_total_cost?.toLocaleString()}</strong></span>}
-                  {q.final_client_price > 0 && <span>제안가: <strong className="text-foreground">¥{q.final_client_price?.toLocaleString()}</strong></span>}
-                  {margin && <span>마진율: <strong className="text-accent">{margin}%</strong></span>}
+                  {q.factory_total_cost > 0 && <span>공장원가: <strong className="text-foreground">¥{q.factory_total_cost?.toLocaleString()} CNY</strong></span>}
+                  {q.logistics_cost > 0 && <span>물류비: <strong className="text-foreground">¥{q.logistics_cost?.toLocaleString()} CNY</strong></span>}
+                  {q.final_client_price > 0 && <span>제안가: <strong className="text-primary">${q.final_client_price?.toLocaleString()} USD</strong></span>}
+                  {q.masir_fee_value > 0 && <span>수수료: <strong className="text-accent">{q.masir_fee_type === 'PERCENT' ? `${q.masir_fee_value}% = $${(q.final_client_price * q.masir_fee_value / 100).toFixed(2)}` : `$${q.masir_fee_value} USD`}</strong></span>}
                 </div>
                 {q.raw_file_url && (
                   <a href={q.raw_file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[10px] text-primary hover:underline">
