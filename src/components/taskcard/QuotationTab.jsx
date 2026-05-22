@@ -26,7 +26,7 @@ const emptyForm = {
   masir_fee_type: 'PERCENT',
   masir_fee_value: '',
   exchange_rate_date: new Date().toISOString().slice(0, 10),
-  exchange_rate_usd: '0.138',
+  exchange_rate_usd: '0.00072',
   exchange_rate_krw: '190',
   status: 'DRAFT',
   raw_file_url: '',
@@ -42,7 +42,8 @@ function calcQuote(factory_total_cost, logistics_cost, masir_fee_type, masir_fee
 }
 
 function CurrencyPanel({ cny, usdRate, krwRate }) {
-  const usd = usdRate ? (cny * usdRate).toFixed(2) : null;
+  const krwAmount = krwRate ? cny * krwRate : 0;
+  const usd = usdRate && krwRate ? (krwAmount * usdRate).toFixed(2) : null;
   const krw = krwRate ? Math.round(cny * krwRate).toLocaleString() : null;
   return (
     <div className="grid grid-cols-3 gap-2 mt-2">
@@ -252,8 +253,8 @@ export default function QuotationTab({ card, user }) {
                   <Input type="date" value={form.exchange_rate_date} onChange={e => setForm(f => ({ ...f, exchange_rate_date: e.target.value }))} className="h-7 text-xs" />
                 </div>
                 <div>
-                  <Label className="text-[10px]">1 CNY = ? USD</Label>
-                  <Input type="number" step="0.0001" value={form.exchange_rate_usd} onChange={e => setForm(f => ({ ...f, exchange_rate_usd: e.target.value }))} className="h-7 text-xs" placeholder="예: 0.138" />
+                  <Label className="text-[10px]">1 KRW = ? USD (송금기준)</Label>
+                  <Input type="number" step="0.00001" value={form.exchange_rate_usd} onChange={e => setForm(f => ({ ...f, exchange_rate_usd: e.target.value }))} className="h-7 text-xs" placeholder="예: 0.00072" />
                 </div>
                 <div>
                   <Label className="text-[10px]">1 CNY = ? KRW</Label>
