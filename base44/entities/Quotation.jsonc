@@ -83,17 +83,20 @@
           },
           "total_cny": {
             "type": "number"
+          },
+          "currency": {
+            "type": "string"
           }
         }
       }
     },
     "factory_total_cost": {
       "type": "number",
-      "description": "\uacf5\uc7a5 \uc21c\uc218 \ucd1d\ube44\uc6a9 (CNY)"
+      "description": "\uacf5\uc7a5 \uc6d0\uac00 (CNY)"
     },
     "logistics_cost": {
       "type": "number",
-      "description": "\ubb3c\ub958\ube44 \ud569\uc0b0 (CNY)"
+      "description": "\ubb3c\ub958\ube44 (CNY)"
     },
     "masir_fee_type": {
       "type": "string",
@@ -105,11 +108,23 @@
     },
     "masir_fee_value": {
       "type": "number",
-      "description": "\ub9c8\uc2dc\uc544 \uc218\uc218\ub8cc \uac12"
+      "description": "\ub9c8\uc2dc\uc544 \uc218\uc218\ub8cc \uac12 (% \ub610\ub294 CNY \uace0\uc815)"
+    },
+    "masir_fee_amount_cny": {
+      "type": "number",
+      "description": "\ub9c8\uc2dc\uc544 \uc218\uc218\ub8cc \uacc4\uc0b0 \uae08\uc561 (CNY)"
     },
     "final_client_price": {
       "type": "number",
-      "description": "\ucd5c\uc885 \uace0\uac1d\uc0ac \uc81c\uc548\uac00"
+      "description": "\uace0\uac1d \uc81c\uc548\uac00 (CNY, \uc6d0\uac00+\ubb3c\ub958\ube44+\uc218\uc218\ub8cc)"
+    },
+    "exchange_rate_usd": {
+      "type": "number",
+      "description": "\ud658\uc728: 1 USD = ? CNY (\uc608: 7.2)"
+    },
+    "exchange_rate_krw": {
+      "type": "number",
+      "description": "\ud658\uc728: 1 CNY = ? KRW (\uc608: 190)"
     },
     "status": {
       "type": "string",
