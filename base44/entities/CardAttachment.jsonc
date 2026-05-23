@@ -6,6 +6,10 @@
       "type": "string",
       "description": "\uc885\uc18d\ub41c TaskCard ID"
     },
+    "folder_id": {
+      "type": "string",
+      "description": "\uc18d\ud55c \ud3f4\ub354 ID (\uc5c6\uc73c\uba74 \ub8e8\ud2b8)"
+    },
     "file_name": {
       "type": "string",
       "description": "\ud30c\uc77c\uba85"

@@ -1,0 +1,26 @@
+{
+  "name": "CardFolder",
+  "type": "object",
+  "properties": {
+    "card_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c TaskCard ID"
+    },
+    "parent_folder_id": {
+      "type": "string",
+      "description": "\uc0c1\uc704 \ud3f4\ub354 ID (\uc5c6\uc73c\uba74 \ub8e8\ud2b8)"
+    },
+    "folder_name": {
+      "type": "string",
+      "description": "\ud3f4\ub354 \uc774\ub984"
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "\uc0dd\uc131\uc790 \uc774\ub984"
+    }
+  },
+  "required": [
+    "card_id",
+    "folder_name"
+  ]
+}

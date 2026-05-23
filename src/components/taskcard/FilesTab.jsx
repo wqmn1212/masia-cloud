@@ -1,151 +1,208 @@
-import React, { useState, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useMemo, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/use-toast';
-import { Upload, FileText, FileImage, Film, Loader2, Sparkles, ExternalLink } from 'lucide-react';
+import { FolderPlus, Upload, Loader2, FolderOpen } from 'lucide-react';
+import Breadcrumbs from './files/Breadcrumbs';
+import FolderRow from './files/FolderRow';
+import FileRow from './files/FileRow';
+import NewFolderDialog from './files/NewFolderDialog';
 
-function fileIcon(type) {
-  if (!type) return FileText;
-  if (['jpg','jpeg','png','gif','webp'].includes(type)) return FileImage;
-  if (['mp4','mov','avi','mkv'].includes(type)) return Film;
-  return FileText;
-}
-
-export default function FilesTab({ card, user }) {
+export default function FilesTab({ card }) {
+  const qc = useQueryClient();
+  const fileInputRef = useRef(null);
+  const [currentFolderId, setCurrentFolderId] = useState(null); // null = 루트
+  const [path, setPath] = useState([]); // [{id, name}]
+  const [showNewFolder, setShowNewFolder] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [parsingId, setParsingId] = useState(null);
-  const inputRef = useRef();
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
 
-  const { data: files = [], isLoading } = useQuery({
-    queryKey: ['card-files', card.id],
+  const foldersKey = ['card_folders', card.id];
+  const filesKey = ['card_attachments', card.id];
+
+  const { data: folders = [], isLoading: loadingFolders } = useQuery({
+    queryKey: foldersKey,
+    queryFn: () => base44.entities.CardFolder.filter({ card_id: card.id }, '-created_date'),
+  });
+
+  const { data: files = [], isLoading: loadingFiles } = useQuery({
+    queryKey: filesKey,
     queryFn: () => base44.entities.CardAttachment.filter({ card_id: card.id }, '-created_date'),
   });
 
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.CardAttachment.create(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['card-files', card.id] }),
-  });
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.CardAttachment.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['card-files', card.id] }),
+  const currentFolders = useMemo(
+    () => folders.filter(f => (f.parent_folder_id || null) === currentFolderId),
+    [folders, currentFolderId]
+  );
+  const currentFiles = useMemo(
+    () => files.filter(f => (f.folder_id || null) === currentFolderId),
+    [files, currentFolderId]
+  );
+
+  const createFolderMutation = useMutation({
+    mutationFn: async (name) => {
+      const user = await base44.auth.me().catch(() => null);
+      return base44.entities.CardFolder.create({
+        card_id: card.id,
+        parent_folder_id: currentFolderId || undefined,
+        folder_name: name,
+        created_by_name: user?.full_name || '',
+      });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: foldersKey }),
   });
 
-  const handleUpload = async (files) => {
+  const handleUpload = async (file) => {
+    if (!file) return;
     setUploading(true);
-    for (const file of files) {
-      const ext = file.name.split('.').pop().toLowerCase();
+    try {
+      const user = await base44.auth.me().catch(() => null);
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      await createMutation.mutateAsync({
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      await base44.entities.CardAttachment.create({
         card_id: card.id,
+        folder_id: currentFolderId || undefined,
         file_name: file.name,
         file_type: ext,
         file_url,
-        uploader_name: user?.full_name || '사용자',
-        uploader_role: user?.role === 'admin' ? 'HQ' : 'AGENT',
-        ai_parse_status: 'NONE',
+        uploader_name: user?.full_name || '',
+        uploader_role: 'HQ',
       });
+      qc.invalidateQueries({ queryKey: filesKey });
+    } finally {
+      setUploading(false);
     }
-    setUploading(false);
-    toast({ title: `${files.length}개 파일 업로드 완료` });
   };
 
-  const handleAiParse = async (attachment) => {
-    setParsingId(attachment.id);
-    await updateMutation.mutateAsync({ id: attachment.id, data: { ai_parse_status: 'PENDING' } });
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `아래 견적서/문서 파일을 분석하여 핵심 내용을 한국어로 요약해주세요. 파일명: ${attachment.file_name}. 파일: ${attachment.file_url}`,
-      file_urls: [attachment.file_url],
-    });
-    await updateMutation.mutateAsync({ id: attachment.id, data: { ai_parse_status: 'DONE', ai_parsed_text: result } });
-    setParsingId(null);
-    toast({ title: 'AI 파싱 완료' });
+  const deleteFolderMutation = useMutation({
+    mutationFn: async (folderId) => {
+      const folderIdsToDelete = [];
+      const fileIdsToDelete = [];
+      const stack = [folderId];
+      while (stack.length) {
+        const fid = stack.pop();
+        folderIdsToDelete.push(fid);
+        folders.filter(f => f.parent_folder_id === fid).forEach(c => stack.push(c.id));
+        files.filter(f => f.folder_id === fid).forEach(f => fileIdsToDelete.push(f.id));
+      }
+      await Promise.all(fileIdsToDelete.map(id => base44.entities.CardAttachment.delete(id)));
+      await Promise.all(folderIdsToDelete.map(id => base44.entities.CardFolder.delete(id)));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: foldersKey });
+      qc.invalidateQueries({ queryKey: filesKey });
+    },
+  });
+
+  const deleteFileMutation = useMutation({
+    mutationFn: (id) => base44.entities.CardAttachment.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: filesKey }),
+  });
+
+  const enterFolder = (folder) => {
+    setCurrentFolderId(folder.id);
+    setPath(p => [...p, { id: folder.id, name: folder.folder_name }]);
   };
 
-  const isVideo = (type) => ['mp4','mov','avi','mkv','webm'].includes(type || '');
-  const isImage = (type) => ['jpg','jpeg','png','gif','webp'].includes(type || '');
+  const navigateTo = (idx) => {
+    if (idx < 0) {
+      setCurrentFolderId(null);
+      setPath([]);
+    } else {
+      const newPath = path.slice(0, idx + 1);
+      setPath(newPath);
+      setCurrentFolderId(newPath[idx].id);
+    }
+  };
+
+  const currentFolderName = path.length ? path[path.length - 1].name : '루트';
+  const isLoading = loadingFolders || loadingFiles;
+  const isEmpty = !isLoading && currentFolders.length === 0 && currentFiles.length === 0;
 
   return (
-    <div className="space-y-4">
-      {/* Drop zone */}
-      <div
-        className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
-        onClick={() => inputRef.current?.click()}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => { e.preventDefault(); handleUpload(Array.from(e.dataTransfer.files)); }}
-      >
-        {uploading ? (
-          <div className="flex items-center justify-center gap-2 text-muted-foreground">
-            <Loader2 className="w-5 h-5 animate-spin" /> 업로드 중...
-          </div>
-        ) : (
-          <>
-            <Upload className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
-            <p className="text-sm font-medium">파일을 드래그하거나 클릭하여 업로드</p>
-            <p className="text-xs text-muted-foreground mt-1">PDF, Excel, Word, 이미지, 동영상(MP4) 지원</p>
-          </>
-        )}
-        <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => e.target.files && handleUpload(Array.from(e.target.files))} />
+    <div className="space-y-3">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <Breadcrumbs path={path} onNavigate={navigateTo} />
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowNewFolder(true)}
+            className="h-8 text-xs gap-1"
+          >
+            <FolderPlus className="w-3.5 h-3.5" /> 새 폴더
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="h-8 text-xs gap-1"
+          >
+            {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+            파일 업로드
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleUpload(f);
+              e.target.value = '';
+            }}
+          />
+        </div>
       </div>
 
       {/* File list */}
-      {isLoading ? (
-        <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-14 rounded-lg bg-muted animate-pulse" />)}</div>
-      ) : files.length === 0 ? (
-        <p className="text-center text-sm text-muted-foreground py-4">업로드된 파일이 없습니다</p>
-      ) : (
-        <div className="space-y-2">
-          {files.map((f) => {
-            const Icon = fileIcon(f.file_type);
-            return (
-              <div key={f.id} className="rounded-xl border bg-card p-3 space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{f.file_name}</p>
-                    <p className="text-[10px] text-muted-foreground">{f.uploader_name} · {f.file_type?.toUpperCase()}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    {['pdf','xlsx','docx','xls'].includes(f.file_type || '') && (
-                      <Button size="sm" variant="outline" className="h-7 text-xs gap-1"
-                        onClick={() => handleAiParse(f)} disabled={parsingId === f.id || f.ai_parse_status === 'PENDING'}>
-                        {(parsingId === f.id || f.ai_parse_status === 'PENDING')
-                          ? <Loader2 className="w-3 h-3 animate-spin" />
-                          : <Sparkles className="w-3 h-3" />}
-                        AI 파싱
-                      </Button>
-                    )}
-                    <a href={f.file_url} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0"><ExternalLink className="w-3 h-3" /></Button>
-                    </a>
-                  </div>
-                </div>
+      <div className="border rounded-lg bg-card overflow-hidden">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-10 text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin" />
+          </div>
+        ) : isEmpty ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <FolderOpen className="w-10 h-10 mb-2 opacity-40" />
+            <p className="text-xs">이 폴더는 비어있습니다</p>
+            <p className="text-[10px] mt-1">새 폴더를 만들거나 파일을 업로드하세요</p>
+          </div>
+        ) : (
+          <div className="divide-y">
+            {currentFolders.map(folder => (
+              <FolderRow
+                key={folder.id}
+                folder={folder}
+                onOpen={enterFolder}
+                onDelete={() => deleteFolderMutation.mutate(folder.id)}
+              />
+            ))}
+            {currentFiles.map(file => (
+              <FileRow
+                key={file.id}
+                file={file}
+                onDelete={() => deleteFileMutation.mutate(file.id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
-                {/* Video player */}
-                {isVideo(f.file_type) && (
-                  <video src={f.file_url} controls className="w-full rounded-lg max-h-48 bg-black" />
-                )}
-                {/* Image preview */}
-                {isImage(f.file_type) && (
-                  <img src={f.file_url} alt={f.file_name} className="w-full rounded-lg max-h-48 object-contain bg-muted" />
-                )}
-                {/* AI parsed result */}
-                {f.ai_parse_status === 'DONE' && f.ai_parsed_text && (
-                  <div className="p-2 rounded-lg bg-primary/5 border border-primary/20">
-                    <p className="text-[10px] font-semibold text-primary mb-1 flex items-center gap-1"><Sparkles className="w-3 h-3" /> AI 파싱 결과</p>
-                    <p className="text-xs text-foreground/80 whitespace-pre-wrap">{f.ai_parsed_text}</p>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+      {/* Footer summary */}
+      {!isLoading && !isEmpty && (
+        <div className="text-[10px] text-muted-foreground text-right px-1">
+          폴더 {currentFolders.length}개 · 파일 {currentFiles.length}개
         </div>
       )}
+
+      <NewFolderDialog
+        open={showNewFolder}
+        onClose={() => setShowNewFolder(false)}
+        onCreate={(name) => {
+          createFolderMutation.mutate(name);
+          setShowNewFolder(false);
+        }}
+        parentName={currentFolderName}
+      />
     </div>
   );
 }
