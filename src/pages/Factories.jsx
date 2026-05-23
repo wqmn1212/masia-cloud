@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
 } from '@/components/ui/dialog';
-import { Plus, Factory, MapPin, Users, Calendar, DollarSign } from 'lucide-react';
+import { Plus, Factory, MapPin, Users, Calendar, DollarSign, LayoutDashboard } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { Link } from 'react-router-dom';
 
 const emptyFactory = {
   company_type: 'FACTORY',
@@ -171,6 +172,12 @@ export default function Factories() {
                     담당: {f.contact_person} {f.wechat_id && `(WeChat: ${f.wechat_id})`}
                   </p>
                 )}
+                <Button asChild variant="outline" size="sm" className="w-full mt-2 gap-1.5 text-xs h-8">
+                  <Link to={`/factories/${f.id}/dashboard`}>
+                    <LayoutDashboard className="w-3.5 h-3.5" />
+                    팭토리 대시보드 열기
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           ))}

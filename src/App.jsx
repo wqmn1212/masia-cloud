@@ -18,6 +18,7 @@ import ASRequests from '@/pages/ASRequests';
 import Settlement from '@/pages/Settlement';
 import Requirements from '@/pages/Requirements';
 import TaskBoard from '@/pages/TaskBoard';
+import FactoryDashboard from '@/pages/FactoryDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -53,6 +54,7 @@ const AuthenticatedApp = () => {
         <Route path="/settlement" element={<Settlement />} />
         <Route path="/requirements" element={<Requirements />} />
         <Route path="/task-board" element={<TaskBoard />} />
+        <Route path="/factories/:factoryId/dashboard" element={<FactoryDashboard />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
