@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, FileText, Trash2, Upload, Loader2, ExternalLink, Pencil } from 'lucide-react';
+import { Plus, FileText, Trash2, Upload, Loader2, ExternalLink, Pencil, Download } from 'lucide-react';
+import { generateQuotationPDF } from '@/lib/generateQuotationPDF';
 
 const STATUS_META = {
   DRAFT:    { label: '초안',     color: 'bg-muted text-muted-foreground' },
@@ -412,6 +413,13 @@ export default function QuotationTab({ card, user }) {
                         ))}
                       </SelectContent>
                     </Select>
+                    <button
+                      onClick={() => generateQuotationPDF(q)}
+                      className="text-muted-foreground hover:text-primary p-1"
+                      title="공식 견적서 PDF 다운로드"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
                     <button onClick={() => handleEdit(q)} className="text-muted-foreground hover:text-primary p-1" title="수정">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
