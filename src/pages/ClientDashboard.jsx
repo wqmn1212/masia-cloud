@@ -6,8 +6,12 @@ import { ArrowLeft, Building2, MapPin, Users, Phone, Mail, Loader2, Inbox, Facto
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import TaskCardSummaryItem from '@/components/taskcard/TaskCardSummaryItem';
 import CardModal from '@/components/taskcard/CardModal';
+import ClientFilesPanel from '@/components/client/ClientFilesPanel';
+import ClientQuotationsPanel from '@/components/client/ClientQuotationsPanel';
+import ClientTasksPanel from '@/components/client/ClientTasksPanel';
 
 const STATUS_FILTERS = [
   { key: 'ALL',         label: '전체' },
@@ -82,10 +86,24 @@ export default function ClientDashboard() {
     return c;
   }, [cards]);
 
-  // 통합 통계
-  const totalFiles = attachments.filter(a => cardIds.includes(a.card_id)).length;
-  const totalQuotations = quotations.filter(q => cardIds.includes(q.card_id)).length;
-  const totalTasks = taskItems.filter(t => cardIds.includes(t.card_id)).length;
+  // 고객사 소속 데이터만 필터링
+  const clientAttachments = useMemo(
+    () => attachments.filter(a => cardIds.includes(a.card_id)),
+    [attachments, cardIds]
+  );
+  const clientQuotations = useMemo(
+    () => quotations.filter(q => cardIds.includes(q.card_id)),
+    [quotations, cardIds]
+  );
+  const clientTaskItems = useMemo(
+    () => taskItems.filter(t => cardIds.includes(t.card_id)),
+    [taskItems, cardIds]
+  );
+  const cardsById = useMemo(() => {
+    const map = {};
+    cards.forEach(c => { map[c.id] = c; });
+    return map;
+  }, [cards]);
 
   const filteredCards = statusFilter === 'ALL'
     ? cards
@@ -163,62 +181,96 @@ export default function ClientDashboard() {
             {hasCards && (
               <div className="grid grid-cols-4 gap-3 mt-5 pt-5 border-t">
                 <StatBox label="태스크 카드" value={cards.length} />
-                <StatBox label="견적" value={totalQuotations} />
-                <StatBox label="첨부 파일" value={totalFiles} />
-                <StatBox label="세부 업무" value={totalTasks} />
+                <StatBox label="견적" value={clientQuotations.length} />
+                <StatBox label="첨부 파일" value={clientAttachments.length} />
+                <StatBox label="세부 업무" value={clientTaskItems.length} />
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Status filter */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {STATUS_FILTERS.map(f => (
-          <button
-            key={f.key}
-            onClick={() => setStatusFilter(f.key)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-              statusFilter === f.key
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-card hover:bg-accent text-muted-foreground border-border'
-            }`}
-          >
-            {f.label}
-            <span className="ml-1 opacity-70">({statusCounts[f.key] || 0})</span>
-          </button>
-        ))}
-      </div>
+      {/* Tabs */}
+      <Tabs defaultValue="cards" className="w-full">
+        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+          <TabsTrigger value="cards">태스크 카드 ({cards.length})</TabsTrigger>
+          <TabsTrigger value="files">파일 관리 ({clientAttachments.length})</TabsTrigger>
+          <TabsTrigger value="quotations">견적 ({clientQuotations.length})</TabsTrigger>
+          <TabsTrigger value="tasks">세부 업무 ({clientTaskItems.length})</TabsTrigger>
+        </TabsList>
 
-      {/* Task cards grid */}
-      {loadingCards ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => <Card key={i} className="h-40 animate-pulse bg-muted" />)}
-        </div>
-      ) : filteredCards.length === 0 ? (
-        <Card className="p-12 text-center">
-          <Inbox className="w-12 h-12 mx-auto text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-semibold">
-            {statusFilter === 'ALL' ? '연결된 태스크가 없습니다' : '해당 상태의 태스크가 없습니다'}
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            태스크 보드에서 이 고객사를 지정한 카드를 만들면 여기에 나타납니다
-          </p>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCards.map(card => (
-            <TaskCardSummaryItem
-              key={card.id}
-              card={card}
-              counts={counts[card.id]}
-              onClick={() => setSelectedCard(card)}
-              secondaryText={card.factory_name}
-              secondaryIcon={Factory}
-            />
-          ))}
-        </div>
-      )}
+        <TabsContent value="cards" className="space-y-4 mt-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            {STATUS_FILTERS.map(f => (
+              <button
+                key={f.key}
+                onClick={() => setStatusFilter(f.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  statusFilter === f.key
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-card hover:bg-accent text-muted-foreground border-border'
+                }`}
+              >
+                {f.label}
+                <span className="ml-1 opacity-70">({statusCounts[f.key] || 0})</span>
+              </button>
+            ))}
+          </div>
+
+          {loadingCards ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => <Card key={i} className="h-40 animate-pulse bg-muted" />)}
+            </div>
+          ) : filteredCards.length === 0 ? (
+            <Card className="p-12 text-center">
+              <Inbox className="w-12 h-12 mx-auto text-muted-foreground/40" />
+              <p className="mt-4 text-lg font-semibold">
+                {statusFilter === 'ALL' ? '연결된 태스크가 없습니다' : '해당 상태의 태스크가 없습니다'}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                태스크 보드에서 이 고객사를 지정한 카드를 만들면 여기에 나타납니다
+              </p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredCards.map(card => (
+                <TaskCardSummaryItem
+                  key={card.id}
+                  card={card}
+                  counts={counts[card.id]}
+                  onClick={() => setSelectedCard(card)}
+                  secondaryText={card.factory_name}
+                  secondaryIcon={Factory}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="files" className="mt-4">
+          <ClientFilesPanel
+            attachments={clientAttachments}
+            cardsById={cardsById}
+            onCardClick={setSelectedCard}
+          />
+        </TabsContent>
+
+        <TabsContent value="quotations" className="mt-4">
+          <ClientQuotationsPanel
+            quotations={clientQuotations}
+            cardsById={cardsById}
+            onCardClick={setSelectedCard}
+          />
+        </TabsContent>
+
+        <TabsContent value="tasks" className="mt-4">
+          <ClientTasksPanel
+            taskItems={clientTaskItems}
+            cardsById={cardsById}
+            onCardClick={setSelectedCard}
+          />
+        </TabsContent>
+      </Tabs>
 
       <CardModal
         card={selectedCard}
