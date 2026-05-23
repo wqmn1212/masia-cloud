@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { ArrowLeft, Factory, MapPin, Users, Phone, Mail, Loader2, Inbox } from 'lucide-react';
+import { ArrowLeft, Building2, MapPin, Users, Phone, Mail, Loader2, Inbox, Factory } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,44 +18,44 @@ const STATUS_FILTERS = [
   { key: 'DONE',        label: '완료' },
 ];
 
-export default function FactoryDashboard() {
-  const { factoryId } = useParams();
+export default function ClientDashboard() {
+  const { clientId } = useParams();
   const [selectedCard, setSelectedCard] = useState(null);
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  // 공장 프로필
-  const { data: factories = [], isLoading: loadingFactory } = useQuery({
-    queryKey: ['factory', factoryId],
-    queryFn: () => base44.entities.Company.filter({ id: factoryId }),
-    enabled: !!factoryId,
+  // 고객사 프로필
+  const { data: clients = [], isLoading: loadingClient } = useQuery({
+    queryKey: ['client', clientId],
+    queryFn: () => base44.entities.Company.filter({ id: clientId }),
+    enabled: !!clientId,
   });
-  const factory = factories[0];
+  const client = clients[0];
 
-  // 이 공장에 연결된 태스크 카드
+  // 이 고객사에 연결된 태스크 카드
   const { data: cards = [], isLoading: loadingCards } = useQuery({
-    queryKey: ['factory-taskcards', factoryId],
-    queryFn: () => base44.entities.TaskCard.filter({ factory_id: factoryId }, '-created_date'),
-    enabled: !!factoryId,
+    queryKey: ['client-taskcards', clientId],
+    queryFn: () => base44.entities.TaskCard.filter({ client_id: clientId }, '-created_date'),
+    enabled: !!clientId,
   });
 
   const cardIds = cards.map(c => c.id);
   const hasCards = cardIds.length > 0;
 
-  // 카드별 요약 통계용 데이터 (한번에 가져와서 클라이언트 그룹핑)
+  // 카드별 통계 데이터 (한 번에 가져와 클라이언트 그룹핑)
   const { data: attachments = [] } = useQuery({
-    queryKey: ['factory-attachments', factoryId],
+    queryKey: ['client-attachments', clientId],
     queryFn: () => base44.entities.CardAttachment.list('-created_date', 1000),
     enabled: hasCards,
   });
 
   const { data: quotations = [] } = useQuery({
-    queryKey: ['factory-quotations', factoryId],
+    queryKey: ['client-quotations', clientId],
     queryFn: () => base44.entities.Quotation.list('-created_date', 1000),
     enabled: hasCards,
   });
 
   const { data: taskItems = [] } = useQuery({
-    queryKey: ['factory-taskitems', factoryId],
+    queryKey: ['client-taskitems', clientId],
     queryFn: () => base44.entities.TaskItem.list('-created_date', 1000),
     enabled: hasCards,
   });
@@ -82,11 +82,16 @@ export default function FactoryDashboard() {
     return c;
   }, [cards]);
 
+  // 통합 통계
+  const totalFiles = attachments.filter(a => cardIds.includes(a.card_id)).length;
+  const totalQuotations = quotations.filter(q => cardIds.includes(q.card_id)).length;
+  const totalTasks = taskItems.filter(t => cardIds.includes(t.card_id)).length;
+
   const filteredCards = statusFilter === 'ALL'
     ? cards
     : cards.filter(c => c.status === statusFilter);
 
-  if (loadingFactory) {
+  if (loadingClient) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -94,14 +99,14 @@ export default function FactoryDashboard() {
     );
   }
 
-  if (!factory) {
+  if (!client) {
     return (
       <div className="space-y-4">
         <Button asChild variant="ghost" size="sm">
-          <Link to="/factories"><ArrowLeft className="w-4 h-4 mr-1" />공장 목록</Link>
+          <Link to="/clients"><ArrowLeft className="w-4 h-4 mr-1" />고객사 목록</Link>
         </Button>
         <Card className="p-12 text-center">
-          <p className="text-muted-foreground">공장을 찾을 수 없습니다.</p>
+          <p className="text-muted-foreground">고객사를 찾을 수 없습니다.</p>
         </Card>
       </div>
     );
@@ -112,50 +117,57 @@ export default function FactoryDashboard() {
       {/* Header */}
       <div>
         <Button asChild variant="ghost" size="sm" className="mb-2 -ml-2">
-          <Link to="/factories"><ArrowLeft className="w-4 h-4 mr-1" />공장 목록</Link>
+          <Link to="/clients"><ArrowLeft className="w-4 h-4 mr-1" />고객사 목록</Link>
         </Button>
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-start gap-4 flex-wrap">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                <Factory className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-xl bg-accent/15 text-accent flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-6 h-6" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-2xl font-bold tracking-tight">{factory.company_name}</h1>
-                  <Badge variant="secondary" className="text-[10px]">공장</Badge>
+                  <h1 className="text-2xl font-bold tracking-tight">{client.company_name}</h1>
+                  <Badge variant="secondary" className="text-[10px]">고객사</Badge>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-3 text-xs text-muted-foreground">
-                  {factory.factory_address && (
+                  {client.address && (
                     <div className="flex items-center gap-1.5 min-w-0">
                       <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span className="truncate">{factory.factory_address}</span>
+                      <span className="truncate">{client.address}</span>
                     </div>
                   )}
-                  {factory.contact_person && (
+                  {client.contact_person && (
                     <div className="flex items-center gap-1.5 min-w-0">
                       <Users className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span className="truncate">
-                        {factory.contact_person}
-                        {factory.wechat_id && ` · WeChat ${factory.wechat_id}`}
-                      </span>
+                      <span className="truncate">{client.contact_person}</span>
                     </div>
                   )}
-                  {factory.phone && (
+                  {client.phone && (
                     <div className="flex items-center gap-1.5 min-w-0">
                       <Phone className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span className="truncate">{factory.phone}</span>
+                      <span className="truncate">{client.phone}</span>
                     </div>
                   )}
-                  {factory.email && (
+                  {client.email && (
                     <div className="flex items-center gap-1.5 min-w-0">
                       <Mail className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span className="truncate">{factory.email}</span>
+                      <span className="truncate">{client.email}</span>
                     </div>
                   )}
                 </div>
               </div>
             </div>
+
+            {/* 통합 통계 */}
+            {hasCards && (
+              <div className="grid grid-cols-4 gap-3 mt-5 pt-5 border-t">
+                <StatBox label="태스크 카드" value={cards.length} />
+                <StatBox label="견적" value={totalQuotations} />
+                <StatBox label="첨부 파일" value={totalFiles} />
+                <StatBox label="세부 업무" value={totalTasks} />
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -190,7 +202,7 @@ export default function FactoryDashboard() {
             {statusFilter === 'ALL' ? '연결된 태스크가 없습니다' : '해당 상태의 태스크가 없습니다'}
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            태스크 보드에서 이 공장을 지정한 카드를 만들면 여기에 나타납니다
+            태스크 보드에서 이 고객사를 지정한 카드를 만들면 여기에 나타납니다
           </p>
         </Card>
       ) : (
@@ -201,17 +213,27 @@ export default function FactoryDashboard() {
               card={card}
               counts={counts[card.id]}
               onClick={() => setSelectedCard(card)}
+              secondaryText={card.factory_name}
+              secondaryIcon={Factory}
             />
           ))}
         </div>
       )}
 
-      {/* Card detail modal */}
       <CardModal
         card={selectedCard}
         open={!!selectedCard}
         onClose={() => setSelectedCard(null)}
       />
+    </div>
+  );
+}
+
+function StatBox({ label, value }) {
+  return (
+    <div className="text-center">
+      <div className="text-2xl font-bold tracking-tight">{value}</div>
+      <div className="text-[10px] text-muted-foreground mt-0.5">{label}</div>
     </div>
   );
 }

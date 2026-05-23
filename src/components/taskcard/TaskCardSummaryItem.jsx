@@ -3,11 +3,11 @@ import { FileText, FileBox, ListChecks, Calendar, AlertCircle, User } from 'luci
 import { format } from 'date-fns';
 
 const STATUS_META = {
-  TODO:        { label: '대기',    color: 'bg-slate-100 text-slate-700 border-slate-200' },
-  IN_PROGRESS: { label: '진행중',  color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  REVIEW:      { label: '검토',    color: 'bg-amber-100 text-amber-700 border-amber-200' },
-  PRODUCTION:  { label: '생산',    color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  DONE:        { label: '완료',    color: 'bg-green-100 text-green-700 border-green-200' },
+  TODO:        { label: '대기',   color: 'bg-slate-100 text-slate-700 border-slate-200' },
+  IN_PROGRESS: { label: '진행중', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  REVIEW:      { label: '검토',   color: 'bg-amber-100 text-amber-700 border-amber-200' },
+  PRODUCTION:  { label: '생산',   color: 'bg-purple-100 text-purple-700 border-purple-200' },
+  DONE:        { label: '완료',   color: 'bg-green-100 text-green-700 border-green-200' },
 };
 
 const PRIORITY_META = {
@@ -17,10 +17,18 @@ const PRIORITY_META = {
   LOW:    { label: '낮음', color: 'text-slate-500' },
 };
 
-export default function FactoryTaskCardItem({ card, counts, onClick }) {
+export default function TaskCardSummaryItem({
+  card,
+  counts,
+  onClick,
+  secondaryText,
+  secondaryIcon: SecIcon = User,
+}) {
   const status = STATUS_META[card.status] || STATUS_META.TODO;
   const priority = PRIORITY_META[card.priority];
   const c = counts || { files: 0, quotations: 0, tasks: 0, doneTasks: 0 };
+  // 기본값: 고객사 이름. 호출 측에서 명시적으로 다른 값(공장명 등)을 넘길 수 있음
+  const display = secondaryText !== undefined ? secondaryText : card.client_name;
 
   return (
     <button
@@ -36,10 +44,10 @@ export default function FactoryTaskCardItem({ card, counts, onClick }) {
         </Badge>
       </div>
 
-      {card.client_name && (
+      {display && (
         <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
-          <User className="w-3 h-3" />
-          <span className="truncate">{card.client_name}</span>
+          <SecIcon className="w-3 h-3" />
+          <span className="truncate">{display}</span>
         </div>
       )}
 

@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Users, Mail, Phone, MapPin, FileText, Upload, Loader2, ExternalLink, Pencil } from 'lucide-react';
+import { Plus, Users, Mail, Phone, MapPin, FileText, Upload, Loader2, ExternalLink, Pencil, LayoutDashboard } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { Link } from 'react-router-dom';
 
 const emptyClient = {
   company_type: 'CLIENT',
@@ -227,6 +228,12 @@ export default function Clients() {
                 {c.memo && (
                   <p className="text-[11px] text-muted-foreground/70 pt-1 border-t line-clamp-2">{c.memo}</p>
                 )}
+                <Button asChild variant="outline" size="sm" className="w-full mt-2 gap-1.5 text-xs h-8">
+                  <Link to={`/clients/${c.id}/dashboard`}>
+                    <LayoutDashboard className="w-3.5 h-3.5" />
+                    고객사 프로필 열기
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           ))}
