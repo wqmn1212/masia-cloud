@@ -197,7 +197,10 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
                       className={`relative text-[10px] rounded px-1.5 py-0.5 truncate cursor-pointer font-medium transition-opacity text-white
                         ${hoveredCard === entry.id ? 'opacity-80' : 'opacity-100'}
                       `}
-                      style={{ backgroundColor: getCardBg(entry.priority, entry.status) }}
+                      style={{
+                        backgroundColor: getCardBg(entry.priority, entry.status),
+                        textDecoration: entry.status === 'DONE' ? 'line-through' : 'none',
+                      }}
                       title={`[${entry.priority || '우선순위없음'}] ${entry.title}`}
                     >
                       {PRIORITY_EMOJI[entry.priority] && (
@@ -212,6 +215,7 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
                       style={{
                         backgroundColor: PRIORITY_BG[entry.priority] || ITEM_STATUS_BG[entry.status] || '#9ca3af',
                         opacity: 0.85,
+                        textDecoration: entry.status === 'DONE' ? 'line-through' : 'none',
                       }}
                       title={`[세부업무] ${entry.title}`}
                     >
