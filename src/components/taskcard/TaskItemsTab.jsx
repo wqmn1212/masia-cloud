@@ -52,6 +52,7 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
     },
     onSuccess: (newItem) => {
       queryClient.invalidateQueries({ queryKey: ['task-items', card.id] });
+      queryClient.invalidateQueries({ queryKey: ['task-items-all'] });
       setForm(emptyForm);
       setShowForm(false);
       if (newItem?.id) setExpandedId(newItem.id);
@@ -72,13 +73,17 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
       }
       return base44.entities.TaskItem.update(id, { ...data, ...extra });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['task-items', card.id] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['task-items', card.id] });
+      queryClient.invalidateQueries({ queryKey: ['task-items-all'] });
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.TaskItem.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task-items', card.id] });
+      queryClient.invalidateQueries({ queryKey: ['task-items-all'] });
       toast({ title: '업무 삭제됨' });
     },
   });
