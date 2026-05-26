@@ -3,7 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/lib/LanguageContext';
 import {
   LayoutDashboard, Factory, FileText, Shield, Users,
-  Clock, Wrench, Package, ChevronLeft, ChevronRight, Cloud, Calculator, ListChecks, Kanban
+  Clock, Wrench, Package, ChevronLeft, ChevronRight, Cloud, Calculator, ListChecks, Kanban,
+  ShieldCheck, UserCog
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -36,10 +37,28 @@ const navSectionDefs = [
   }
 ];
 
-export default function Sidebar({ collapsed, onToggle }) {
+export default function Sidebar({ collapsed, onToggle, user }) {
   const location = useLocation();
   const { t } = useLanguage();
-  const navSections = navSectionDefs;
+
+  // 계정 등급별 메뉴 구성
+  let navSections;
+  if (user?.account_tier === 'master') {
+    navSections = [{
+      label: '관리',
+      items: [
+        { path: '/master-admin', icon: ShieldCheck, label: '마스터 관리자' },
+      ],
+    }];
+  } else if (user?.account_tier === 'service') {
+    navSections = navSectionDefs.map((sec, i) =>
+      i === 0
+        ? { ...sec, items: [...sec.items, { path: '/team', icon: UserCog, label: '팀 관리' }] }
+        : sec
+    );
+  } else {
+    navSections = navSectionDefs;
+  }
 
   return (
     <aside className={cn(
@@ -63,7 +82,7 @@ export default function Sidebar({ collapsed, onToggle }) {
           <div key={section.label} className="mb-5">
             {!collapsed && (
               <p className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40 px-3 mb-2">
-                {t(section.labelKey)}
+                {section.labelKey ? t(section.labelKey) : section.label}
               </p>
             )}
             <div className="space-y-0.5">
@@ -81,7 +100,11 @@ export default function Sidebar({ collapsed, onToggle }) {
                     )}
                   >
                     <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
-                    {!collapsed && <span className="font-medium truncate">{t(item.labelKey)}</span>}
+                    {!collapsed && (
+                      <span className="font-medium truncate">
+                        {item.labelKey ? t(item.labelKey) : item.label}
+                      </span>
+                    )}
                   </Link>
                 );
               })}

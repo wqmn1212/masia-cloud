@@ -20,6 +20,8 @@ import Requirements from '@/pages/Requirements';
 import TaskBoard from '@/pages/TaskBoard';
 import FactoryDashboard from '@/pages/FactoryDashboard';
 import ClientDashboard from '@/pages/ClientDashboard';
+import MasterAdminDashboard from '@/pages/MasterAdminDashboard';
+import TeamManagement from '@/pages/TeamManagement';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -57,6 +59,8 @@ const AuthenticatedApp = () => {
         <Route path="/task-board" element={<TaskBoard />} />
         <Route path="/factories/:factoryId/dashboard" element={<FactoryDashboard />} />
         <Route path="/clients/:clientId/dashboard" element={<ClientDashboard />} />
+        <Route path="/master-admin" element={<MasterAdminDashboard />} />
+        <Route path="/team" element={<TeamManagement />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

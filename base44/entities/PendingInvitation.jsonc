@@ -1,0 +1,35 @@
+{
+  "name": "PendingInvitation",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "description": "\ucd08\ub300\ubc1b\uc740 \uc774\uba54\uc77c"
+    },
+    "account_tier": {
+      "type": "string",
+      "enum": [
+        "service",
+        "sub"
+      ],
+      "description": "\uac00\uc785 \uc2dc \uc790\ub3d9 \uc801\uc6a9\ub420 \uacc4\uc815 \ub4f1\uae09"
+    },
+    "service_admin_id": {
+      "type": "string",
+      "description": "(sub \uc77c \ub54c) \uc18c\uc18d\ub420 \uc11c\ube44\uc2a4 \uad00\ub9ac\uc790 ID"
+    },
+    "account_label": {
+      "type": "string",
+      "description": "\ud68c\uc0ac/\ud300 \ud45c\uc2dc\uba85"
+    },
+    "claimed": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uc0ac\uc6a9\uc790\uac00 \uac00\uc785 \ud6c4 \uc801\uc6a9 \uc644\ub8cc \uc5ec\ubd80"
+    }
+  },
+  "required": [
+    "email",
+    "account_tier"
+  ]
+}
