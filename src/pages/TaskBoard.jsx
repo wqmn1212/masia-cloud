@@ -23,6 +23,7 @@ const COLUMNS = [
   { id: 'REVIEW',      label: '견적 검토',  color: 'bg-accent/10',        dotColor: 'bg-accent' },
   { id: 'PRODUCTION',  label: '발주·제작', color: 'bg-chart-4/10',       dotColor: 'bg-chart-4' },
   { id: 'DONE',        label: '완료',       color: 'bg-primary/10',       dotColor: 'bg-primary' },
+  { id: 'CANCELLED',   label: '취소',       color: 'bg-red-50',           dotColor: 'bg-red-400' },
 ];
 
 const PRIORITY_META = {
@@ -117,7 +118,7 @@ export default function TaskBoard() {
       </div>
 
       {/* Status Summary Widget */}
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
         {COLUMNS.map((col) => {
           const count = columnCards(col.id).length;
           const total = cards.length || 1;

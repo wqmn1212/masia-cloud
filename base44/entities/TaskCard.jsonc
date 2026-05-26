@@ -17,7 +17,8 @@
         "IN_PROGRESS",
         "REVIEW",
         "PRODUCTION",
-        "DONE"
+        "DONE",
+        "CANCELLED"
       ],
       "description": "\uce78\ubc18 \uc0c1\ud0dc"
     },

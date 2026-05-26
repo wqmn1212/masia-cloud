@@ -8,6 +8,7 @@ const STATUS_META = {
   REVIEW:      { label: '검토',   color: 'bg-amber-100 text-amber-700 border-amber-200' },
   PRODUCTION:  { label: '생산',   color: 'bg-purple-100 text-purple-700 border-purple-200' },
   DONE:        { label: '완료',   color: 'bg-green-100 text-green-700 border-green-200' },
+  CANCELLED:   { label: '취소',   color: 'bg-red-50 text-red-700 border-red-200' },
 };
 
 const PRIORITY_META = {
