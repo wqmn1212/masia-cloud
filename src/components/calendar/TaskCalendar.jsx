@@ -124,13 +124,13 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
   return (
     <div className="bg-card rounded-2xl border shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b bg-card">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 sm:px-6 py-3 sm:py-4 border-b bg-card">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <CalendarDays className="w-5 h-5 text-primary" />
-          <h2 className="text-lg font-bold">
+          <h2 className="text-base sm:text-lg font-bold">
             {currentYear}년 {currentMonth + 1}월
           </h2>
-          <Badge variant="outline" className="text-xs">{cardsWithDueDate}개 카드 · {itemsWithDueDate}개 세부업무</Badge>
+          <Badge variant="outline" className="text-[10px] sm:text-xs">{cardsWithDueDate}개 카드 · {itemsWithDueDate}개 세부업무</Badge>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={goToday} className="text-xs h-7 px-3">
@@ -168,7 +168,7 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
             <div
               key={idx}
               onClick={() => onDateClick && onDateClick(key)}
-              className={`border-r border-b p-1 min-h-[100px] cursor-pointer group transition-colors
+              className={`border-r border-b p-0.5 sm:p-1 min-h-[68px] sm:min-h-[100px] cursor-pointer group transition-colors
                 ${!dayObj.isCurrentMonth ? 'bg-muted/20' : 'hover:bg-accent/5'}
                 ${idx % 7 === 6 ? 'border-r-0' : ''}
               `}
@@ -235,7 +235,7 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 px-6 py-3 border-t bg-muted/20 flex-wrap">
+      <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-3 border-t bg-muted/20 flex-wrap">
         <span className="text-[10px] font-semibold text-muted-foreground mr-1">우선순위:</span>
         {[['URGENT','#ef4444','긴급'], ['HIGH','#f97316','높음'], ['MEDIUM',null,'보통'], ['LOW','#94a3b8','낮음']].map(([k, color, v]) => (
           <div key={k} className="flex items-center gap-1.5">

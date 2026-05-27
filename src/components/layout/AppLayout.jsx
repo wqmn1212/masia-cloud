@@ -10,6 +10,7 @@ import AccountInactive from '@/components/AccountInactive';
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [claimChecked, setClaimChecked] = useState(false);
 
   const { data: user, refetch } = useQuery({
@@ -39,13 +40,19 @@ export default function AppLayout() {
   return (
     <LanguageProvider>
       <div className="min-h-screen bg-background">
-        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} user={user} />
+        <Sidebar
+          collapsed={collapsed}
+          onToggle={() => setCollapsed(!collapsed)}
+          user={user}
+          mobileOpen={mobileOpen}
+          onMobileClose={() => setMobileOpen(false)}
+        />
         <div className={cn(
           "transition-all duration-300",
-          collapsed ? "ml-[68px]" : "ml-[240px]"
+          collapsed ? "md:ml-[68px]" : "md:ml-[240px]"
         )}>
-          <TopBar />
-          <main className="p-6">
+          <TopBar onMenuClick={() => setMobileOpen(true)} />
+          <main className="p-3 md:p-6">
             <Outlet />
           </main>
         </div>

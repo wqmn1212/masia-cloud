@@ -37,7 +37,7 @@ const navSectionDefs = [
   }
 ];
 
-export default function Sidebar({ collapsed, onToggle, user }) {
+export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobileClose }) {
   const location = useLocation();
   const { t } = useLanguage();
 
@@ -61,10 +61,18 @@ export default function Sidebar({ collapsed, onToggle, user }) {
   }
 
   return (
-    <aside className={cn(
-      "fixed left-0 top-0 h-screen bg-sidebar text-sidebar-foreground z-40 transition-all duration-300 flex flex-col",
-      collapsed ? "w-[68px]" : "w-[240px]"
-    )}>
+    <>
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={onMobileClose}
+        />
+      )}
+      <aside className={cn(
+        "fixed left-0 top-0 h-screen bg-sidebar text-sidebar-foreground z-40 transition-transform duration-300 flex flex-col",
+        collapsed ? "w-[68px]" : "w-[240px]",
+        mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      )}>
       {/* Logo */}
       <div className="h-16 flex items-center px-4 border-b border-sidebar-border">
         <Cloud className="w-7 h-7 text-sidebar-primary flex-shrink-0" />
@@ -92,6 +100,7 @@ export default function Sidebar({ collapsed, onToggle, user }) {
                   <Link
                     key={item.path}
                     to={item.path}
+                    onClick={onMobileClose}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
                       isActive
@@ -116,10 +125,11 @@ export default function Sidebar({ collapsed, onToggle, user }) {
       {/* Collapse Button */}
       <button
         onClick={onToggle}
-        className="h-12 flex items-center justify-center border-t border-sidebar-border text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
+        className="h-12 hidden md:flex items-center justify-center border-t border-sidebar-border text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
       >
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
     </aside>
+    </>
   );
 }

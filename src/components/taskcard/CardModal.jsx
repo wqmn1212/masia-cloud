@@ -42,10 +42,10 @@ export default function CardModal({ card, open, onClose }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[92vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader className="pb-0">
-          <div className="flex items-start gap-3 flex-wrap">
-            <DialogTitle className="text-lg flex-1">
+          <div className="flex items-start gap-2 sm:gap-3 flex-wrap">
+            <DialogTitle className="text-base sm:text-lg flex-1 min-w-0 pr-6">
               {viewLang === 'CN' ? (card.title_cn || card.title) : card.title}
             </DialogTitle>
             <div className="flex items-center gap-2">
@@ -73,13 +73,13 @@ export default function CardModal({ card, open, onClose }) {
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="mt-4">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="overview">오버뷰</TabsTrigger>
-            <TabsTrigger value="tasks">업무 목록</TabsTrigger>
-            <TabsTrigger value="quotation">견적</TabsTrigger>
-            <TabsTrigger value="files">파일</TabsTrigger>
-            <TabsTrigger value="chat">채팅</TabsTrigger>
-            <TabsTrigger value="settlement">정산</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto gap-0.5">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm py-1.5">오버뷰</TabsTrigger>
+            <TabsTrigger value="tasks" className="text-xs sm:text-sm py-1.5">업무</TabsTrigger>
+            <TabsTrigger value="quotation" className="text-xs sm:text-sm py-1.5">견적</TabsTrigger>
+            <TabsTrigger value="files" className="text-xs sm:text-sm py-1.5">파일</TabsTrigger>
+            <TabsTrigger value="chat" className="text-xs sm:text-sm py-1.5">채팅</TabsTrigger>
+            <TabsTrigger value="settlement" className="text-xs sm:text-sm py-1.5">정산</TabsTrigger>
           </TabsList>
 
           <TabsContent value="tasks" className="mt-4">
