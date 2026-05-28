@@ -35,7 +35,7 @@ export default function DayDetailDialog({ open, onClose, dateKey, cards = [], ta
 
   const handleItemClick = (item) => {
     const parent = cards.find(c => c.id === item.card_id);
-    if (parent) onSelectCard?.(parent);
+    if (parent) onSelectCard?.(parent, 'tasks');
   };
 
   const total = dayCards.length + dayItems.length;

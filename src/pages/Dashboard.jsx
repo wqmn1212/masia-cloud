@@ -45,9 +45,16 @@ export default function Dashboard() {
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [selectedCardTab, setSelectedCardTab] = useState('overview');
 
-  const handleSelectCardFromDay = (card) => {
+  const handleSelectCardFromDay = (card, tab = 'overview') => {
     setSelectedDate(null);
+    setSelectedCardTab(tab);
+    setSelectedCard(card);
+  };
+
+  const handleCardClickFromCalendar = (card) => {
+    setSelectedCardTab('overview');
     setSelectedCard(card);
   };
 
@@ -73,7 +80,7 @@ export default function Dashboard() {
       <TaskCalendar
         cards={allCards}
         taskItems={allTaskItems}
-        onCardClick={(card) => setSelectedCard(card)}
+        onCardClick={handleCardClickFromCalendar}
         onDateClick={(key) => setSelectedDate(key)}
       />
 
@@ -91,6 +98,7 @@ export default function Dashboard() {
           card={selectedCard}
           open={!!selectedCard}
           onClose={() => setSelectedCard(null)}
+          initialTab={selectedCardTab}
         />
       )}
     </div>

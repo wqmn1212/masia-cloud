@@ -23,7 +23,7 @@ const CAT_LABEL = {
   DRIP_BAG: '드립백', SLEEVE: '슬리브', DESKTOP_LABELER: '탁상 라벨러', TUBE_SEALER: '튜브 실링기',
 };
 
-export default function CardModal({ card, open, onClose }) {
+export default function CardModal({ card, open, onClose, initialTab = 'overview' }) {
   const [user, setUser] = useState(null);
   const [viewLang, setViewLang] = useState('KR');
 
@@ -72,7 +72,7 @@ export default function CardModal({ card, open, onClose }) {
           )}
         </DialogHeader>
 
-        <Tabs defaultValue="overview" className="mt-4">
+        <Tabs defaultValue={initialTab} className="mt-4">
           <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto gap-0.5">
             <TabsTrigger value="overview" className="text-xs sm:text-sm py-1.5">오버뷰</TabsTrigger>
             <TabsTrigger value="tasks" className="text-xs sm:text-sm py-1.5">업무</TabsTrigger>
