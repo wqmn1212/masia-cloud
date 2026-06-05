@@ -18,6 +18,8 @@ export default function FilesTab({ card }) {
   const [uploading, setUploading] = useState(false);
   const [folderUploading, setFolderUploading] = useState(false);
   const [folderProgress, setFolderProgress] = useState({ current: 0, total: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounter = useRef(0);
 
   const foldersKey = ['card_folders', card.id];
   const filesKey = ['card_attachments', card.id];
@@ -88,7 +90,7 @@ export default function FilesTab({ card }) {
       // 1) 폴더 계층 수집 — 고유한 경로 모두
       const folderPathsSet = new Set();
       filesArr.forEach(f => {
-        const rel = f.webkitRelativePath || f.name;
+        const rel = f.webkitRelativePath || f._relPath || f.name;
         const parts = rel.split('/');
         for (let i = 1; i < parts.length; i++) {
           folderPathsSet.add(parts.slice(0, i).join('/'));
@@ -117,7 +119,7 @@ export default function FilesTab({ card }) {
       // 3) 파일 업로드 + 엔티티 생성
       let done = 0;
       for (const file of filesArr) {
-        const rel = file.webkitRelativePath || file.name;
+        const rel = file.webkitRelativePath || file._relPath || file.name;
         const parts = rel.split('/');
         const parentPath = parts.slice(0, -1).join('/');
         const folderId = parentPath ? pathToId.get(parentPath) : currentFolderId;
@@ -189,8 +191,88 @@ export default function FilesTab({ card }) {
   const isLoading = loadingFolders || loadingFiles;
   const isEmpty = !isLoading && currentFolders.length === 0 && currentFiles.length === 0;
 
+  // 드래그앤드롭: FileSystemEntry 재귀 탐색
+  const traverseEntry = (entry, basePath = '') => new Promise((resolve) => {
+    if (entry.isFile) {
+      entry.file((f) => {
+        f._relPath = basePath ? `${basePath}/${f.name}` : f.name;
+        resolve([f]);
+      }, () => resolve([]));
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      const newBase = basePath ? `${basePath}/${entry.name}` : entry.name;
+      const collected = [];
+      const readBatch = () => {
+        reader.readEntries(async (entries) => {
+          if (entries.length === 0) {
+            const nested = await Promise.all(collected.map((e) => traverseEntry(e, newBase)));
+            resolve(nested.flat());
+          } else {
+            collected.push(...entries);
+            readBatch();
+          }
+        }, () => resolve([]));
+      };
+      readBatch();
+    } else {
+      resolve([]);
+    }
+  });
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current = 0;
+    setIsDragging(false);
+    const items = e.dataTransfer?.items;
+    if (!items || items.length === 0) return;
+    const promises = [];
+    for (let i = 0; i < items.length; i++) {
+      const entry = items[i].webkitGetAsEntry?.();
+      if (entry) promises.push(traverseEntry(entry));
+    }
+    const nested = await Promise.all(promises);
+    const allFiles = nested.flat();
+    if (allFiles.length > 0) handleFolderUpload(allFiles);
+  };
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer?.types?.includes('Files')) {
+      dragCounter.current++;
+      setIsDragging(true);
+    }
+  };
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current--;
+    if (dragCounter.current <= 0) {
+      dragCounter.current = 0;
+      setIsDragging(false);
+    }
+  };
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   return (
-    <div className="space-y-3">
+    <div
+      className="space-y-3 relative"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {isDragging && (
+        <div className="absolute inset-0 z-20 rounded-lg border-2 border-dashed border-primary bg-primary/10 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none">
+          <Upload className="w-8 h-8 text-primary mb-2" />
+          <p className="text-sm font-medium text-primary">여기에 드롭하여 업로드</p>
+          <p className="text-[11px] text-muted-foreground mt-1">파일과 폴더 모두 지원</p>
+        </div>
+      )}
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <Breadcrumbs path={path} onNavigate={navigateTo} />
