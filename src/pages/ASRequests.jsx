@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Wrench, Upload, Loader2, Image } from 'lucide-react';
+import { Plus, Wrench, Loader2, Image } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import DropZone from '@/components/ui/drop-zone';
 
 const CATEGORY_LABELS = {
   DRIP_BAG: '드립백 포장기',
@@ -66,8 +67,7 @@ export default function ASRequests() {
 
   const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
-  const handleMediaUpload = async (e) => {
-    const file = e.target.files?.[0];
+  const handleMediaUpload = async (file) => {
     if (!file) return;
     setUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -129,17 +129,13 @@ export default function ASRequests() {
               </div>
               <div>
                 <Label>사진/영상 첨부</Label>
-                <label className="flex items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer hover:border-primary/50 transition-colors">
-                  {uploading ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                  ) : (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Upload className="w-4 h-4" />
-                      <span>클릭하여 업로드</span>
-                    </div>
-                  )}
-                  <input type="file" className="hidden" accept="image/*,video/*" onChange={handleMediaUpload} />
-                </label>
+                <DropZone
+                  onFile={handleMediaUpload}
+                  uploading={uploading}
+                  accept="image/*,video/*"
+                  label="드래그 또는 클릭하여 업로드"
+                  className="mt-1"
+                />
                 {form.media_urls.length > 0 && (
                   <div className="flex gap-2 mt-2 flex-wrap">
                     {form.media_urls.map((url, i) => (

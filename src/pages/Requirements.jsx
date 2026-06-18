@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, CheckCircle2, Clock, Loader2, ShieldCheck, Upload, Languages } from 'lucide-react';
+import { Plus, CheckCircle2, Clock, Loader2, ShieldCheck, Languages } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import DropZone from '@/components/ui/drop-zone';
 
 const STATUS_FLOW = ['PENDING', 'APPROVED', 'COMPLETED', 'VERIFIED'];
 
@@ -221,14 +222,14 @@ export default function Requirements() {
                       )}
 
                       {needsEvidence && (
-                        <label className="w-full cursor-pointer">
-                          <div className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium border-2 border-dashed border-primary/60 text-primary bg-primary/5 hover:bg-primary/10 transition-colors ${uploadingEvidence === req.id ? 'opacity-50 pointer-events-none' : ''}`}>
-                            {uploadingEvidence === req.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-                            {uploadingEvidence === req.id ? '업로드 중...' : '실물 증빙 업로드'}
-                          </div>
-                          <input type="file" className="hidden" accept="image/*,video/*"
-                            onChange={(e) => e.target.files?.[0] && handleEvidenceUpload(req.id, e.target.files[0])} />
-                        </label>
+                        <DropZone
+                          onFile={(file) => handleEvidenceUpload(req.id, file)}
+                          uploading={uploadingEvidence === req.id}
+                          accept="image/*,video/*"
+                          compact
+                          label="실물 증빙 업로드"
+                          className="w-full"
+                        />
                       )}
 
                       <Button size="sm" variant="outline" className="w-full text-xs h-8" onClick={() => openEdit(req)}>수정</Button>

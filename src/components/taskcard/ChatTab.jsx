@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Paperclip, Loader2 } from 'lucide-react';
+import DropZone from '@/components/ui/drop-zone';
 import { translateFieldsToCN } from '@/lib/translate';
 
 const ROLE_COLOR = {
@@ -82,7 +83,8 @@ export default function ChatTab({ card, user, viewLang = 'KR' }) {
   const isMyMsg = (msg) => msg.sender_email === user?.email;
 
   return (
-    <div className="flex flex-col h-[420px]">
+    <DropZone onFile={handleFileAttach} uploading={uploading} className="flex flex-col h-[420px]">
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-3 p-1 pb-2">
         {messages.length === 0 && (
@@ -130,6 +132,6 @@ export default function ChatTab({ card, user, viewLang = 'KR' }) {
           <Send className="w-4 h-4" />
         </Button>
       </div>
-    </div>
+    </DropZone>
   );
 }

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, FileText, Trash2, Upload, Loader2, ExternalLink, Pencil, Download } from 'lucide-react';
+import DropZone from '@/components/ui/drop-zone';
 import { generateQuotationPDF } from '@/lib/generateQuotationPDF';
 
 const STATUS_META = {
@@ -132,8 +133,7 @@ export default function QuotationTab({ card, user }) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['quotations-by-card', card.id] }),
   });
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
+  const handleFileUpload = async (file) => {
     if (!file) return;
     setUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -256,11 +256,13 @@ export default function QuotationTab({ card, user }) {
           <div>
             <Label className="text-xs">견적서 파일 업로드 (선택 — AI 자동 추출)</Label>
             <div className="flex gap-2 mt-1">
-              <label className="flex items-center gap-1.5 cursor-pointer border rounded-lg px-3 py-1.5 text-xs hover:bg-muted transition-colors">
-                {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-                {uploading ? '업로드 중...' : parsing ? 'AI 분석 중...' : '파일 선택'}
-                <input type="file" className="hidden" onChange={handleFileUpload} accept=".pdf,.xlsx,.xls,.jpg,.jpeg,.png" />
-              </label>
+              <DropZone
+                onFile={handleFileUpload}
+                uploading={uploading || parsing}
+                accept=".pdf,.xlsx,.xls,.jpg,.jpeg,.png"
+                compact
+                label={parsing ? 'AI 분석 중...' : '파일 선택'}
+              />
               {form.raw_file_url && <span className="text-[10px] text-accent self-center">✓ 업로드 완료</span>}
             </div>
           </div>
