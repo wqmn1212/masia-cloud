@@ -205,19 +205,6 @@ function buildHTML(q) {
         <div style="white-space:pre-wrap;">${q.remarks}</div>
       </div>` : ''}
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:28px; margin-bottom:32px;">
-        <div>
-          <div style="font-size:10px; color:#64748b; font-weight:600; margin-bottom:6px;">공급자 서명 · Supplier Signature</div>
-          <div style="height:70px; border:1px dashed #cbd5e1; border-radius:6px; background:#fcfcfd;"></div>
-          <div style="font-size:10.5px; margin-top:6px; color:#475569;">DONGGUAN AEGIS TRADE CO., LTD &nbsp;·&nbsp; Date: ____________________</div>
-        </div>
-        <div>
-          <div style="font-size:10px; color:#64748b; font-weight:600; margin-bottom:6px;">고객사 확인 · Client Approval</div>
-          <div style="height:70px; border:1px dashed #cbd5e1; border-radius:6px; background:#fcfcfd;"></div>
-          <div style="font-size:10.5px; margin-top:6px; color:#475569;">${q.client_name || ''} &nbsp;·&nbsp; Date: ____________________</div>
-        </div>
-      </div>
-
       <div style="padding-top:14px; border-top:2px solid #2563eb; text-align:center; font-size:9.5px; color:#64748b;">
         <strong style="color:#2563eb;">DONGGUAN AEGIS TRADE CO., LTD</strong> · Generated automatically on ${today}
       </div>
