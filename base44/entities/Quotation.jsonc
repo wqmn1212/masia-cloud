@@ -46,6 +46,51 @@
       ],
       "description": "\uc778\ucf54\ud140\uc988"
     },
+    "quote_title": {
+      "type": "string",
+      "description": "\uacac\uc801\uc11c \uc81c\ubaa9"
+    },
+    "product_name": {
+      "type": "string",
+      "description": "\uc81c\ud488\uba85"
+    },
+    "model_name": {
+      "type": "string",
+      "description": "\ubaa8\ub378\uba85"
+    },
+    "quote_options": {
+      "type": "array",
+      "description": "\uc81c\ud488 \uc635\uc158/\uc138\ubd80 \ud56d\ubaa9 \ub9ac\uc2a4\ud2b8 (USD \uae30\uc900)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "option_name": {
+            "type": "string",
+            "description": "\uc635\uc158/\ud56d\ubaa9\uba85"
+          },
+          "specification": {
+            "type": "string",
+            "description": "\uc138\ubd80 \uc0ac\uc591"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "\uc218\ub7c9"
+          },
+          "unit_price_usd": {
+            "type": "number",
+            "description": "\ub2e8\uac00 (USD)"
+          },
+          "total_usd": {
+            "type": "number",
+            "description": "\uae08\uc561 (USD)"
+          }
+        }
+      }
+    },
+    "options_total_usd": {
+      "type": "number",
+      "description": "\uc635\uc158 \ud569\uc0b0 \ucd1d\uc561 (USD)"
+    },
     "raw_file_url": {
       "type": "string",
       "description": "\uc6d0\ubcf8 \ud30c\uc77c URL"

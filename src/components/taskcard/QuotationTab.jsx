@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Plus, FileText, Trash2, Upload, Loader2, ExternalLink, Pencil, Download } from 'lucide-react';
 import DropZone from '@/components/ui/drop-zone';
 import { generateQuotationPDF } from '@/lib/generateQuotationPDF';
+import QuoteOptionsEditor from '@/components/quotation/QuoteOptionsEditor';
 
 const STATUS_META = {
   DRAFT:    { label: '초안',     color: 'bg-muted text-muted-foreground' },
@@ -23,6 +24,10 @@ const STATUS_META = {
 const emptyForm = {
   factory_name: '',
   incoterms: 'EXW',
+  quote_title: '',
+  product_name: '',
+  model_name: '',
+  quote_options: [],
   factory_total_cost: '',
   factory_cost_currency: 'CNY',
   logistics_cost: '',
@@ -189,8 +194,19 @@ export default function QuotationTab({ card, user }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const normalizedOptions = (form.quote_options || [])
+      .filter(o => o.option_name || o.unit_price_usd)
+      .map(o => ({
+        option_name: o.option_name || '',
+        specification: o.specification || '',
+        quantity: Number(o.quantity) || 0,
+        unit_price_usd: Number(o.unit_price_usd) || 0,
+        total_usd: (Number(o.quantity) || 0) * (Number(o.unit_price_usd) || 0),
+      }));
     const payload = {
       ...form,
+      quote_options: normalizedOptions,
+      options_total_usd: normalizedOptions.reduce((s, o) => s + o.total_usd, 0),
       card_id: card.id,
       client_name: card.client_name || form.client_name,
       machine_category: card.target_machine_category,
@@ -223,6 +239,10 @@ export default function QuotationTab({ card, user }) {
     setForm({
       factory_name: q.factory_name || '',
       incoterms: q.incoterms || 'EXW',
+      quote_title: q.quote_title || '',
+      product_name: q.product_name || '',
+      model_name: q.model_name || '',
+      quote_options: q.quote_options || [],
       factory_total_cost: fDisp === 0 ? '' : fDisp,
       factory_cost_currency: fCur,
       logistics_cost: lDisp === 0 ? '' : lDisp,
@@ -264,6 +284,35 @@ export default function QuotationTab({ card, user }) {
                 label={parsing ? 'AI 분석 중...' : '파일 선택'}
               />
               {form.raw_file_url && <span className="text-[10px] text-accent self-center">✓ 업로드 완료</span>}
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-xs">견적서 제목</Label>
+            <Input value={form.quote_title} onChange={e => setForm(f => ({ ...f, quote_title: e.target.value }))} placeholder="예: 드립백 포장기 공급 견적" className="h-8 text-xs" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">제품명</Label>
+              <Input value={form.product_name} onChange={e => setForm(f => ({ ...f, product_name: e.target.value }))} placeholder="예: 드립백 포장기" className="h-8 text-xs" />
+            </div>
+            <div>
+              <Label className="text-xs">모델명</Label>
+              <Input value={form.model_name} onChange={e => setForm(f => ({ ...f, model_name: e.target.value }))} placeholder="예: DBM-5000" className="h-8 text-xs" />
+            </div>
+          </div>
+
+          {/* 옵션 / 세부 항목 (USD) */}
+          <div className="border rounded-xl p-3 bg-background">
+            <QuoteOptionsEditor
+              options={form.quote_options}
+              onChange={(opts) => setForm(f => ({ ...f, quote_options: opts }))}
+              usdToKrw={Number(form.exchange_rate_usd) || 0}
+            />
+            <div className="mt-2">
+              <Label className="text-[10px]">환율: $1 = ? 원 (KRW)</Label>
+              <Input type="number" step="0.01" value={form.exchange_rate_usd} onChange={e => setForm(f => ({ ...f, exchange_rate_usd: e.target.value }))} className="h-7 text-xs w-32" placeholder="예: 1380" />
             </div>
           </div>
 
@@ -401,7 +450,8 @@ export default function QuotationTab({ card, user }) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">{q.factory_name}</span>
+                    <span className="text-sm font-medium">{q.quote_title || q.factory_name}</span>
+                    {q.product_name && <span className="text-[11px] text-muted-foreground">{q.product_name}{q.model_name ? ` · ${q.model_name}` : ''}</span>}
                     {q.incoterms && <Badge variant="outline" className="text-[9px] h-4 px-1">{q.incoterms.replace('_', ' ')}</Badge>}
                   </div>
                   <div className="flex items-center gap-2">
@@ -432,6 +482,10 @@ export default function QuotationTab({ card, user }) {
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+                    {q.options_total_usd > 0 && (
+                      <span>옵션 합계: <strong className="text-primary">${q.options_total_usd.toLocaleString()}</strong>
+                      {q.exchange_rate_usd > 0 && <span className="opacity-70"> (≈₩{Math.round(q.options_total_usd * q.exchange_rate_usd).toLocaleString()})</span>}</span>
+                    )}
                     {q.factory_total_cost > 0 && <span>원가: <strong className="text-foreground">¥{q.factory_total_cost?.toLocaleString()}</strong></span>}
                     {q.logistics_cost > 0 && <span>물류비: <strong className="text-foreground">¥{q.logistics_cost?.toLocaleString()}</strong></span>}
                     {q.masir_fee_amount_cny > 0 && <span>수수료: <strong className="text-accent">¥{q.masir_fee_amount_cny?.toLocaleString()} {q.masir_fee_type === 'PERCENT' ? `(${q.masir_fee_value}%)` : '(고정)'}</strong></span>}
