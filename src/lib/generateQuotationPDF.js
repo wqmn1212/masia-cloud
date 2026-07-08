@@ -20,36 +20,37 @@ const fmtByCurrency = (v, cur) => {
   return sym + Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 });
 };
 
-function buildOptionRows(q) {
+// 고객 PDF: 수수료를 각 항목 금액에 비례 배분하여 수수료 포함 가격으로 표시 (수수료 항목 미노출)
+function buildOptionRows(q, factor = 1) {
   const options = Array.isArray(q.quote_options) ? q.quote_options : [];
   return options.map((o, i) => {
-    const unit = o.unit_price ?? o.unit_price_usd;
-    const cur = o.unit_price != null ? (o.currency || 'USD') : 'USD';
-    const total = o.total_usd ?? (Number(o.quantity) || 0) * (Number(unit) || 0);
+    const baseTotal = o.total_usd ?? (Number(o.quantity) || 0) * (Number(o.unit_price ?? o.unit_price_usd) || 0);
+    const total = baseTotal * factor;
+    const qty = Number(o.quantity) || 0;
+    const unit = qty > 0 ? total / qty : total;
     return `
       <tr>
         <td style="${td}text-align:center;">${i + 1}</td>
         <td style="${td}">${o.option_name || ''}</td>
         <td style="${td}">${o.specification || ''}</td>
         <td style="${td}text-align:right;">${o.quantity ?? '-'}</td>
-        <td style="${td}text-align:right;">${fmtByCurrency(unit, cur)}${cur !== 'USD' ? ` <span style="color:#94a3b8;font-size:9px;">${cur}</span>` : ''}</td>
+        <td style="${td}text-align:right;">${fmtUSD(unit)}</td>
         <td style="${td}text-align:right;">${fmtUSD(total)}</td>
       </tr>`;
   }).join('');
 }
 
+// 고객 PDF: 공장명 미노출, 수수료는 제품 금액에 합산하여 표시
 function buildLegacyRows(q, fee) {
+  const productTotal = (Number(q.factory_total_cost) || 0) + fee;
   const rows = [{
     no: 1,
-    name: `${q.factory_name || ''} — 장비 본체 일체`,
-    spec: '-',
-    qty: 1, unit: q.factory_total_cost, total: q.factory_total_cost,
+    name: q.product_name || '장비 본체 일체',
+    spec: q.model_name || '-',
+    qty: 1, unit: productTotal, total: productTotal,
   }];
   if (Number(q.logistics_cost) > 0) {
     rows.push({ no: rows.length + 1, name: '물류비 (Logistics & Shipping)', spec: INCOTERMS_LABEL[q.incoterms] || '-', qty: 1, unit: q.logistics_cost, total: q.logistics_cost });
-  }
-  if (fee > 0) {
-    rows.push({ no: rows.length + 1, name: '서비스 수수료 (Service Fee)', spec: q.masir_fee_type === 'PERCENT' ? `${q.masir_fee_value || 0}%` : 'Fixed', qty: '-', unit: '-', total: fee });
   }
   return rows.map(r => `
     <tr>
@@ -68,12 +69,19 @@ function buildHTML(q) {
   const hasOptions = Array.isArray(q.quote_options) && q.quote_options.length > 0;
 
   const usdToKrw = Number(q.exchange_rate_usd) || 0;
+  const adv = Number(q.advance_payment_percent) || 30;
+  const bal = Number(q.balance_payment_percent) || (100 - adv);
+  const shipDays = Number(q.shipping_days) || 0;
   let lineRows, totalLabelHtml, currencyLabel;
 
   if (hasOptions) {
-    const totalUSD = q.options_total_usd ?? q.quote_options.reduce((s, o) => s + (o.total_usd ?? (Number(o.quantity) || 0) * (Number(o.unit_price ?? o.unit_price_usd) || 0)), 0);
+    const baseUSD = q.options_total_usd ?? q.quote_options.reduce((s, o) => s + (o.total_usd ?? (Number(o.quantity) || 0) * (Number(o.unit_price ?? o.unit_price_usd) || 0)), 0);
+    const cnyToKrw = Number(q.exchange_rate_krw) || 0;
+    const feeUSD = (usdToKrw > 0 && cnyToKrw > 0) ? (Number(q.masir_fee_amount_cny) || 0) * cnyToKrw / usdToKrw : 0;
+    const totalUSD = Number(q.final_price_usd) > 0 ? Number(q.final_price_usd) : baseUSD + feeUSD;
+    const factor = baseUSD > 0 ? totalUSD / baseUSD : 1;
     const totalKRW = usdToKrw ? Math.round(totalUSD * usdToKrw) : null;
-    lineRows = buildOptionRows(q);
+    lineRows = buildOptionRows(q, factor);
     currencyLabel = 'USD · US Dollar';
     totalLabelHtml = `
       <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#2563eb; color:#fff; border-radius:8px;">
@@ -123,6 +131,12 @@ function buildHTML(q) {
       </div>
 
       ${q.quote_title ? `<div style="font-size:16px; font-weight:700; margin-bottom:16px; text-align:center; padding:10px; background:#f1f5f9; border-radius:8px;">${q.quote_title}</div>` : ''}
+
+      ${q.product_image_url ? `
+      <div style="text-align:center; margin-bottom:20px;">
+        <img src="${q.product_image_url}" crossorigin="anonymous" style="max-height:200px; max-width:70%; border:1px solid #e5e7eb; border-radius:8px; object-fit:contain;" />
+        ${q.product_name ? `<div style="font-size:10px; color:#64748b; margin-top:6px;">${q.product_name}${q.model_name ? ` · ${q.model_name}` : ''}</div>` : ''}
+      </div>` : ''}
 
       <div style="display:flex; gap:16px; margin-bottom:20px;">
         <div style="flex:1; border:1px solid #e5e7eb; border-radius:8px; padding:12px; background:#f8fafc;">
@@ -180,10 +194,16 @@ function buildHTML(q) {
         <div style="color:#0f172a; font-size:11px; font-weight:700; margin-bottom:6px;">계약 조건 · Terms &amp; Conditions</div>
         <div>1. 인코텀즈 / Incoterms: ${INCOTERMS_LABEL[q.incoterms] || '별도 협의'}</div>
         <div>2. 견적 유효기간 / Validity: 발행일로부터 30일 (30 days from issue date)</div>
-        <div>3. 결제 조건 / Payment: 계약 시 30% 선급금, 출하 전 70% 잔금 (T/T)</div>
-        <div>4. 납기 / Delivery: 발주 및 선급금 입금 확인 후 협의된 일정에 따름</div>
+        <div>3. 결제 조건 / Payment: 계약 시 선금 ${adv}%, 출하 전 잔금 ${bal}% (T/T)</div>
+        <div>4. 납기 / Delivery: ${shipDays > 0 ? `발주 및 선금 입금 확인 후 ${shipDays}일 이내 출하 (${shipDays} days after order confirmation)` : '발주 및 선금 입금 확인 후 협의된 일정에 따름'}</div>
         <div>5. 원화(KRW) 환산 금액은 참고용이며, 실제 결제는 USD 기준으로 진행됩니다.</div>
       </div>
+
+      ${q.remarks ? `
+      <div style="border:1px solid #fde68a; border-radius:8px; padding:14px; background:#fffbeb; font-size:10.5px; color:#475569; line-height:1.7; margin-bottom:28px;">
+        <div style="color:#0f172a; font-size:11px; font-weight:700; margin-bottom:6px;">비고 · Remarks</div>
+        <div style="white-space:pre-wrap;">${q.remarks}</div>
+      </div>` : ''}
 
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:28px; margin-bottom:32px;">
         <div>
@@ -215,6 +235,9 @@ export async function generateQuotationPDF(q) {
   document.body.appendChild(container);
 
   try {
+    await Promise.all(Array.from(container.querySelectorAll('img')).map(img =>
+      img.complete ? Promise.resolve() : new Promise((r) => { img.onload = r; img.onerror = r; })
+    ));
     await new Promise((r) => setTimeout(r, 80));
     const target = container.firstElementChild;
     const canvas = await html2canvas(target, {

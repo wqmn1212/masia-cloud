@@ -12,7 +12,7 @@
     },
     "factory_name": {
       "type": "string",
-      "description": "\uacf5\uc7a5\uba85"
+      "description": "\uacf5\uc7a5\uba85 (\ub0b4\ubd80\uc6a9 \u2014 \uace0\uac1d PDF \ubbf8\ub178\ucd9c)"
     },
     "client_id": {
       "type": "string",
@@ -58,6 +58,26 @@
       "type": "string",
       "description": "\ubaa8\ub378\uba85"
     },
+    "product_image_url": {
+      "type": "string",
+      "description": "\uc81c\ud488 \uc0ac\uc9c4 URL (PDF \ud45c\uc2dc)"
+    },
+    "remarks": {
+      "type": "string",
+      "description": "\ube44\uace0 (PDF \ud45c\uc2dc)"
+    },
+    "advance_payment_percent": {
+      "type": "number",
+      "description": "\uc120\uae08 %"
+    },
+    "balance_payment_percent": {
+      "type": "number",
+      "description": "\uc794\uae08 %"
+    },
+    "shipping_days": {
+      "type": "number",
+      "description": "\ucd9c\ud558\uc77c (\ubc1c\uc8fc \uc2dc\uc810\uc73c\ub85c\ubd80\ud130 N\uc77c)"
+    },
     "quote_options": {
       "type": "array",
       "description": "\uc81c\ud488 \uc635\uc158/\uc138\ubd80 \ud56d\ubaa9 \ub9ac\uc2a4\ud2b8 (\ud1b5\ud654\ubcc4 \uc785\ub825, USD \ud658\uc0b0 \uc800\uc7a5)",
@@ -102,7 +122,11 @@
     },
     "options_total_usd": {
       "type": "number",
-      "description": "\uc635\uc158 \ud569\uc0b0 \ucd1d\uc561 (USD)"
+      "description": "\uc635\uc158 \ud569\uc0b0 \ucd1d\uc561 (USD) = \uacf5\uc7a5 \uc6d0\uac00"
+    },
+    "final_price_usd": {
+      "type": "number",
+      "description": "\uc218\uc218\ub8cc \ud3ec\ud568 \ucd5c\uc885 \uc81c\uc548\uac00 (USD)"
     },
     "raw_file_url": {
       "type": "string",

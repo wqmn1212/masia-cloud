@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
@@ -37,6 +38,11 @@ const emptyForm = {
   exchange_rate_date: new Date().toISOString().slice(0, 10),
   exchange_rate_usd: '1380',
   exchange_rate_krw: '190',
+  remarks: '',
+  advance_payment_percent: '30',
+  balance_payment_percent: '70',
+  shipping_days: '',
+  product_image_url: '',
   status: 'DRAFT',
   raw_file_url: '',
 };
@@ -93,6 +99,7 @@ export default function QuotationTab({ card, user }) {
   const [form, setForm] = useState({ ...emptyForm, factory_name: card.factory_name || '', client_name: card.client_name || '' });
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -175,17 +182,29 @@ export default function QuotationTab({ card, user }) {
     setParsing(false);
   };
 
-  const { factoryCNY, logisticsCNY, calc } = useMemo(() => {
+  const handleImageUpload = async (file) => {
+    if (!file) return;
+    setUploadingImage(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setForm(f => ({ ...f, product_image_url: file_url }));
+    setUploadingImage(false);
+  };
+
+  const { factoryCNY, logisticsCNY, calc, optionsTotalUSD } = useMemo(() => {
     const usdR = Number(form.exchange_rate_usd) || 0;
     const krwR = Number(form.exchange_rate_krw) || 0;
-    const fCNY = toCNY(form.factory_total_cost, form.factory_cost_currency, usdR, krwR);
+    const optUSD = (form.quote_options || []).reduce((s, o) => s + (Number(o.quantity) || 0) * optionToUSD(o.unit_price, o.currency, usdR, krwR), 0);
+    // 옵션이 있으면 옵션 합산(USD)이 공장 원가로 자동 반영
+    const fCNY = optUSD > 0 ? toCNY(optUSD, 'USD', usdR, krwR) : toCNY(form.factory_total_cost, form.factory_cost_currency, usdR, krwR);
     const lCNY = toCNY(form.logistics_cost, form.logistics_cost_currency, usdR, krwR);
     return {
       factoryCNY: fCNY,
       logisticsCNY: lCNY,
+      optionsTotalUSD: optUSD,
       calc: calcQuote(fCNY, lCNY, form.masir_fee_type, form.masir_fee_value),
     };
   }, [
+    form.quote_options,
     form.factory_total_cost, form.factory_cost_currency,
     form.logistics_cost, form.logistics_cost_currency,
     form.masir_fee_type, form.masir_fee_value,
@@ -206,10 +225,18 @@ export default function QuotationTab({ card, user }) {
         currency: o.currency || 'USD',
         total_usd: (Number(o.quantity) || 0) * optionToUSD(o.unit_price, o.currency, usdR, cnyR),
       }));
+    const optTotalUSD = normalizedOptions.reduce((s, o) => s + o.total_usd, 0);
+    const feeUSD = (usdR > 0 && cnyR > 0) ? calc.fee * cnyR / usdR : 0;
     const payload = {
       ...form,
       quote_options: normalizedOptions,
-      options_total_usd: normalizedOptions.reduce((s, o) => s + o.total_usd, 0),
+      options_total_usd: optTotalUSD,
+      final_price_usd: optTotalUSD > 0 ? Number((optTotalUSD + feeUSD).toFixed(2)) : 0,
+      remarks: form.remarks || '',
+      advance_payment_percent: Number(form.advance_payment_percent) || 0,
+      balance_payment_percent: Number(form.balance_payment_percent) || 0,
+      shipping_days: Number(form.shipping_days) || 0,
+      product_image_url: form.product_image_url || '',
       card_id: card.id,
       client_name: card.client_name || form.client_name,
       machine_category: card.target_machine_category,
@@ -259,6 +286,11 @@ export default function QuotationTab({ card, user }) {
       exchange_rate_date: q.exchange_rate_date || new Date().toISOString().slice(0, 10),
       exchange_rate_usd: q.exchange_rate_usd ?? '1380',
       exchange_rate_krw: q.exchange_rate_krw ?? '190',
+      remarks: q.remarks || '',
+      advance_payment_percent: q.advance_payment_percent ?? '30',
+      balance_payment_percent: q.balance_payment_percent ?? '70',
+      shipping_days: q.shipping_days || '',
+      product_image_url: q.product_image_url || '',
       status: q.status || 'DRAFT',
       raw_file_url: q.raw_file_url || '',
     });
@@ -348,7 +380,14 @@ export default function QuotationTab({ card, user }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">공장 원가</Label>
+              <Label className="text-xs">공장 원가 {optionsTotalUSD > 0 && <span className="text-[10px] text-primary font-semibold">(옵션 합산 자동 반영)</span>}</Label>
+              {optionsTotalUSD > 0 ? (
+                <div className="h-8 flex items-center px-3 rounded-md border bg-muted/40 text-xs font-semibold">
+                  ${optionsTotalUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  <span className="text-muted-foreground font-normal ml-2">≈ ¥{Math.round(factoryCNY).toLocaleString()}</span>
+                </div>
+              ) : (
+              <>
               <div className="flex gap-1">
                 <Input type="number" value={form.factory_total_cost} onChange={e => setForm(f => ({ ...f, factory_total_cost: e.target.value }))} className="h-8 text-xs flex-1" placeholder={form.factory_cost_currency === 'KRW' ? '₩' : form.factory_cost_currency === 'USD' ? '$' : '¥'} />
                 <Select value={form.factory_cost_currency} onValueChange={v => setForm(f => ({ ...f, factory_cost_currency: v }))}>
@@ -362,6 +401,8 @@ export default function QuotationTab({ card, user }) {
               </div>
               {form.factory_cost_currency !== 'CNY' && factoryCNY > 0 && (
                 <p className="text-[10px] text-muted-foreground mt-0.5">≈ ¥{Math.round(factoryCNY).toLocaleString()} CNY</p>
+              )}
+              </>
               )}
             </div>
             <div>
@@ -397,6 +438,35 @@ export default function QuotationTab({ card, user }) {
             <div>
               <Label className="text-xs">수수료 {form.masir_fee_type === 'PERCENT' ? '(%)' : '(CNY ¥)'}</Label>
               <Input type="number" value={form.masir_fee_value} onChange={e => setForm(f => ({ ...f, masir_fee_value: e.target.value }))} className="h-8 text-xs" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label className="text-xs">선금 (%)</Label>
+              <Input type="number" min="0" max="100" value={form.advance_payment_percent} onChange={e => setForm(f => ({ ...f, advance_payment_percent: e.target.value }))} className="h-8 text-xs" placeholder="예: 30" />
+            </div>
+            <div>
+              <Label className="text-xs">잔금 (%)</Label>
+              <Input type="number" min="0" max="100" value={form.balance_payment_percent} onChange={e => setForm(f => ({ ...f, balance_payment_percent: e.target.value }))} className="h-8 text-xs" placeholder="예: 70" />
+            </div>
+            <div>
+              <Label className="text-xs">출하일 (발주 후 일)</Label>
+              <Input type="number" min="0" value={form.shipping_days} onChange={e => setForm(f => ({ ...f, shipping_days: e.target.value }))} className="h-8 text-xs" placeholder="예: 45" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">제품 사진 (PDF에 표시)</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <DropZone onFile={handleImageUpload} uploading={uploadingImage} accept="image/*" compact label="사진 업로드" />
+                {form.product_image_url && <img src={form.product_image_url} alt="제품 사진" className="h-12 w-12 object-cover rounded-md border" />}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">비고 (PDF에 표시)</Label>
+              <Textarea value={form.remarks} onChange={e => setForm(f => ({ ...f, remarks: e.target.value }))} rows={2} className="text-xs" placeholder="특이사항, 포함/불포함 내역 등" />
             </div>
           </div>
 
