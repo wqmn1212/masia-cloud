@@ -227,49 +227,49 @@ export async function generateQuotationPDF(q) {
     ));
     await new Promise((r) => setTimeout(r, 80));
     const root = container.firstElementChild;
-    // 섹션(블록) 단위로 개별 캡처 → 페이지 경계에서 블록이 잘리지 않도록 배치
     const blocks = Array.from(root.children);
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pageW = 210;
-    const pageH = 297;
-    const marginX = 11;
-    const marginY = 12;
-    const contentW = pageW - marginX * 2;
-    const usableH = pageH - marginY * 2;
-    let y = marginY;
 
+    // A4 비율의 페이지 컨테이너 (794px = 210mm 기준)
+    const PAGE_W = 794;
+    const PAGE_H = Math.round((PAGE_W * 297) / 210); // ≈ 1123px
+    const PAD = 40;
+    const USABLE = PAGE_H - PAD * 2;
+
+    // 블록 높이를 측정해 페이지별로 그룹핑 (블록이 페이지 경계에서 잘리지 않도록)
+    const pagesBlocks = [[]];
+    let used = 0;
     for (const block of blocks) {
-      const canvas = await html2canvas(block, {
+      const style = window.getComputedStyle(block);
+      const h = block.offsetHeight + (parseFloat(style.marginTop) || 0) + (parseFloat(style.marginBottom) || 0);
+      if (used + h > USABLE && pagesBlocks[pagesBlocks.length - 1].length > 0) {
+        pagesBlocks.push([]);
+        used = 0;
+      }
+      pagesBlocks[pagesBlocks.length - 1].push(block);
+      used += h;
+    }
+
+    // 각 페이지를 실제 A4 크기 컨테이너로 재구성
+    const pageDivs = pagesBlocks.map((list) => {
+      const page = document.createElement('div');
+      page.style.cssText = `width:${PAGE_W}px;height:${PAGE_H}px;padding:${PAD}px;box-sizing:border-box;background:#fff;overflow:hidden;font-family:'Noto Sans KR','Malgun Gothic',-apple-system,sans-serif;color:#0f172a;`;
+      list.forEach((b) => page.appendChild(b));
+      container.appendChild(page);
+      return page;
+    });
+    root.remove();
+
+    // 페이지 단위로 캡처 → PDF 한 페이지에 정확히 매핑
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    for (let i = 0; i < pageDivs.length; i++) {
+      const canvas = await html2canvas(pageDivs[i], {
         scale: 2,
         backgroundColor: '#ffffff',
         useCORS: true,
         logging: false,
       });
-      if (canvas.width === 0 || canvas.height === 0) continue;
-      const imgData = canvas.toDataURL('image/png');
-      const imgH = (canvas.height * contentW) / canvas.width;
-
-      if (imgH <= usableH) {
-        // 블록이 현재 페이지에 안 들어가면 새 페이지에서 시작
-        if (y + imgH > pageH - marginY && y > marginY) {
-          pdf.addPage();
-          y = marginY;
-        }
-        pdf.addImage(imgData, 'PNG', marginX, y, contentW, imgH);
-        y += imgH + 4;
-      } else {
-        // 한 페이지보다 큰 블록만 예외적으로 분할
-        if (y > marginY) {
-          pdf.addPage();
-          y = marginY;
-        }
-        const pages = Math.ceil(imgH / usableH);
-        for (let p = 0; p < pages; p++) {
-          if (p > 0) pdf.addPage();
-          pdf.addImage(imgData, 'PNG', marginX, marginY - p * usableH, contentW, imgH);
-        }
-        y = marginY + (imgH - (pages - 1) * usableH) + 4;
-      }
+      if (i > 0) pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297);
     }
 
     const safe = (s) => String(s || '').replace(/[^\w\u3131-\uD79D一-龥]+/g, '_').slice(0, 40);
