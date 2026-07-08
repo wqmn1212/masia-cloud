@@ -226,32 +226,49 @@ export async function generateQuotationPDF(q) {
       img.complete ? Promise.resolve() : new Promise((r) => { img.onload = r; img.onerror = r; })
     ));
     await new Promise((r) => setTimeout(r, 80));
-    const target = container.firstElementChild;
-    const canvas = await html2canvas(target, {
-      scale: 2,
-      backgroundColor: '#ffffff',
-      useCORS: true,
-      logging: false,
-    });
-    const imgData = canvas.toDataURL('image/png');
+    const root = container.firstElementChild;
+    // 섹션(블록) 단위로 개별 캡처 → 페이지 경계에서 블록이 잘리지 않도록 배치
+    const blocks = Array.from(root.children);
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = 210;
-    const pageHeight = 297;
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const pageW = 210;
+    const pageH = 297;
+    const marginX = 11;
+    const marginY = 12;
+    const contentW = pageW - marginX * 2;
+    const usableH = pageH - marginY * 2;
+    let y = marginY;
 
-    if (imgHeight <= pageHeight) {
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    } else {
-      let position = 0;
-      let heightLeft = imgHeight;
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-      while (heightLeft > 0) {
-        position -= pageHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+    for (const block of blocks) {
+      const canvas = await html2canvas(block, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false,
+      });
+      if (canvas.width === 0 || canvas.height === 0) continue;
+      const imgData = canvas.toDataURL('image/png');
+      const imgH = (canvas.height * contentW) / canvas.width;
+
+      if (imgH <= usableH) {
+        // 블록이 현재 페이지에 안 들어가면 새 페이지에서 시작
+        if (y + imgH > pageH - marginY && y > marginY) {
+          pdf.addPage();
+          y = marginY;
+        }
+        pdf.addImage(imgData, 'PNG', marginX, y, contentW, imgH);
+        y += imgH + 4;
+      } else {
+        // 한 페이지보다 큰 블록만 예외적으로 분할
+        if (y > marginY) {
+          pdf.addPage();
+          y = marginY;
+        }
+        const pages = Math.ceil(imgH / usableH);
+        for (let p = 0; p < pages; p++) {
+          if (p > 0) pdf.addPage();
+          pdf.addImage(imgData, 'PNG', marginX, marginY - p * usableH, contentW, imgH);
+        }
+        y = marginY + (imgH - (pages - 1) * usableH) + 4;
       }
     }
 
