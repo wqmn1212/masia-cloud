@@ -13,17 +13,26 @@ const fmtCNY = (v) => (v || v === 0) ? '¥' + Number(v).toLocaleString() : '-';
 
 const td = 'padding:8px;border:1px solid #e5e7eb;';
 
+const CURRENCY_SYMBOL = { USD: '$', CNY: '¥', KRW: '₩' };
+const fmtByCurrency = (v, cur) => {
+  if (v == null && v !== 0) return '-';
+  const sym = CURRENCY_SYMBOL[cur] || '$';
+  return sym + Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 });
+};
+
 function buildOptionRows(q) {
   const options = Array.isArray(q.quote_options) ? q.quote_options : [];
   return options.map((o, i) => {
-    const total = o.total_usd ?? (Number(o.quantity) || 0) * (Number(o.unit_price_usd) || 0);
+    const unit = o.unit_price ?? o.unit_price_usd;
+    const cur = o.unit_price != null ? (o.currency || 'USD') : 'USD';
+    const total = o.total_usd ?? (Number(o.quantity) || 0) * (Number(unit) || 0);
     return `
       <tr>
         <td style="${td}text-align:center;">${i + 1}</td>
         <td style="${td}">${o.option_name || ''}</td>
         <td style="${td}">${o.specification || ''}</td>
         <td style="${td}text-align:right;">${o.quantity ?? '-'}</td>
-        <td style="${td}text-align:right;">${fmtUSD(o.unit_price_usd)}</td>
+        <td style="${td}text-align:right;">${fmtByCurrency(unit, cur)}${cur !== 'USD' ? ` <span style="color:#94a3b8;font-size:9px;">${cur}</span>` : ''}</td>
         <td style="${td}text-align:right;">${fmtUSD(total)}</td>
       </tr>`;
   }).join('');
@@ -62,7 +71,7 @@ function buildHTML(q) {
   let lineRows, totalLabelHtml, currencyLabel;
 
   if (hasOptions) {
-    const totalUSD = q.options_total_usd ?? q.quote_options.reduce((s, o) => s + (o.total_usd ?? (Number(o.quantity) || 0) * (Number(o.unit_price_usd) || 0)), 0);
+    const totalUSD = q.options_total_usd ?? q.quote_options.reduce((s, o) => s + (o.total_usd ?? (Number(o.quantity) || 0) * (Number(o.unit_price ?? o.unit_price_usd) || 0)), 0);
     const totalKRW = usdToKrw ? Math.round(totalUSD * usdToKrw) : null;
     lineRows = buildOptionRows(q);
     currencyLabel = 'USD · US Dollar';
@@ -74,7 +83,7 @@ function buildHTML(q) {
       ${totalKRW ? `
       <div style="margin-top:8px; font-size:10.5px; color:#64748b; text-align:right; line-height:1.6;">
         참고 원화 환산: <strong style="color:#0f172a;">₩${totalKRW.toLocaleString()} KRW</strong><br/>
-        적용 환율: $1 = ₩${usdToKrw.toLocaleString()}${q.exchange_rate_date ? ` (기준일: ${q.exchange_rate_date})` : ''}
+        당일 적용 환율: $1 = ₩${usdToKrw.toLocaleString()}${Number(q.exchange_rate_krw) > 0 ? ` · ¥1 = ₩${Number(q.exchange_rate_krw).toLocaleString()}` : ''}${q.exchange_rate_date ? ` (기준일: ${q.exchange_rate_date})` : ''}
       </div>` : ''}`;
   } else {
     const base = (Number(q.factory_total_cost) || 0) + (Number(q.logistics_cost) || 0);

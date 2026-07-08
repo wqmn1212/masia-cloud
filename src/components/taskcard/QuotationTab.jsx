@@ -10,7 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Plus, FileText, Trash2, Upload, Loader2, ExternalLink, Pencil, Download } from 'lucide-react';
 import DropZone from '@/components/ui/drop-zone';
 import { generateQuotationPDF } from '@/lib/generateQuotationPDF';
-import QuoteOptionsEditor from '@/components/quotation/QuoteOptionsEditor';
+import QuoteOptionsEditor, { optionToUSD } from '@/components/quotation/QuoteOptionsEditor';
 
 const STATUS_META = {
   DRAFT:    { label: '초안',     color: 'bg-muted text-muted-foreground' },
@@ -194,14 +194,17 @@ export default function QuotationTab({ card, user }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const usdR = Number(form.exchange_rate_usd) || 0;
+    const cnyR = Number(form.exchange_rate_krw) || 0;
     const normalizedOptions = (form.quote_options || [])
-      .filter(o => o.option_name || o.unit_price_usd)
+      .filter(o => o.option_name || o.unit_price)
       .map(o => ({
         option_name: o.option_name || '',
         specification: o.specification || '',
         quantity: Number(o.quantity) || 0,
-        unit_price_usd: Number(o.unit_price_usd) || 0,
-        total_usd: (Number(o.quantity) || 0) * (Number(o.unit_price_usd) || 0),
+        unit_price: Number(o.unit_price) || 0,
+        currency: o.currency || 'USD',
+        total_usd: (Number(o.quantity) || 0) * optionToUSD(o.unit_price, o.currency, usdR, cnyR),
       }));
     const payload = {
       ...form,
@@ -242,7 +245,11 @@ export default function QuotationTab({ card, user }) {
       quote_title: q.quote_title || '',
       product_name: q.product_name || '',
       model_name: q.model_name || '',
-      quote_options: q.quote_options || [],
+      quote_options: (q.quote_options || []).map(o => (
+        o.unit_price == null && o.unit_price_usd != null
+          ? { ...o, unit_price: o.unit_price_usd, currency: 'USD' }
+          : o
+      )),
       factory_total_cost: fDisp === 0 ? '' : fDisp,
       factory_cost_currency: fCur,
       logistics_cost: lDisp === 0 ? '' : lDisp,
@@ -309,10 +316,17 @@ export default function QuotationTab({ card, user }) {
               options={form.quote_options}
               onChange={(opts) => setForm(f => ({ ...f, quote_options: opts }))}
               usdToKrw={Number(form.exchange_rate_usd) || 0}
+              cnyToKrw={Number(form.exchange_rate_krw) || 0}
             />
-            <div className="mt-2">
-              <Label className="text-[10px]">환율: $1 = ? 원 (KRW)</Label>
-              <Input type="number" step="0.01" value={form.exchange_rate_usd} onChange={e => setForm(f => ({ ...f, exchange_rate_usd: e.target.value }))} className="h-7 text-xs w-32" placeholder="예: 1380" />
+            <div className="mt-2 flex gap-3 flex-wrap">
+              <div>
+                <Label className="text-[10px]">당일 환율: $1 = ? 원</Label>
+                <Input type="number" step="0.01" value={form.exchange_rate_usd} onChange={e => setForm(f => ({ ...f, exchange_rate_usd: e.target.value }))} className="h-7 text-xs w-32" placeholder="예: 1380" />
+              </div>
+              <div>
+                <Label className="text-[10px]">당일 환율: ¥1 = ? 원</Label>
+                <Input type="number" step="0.01" value={form.exchange_rate_krw} onChange={e => setForm(f => ({ ...f, exchange_rate_krw: e.target.value }))} className="h-7 text-xs w-32" placeholder="예: 190" />
+              </div>
             </div>
           </div>
 

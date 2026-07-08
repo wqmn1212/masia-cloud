@@ -60,7 +60,7 @@
     },
     "quote_options": {
       "type": "array",
-      "description": "\uc81c\ud488 \uc635\uc158/\uc138\ubd80 \ud56d\ubaa9 \ub9ac\uc2a4\ud2b8 (USD \uae30\uc900)",
+      "description": "\uc81c\ud488 \uc635\uc158/\uc138\ubd80 \ud56d\ubaa9 \ub9ac\uc2a4\ud2b8 (\ud1b5\ud654\ubcc4 \uc785\ub825, USD \ud658\uc0b0 \uc800\uc7a5)",
       "items": {
         "type": "object",
         "properties": {
@@ -76,13 +76,26 @@
             "type": "number",
             "description": "\uc218\ub7c9"
           },
+          "unit_price": {
+            "type": "number",
+            "description": "\ub2e8\uac00 (\uc785\ub825 \ud1b5\ud654 \uae30\uc900)"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "USD",
+              "CNY",
+              "KRW"
+            ],
+            "description": "\ub2e8\uac00 \uc785\ub825 \ud1b5\ud654"
+          },
           "unit_price_usd": {
             "type": "number",
-            "description": "\ub2e8\uac00 (USD)"
+            "description": "(\ub808\uac70\uc2dc) \ub2e8\uac00 USD"
           },
           "total_usd": {
             "type": "number",
-            "description": "\uae08\uc561 (USD)"
+            "description": "\uae08\uc561 (USD \ud658\uc0b0)"
           }
         }
       }
@@ -188,11 +201,11 @@
     },
     "exchange_rate_usd": {
       "type": "number",
-      "description": "\uc1a1\uae08\uae30\uc900 \ud658\uc728: 1 USD = ? KRW"
+      "description": "\ub2f9\uc77c \ud658\uc728: 1 USD = ? KRW"
     },
     "exchange_rate_krw": {
       "type": "number",
-      "description": "\ud658\uc728: 1 CNY = ? KRW"
+      "description": "\ub2f9\uc77c \ud658\uc728: 1 CNY = ? KRW"
     },
     "status": {
       "type": "string",
