@@ -11,15 +11,15 @@ const CURRENCY_SYMBOL = { USD: '$', CNY: '¥', KRW: '₩' };
 const fmtByCurrency = (v, cur) => {
   if (v == null && v !== 0) return '-';
   const sym = CURRENCY_SYMBOL[cur] || '$';
-  return sym + Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return sym + Number(v).toLocaleString(undefined, { maximumFractionDigits: cur === 'KRW' ? 0 : 2 });
 };
 
 // 고객 PDF: 수수료를 각 항목 금액에 비례 배분하여 수수료 포함 가격으로 표시 (수수료 항목 미노출)
-function buildOptionRows(q, factor = 1) {
+function buildOptionRows(q, factor = 1, convert = (v) => v, cur = 'USD') {
   const options = Array.isArray(q.quote_options) ? q.quote_options : [];
   return options.map((o, i) => {
     const baseTotal = o.total_usd ?? (Number(o.quantity) || 0) * (Number(o.unit_price ?? o.unit_price_usd) || 0);
-    const total = baseTotal * factor;
+    const total = convert(baseTotal * factor);
     const qty = Number(o.quantity) || 0;
     const unit = qty > 0 ? total / qty : total;
     return `
@@ -28,8 +28,8 @@ function buildOptionRows(q, factor = 1) {
         <td style="${td}">${o.option_name || ''}</td>
         <td style="${td}">${o.specification || ''}</td>
         <td style="${td}text-align:right;">${o.quantity ?? '-'}</td>
-        <td style="${td}text-align:right;">${fmtUSD(unit)}</td>
-        <td style="${td}text-align:right;">${fmtUSD(total)}</td>
+        <td style="${td}text-align:right;">${fmtByCurrency(unit, cur)}</td>
+        <td style="${td}text-align:right;">${fmtByCurrency(total, cur)}</td>
       </tr>`;
   }).join('');
 }
@@ -66,26 +66,48 @@ function buildHTML(q) {
   const adv = Number(q.advance_payment_percent) || 30;
   const bal = Number(q.balance_payment_percent) || (100 - adv);
   const shipDays = Number(q.shipping_days) || 0;
-  let lineRows, totalLabelHtml, currencyLabel;
+  let lineRows, totalLabelHtml, currencyLabel, settleCur = 'USD';
 
   if (hasOptions) {
     const baseUSD = q.options_total_usd ?? q.quote_options.reduce((s, o) => s + (o.total_usd ?? (Number(o.quantity) || 0) * (Number(o.unit_price ?? o.unit_price_usd) || 0)), 0);
     const cnyToKrw = Number(q.exchange_rate_krw) || 0;
+    const usdToCny = (usdToKrw > 0 && cnyToKrw > 0) ? usdToKrw / cnyToKrw : 0;
     const feeUSD = (usdToKrw > 0 && cnyToKrw > 0) ? (Number(q.masir_fee_amount_cny) || 0) * cnyToKrw / usdToKrw : 0;
     const totalUSD = Number(q.final_price_usd) > 0 ? Number(q.final_price_usd) : baseUSD + feeUSD;
     const factor = baseUSD > 0 ? totalUSD / baseUSD : 1;
-    const totalKRW = usdToKrw ? Math.round(totalUSD * usdToKrw) : null;
-    lineRows = buildOptionRows(q, factor);
-    currencyLabel = 'USD · US Dollar';
+
+    // 옵션 입력 통화 기준으로 표시 통화 결정 (모두 동일 통화면 해당 통화, 혼합 시 USD)
+    const optCurs = [...new Set(q.quote_options.map(o => o.currency || 'USD'))];
+    const primary = optCurs.length === 1 ? optCurs[0] : 'USD';
+    settleCur = primary;
+    const fromUSD = (v, cur) =>
+      cur === 'USD' ? v
+      : cur === 'CNY' ? (usdToCny > 0 ? v * usdToCny : 0)
+      : (usdToKrw > 0 ? Math.round(v * usdToKrw) : 0);
+
+    lineRows = buildOptionRows(q, factor, (v) => fromUSD(v, primary), primary);
+    currencyLabel = primary === 'USD' ? 'USD · US Dollar' : primary === 'CNY' ? 'CNY · 人民币' : 'KRW · 대한민국 원';
+
+    const totalPrimary = fromUSD(totalUSD, primary);
+    const refParts = ['USD', 'CNY', 'KRW']
+      .filter(c => c !== primary)
+      .map(c => ({ c, v: fromUSD(totalUSD, c) }))
+      .filter(r => r.v > 0)
+      .map(r => `<strong style="color:#0f172a;">${fmtByCurrency(r.v, r.c)} ${r.c}</strong>`);
+    const rateParts = [];
+    if (usdToKrw > 0) rateParts.push(`$1 = ₩${usdToKrw.toLocaleString()}`);
+    if (cnyToKrw > 0) rateParts.push(`¥1 = ₩${cnyToKrw.toLocaleString()}`);
+    if (usdToCny > 0) rateParts.push(`$1 = ¥${usdToCny.toFixed(3)}`);
+
     totalLabelHtml = `
       <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#2563eb; color:#fff; border-radius:8px;">
         <span style="font-weight:700; letter-spacing:0.3px;">TOTAL · 합계</span>
-        <strong style="font-size:18px;">${fmtUSD(totalUSD)}</strong>
+        <strong style="font-size:18px;">${fmtByCurrency(totalPrimary, primary)}</strong>
       </div>
-      ${totalKRW ? `
+      ${refParts.length || rateParts.length ? `
       <div style="margin-top:8px; font-size:10.5px; color:#64748b; text-align:right; line-height:1.6;">
-        참고 원화 환산: <strong style="color:#0f172a;">₩${totalKRW.toLocaleString()} KRW</strong><br/>
-        당일 적용 환율: $1 = ₩${usdToKrw.toLocaleString()}${Number(q.exchange_rate_krw) > 0 ? ` · ¥1 = ₩${Number(q.exchange_rate_krw).toLocaleString()}` : ''}${q.exchange_rate_date ? ` (기준일: ${q.exchange_rate_date})` : ''}
+        ${refParts.length ? `참고 환산: ${refParts.join(' · ')}<br/>` : ''}
+        ${rateParts.length ? `당일 적용 환율: ${rateParts.join(' · ')}${q.exchange_rate_date ? ` (기준일: ${q.exchange_rate_date})` : ''}` : ''}
       </div>` : ''}`;
   } else {
     const base = (Number(q.factory_total_cost) || 0) + (Number(q.logistics_cost) || 0);
@@ -95,6 +117,7 @@ function buildHTML(q) {
     const krwTotal = krwRate ? Math.round(total * krwRate) : null;
     lineRows = buildLegacyRows(q, fee);
     currencyLabel = 'CNY · 人民币';
+    settleCur = 'CNY';
     totalLabelHtml = `
       <div style="display:flex; justify-content:space-between; padding:8px 12px; border-bottom:1px solid #e5e7eb;">
         <span style="color:#64748b;">Subtotal · 소계</span><strong>${fmtCNY(base)}</strong>
@@ -190,7 +213,7 @@ function buildHTML(q) {
         <div>2. 견적 유효기간 / Validity: 발행일로부터 30일 (30 days from issue date)</div>
         <div>3. 결제 조건 / Payment: 계약 시 선금 ${adv}%, 출하 전 잔금 ${bal}% (T/T)</div>
         <div>4. 납기 / Delivery: ${shipDays > 0 ? `발주 및 선금 입금 확인 후 ${shipDays}일 이내 출하 (${shipDays} days after order confirmation)` : '발주 및 선금 입금 확인 후 협의된 일정에 따름'}</div>
-        <div>5. 원화(KRW) 환산 금액은 참고용이며, 실제 결제는 USD 기준으로 진행됩니다.</div>
+        <div>5. 참고 환산 금액은 참고용이며, 실제 결제는 ${settleCur} 기준으로 진행됩니다.</div>
       </div>
 
       ${q.remarks ? `

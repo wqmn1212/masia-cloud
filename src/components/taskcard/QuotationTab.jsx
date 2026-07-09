@@ -360,6 +360,14 @@ export default function QuotationTab({ card, user }) {
                 <Label className="text-[10px]">당일 환율: ¥1 = ? 원</Label>
                 <Input type="number" step="0.01" value={form.exchange_rate_krw} onChange={e => setForm(f => ({ ...f, exchange_rate_krw: e.target.value }))} className="h-7 text-xs w-32" placeholder="예: 190" />
               </div>
+              <div>
+                <Label className="text-[10px]">자동 환산: $1 = ? 위안</Label>
+                <div className="h-7 flex items-center px-2 rounded-md border bg-muted/40 text-xs w-32 font-semibold">
+                  {Number(form.exchange_rate_usd) > 0 && Number(form.exchange_rate_krw) > 0
+                    ? `¥${(Number(form.exchange_rate_usd) / Number(form.exchange_rate_krw)).toFixed(3)}`
+                    : '—'}
+                </div>
+              </div>
             </div>
           </div>
 
