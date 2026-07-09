@@ -12,6 +12,7 @@ import { Plus, FileText, Trash2, Upload, Loader2, ExternalLink, Pencil, Download
 import DropZone from '@/components/ui/drop-zone';
 import { generateQuotationPDF } from '@/lib/generateQuotationPDF';
 import QuoteOptionsEditor, { optionToUSD } from '@/components/quotation/QuoteOptionsEditor';
+import { INCOTERMS_2020, LEGACY_INCOTERMS } from '@/lib/incoterms';
 
 const STATUS_META = {
   DRAFT:    { label: '초안',     color: 'bg-muted text-muted-foreground' },
@@ -371,8 +372,19 @@ export default function QuotationTab({ card, user }) {
               <Label className="text-xs">인코텀즈</Label>
               <Select value={form.incoterms} onValueChange={v => setForm(f => ({ ...f, incoterms: v }))}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {['EXW', 'FOB_SHANGHAI', 'FOB_GUANGZHOU', 'CIF'].map(v => <SelectItem key={v} value={v}>{v.replace('_', ' ')}</SelectItem>)}
+                <SelectContent className="max-h-72">
+                  <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground">모든 운송 수단 (Incoterms 2020)</div>
+                  {INCOTERMS_2020.filter(t => t.group === '모든 운송 수단').map(t => (
+                    <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>
+                  ))}
+                  <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground">해상 운송 전용</div>
+                  {INCOTERMS_2020.filter(t => t.group === '해상 운송 전용').map(t => (
+                    <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>
+                  ))}
+                  <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground">항구 지정 (레거시)</div>
+                  {LEGACY_INCOTERMS.map(t => (
+                    <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

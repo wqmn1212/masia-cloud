@@ -1,12 +1,6 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-
-const INCOTERMS_LABEL = {
-  EXW: 'EXW (Ex Works)',
-  FOB_SHANGHAI: 'FOB Shanghai',
-  FOB_GUANGZHOU: 'FOB Guangzhou',
-  CIF: 'CIF (Cost, Insurance & Freight)',
-};
+import { INCOTERMS_LABEL } from '@/lib/incoterms';
 
 const fmtUSD = (v) => (v || v === 0) ? '$' + Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '-';
 const fmtCNY = (v) => (v || v === 0) ? '¥' + Number(v).toLocaleString() : '-';

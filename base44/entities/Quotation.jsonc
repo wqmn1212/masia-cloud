@@ -40,11 +40,20 @@
       "type": "string",
       "enum": [
         "EXW",
+        "FCA",
+        "CPT",
+        "CIP",
+        "DAP",
+        "DPU",
+        "DDP",
+        "FAS",
+        "FOB",
+        "CFR",
+        "CIF",
         "FOB_SHANGHAI",
-        "FOB_GUANGZHOU",
-        "CIF"
+        "FOB_GUANGZHOU"
       ],
-      "description": "\uc778\ucf54\ud140\uc988"
+      "description": "\uc778\ucf54\ud140\uc988 (Incoterms 2020 \u2014 11\uac00\uc9c0 \uc870\uac74 + \ub808\uac70\uc2dc \ud56d\uad6c \uc9c0\uc815 FOB)"
     },
     "quote_title": {
       "type": "string",
