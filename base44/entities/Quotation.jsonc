@@ -118,13 +118,17 @@
             ],
             "description": "\ub2e8\uac00 \uc785\ub825 \ud1b5\ud654"
           },
+          "margin_percent": {
+            "type": "number",
+            "description": "\ud56d\ubaa9\ubcc4 \ub9c8\uc9c4\uc728 (%)"
+          },
           "unit_price_usd": {
             "type": "number",
             "description": "(\ub808\uac70\uc2dc) \ub2e8\uac00 USD"
           },
           "total_usd": {
             "type": "number",
-            "description": "\uae08\uc561 (USD \ud658\uc0b0)"
+            "description": "\uae08\uc561 (USD \ud658\uc0b0, \ub9c8\uc9c4 \ubbf8\ud3ec\ud568 \uc6d0\uac00)"
           }
         }
       }
@@ -135,7 +139,7 @@
     },
     "final_price_usd": {
       "type": "number",
-      "description": "\uc218\uc218\ub8cc \ud3ec\ud568 \ucd5c\uc885 \uc81c\uc548\uac00 (USD)"
+      "description": "\ud56d\ubaa9\ubcc4 \ub9c8\uc9c4 + \uc218\uc218\ub8cc \ud3ec\ud568 \ucd5c\uc885 \uc81c\uc548\uac00 (USD)"
     },
     "raw_file_url": {
       "type": "string",

@@ -19,7 +19,9 @@ function buildOptionRows(q, factor = 1, convert = (v) => v, cur = 'USD') {
   const options = Array.isArray(q.quote_options) ? q.quote_options : [];
   return options.map((o, i) => {
     const baseTotal = o.total_usd ?? (Number(o.quantity) || 0) * (Number(o.unit_price ?? o.unit_price_usd) || 0);
-    const total = convert(baseTotal * factor);
+    // 항목별 마진율 적용 (고객 표시 가격)
+    const withMargin = baseTotal * (1 + (Number(o.margin_percent) || 0) / 100);
+    const total = convert(withMargin * factor);
     const qty = Number(o.quantity) || 0;
     const unit = qty > 0 ? total / qty : total;
     return `
@@ -73,8 +75,13 @@ function buildHTML(q) {
     const cnyToKrw = Number(q.exchange_rate_krw) || 0;
     const usdToCny = (usdToKrw > 0 && cnyToKrw > 0) ? usdToKrw / cnyToKrw : 0;
     const feeUSD = (usdToKrw > 0 && cnyToKrw > 0) ? (Number(q.masir_fee_amount_cny) || 0) * cnyToKrw / usdToKrw : 0;
-    const totalUSD = Number(q.final_price_usd) > 0 ? Number(q.final_price_usd) : baseUSD + feeUSD;
-    const factor = baseUSD > 0 ? totalUSD / baseUSD : 1;
+    // 항목별 마진 포함 합계 — 전체 수수료는 마진 포함 금액에 비례 배분
+    const withMarginUSD = q.quote_options.reduce((s, o) => {
+      const b = o.total_usd ?? (Number(o.quantity) || 0) * (Number(o.unit_price ?? o.unit_price_usd) || 0);
+      return s + b * (1 + (Number(o.margin_percent) || 0) / 100);
+    }, 0);
+    const totalUSD = Number(q.final_price_usd) > 0 ? Number(q.final_price_usd) : withMarginUSD + feeUSD;
+    const factor = withMarginUSD > 0 ? totalUSD / withMarginUSD : 1;
 
     // 옵션 입력 통화 기준으로 표시 통화 결정 (모두 동일 통화면 해당 통화, 혼합 시 USD)
     const optCurs = [...new Set(q.quote_options.map(o => o.currency || 'USD'))];
