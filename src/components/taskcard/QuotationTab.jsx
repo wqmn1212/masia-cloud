@@ -184,32 +184,67 @@ export default function QuotationTab({ card, user }) {
     setForm(f => ({ ...f, raw_file_url: file_url }));
     setUploading(false);
 
-    // AI 파싱
+    // AI 파싱 — 견적 항목(옵션명/사양/수량/단가/통화)까지 자동 추출
     setParsing(true);
-    const schema = {
-      type: 'object',
-      properties: {
-        factory_name: { type: 'string' },
-        factory_total_cost: { type: 'number' },
-        logistics_cost: { type: 'number' },
-        final_client_price: { type: 'number' },
-        incoterms: { type: 'string' },
-      },
-    };
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `아래 견적서 파일에서 공장명, 총비용(CNY), 물류비(CNY), 고객 제안가, 인코텀즈를 추출하세요.`,
-      file_urls: [file_url],
-      response_json_schema: schema,
-    });
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    let result = null;
+    if (['xlsx', 'xls', 'csv'].includes(ext)) {
+      // 엑셀: 백엔드에서 시트 내용을 텍스트로 변환 후 AI 추출 (정확도 높음)
+      const res = await base44.functions.invoke('parseQuotationExcel', { file_url });
+      result = res.data?.data || null;
+    } else {
+      // PDF/이미지: 비전 AI로 직접 추출
+      result = await base44.integrations.Core.InvokeLLM({
+        prompt: '첨부된 견적서에서 공장/발행처 회사명, 제품명, 모델명, 인코텀즈, 물류비, 그리고 모든 개별 견적 항목(품목명 원문 그대로, 사양/규격, 수량, 단가 숫자, 통화 — ¥/元/RMB는 CNY, $는 USD, ₩는 KRW)을 추출하세요. 합계/총계 행은 항목에 포함하지 마세요. 실제 파일에 있는 내용만 추출하세요.',
+        file_urls: [file_url],
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            factory_name: { type: 'string' },
+            product_name: { type: 'string' },
+            model_name: { type: 'string' },
+            incoterms: { type: 'string' },
+            logistics_cost: { type: 'number' },
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  option_name: { type: 'string' },
+                  specification: { type: 'string' },
+                  quantity: { type: 'number' },
+                  unit_price: { type: 'number' },
+                  currency: { type: 'string', enum: ['USD', 'CNY', 'KRW'] },
+                },
+              },
+            },
+          },
+        },
+      });
+    }
     if (result) {
+      const items = (result.items || [])
+        .filter(it => it.option_name || it.unit_price)
+        .map(it => ({
+          option_name: it.option_name || '',
+          specification: it.specification || '',
+          quantity: Number(it.quantity) || 1,
+          unit_price: Number(it.unit_price) || 0,
+          currency: ['USD', 'CNY', 'KRW'].includes(it.currency) ? it.currency : 'CNY',
+          margin_percent: 0,
+        }));
       setForm(f => ({
         ...f,
         factory_name: result.factory_name || f.factory_name,
-        factory_total_cost: result.factory_total_cost || f.factory_total_cost,
+        product_name: result.product_name || f.product_name,
+        model_name: result.model_name || f.model_name,
         logistics_cost: result.logistics_cost || f.logistics_cost,
-        final_client_price: result.final_client_price || f.final_client_price,
-        incoterms: result.incoterms || f.incoterms,
+        incoterms: ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF'].includes(result.incoterms) ? result.incoterms : f.incoterms,
+        quote_options: items.length > 0 ? items : f.quote_options,
       }));
+      if (items.length > 0) toast({ title: `견적 항목 ${items.length}개 자동 입력 완료`, description: '옵션명·사양·수량·단가·통화를 확인 후 필요 시 수정하세요.' });
+    } else {
+      toast({ title: '자동 추출 실패', description: '파일 내용을 인식하지 못했습니다. 직접 입력해주세요.', variant: 'destructive' });
     }
     setParsing(false);
   };
