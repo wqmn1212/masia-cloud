@@ -1,0 +1,45 @@
+{
+  "description": "\ub9e4\uc77c \uc624\uc804 9\uc2dc(KST)\uc5d0 USD/CNY/KRW \ucd5c\uc2e0 \ud658\uc728\uc744 \uc870\ud68c\ud574 \uc800\uc7a5\ud569\ub2c8\ub2e4",
+  "name": "\uc77c\uc77c \ud658\uc728 \uc790\ub3d9 \uc5c5\ub370\uc774\ud2b8",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "daily_exchange_rate_update",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "update_rates": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "updateExchangeRates",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\ud658\uc728 \uc5c5\ub370\uc774\ud2b8",
+            "description": "\ucd5c\uc2e0 \ud658\uc728 \uc870\ud68c\u00b7\uc800\uc7a5"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 9 * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

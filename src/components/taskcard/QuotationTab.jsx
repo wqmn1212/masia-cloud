@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -109,6 +109,37 @@ export default function QuotationTab({ card, user }) {
     queryKey: ['quotations-by-card', card.id],
     queryFn: () => base44.entities.Quotation.filter({ card_id: card.id }, '-created_date'),
   });
+
+  // 최신 환율 자동 조회 — 오늘 환율이 없으면 백엔드에서 즉시 갱신
+  const { data: latestRate } = useQuery({
+    queryKey: ['latest-exchange-rate'],
+    staleTime: 1000 * 60 * 30,
+    queryFn: async () => {
+      const today = new Date().toLocaleDateString('en-CA');
+      let rows = await base44.entities.ExchangeRate.list('-rate_date', 1);
+      if (!rows[0] || rows[0].rate_date < today) {
+        try {
+          await base44.functions.invoke('updateExchangeRates', {});
+          rows = await base44.entities.ExchangeRate.list('-rate_date', 1);
+        } catch {
+          // 갱신 실패 시 마지막 저장 환율 사용
+        }
+      }
+      return rows[0] || null;
+    },
+  });
+
+  // 신규 견적 작성 시 최신 환율 자동 적용 (수정 모드에서는 기존 환율 유지)
+  useEffect(() => {
+    if (latestRate && !editingId) {
+      setForm(f => ({
+        ...f,
+        exchange_rate_date: latestRate.rate_date,
+        exchange_rate_usd: String(latestRate.usd_krw),
+        exchange_rate_krw: String(latestRate.cny_krw),
+      }));
+    }
+  }, [latestRate, editingId]);
 
   const resetForm = () => {
     setShowForm(false);
@@ -357,6 +388,9 @@ export default function QuotationTab({ card, user }) {
               usdToKrw={Number(form.exchange_rate_usd) || 0}
               cnyToKrw={Number(form.exchange_rate_krw) || 0}
             />
+            {latestRate && !editingId && (
+              <p className="text-[10px] text-accent mt-2">✓ {latestRate.rate_date} 기준 최신 환율 자동 적용 (매일 오전 9시 자동 갱신 · 직접 수정 가능)</p>
+            )}
             <div className="mt-2 flex gap-3 flex-wrap">
               <div>
                 <Label className="text-[10px]">당일 환율: $1 = ? 원</Label>

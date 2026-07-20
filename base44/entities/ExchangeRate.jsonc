@@ -1,0 +1,32 @@
+{
+  "name": "ExchangeRate",
+  "type": "object",
+  "properties": {
+    "rate_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\ud658\uc728 \uae30\uc900 \ub0a0\uc9dc (KST)"
+    },
+    "usd_krw": {
+      "type": "number",
+      "description": "1 USD = ? KRW"
+    },
+    "cny_krw": {
+      "type": "number",
+      "description": "1 CNY = ? KRW"
+    },
+    "usd_cny": {
+      "type": "number",
+      "description": "1 USD = ? CNY"
+    },
+    "source": {
+      "type": "string",
+      "description": "\ud658\uc728 \ub370\uc774\ud130 \ucd9c\ucc98"
+    }
+  },
+  "required": [
+    "rate_date",
+    "usd_krw",
+    "cny_krw"
+  ]
+}
