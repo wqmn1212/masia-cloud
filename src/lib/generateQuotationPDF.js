@@ -83,9 +83,10 @@ function buildHTML(q) {
     const totalUSD = Number(q.final_price_usd) > 0 ? Number(q.final_price_usd) : withMarginUSD + feeUSD;
     const factor = withMarginUSD > 0 ? totalUSD / withMarginUSD : 1;
 
-    // 옵션 입력 통화 기준으로 표시 통화 결정 (모두 동일 통화면 해당 통화, 혼합 시 USD)
+    // 견적 작성 시 선택한 최종 메인 통화로 모든 옵션 단가와 합계를 환산
     const optCurs = [...new Set(q.quote_options.map(o => o.currency || 'USD'))];
-    const primary = optCurs.length === 1 ? optCurs[0] : 'USD';
+    const inferredCurrency = optCurs.length === 1 ? optCurs[0] : 'USD';
+    const primary = ['USD', 'CNY', 'KRW'].includes(q.final_currency) ? q.final_currency : inferredCurrency;
     settleCur = primary;
     const fromUSD = (v, cur) =>
       cur === 'USD' ? v

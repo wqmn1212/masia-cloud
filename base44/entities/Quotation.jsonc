@@ -87,6 +87,16 @@
       "type": "number",
       "description": "\ucd9c\ud558\uc77c (\ubc1c\uc8fc \uc2dc\uc810\uc73c\ub85c\ubd80\ud130 N\uc77c)"
     },
+    "final_currency": {
+      "type": "string",
+      "enum": [
+        "USD",
+        "CNY",
+        "KRW"
+      ],
+      "default": "USD",
+      "description": "\uace0\uac1d PDF \ucd5c\uc885 \uba54\uc778 \ud45c\uc2dc \ud1b5\ud654"
+    },
     "quote_options": {
       "type": "array",
       "description": "\uc81c\ud488 \uc635\uc158/\uc138\ubd80 \ud56d\ubaa9 \ub9ac\uc2a4\ud2b8 (\ud1b5\ud654\ubcc4 \uc785\ub825, USD \ud658\uc0b0 \uc800\uc7a5)",

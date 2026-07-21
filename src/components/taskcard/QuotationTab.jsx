@@ -30,6 +30,7 @@ const emptyForm = {
   product_name: '',
   model_name: '',
   quote_options: [],
+  final_currency: 'USD',
   factory_total_cost: '',
   factory_cost_currency: 'CNY',
   logistics_cost: '',
@@ -350,6 +351,7 @@ export default function QuotationTab({ card, user }) {
           ? { ...o, unit_price: o.unit_price_usd, currency: 'USD' }
           : o
       )),
+      final_currency: q.final_currency || 'USD',
       factory_total_cost: fDisp === 0 ? '' : fDisp,
       factory_cost_currency: fCur,
       logistics_cost: lDisp === 0 ? '' : lDisp,
@@ -444,6 +446,19 @@ export default function QuotationTab({ card, user }) {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div>
+            <Label className="text-xs">PDF 최종 메인 통화</Label>
+            <Select value={form.final_currency} onValueChange={v => setForm(f => ({ ...f, final_currency: v }))}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="USD" className="text-xs">$ USD · 달러</SelectItem>
+                <SelectItem value="CNY" className="text-xs">¥ CNY · 위안</SelectItem>
+                <SelectItem value="KRW" className="text-xs">₩ KRW · 원</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground mt-1">PDF 다운로드 시 모든 옵션 단가와 합계가 이 통화로 환산됩니다.</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
