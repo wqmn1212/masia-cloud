@@ -12,13 +12,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: 마스터 관리자만 접근 가능' }, { status: 403 });
     }
 
+    if (user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const serviceAdmins = await base44.asServiceRole.entities.User.filter({ account_tier: 'service' });
-    const pending = await base44.asServiceRole.entities.PendingInvitation.filter({
-      account_tier: 'service',
-      claimed: false,
-    });
+    const pending = await base44.asServiceRole.entities.PendingInvitation.filter({ account_tier: 'service', claimed: false });
+    const tenants = await base44.asServiceRole.entities.Tenant.list('-created_date', 200);
 
-    return Response.json({ serviceAdmins, pending });
+    return Response.json({ serviceAdmins, pending, tenants });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

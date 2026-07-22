@@ -1,0 +1,31 @@
+{
+  "name": "Tenant",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "\ud300/\ud68c\uc0ac \uc774\ub984"
+    },
+    "slug": {
+      "type": "string",
+      "description": "\ud300 \uace0\uc720 \uc2dd\ubcc4\uc790"
+    },
+    "master_user_id": {
+      "type": "string",
+      "description": "\ud300 \ub9c8\uc2a4\ud130 User ID"
+    },
+    "master_email": {
+      "type": "string",
+      "description": "\ud300 \ub9c8\uc2a4\ud130 \uc774\uba54\uc77c"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "\ud300 \ud65c\uc131 \uc0c1\ud0dc"
+    }
+  },
+  "required": [
+    "name",
+    "slug"
+  ]
+}

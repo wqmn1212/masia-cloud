@@ -1,8 +1,9 @@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { User } from 'lucide-react';
+import { KeyRound, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export default function UserAccountRow({ user, onToggle, disabled }) {
+export default function UserAccountRow({ user, onToggle, onPermissions, disabled }) {
   const active = user.is_active !== false;
   return (
     <div className="flex items-center gap-3 p-3 hover:bg-muted/40 transition-colors">
@@ -18,6 +19,11 @@ export default function UserAccountRow({ user, onToggle, disabled }) {
         </div>
         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
       </div>
+      {onPermissions && (
+        <Button variant="outline" size="sm" onClick={onPermissions}>
+          <KeyRound className="w-3.5 h-3.5" /> 메뉴 권한
+        </Button>
+      )}
       <Badge
         variant="outline"
         className={active

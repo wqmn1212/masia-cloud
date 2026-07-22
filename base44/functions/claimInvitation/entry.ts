@@ -27,14 +27,17 @@ Deno.serve(async (req) => {
     const invite = invites[0];
     const updateData = {
       account_tier: invite.account_tier,
+      tenant_id: invite.tenant_id,
+      allowed_tabs: invite.allowed_tabs || [],
       is_active: true,
       account_label: invite.account_label || '',
     };
-    if (invite.service_admin_id) {
-      updateData.service_admin_id = invite.service_admin_id;
-    }
+    if (invite.service_admin_id) updateData.service_admin_id = invite.service_admin_id;
 
     await base44.asServiceRole.entities.User.update(user.id, updateData);
+    if (invite.account_tier === 'service') {
+      await base44.asServiceRole.entities.Tenant.update(invite.tenant_id, { master_user_id: user.id });
+    }
     await base44.asServiceRole.entities.PendingInvitation.update(invite.id, { claimed: true });
 
     return Response.json({ ok: true, claimed: true, tier: invite.account_tier });

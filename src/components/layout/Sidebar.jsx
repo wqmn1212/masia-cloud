@@ -7,6 +7,7 @@ import {
   ShieldCheck, UserCog
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { canAccessPath } from '@/lib/menuPermissions';
 
 const navSectionDefs = [
   {
@@ -58,6 +59,12 @@ export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobil
     );
   } else {
     navSections = navSectionDefs;
+  }
+
+  if (user?.account_tier === 'sub') {
+    navSections = navSections
+      .map(section => ({ ...section, items: section.items.filter(item => canAccessPath(user, item.path)) }))
+      .filter(section => section.items.length > 0);
   }
 
   return (

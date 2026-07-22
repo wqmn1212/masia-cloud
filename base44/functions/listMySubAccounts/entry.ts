@@ -13,11 +13,11 @@ Deno.serve(async (req) => {
     }
 
     const subs = await base44.asServiceRole.entities.User.filter({
-      service_admin_id: user.id,
+      tenant_id: user.tenant_id,
       account_tier: 'sub',
     });
     const pending = await base44.asServiceRole.entities.PendingInvitation.filter({
-      service_admin_id: user.id,
+      tenant_id: user.tenant_id,
       account_tier: 'sub',
       claimed: false,
     });

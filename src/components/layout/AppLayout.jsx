@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
@@ -7,11 +7,14 @@ import { cn } from '@/lib/utils';
 import { LanguageProvider } from '@/lib/LanguageContext';
 import { base44 } from '@/api/base44Client';
 import AccountInactive from '@/components/AccountInactive';
+import AccessDenied from '@/components/AccessDenied';
+import { canAccessPath } from '@/lib/menuPermissions';
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [claimChecked, setClaimChecked] = useState(false);
+  const location = useLocation();
 
   const { data: user, refetch } = useQuery({
     queryKey: ['current-user'],
@@ -53,7 +56,7 @@ export default function AppLayout() {
         )}>
           <TopBar onMenuClick={() => setMobileOpen(true)} />
           <main className="p-3 md:p-6">
-            <Outlet />
+            {canAccessPath(user, location.pathname) ? <Outlet /> : <AccessDenied />}
           </main>
         </div>
       </div>

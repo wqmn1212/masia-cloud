@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     const isServiceTogglingOwnSub =
       user.account_tier === 'service' &&
       target.account_tier === 'sub' &&
-      target.service_admin_id === user.id;
+      target.tenant_id === user.tenant_id;
 
     if (!isMasterTogglingService && !isServiceTogglingOwnSub) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });

@@ -9,17 +9,17 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const masters = await base44.asServiceRole.entities.User.filter({ account_tier: 'master' });
-
-    if (masters.length > 0) {
-      if (masters[0].id === user.id) {
-        return Response.json({ status: 'is_master' });
-      }
-      return Response.json({ status: 'master_exists' });
+    const masterEmail = 'makeforyou7@gmail.com';
+    if (user.email.toLowerCase() !== masterEmail || user.role !== 'admin') {
+      return Response.json({ status: 'not_eligible' });
     }
 
-    if (user.role !== 'admin') {
-      return Response.json({ status: 'not_eligible' });
+    const masters = await base44.asServiceRole.entities.User.filter({ account_tier: 'master' });
+    if (masters.length > 0 && masters[0].id !== user.id) {
+      return Response.json({ status: 'master_exists' });
+    }
+    if (user.account_tier === 'master') {
+      return Response.json({ status: 'is_master' });
     }
 
     await base44.asServiceRole.entities.User.update(user.id, {

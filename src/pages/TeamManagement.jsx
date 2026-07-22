@@ -9,12 +9,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Plus, UserCog, Loader2, AlertTriangle, Mail, Users } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import UserAccountRow from '@/components/admin/UserAccountRow';
+import PermissionPicker from '@/components/admin/PermissionPicker';
 
 export default function TeamManagement() {
   const [me, setMe] = useState(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [label, setLabel] = useState('');
+  const [allowedTabs, setAllowedTabs] = useState([]);
+  const [permissionUser, setPermissionUser] = useState(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -37,6 +40,7 @@ export default function TeamManagement() {
       setInviteOpen(false);
       setEmail('');
       setLabel('');
+      setAllowedTabs([]);
       toast({
         title: '초대 완료',
         description: res.data?.pending
@@ -46,6 +50,16 @@ export default function TeamManagement() {
     },
     onError: (err) =>
       toast({ title: '초대 실패', description: String(err.message || err), variant: 'destructive' }),
+  });
+
+  const permissionMutation = useMutation({
+    mutationFn: ({ id, allowed_tabs }) => base44.functions.invoke('updateMemberPermissions', { target_user_id: id, allowed_tabs }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-sub-accounts'] });
+      setPermissionUser(null);
+      toast({ title: '메뉴 권한 저장 완료' });
+    },
+    onError: (err) => toast({ title: '권한 저장 실패', description: String(err.message || err), variant: 'destructive' }),
   });
 
   const toggleMutation = useMutation({
@@ -122,6 +136,7 @@ export default function TeamManagement() {
                 key={u.id}
                 user={u}
                 onToggle={(is_active) => toggleMutation.mutate({ id: u.id, is_active })}
+                onPermissions={() => setPermissionUser({ ...u, allowed_tabs: u.allowed_tabs || [] })}
                 disabled={toggleMutation.isPending}
               />
             ))
@@ -161,7 +176,7 @@ export default function TeamManagement() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              inviteMutation.mutate({ email, account_label: label });
+              inviteMutation.mutate({ email, account_label: label, allowed_tabs: allowedTabs });
             }}
             className="space-y-4 pt-2"
           >
@@ -183,6 +198,10 @@ export default function TeamManagement() {
                 placeholder="예: 영업팀 김OO"
               />
             </div>
+            <div>
+              <Label className="text-xs">접근 허용 메뉴</Label>
+              <PermissionPicker value={allowedTabs} onChange={setAllowedTabs} />
+            </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setInviteOpen(false)}>취소</Button>
               <Button type="submit" disabled={inviteMutation.isPending}>
@@ -191,6 +210,28 @@ export default function TeamManagement() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!permissionUser} onOpenChange={(open) => !open && setPermissionUser(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>팀원 메뉴 권한</DialogTitle></DialogHeader>
+          {permissionUser && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">{permissionUser.email}</p>
+              <PermissionPicker
+                value={permissionUser.allowed_tabs}
+                onChange={(allowed_tabs) => setPermissionUser({ ...permissionUser, allowed_tabs })}
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setPermissionUser(null)}>취소</Button>
+                <Button
+                  disabled={permissionMutation.isPending}
+                  onClick={() => permissionMutation.mutate({ id: permissionUser.id, allowed_tabs: permissionUser.allowed_tabs })}
+                >저장</Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

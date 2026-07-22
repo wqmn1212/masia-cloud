@@ -93,12 +93,12 @@ export default function MasterAdminDashboard() {
             <Shield className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">마스터 관리자 대시보드</h1>
-            <p className="text-sm text-muted-foreground">서비스 관리자 계정을 초대하고 활성 상태를 관리합니다</p>
+            <h1 className="text-2xl font-bold tracking-tight">SaaS 마스터 관리</h1>
+            <p className="text-sm text-muted-foreground">새 팀을 만들고 각 팀의 마스터 계정을 지정합니다</p>
           </div>
         </div>
         <Button onClick={() => setInviteOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />서비스 관리자 초대
+          <Plus className="w-4 h-4 mr-2" />새 팀 만들기
         </Button>
       </div>
 
@@ -111,7 +111,7 @@ export default function MasterAdminDashboard() {
       )}
 
       <div className="grid grid-cols-3 gap-4">
-        <StatBox label="전체 서비스 관리자" value={serviceAdmins.length} />
+        <StatBox label="전체 팀" value={data?.tenants?.length || 0} />
         <StatBox label="활성 계정" value={activeCount} />
         <StatBox label="대기 중인 초대" value={pending.length} />
       </div>
@@ -119,7 +119,7 @@ export default function MasterAdminDashboard() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Users className="w-4 h-4" />서비스 관리자 ({serviceAdmins.length})
+            <Users className="w-4 h-4" />팀 마스터 ({serviceAdmins.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0 divide-y">
@@ -127,7 +127,7 @@ export default function MasterAdminDashboard() {
             <div className="p-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></div>
           ) : serviceAdmins.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">
-              등록된 서비스 관리자가 없습니다
+              지정된 팀 마스터가 없습니다
             </div>
           ) : (
             serviceAdmins.map((u) => (
@@ -169,12 +169,12 @@ export default function MasterAdminDashboard() {
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>서비스 관리자 초대</DialogTitle>
+            <DialogTitle>새 팀 및 팀 마스터 생성</DialogTitle>
           </DialogHeader>
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              inviteMutation.mutate({ email, account_label: label });
+              inviteMutation.mutate({ email, team_name: label });
             }}
             className="space-y-4 pt-2"
           >
@@ -189,18 +189,19 @@ export default function MasterAdminDashboard() {
               />
             </div>
             <div>
-              <Label className="text-xs">회사/팀 이름 (선택)</Label>
+              <Label className="text-xs">팀/회사 이름</Label>
               <Input
+                required
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
-                placeholder="예: 마시아 코리아"
+                placeholder="예: MASIA"
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setInviteOpen(false)}>취소</Button>
               <Button type="submit" disabled={inviteMutation.isPending}>
                 {inviteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                초대 발송
+                팀 생성 및 초대
               </Button>
             </div>
           </form>

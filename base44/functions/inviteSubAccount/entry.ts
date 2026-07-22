@@ -15,28 +15,28 @@ Deno.serve(async (req) => {
       return Response.json({ error: '비활성 계정입니다' }, { status: 403 });
     }
 
-    const { email, account_label } = await req.json();
-    if (!email) {
-      return Response.json({ error: '이메일이 필요합니다' }, { status: 400 });
+    const { email, account_label, allowed_tabs = [] } = await req.json();
+    if (!email || !user.tenant_id) {
+      return Response.json({ error: '이메일 또는 소속 팀 정보가 없습니다' }, { status: 400 });
     }
 
-    await base44.users.inviteUser(email, 'user');
-
-    const found = await base44.asServiceRole.entities.User.filter({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    const found = await base44.asServiceRole.entities.User.filter({ email: normalizedEmail });
     if (found.length > 0) {
       await base44.asServiceRole.entities.User.update(found[0].id, {
-        account_tier: 'sub',
-        service_admin_id: user.id,
-        is_active: true,
-        account_label: account_label || '',
+        account_tier: 'sub', tenant_id: user.tenant_id, service_admin_id: user.id,
+        allowed_tabs, is_active: true, account_label: account_label || '',
       });
       return Response.json({ ok: true, applied: true });
     }
 
+    await base44.users.inviteUser(normalizedEmail, 'user');
     await base44.asServiceRole.entities.PendingInvitation.create({
-      email,
+      email: normalizedEmail,
       account_tier: 'sub',
+      tenant_id: user.tenant_id,
       service_admin_id: user.id,
+      allowed_tabs,
       account_label: account_label || '',
       claimed: false,
     });
