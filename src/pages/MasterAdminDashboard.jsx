@@ -43,8 +43,8 @@ export default function MasterAdminDashboard() {
       toast({
         title: '초대 완료',
         description: res.data?.pending
-          ? '초대장이 발송되었습니다. 사용자가 가입하면 자동으로 서비스 관리자로 지정됩니다.'
-          : '서비스 관리자로 등록되었습니다.',
+          ? '초대장이 발송되었습니다. 가입하면 해당 팀의 팀 마스터로 자동 지정됩니다.'
+          : '팀 마스터 지정이 완료되었습니다.',
       });
     },
     onError: (err) =>
@@ -74,8 +74,8 @@ export default function MasterAdminDashboard() {
         <p className="mt-4 text-lg font-semibold">접근 권한이 없습니다</p>
         <p className="text-sm text-muted-foreground mt-1">
           {setupStatus === 'master_exists'
-            ? '이미 다른 사용자가 마스터 관리자로 지정되어 있습니다.'
-            : '마스터 관리자 권한이 없습니다.'}
+            ? '이미 다른 사용자가 SaaS 마스터로 지정되어 있습니다.'
+            : 'SaaS 마스터 권한이 없습니다.'}
         </p>
       </Card>
     );
@@ -112,7 +112,7 @@ export default function MasterAdminDashboard() {
 
       <div className="grid grid-cols-3 gap-4">
         <StatBox label="전체 팀" value={data?.tenants?.length || 0} />
-        <StatBox label="활성 계정" value={activeCount} />
+        <StatBox label="활성 팀 마스터" value={activeCount} />
         <StatBox label="대기 중인 초대" value={pending.length} />
       </div>
 
