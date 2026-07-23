@@ -15,17 +15,21 @@ Deno.serve(async (req) => {
       return Response.json({ error: '비활성 계정입니다' }, { status: 403 });
     }
 
-    const { email, account_label, allowed_tabs = [] } = await req.json();
-    if (!email || !user.tenant_id) {
+    const { email, account_label, team_role_id } = await req.json();
+    if (!email || !user.tenant_id || !team_role_id) {
       return Response.json({ error: '이메일 또는 소속 팀 정보가 없습니다' }, { status: 400 });
     }
 
+    const roles = await base44.asServiceRole.entities.TeamRole.filter({ id: team_role_id, tenant_id: user.tenant_id });
+    const role = roles[0];
+    if (!role) return Response.json({ error: '같은 팀의 역할을 선택하세요' }, { status: 403 });
+    const allowed_tabs = role.menu_paths || [];
     const normalizedEmail = email.trim().toLowerCase();
     const found = await base44.asServiceRole.entities.User.filter({ email: normalizedEmail });
     if (found.length > 0) {
       await base44.asServiceRole.entities.User.update(found[0].id, {
         account_tier: 'sub', tenant_id: user.tenant_id, service_admin_id: user.id,
-        allowed_tabs, is_active: true, account_label: account_label || '',
+        team_role_id: role.id, team_role_name: role.name, allowed_tabs, is_active: true, account_label: account_label || '',
       });
       return Response.json({ ok: true, applied: true });
     }
@@ -36,6 +40,8 @@ Deno.serve(async (req) => {
       account_tier: 'sub',
       tenant_id: user.tenant_id,
       service_admin_id: user.id,
+      team_role_id: role.id,
+      team_role_name: role.name,
       allowed_tabs,
       account_label: account_label || '',
       claimed: false,

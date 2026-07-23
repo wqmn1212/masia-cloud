@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,19 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, UserCog, Loader2, AlertTriangle, Mail, Users } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import UserAccountRow from '@/components/admin/UserAccountRow';
-import PermissionPicker from '@/components/admin/PermissionPicker';
 
 export default function TeamManagement() {
   const [me, setMe] = useState(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [label, setLabel] = useState('');
-  const [allowedTabs, setAllowedTabs] = useState([]);
-  const [permissionUser, setPermissionUser] = useState(null);
+  const [roleId, setRoleId] = useState('');
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -32,6 +33,11 @@ export default function TeamManagement() {
     queryFn: async () => (await base44.functions.invoke('listMySubAccounts', {})).data,
     enabled: !!isServiceAdmin,
   });
+  const { data: roleData } = useQuery({
+    queryKey: ['team-roles'],
+    queryFn: async () => (await base44.functions.invoke('manageTeamRoles', { action: 'list' })).data,
+    enabled: !!isServiceAdmin,
+  });
 
   const inviteMutation = useMutation({
     mutationFn: (body) => base44.functions.invoke('inviteSubAccount', body),
@@ -40,7 +46,7 @@ export default function TeamManagement() {
       setInviteOpen(false);
       setEmail('');
       setLabel('');
-      setAllowedTabs([]);
+      setRoleId('');
       toast({
         title: '초대 완료',
         description: res.data?.pending
@@ -50,16 +56,6 @@ export default function TeamManagement() {
     },
     onError: (err) =>
       toast({ title: '초대 실패', description: String(err.message || err), variant: 'destructive' }),
-  });
-
-  const permissionMutation = useMutation({
-    mutationFn: ({ id, allowed_tabs, team_role }) => base44.functions.invoke('updateMemberPermissions', { target_user_id: id, allowed_tabs, team_role: team_role || 'member' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-sub-accounts'] });
-      setPermissionUser(null);
-      toast({ title: '메뉴 권한 저장 완료' });
-    },
-    onError: (err) => toast({ title: '권한 저장 실패', description: String(err.message || err), variant: 'destructive' }),
   });
 
   const toggleMutation = useMutation({
@@ -92,6 +88,7 @@ export default function TeamManagement() {
 
   const subs = data?.subs || [];
   const pending = data?.pending || [];
+  const roles = roleData?.roles || [];
   const activeCount = subs.filter((u) => u.is_active !== false).length;
 
   return (
@@ -136,7 +133,7 @@ export default function TeamManagement() {
                 key={u.id}
                 user={u}
                 onToggle={(is_active) => toggleMutation.mutate({ id: u.id, is_active })}
-                onPermissions={() => setPermissionUser({ ...u, allowed_tabs: u.allowed_tabs || [] })}
+                onPermissions={() => navigate('/user-permissions')}
                 disabled={toggleMutation.isPending}
               />
             ))
@@ -176,7 +173,7 @@ export default function TeamManagement() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              inviteMutation.mutate({ email, account_label: label, allowed_tabs: allowedTabs });
+              inviteMutation.mutate({ email, account_label: label, team_role_id: roleId });
             }}
             className="space-y-4 pt-2"
           >
@@ -199,12 +196,16 @@ export default function TeamManagement() {
               />
             </div>
             <div>
-              <Label className="text-xs">접근 허용 메뉴</Label>
-              <PermissionPicker value={allowedTabs} onChange={setAllowedTabs} />
+              <Label className="text-xs">팀 역할</Label>
+              <Select value={roleId} onValueChange={setRoleId} required>
+                <SelectTrigger><SelectValue placeholder="역할을 선택하세요" /></SelectTrigger>
+                <SelectContent>{roles.map((role) => <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>)}</SelectContent>
+              </Select>
+              {roles.length === 0 && <p className="mt-1 text-xs text-destructive">사용자 권한 메뉴에서 역할을 먼저 만들어 주세요.</p>}
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setInviteOpen(false)}>취소</Button>
-              <Button type="submit" disabled={inviteMutation.isPending}>
+              <Button type="submit" disabled={inviteMutation.isPending || !roleId}>
                 {inviteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 초대 발송
               </Button>
@@ -213,27 +214,6 @@ export default function TeamManagement() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!permissionUser} onOpenChange={(open) => !open && setPermissionUser(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>팀원 메뉴 권한</DialogTitle></DialogHeader>
-          {permissionUser && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">{permissionUser.email}</p>
-              <PermissionPicker
-                value={permissionUser.allowed_tabs}
-                onChange={(allowed_tabs) => setPermissionUser({ ...permissionUser, allowed_tabs })}
-              />
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setPermissionUser(null)}>취소</Button>
-                <Button
-                  disabled={permissionMutation.isPending}
-                  onClick={() => permissionMutation.mutate({ id: permissionUser.id, allowed_tabs: permissionUser.allowed_tabs, team_role: permissionUser.team_role })}
-                >저장</Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

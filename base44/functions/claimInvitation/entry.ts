@@ -28,6 +28,8 @@ Deno.serve(async (req) => {
     const updateData = {
       account_tier: invite.account_tier,
       tenant_id: invite.tenant_id,
+      team_role_id: invite.team_role_id || '',
+      team_role_name: invite.team_role_name || '',
       allowed_tabs: invite.allowed_tabs || [],
       is_active: true,
       account_label: invite.account_label || '',

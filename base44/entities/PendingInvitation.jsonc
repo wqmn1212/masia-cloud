@@ -20,14 +20,22 @@
     },
     "service_admin_id": {
       "type": "string",
-      "description": "\uc18c\uc18d \ud300 \ub9c8\uc2a4\ud130 ID"
+      "description": "\uc18c\uc18d \ud300 \uad00\ub9ac\uc790 ID"
+    },
+    "team_role_id": {
+      "type": "string",
+      "description": "\ucd08\ub300 \uc2dc \ubc30\uc815\ub41c \uc5ed\ud560 ID"
+    },
+    "team_role_name": {
+      "type": "string",
+      "description": "\ucd08\ub300 \uc2dc \ubc30\uc815\ub41c \uc5ed\ud560\uba85"
     },
     "allowed_tabs": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "\ucd08\ub300 \uc2dc \ubd80\uc5ec\ub41c \uba54\ub274 \uad8c\ud55c"
+      "description": "\uc5ed\ud560\uc5d0\uc11c \ub3d9\uae30\ud654\ub41c \uba54\ub274 \uad8c\ud55c"
     },
     "account_label": {
       "type": "string",

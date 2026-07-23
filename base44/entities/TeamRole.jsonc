@@ -1,0 +1,51 @@
+{
+  "name": "TeamRole",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc5ed\ud560\uc774 \uc18d\ud55c \ud300 ID"
+    },
+    "name": {
+      "type": "string",
+      "description": "\uc5ed\ud560\uba85"
+    },
+    "description": {
+      "type": "string",
+      "description": "\uc5ed\ud560 \uc124\uba85"
+    },
+    "menu_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\uc5ed\ud560\uc5d0 \ud5c8\uc6a9\ub41c \uba54\ub274 \uacbd\ub85c"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
