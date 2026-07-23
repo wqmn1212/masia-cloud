@@ -53,7 +53,7 @@ export default function TeamManagement() {
   });
 
   const permissionMutation = useMutation({
-    mutationFn: ({ id, allowed_tabs }) => base44.functions.invoke('updateMemberPermissions', { target_user_id: id, allowed_tabs }),
+    mutationFn: ({ id, allowed_tabs, team_role }) => base44.functions.invoke('updateMemberPermissions', { target_user_id: id, allowed_tabs, team_role: team_role || 'member' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-sub-accounts'] });
       setPermissionUser(null);
@@ -227,7 +227,7 @@ export default function TeamManagement() {
                 <Button variant="outline" onClick={() => setPermissionUser(null)}>취소</Button>
                 <Button
                   disabled={permissionMutation.isPending}
-                  onClick={() => permissionMutation.mutate({ id: permissionUser.id, allowed_tabs: permissionUser.allowed_tabs })}
+                  onClick={() => permissionMutation.mutate({ id: permissionUser.id, allowed_tabs: permissionUser.allowed_tabs, team_role: permissionUser.team_role })}
                 >저장</Button>
               </div>
             </div>

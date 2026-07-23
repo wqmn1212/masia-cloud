@@ -22,6 +22,8 @@ import FactoryDashboard from '@/pages/FactoryDashboard';
 import ClientDashboard from '@/pages/ClientDashboard';
 import MasterAdminDashboard from '@/pages/MasterAdminDashboard';
 import TeamManagement from '@/pages/TeamManagement';
+import UserPermissions from '@/pages/UserPermissions';
+import FinancialReport from '@/pages/FinancialReport';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -61,6 +63,8 @@ const AuthenticatedApp = () => {
         <Route path="/clients/:clientId/dashboard" element={<ClientDashboard />} />
         <Route path="/master-admin" element={<MasterAdminDashboard />} />
         <Route path="/team" element={<TeamManagement />} />
+        <Route path="/user-permissions" element={<UserPermissions />} />
+        <Route path="/financial-report" element={<FinancialReport />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

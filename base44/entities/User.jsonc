@@ -19,6 +19,16 @@
       "type": "string",
       "description": "\ud300 \ub9c8\uc2a4\ud130 User ID"
     },
+    "team_role": {
+      "type": "string",
+      "enum": [
+        "manager",
+        "member",
+        "viewer"
+      ],
+      "default": "member",
+      "description": "\ud300 \ub0b4 \uc5ed\ud560"
+    },
     "allowed_tabs": {
       "type": "array",
       "items": {

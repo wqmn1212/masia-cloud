@@ -4,7 +4,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import {
   LayoutDashboard, Factory, FileText, Shield, Users,
   Clock, Wrench, Package, ChevronLeft, ChevronRight, Cloud, Calculator, ListChecks, Kanban,
-  ShieldCheck, UserCog
+  ShieldCheck, UserCog, BarChart3, KeyRound
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { canAccessPath } from '@/lib/menuPermissions';
@@ -15,6 +15,7 @@ const navSectionDefs = [
     items: [
       { path: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
       { path: '/quotations', icon: FileText, labelKey: 'nav.quotations' },
+      { path: '/financial-report', icon: BarChart3, label: '재무 리포트' },
       { path: '/task-board', icon: Kanban, labelKey: 'nav.taskboard' },
       { path: '/settlement', icon: Calculator, labelKey: 'nav.settlement' },
       { path: '/knowledge', icon: Shield, labelKey: 'nav.knowledge' },
@@ -54,7 +55,7 @@ export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobil
   } else if (user?.account_tier === 'service') {
     navSections = navSectionDefs.map((sec, i) =>
       i === 0
-        ? { ...sec, items: [...sec.items, { path: '/team', icon: UserCog, label: '팀 관리' }] }
+        ? { ...sec, items: [...sec.items, { path: '/team', icon: UserCog, label: '팀 관리' }, { path: '/user-permissions', icon: KeyRound, label: '사용자 권한' }] }
         : sec
     );
   } else {

@@ -1,6 +1,7 @@
 export const TEAM_MENU_OPTIONS = [
   { path: '/', label: '대시보드' },
   { path: '/quotations', label: '견적 관리' },
+  { path: '/financial-report', label: '재무 리포트' },
   { path: '/task-board', label: '업무 보드' },
   { path: '/settlement', label: '정산 관리' },
   { path: '/knowledge', label: '지식 관리' },
