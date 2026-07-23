@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -7,8 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/use-toast';
-import { Save, Lightbulb, Plus, CheckCircle2, CalendarDays } from 'lucide-react';
+import { AlertCircle, Lightbulb, Plus, CheckCircle2, CalendarDays, Loader2 } from 'lucide-react';
 import CategorySelect from './CategorySelect';
 import ClientSelect from './ClientSelect';
 import FactoryMultiSelect from './FactoryMultiSelect';
@@ -43,27 +42,48 @@ export default function OverviewTab({ card, kbAlerts, viewLang = 'KR' }) {
     }))
   );
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const initialRender = useRef(true);
+  const [autoSaveStatus, setAutoSaveStatus] = useState('idle');
 
   const updateMutation = useMutation({
     mutationFn: async (data) => {
+      const saved = await base44.entities.TaskCard.update(card.id, data);
+      queryClient.invalidateQueries({ queryKey: ['task-cards'] });
       const cn = await translateFieldsToCN({
         title: data.title,
         hq_requirements: data.hq_requirements,
         agent_meeting_notes: data.agent_meeting_notes,
       });
-      return base44.entities.TaskCard.update(card.id, {
-        ...data,
+      await base44.entities.TaskCard.update(card.id, {
         title_cn: cn.title || '',
         hq_requirements_cn: cn.hq_requirements || '',
         agent_meeting_notes_cn: cn.agent_meeting_notes || '',
       });
+      return saved;
     },
+    onMutate: () => setAutoSaveStatus('saving'),
     onSuccess: () => {
+      setAutoSaveStatus('saved');
       queryClient.invalidateQueries({ queryKey: ['task-cards'] });
-      toast({ title: '저장 완료 · 중국어 번역도 캡쳐되었습니다' });
     },
+    onError: () => setAutoSaveStatus('error'),
   });
+
+  useEffect(() => {
+    if (initialRender.current) {
+      initialRender.current = false;
+      return;
+    }
+    setAutoSaveStatus('saving');
+    const timer = window.setTimeout(() => {
+      updateMutation.mutate({
+        ...form,
+        candidate_factory_names: candidateFactories.map(factory => factory.name),
+        candidate_factory_ids: candidateFactories.map(factory => factory.id),
+      });
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [form, candidateFactories]);
 
   const addKbAlert = (suggestion) => {
     setForm(p => ({
@@ -209,14 +229,16 @@ export default function OverviewTab({ card, kbAlerts, viewLang = 'KR' }) {
         )}
       </div>
 
-      <div className="flex justify-end">
-        <Button onClick={() => updateMutation.mutate({
-          ...form,
-          candidate_factory_names: candidateFactories.map(f => f.name),
-          candidate_factory_ids: candidateFactories.map(f => f.id),
-        })} disabled={updateMutation.isPending} className="gap-2">
-          <Save className="w-4 h-4" />{updateMutation.isPending ? '저장 중...' : '저장'}
-        </Button>
+      <div className="flex justify-end min-h-5" aria-live="polite">
+        {autoSaveStatus === 'saving' && (
+          <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><Loader2 className="w-3.5 h-3.5 animate-spin" />자동 저장 중...</span>
+        )}
+        {autoSaveStatus === 'saved' && (
+          <span className="flex items-center gap-1.5 text-xs text-accent"><CheckCircle2 className="w-3.5 h-3.5" />자동 저장됨</span>
+        )}
+        {autoSaveStatus === 'error' && (
+          <span className="flex items-center gap-1.5 text-xs text-destructive"><AlertCircle className="w-3.5 h-3.5" />자동 저장 실패</span>
+        )}
       </div>
     </div>
   );
