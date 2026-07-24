@@ -25,7 +25,12 @@ Deno.serve(async (req) => {
       const paths = normalizeMenuPaths(menu_paths);
       const updated = await base44.asServiceRole.entities.TeamRole.update(role.id, { name: name.trim(), description: description.trim(), menu_paths: paths });
       const members = await base44.asServiceRole.entities.User.filter({ tenant_id: user.tenant_id, team_role_id: role.id });
-      if (members.length) await base44.asServiceRole.entities.User.bulkUpdate(members.map((member) => ({ id: member.id, team_role_name: name.trim(), allowed_tabs: paths })));
+      if (members.length) {
+        await Promise.all(members.map((member) => base44.asServiceRole.entities.User.update(member.id, {
+          team_role_name: name.trim(),
+          allowed_tabs: paths,
+        })));
+      }
       return Response.json({ role: updated });
     }
     if (action === 'delete') {

@@ -16,10 +16,12 @@ export default function AppLayout() {
   const [claimChecked, setClaimChecked] = useState(false);
   const location = useLocation();
 
-  const { data: user, refetch } = useQuery({
+  const { data: user, refetch, isLoading: isLoadingUser } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => base44.auth.me(),
     retry: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000,
   });
 
   // 가입 직후 PendingInvitation 자동 적용
@@ -34,6 +36,19 @@ export default function AppLayout() {
         .catch(() => {});
     }
   }, [user, claimChecked, refetch]);
+
+  // 관리자 권한 변경을 현재 로그인한 팀원 화면에 즉시 반영
+  useEffect(() => {
+    if (!user?.id) return undefined;
+    const unsubscribe = base44.entities.User.subscribe((event) => {
+      if (event.id === user.id) refetch();
+    });
+    return unsubscribe;
+  }, [user?.id, refetch]);
+
+  if (isLoadingUser) {
+    return <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">계정 권한을 확인하는 중...</div>;
+  }
 
   // 비활성 계정 차단
   if (user && user.account_tier && user.is_active === false) {

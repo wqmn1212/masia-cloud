@@ -13,7 +13,22 @@ export const TEAM_MENU_OPTIONS = [
   { path: '/as-requests', label: 'A/S 요청' },
 ];
 
+const matchesPath = (allowedPath, pathname) =>
+  allowedPath === '/'
+    ? pathname === '/'
+    : pathname === allowedPath || pathname.startsWith(`${allowedPath}/`);
+
+const SERVICE_ADMIN_PATHS = ['/team', '/user-permissions'];
+
 export const canAccessPath = (user, pathname) => {
-  if (!user || user.account_tier !== 'sub') return true;
-  return (user.allowed_tabs || []).some(path => path === '/' ? pathname === '/' : pathname.startsWith(path));
+  if (!user) return false;
+  if (user.account_tier === 'master') return matchesPath('/master-admin', pathname);
+  if (user.account_tier === 'service') {
+    return [...TEAM_MENU_OPTIONS.map(item => item.path), ...SERVICE_ADMIN_PATHS]
+      .some(path => matchesPath(path, pathname));
+  }
+  if (user.account_tier === 'sub') {
+    return (user.allowed_tabs || []).some(path => matchesPath(path, pathname));
+  }
+  return false;
 };

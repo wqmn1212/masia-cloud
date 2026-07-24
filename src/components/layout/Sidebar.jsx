@@ -43,30 +43,24 @@ export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobil
   const location = useLocation();
   const { t } = useLanguage();
 
-  // 계정 등급별 메뉴 구성
-  let navSections;
+  // 계정 등급별 후보 메뉴를 만든 뒤 동일한 권한 함수로 최종 필터링
+  let navSections = [];
   if (user?.account_tier === 'master') {
     navSections = [{
       label: '관리',
-      items: [
-        { path: '/master-admin', icon: ShieldCheck, label: '마스터 관리자' },
-      ],
+      items: [{ path: '/master-admin', icon: ShieldCheck, label: '마스터 관리자' }],
     }];
   } else if (user?.account_tier === 'service') {
-    navSections = navSectionDefs.map((sec, i) =>
-      i === 0
-        ? { ...sec, items: [...sec.items, { path: '/team', icon: UserCog, label: '팀 관리' }, { path: '/user-permissions', icon: KeyRound, label: '사용자 권한' }] }
-        : sec
-    );
-  } else {
+    navSections = navSectionDefs.map((section, index) => index === 0
+      ? { ...section, items: [...section.items, { path: '/team', icon: UserCog, label: '팀 관리' }, { path: '/user-permissions', icon: KeyRound, label: '사용자 권한' }] }
+      : section);
+  } else if (user?.account_tier === 'sub') {
     navSections = navSectionDefs;
   }
 
-  if (user?.account_tier === 'sub') {
-    navSections = navSections
-      .map(section => ({ ...section, items: section.items.filter(item => canAccessPath(user, item.path)) }))
-      .filter(section => section.items.length > 0);
-  }
+  navSections = navSections
+    .map(section => ({ ...section, items: section.items.filter(item => canAccessPath(user, item.path)) }))
+    .filter(section => section.items.length > 0);
 
   return (
     <>
