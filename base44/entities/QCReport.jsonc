@@ -1,0 +1,73 @@
+{
+  "name": "QCReport",
+  "type": "object",
+  "properties": {
+    "card_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c \ud0dc\uc2a4\ud06c \uce74\ub4dc ID"
+    },
+    "inspection_type": {
+      "type": "string",
+      "enum": [
+        "SAMPLE",
+        "MASS_PRODUCTION"
+      ]
+    },
+    "inspector_id": {
+      "type": "string"
+    },
+    "inspector_name": {
+      "type": "string"
+    },
+    "checklist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "PENDING",
+              "FAIL"
+            ]
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "media_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "media_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "qc_result": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "CONDITIONAL_PASS",
+        "FAIL"
+      ]
+    },
+    "comments": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "card_id",
+    "inspection_type",
+    "qc_result"
+  ]
+}

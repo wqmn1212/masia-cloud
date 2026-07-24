@@ -68,6 +68,10 @@ export default function TaskBoard() {
     queryKey: ['task-cards'],
     queryFn: () => base44.entities.TaskCard.list('-created_date', 200),
   });
+  const { data: paymentStages = [] } = useQuery({
+    queryKey: ['payment-stages-all'],
+    queryFn: () => base44.entities.PaymentStage.list('-created_date', 1000),
+  });
 
 
 
@@ -95,9 +99,18 @@ export default function TaskBoard() {
     const { draggableId, destination } = result;
     const newStatus = destination.droppableId;
     const card = cards.find(c => c.id === draggableId);
-    if (card && card.status !== newStatus) {
-      updateStatusMutation.mutate({ id: draggableId, status: newStatus });
+    const approved = paymentStages.filter(stage => stage.card_id === draggableId && stage.approval_status === 'APPROVED');
+    const downPaid = approved.some(stage => stage.stage_type === 'DOWN_PAYMENT');
+    const collectionRate = approved.reduce((sum, stage) => sum + Number(stage.percentage || 0), 0);
+    if (newStatus === 'PRODUCTION' && !downPaid) {
+      toast({ title: '생산 착수 잠금', description: '선금 입금 승인 후 이동할 수 있습니다.', variant: 'destructive' });
+      return;
     }
+    if (newStatus === 'DONE' && collectionRate < 100) {
+      toast({ title: '출고 잠금', description: '수금률 100% 승인 후 이동하거나 카드에서 강제 출고 승인하세요.', variant: 'destructive' });
+      return;
+    }
+    if (card && card.status !== newStatus) updateStatusMutation.mutate({ id: draggableId, status: newStatus });
   };
 
   const columnCards = (colId) => cards.filter(c => c.status === colId);

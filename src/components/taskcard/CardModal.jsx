@@ -10,6 +10,9 @@ import ChatTab from './ChatTab';
 import QuotationTab from './QuotationTab';
 import SettlementTab from './SettlementTab';
 import TaskItemsTab from './TaskItemsTab';
+import QCReportPanel from './QCReportPanel';
+import PaymentGatePanel from './PaymentGatePanel';
+import ProcessControlPanel from './ProcessControlPanel';
 
 const STATUS_META = {
   TODO:        { label: '대기 중',    color: 'bg-muted text-muted-foreground' },
@@ -84,9 +87,11 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
 
           <TabsContent value="tasks" className="mt-4">
             <TaskItemsTab card={card} viewLang={viewLang} />
+            <QCReportPanel card={card} user={user} />
           </TabsContent>
           <TabsContent value="overview" className="mt-4">
             <OverviewTab card={card} kbAlerts={kbAlerts} viewLang={viewLang} />
+            <ProcessControlPanel card={card} user={user} />
           </TabsContent>
           <TabsContent value="quotation" className="mt-4">
             <QuotationTab card={card} user={user} />
@@ -98,6 +103,7 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
             <ChatTab card={card} user={user} viewLang={viewLang} />
           </TabsContent>
           <TabsContent value="settlement" className="mt-4">
+            <PaymentGatePanel card={card} user={user} />
             <SettlementTab card={card} user={user} />
           </TabsContent>
         </Tabs>

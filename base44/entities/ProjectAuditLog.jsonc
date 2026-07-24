@@ -1,0 +1,33 @@
+{
+  "name": "ProjectAuditLog",
+  "type": "object",
+  "properties": {
+    "card_id": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "PAYMENT_APPROVED",
+        "QC_RECORDED",
+        "PRODUCTION_STARTED",
+        "SHIPMENT_COMPLETED",
+        "SHIPMENT_OVERRIDDEN"
+      ]
+    },
+    "actor_id": {
+      "type": "string"
+    },
+    "actor_name": {
+      "type": "string"
+    },
+    "details": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "card_id",
+    "event_type",
+    "details"
+  ]
+}

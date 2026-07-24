@@ -1,0 +1,47 @@
+{
+  "name": "PaymentStage",
+  "type": "object",
+  "properties": {
+    "card_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c \ud0dc\uc2a4\ud06c \uce74\ub4dc ID"
+    },
+    "stage_type": {
+      "type": "string",
+      "enum": [
+        "DOWN_PAYMENT",
+        "INTERIM_PAYMENT",
+        "BALANCE_PAYMENT"
+      ]
+    },
+    "percentage": {
+      "type": "number",
+      "description": "\uc57d\uc815 \ube44\uc728"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "APPROVED",
+        "REJECTED"
+      ],
+      "default": "PENDING"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approved_by_id": {
+      "type": "string"
+    },
+    "approved_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "card_id",
+    "stage_type",
+    "percentage",
+    "approval_status"
+  ]
+}
