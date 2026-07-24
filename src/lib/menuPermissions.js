@@ -22,7 +22,7 @@ const SERVICE_ADMIN_PATHS = ['/team', '/user-permissions'];
 
 export const canAccessPath = (user, pathname) => {
   if (!user) return false;
-  if (user.account_tier === 'master') return matchesPath('/master-admin', pathname);
+  if (user.account_tier === 'master') return true;
   if (user.account_tier === 'service') {
     return [...TEAM_MENU_OPTIONS.map(item => item.path), ...SERVICE_ADMIN_PATHS]
       .some(path => matchesPath(path, pathname));
