@@ -1,14 +1,12 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
-// 서비스 관리자 전용: 자신의 하위 계정 초대
-Deno.serve(async (req) => {
+// 팀 관리자 전용: 자신의 하위 계정 초대
+export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    if (user.account_tier !== 'service') {
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!['service', 'master'].includes(user.account_tier)) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
     if (user.is_active === false) {
@@ -23,6 +21,7 @@ Deno.serve(async (req) => {
     const roles = await base44.asServiceRole.entities.TeamRole.filter({ id: team_role_id, tenant_id: user.tenant_id });
     const role = roles[0];
     if (!role) return Response.json({ error: '같은 팀의 역할을 선택하세요' }, { status: 403 });
+
     const allowed_tabs = role.menu_paths || [];
     const normalizedEmail = email.trim().toLowerCase();
     const found = await base44.asServiceRole.entities.User.filter({ email: normalizedEmail });
@@ -35,19 +34,19 @@ Deno.serve(async (req) => {
     }
 
     await base44.users.inviteUser(normalizedEmail, 'user');
-    await base44.asServiceRole.entities.PendingInvitation.create({
-      email: normalizedEmail,
-      account_tier: 'sub',
-      tenant_id: user.tenant_id,
-      service_admin_id: user.id,
-      team_role_id: role.id,
-      team_role_name: role.name,
-      allowed_tabs,
-      account_label: account_label || '',
-      claimed: false,
-    });
+    const pending = await base44.asServiceRole.entities.PendingInvitation.filter({ email: normalizedEmail, tenant_id: user.tenant_id, claimed: false });
+    const invitationData = {
+      email: normalizedEmail, account_tier: 'sub', tenant_id: user.tenant_id,
+      service_admin_id: user.id, team_role_id: role.id, team_role_name: role.name,
+      allowed_tabs, account_label: account_label || '', claimed: false,
+    };
+    if (pending[0]) {
+      await base44.asServiceRole.entities.PendingInvitation.update(pending[0].id, invitationData);
+    } else {
+      await base44.asServiceRole.entities.PendingInvitation.create(invitationData);
+    }
     return Response.json({ ok: true, pending: true });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
-});
+}
