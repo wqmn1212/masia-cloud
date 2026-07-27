@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Plus, Shield, Loader2, AlertTriangle, Mail, Users } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import UserAccountRow from '@/components/admin/UserAccountRow';
+import TeamAccessCard from '@/components/admin/TeamAccessCard';
 
 export default function MasterAdminDashboard() {
   const [setupStatus, setSetupStatus] = useState(null);
@@ -115,6 +116,23 @@ export default function MasterAdminDashboard() {
         <StatBox label="활성 팀 마스터" value={activeCount} />
         <StatBox label="대기 중인 초대" value={pending.length} />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Users className="w-4 h-4" />전체 팀 ({data?.tenants?.length || 0})
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {(data?.tenants || []).map((tenant) => (
+            <TeamAccessCard
+              key={tenant.id}
+              tenant={tenant}
+              admin={serviceAdmins.find((user) => user.tenant_id === tenant.id)}
+            />
+          ))}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
