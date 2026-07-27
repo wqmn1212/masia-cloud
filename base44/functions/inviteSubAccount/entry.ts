@@ -13,31 +13,38 @@ export default async function(req) {
       return Response.json({ error: '비활성 계정입니다' }, { status: 403 });
     }
 
-    const { email, account_label, team_role_id } = await req.json();
-    if (!email || !user.tenant_id || !team_role_id) {
+    const { email, account_label, team_role_id, tenant_id } = await req.json();
+    const targetTenantId = user.account_tier === 'master' ? tenant_id : user.tenant_id;
+    if (!email || !targetTenantId || !team_role_id) {
       return Response.json({ error: '이메일 또는 소속 팀 정보가 없습니다' }, { status: 400 });
     }
+    if (user.account_tier === 'master') {
+      const tenants = await base44.asServiceRole.entities.Tenant.filter({ id: targetTenantId });
+      if (!tenants[0]) return Response.json({ error: '팀을 찾을 수 없습니다' }, { status: 404 });
+    }
 
-    const roles = await base44.asServiceRole.entities.TeamRole.filter({ id: team_role_id, tenant_id: user.tenant_id });
+    const roles = await base44.asServiceRole.entities.TeamRole.filter({ id: team_role_id, tenant_id: targetTenantId });
     const role = roles[0];
     if (!role) return Response.json({ error: '같은 팀의 역할을 선택하세요' }, { status: 403 });
 
     const allowed_tabs = role.menu_paths || [];
+    const managers = await base44.asServiceRole.entities.User.filter({ tenant_id: targetTenantId, account_tier: 'service' });
+    const serviceAdminId = managers[0]?.id || user.id;
     const normalizedEmail = email.trim().toLowerCase();
     const found = await base44.asServiceRole.entities.User.filter({ email: normalizedEmail });
     if (found.length > 0) {
       await base44.asServiceRole.entities.User.update(found[0].id, {
-        account_tier: 'sub', tenant_id: user.tenant_id, service_admin_id: user.id,
+        account_tier: 'sub', tenant_id: targetTenantId, service_admin_id: serviceAdminId,
         team_role_id: role.id, team_role_name: role.name, allowed_tabs, is_active: true, account_label: account_label || '',
       });
       return Response.json({ ok: true, applied: true });
     }
 
     await base44.users.inviteUser(normalizedEmail, 'user');
-    const pending = await base44.asServiceRole.entities.PendingInvitation.filter({ email: normalizedEmail, tenant_id: user.tenant_id, claimed: false });
+    const pending = await base44.asServiceRole.entities.PendingInvitation.filter({ email: normalizedEmail, tenant_id: targetTenantId, claimed: false });
     const invitationData = {
-      email: normalizedEmail, account_tier: 'sub', tenant_id: user.tenant_id,
-      service_admin_id: user.id, team_role_id: role.id, team_role_name: role.name,
+      email: normalizedEmail, account_tier: 'sub', tenant_id: targetTenantId,
+      service_admin_id: serviceAdminId, team_role_id: role.id, team_role_name: role.name,
       allowed_tabs, account_label: account_label || '', claimed: false,
     };
     if (pending[0]) {

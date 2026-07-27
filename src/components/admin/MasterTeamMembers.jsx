@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import UserAccountRow from '@/components/admin/UserAccountRow';
+import MasterTeamInviteDialog from '@/components/admin/MasterTeamInviteDialog';
 
 export default function MasterTeamMembers({ tenantId }) {
   const queryClient = useQueryClient();
@@ -22,7 +23,7 @@ export default function MasterTeamMembers({ tenantId }) {
   const pending = data?.pending || [];
   return (
     <Card>
-      <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Users className="h-4 w-4" />팀원 관리 ({members.length})</CardTitle></CardHeader>
+      <CardHeader className="flex-row items-center justify-between"><CardTitle className="flex items-center gap-2 text-base"><Users className="h-4 w-4" />팀원 관리 ({members.length})</CardTitle><MasterTeamInviteDialog tenantId={tenantId} /></CardHeader>
       <CardContent className="divide-y p-0">
         {isLoading ? <Loader2 className="mx-auto my-8 h-5 w-5 animate-spin" /> : members.length === 0
           ? <p className="p-8 text-center text-sm text-muted-foreground">등록된 팀원이 없습니다.</p>
