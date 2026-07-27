@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import TeamPermissionGrid from '@/components/admin/TeamPermissionGrid';
+import MasterTeamMembers from '@/components/admin/MasterTeamMembers';
 
 export default function MasterTeamDashboard() {
   const { tenantId } = useParams();
@@ -20,6 +21,7 @@ export default function MasterTeamDashboard() {
     <div className="space-y-6">
       <Button asChild variant="ghost" size="sm"><Link to="/master-admin"><ArrowLeft />팀 목록</Link></Button>
       <div className="flex items-center gap-3"><Building2 className="h-8 w-8 text-primary" /><div><h1 className="text-2xl font-bold">{tenant.name} 대시보드</h1><p className="text-sm text-muted-foreground">팀 마스터: {admin?.email || tenant.master_email || '미지정'}</p></div></div>
+      <MasterTeamMembers tenantId={tenant.id} />
       <Card><CardHeader><CardTitle className="text-base">전체 기능 접근</CardTitle></CardHeader><CardContent><TeamPermissionGrid tenantId={tenant.id} /></CardContent></Card>
     </div>
   );
