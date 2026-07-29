@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, FileText, Trash2, Upload, Loader2, ExternalLink, Pencil, Download } from 'lucide-react';
+import { Plus, FileText, Trash2, Upload, Loader2, ExternalLink, Pencil, Download, X } from 'lucide-react';
 import DropZone from '@/components/ui/drop-zone';
 import { generateQuotationPDF } from '@/lib/generateQuotationPDF';
 import QuoteOptionsEditor, { optionToUSD } from '@/components/quotation/QuoteOptionsEditor';
@@ -571,7 +571,19 @@ export default function QuotationTab({ card, user }) {
               <Label className="text-xs">제품 사진 (PDF에 표시)</Label>
               <div className="flex items-center gap-2 mt-1">
                 <DropZone onFile={handleImageUpload} uploading={uploadingImage} accept="image/*" compact label="사진 업로드" />
-                {form.product_image_url && <img src={form.product_image_url} alt="제품 사진" className="h-12 w-12 object-cover rounded-md border" />}
+                {form.product_image_url && (
+                  <div className="relative">
+                    <img src={form.product_image_url} alt="제품 사진" className="h-12 w-12 object-cover rounded-md border" />
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, product_image_url: '' }))}
+                      className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow"
+                      title="사진 삭제"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             <div>
