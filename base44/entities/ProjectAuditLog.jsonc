@@ -29,5 +29,19 @@
     "card_id",
     "event_type",
     "details"
-  ]
+  ],
+  "rls": {
+    "create": { "$or": [
+      { "user_condition": { "data.account_tier": "master" } },
+      { "user_condition": { "data.account_tier": "service" } },
+      { "user_condition": { "data.account_tier": "sub" } }
+    ] },
+    "read": { "$or": [
+      { "user_condition": { "data.account_tier": "master" } },
+      { "user_condition": { "data.account_tier": "service" } },
+      { "user_condition": { "data.account_tier": "sub" } }
+    ] },
+    "update": { "user_condition": { "data.account_tier": "master" } },
+    "delete": { "user_condition": { "data.account_tier": "master" } }
+  }
 }

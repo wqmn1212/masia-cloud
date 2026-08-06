@@ -51,5 +51,11 @@
     "email",
     "account_tier",
     "tenant_id"
-  ]
+  ],
+  "rls": {
+    "create": { "user_condition": { "data.account_tier": "master" } },
+    "read": { "user_condition": { "data.account_tier": "master" } },
+    "update": { "user_condition": { "data.account_tier": "master" } },
+    "delete": { "user_condition": { "data.account_tier": "master" } }
+  }
 }

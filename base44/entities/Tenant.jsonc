@@ -27,5 +27,11 @@
   "required": [
     "name",
     "slug"
-  ]
+  ],
+  "rls": {
+    "create": { "user_condition": { "data.account_tier": "master" } },
+    "read": { "user_condition": { "data.account_tier": "master" } },
+    "update": { "user_condition": { "data.account_tier": "master" } },
+    "delete": { "user_condition": { "data.account_tier": "master" } }
+  }
 }
