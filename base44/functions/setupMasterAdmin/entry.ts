@@ -9,7 +9,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const masterEmail = 'makeforyou7@gmail.com';
+    // 보안 주의: 이 이메일은 기본값(fallback)일 뿐입니다.
+    // `base44 secrets set MASTER_ADMIN_EMAIL=your@email.com` 으로 시크릿을 설정해 두면
+    // 코드에 실제 대표 이메일이 노출되지 않고 그 값이 우선 사용됩니다.
+    const masterEmail = (Deno.env.get('MASTER_ADMIN_EMAIL') || 'makeforyou7@gmail.com').toLowerCase();
     if (user.email.toLowerCase() !== masterEmail || user.role !== 'admin') {
       return Response.json({ status: 'not_eligible' });
     }

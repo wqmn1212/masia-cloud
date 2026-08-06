@@ -43,5 +43,25 @@
     "target_category",
     "issue_case",
     "root_cause"
-  ]
+  ],
+  "rls": {
+    "create": { "$or": [
+      { "user_condition": { "data.account_tier": "master" } },
+      { "user_condition": { "data.account_tier": "service" } },
+      { "user_condition": { "data.account_tier": "sub" } }
+    ] },
+    "read": { "$or": [
+      { "user_condition": { "data.account_tier": "master" } },
+      { "user_condition": { "data.account_tier": "service" } },
+      { "user_condition": { "data.account_tier": "sub" } }
+    ] },
+    "update": { "$or": [
+      { "user_condition": { "data.account_tier": "master" } },
+      { "user_condition": { "data.account_tier": "service" } }
+    ] },
+    "delete": { "$or": [
+      { "user_condition": { "data.account_tier": "master" } },
+      { "user_condition": { "data.account_tier": "service" } }
+    ] }
+  }
 }

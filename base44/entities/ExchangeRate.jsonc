@@ -28,5 +28,21 @@
     "rate_date",
     "usd_krw",
     "cny_krw"
-  ]
+  ],
+  "rls": {
+    "create": { "$or": [
+      { "user_condition": { "data.account_tier": "master" } },
+      { "user_condition": { "data.account_tier": "service" } }
+    ] },
+    "read": { "$or": [
+      { "user_condition": { "data.account_tier": "master" } },
+      { "user_condition": { "data.account_tier": "service" } },
+      { "user_condition": { "data.account_tier": "sub" } }
+    ] },
+    "update": { "$or": [
+      { "user_condition": { "data.account_tier": "master" } },
+      { "user_condition": { "data.account_tier": "service" } }
+    ] },
+    "delete": { "user_condition": { "data.account_tier": "master" } }
+  }
 }

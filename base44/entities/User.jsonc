@@ -53,5 +53,30 @@
       "type": "string",
       "description": "\ud68c\uc0ac/\ud300 \ub610\ub294 \uc0ac\uc6a9\uc790 \ud45c\uc2dc\uba85"
     }
+  },
+  "rls": {
+    "create": true,
+    "read": {
+      "$or": [
+        { "id": "{{user.id}}" },
+        { "created_by": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "data.account_tier": "master" } },
+        { "user_condition": { "data.account_tier": "service" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "data.account_tier": "master" } },
+        { "user_condition": { "data.account_tier": "service" } }
+      ]
+    },
+    "delete": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "data.account_tier": "master" } }
+      ]
+    }
   }
 }

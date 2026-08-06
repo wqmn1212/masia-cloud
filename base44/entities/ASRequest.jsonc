@@ -59,5 +59,26 @@
   "required": [
     "client_name",
     "issue_title"
-  ]
+  ],
+  "rls": {
+    "create": { "$or": [
+      { "user_condition": { "data.account_tier": "master" } },
+      { "user_condition": { "data.account_tier": "service" } },
+      { "user_condition": { "data.account_tier": "sub" } }
+    ] },
+    "read": { "$or": [
+      { "user_condition": { "data.account_tier": "master" } },
+      { "user_condition": { "data.account_tier": "service" } },
+      { "user_condition": { "data.account_tier": "sub" } }
+    ] },
+    "update": { "$or": [
+      { "user_condition": { "data.account_tier": "master" } },
+      { "user_condition": { "data.account_tier": "service" } },
+      { "user_condition": { "data.account_tier": "sub" } }
+    ] },
+    "delete": { "$or": [
+      { "user_condition": { "data.account_tier": "master" } },
+      { "user_condition": { "data.account_tier": "service" } }
+    ] }
+  }
 }

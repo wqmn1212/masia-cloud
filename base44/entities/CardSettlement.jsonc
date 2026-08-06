@@ -46,5 +46,26 @@
   },
   "required": [
     "card_id"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        { "user_condition": { "data.account_tier": "master" } },
+        { "user_condition": { "data.account_tier": "service" } }
+      ]
+    },
+    "read": {
+      "$or": [
+        { "user_condition": { "data.account_tier": "master" } },
+        { "user_condition": { "data.account_tier": "service" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "data.account_tier": "master" } },
+        { "user_condition": { "data.account_tier": "service" } }
+      ]
+    },
+    "delete": { "user_condition": { "data.account_tier": "master" } }
+  }
 }
