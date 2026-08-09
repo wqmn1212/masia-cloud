@@ -13,6 +13,8 @@ import DropZone from '@/components/ui/drop-zone';
 import { generateQuotationPDF } from '@/lib/generateQuotationPDF';
 import QuoteOptionsEditor, { optionToUSD } from '@/components/quotation/QuoteOptionsEditor';
 import { INCOTERMS_2020, LEGACY_INCOTERMS } from '@/lib/incoterms';
+import LogisticsEstimator from '@/components/quotation/LogisticsEstimator';
+import { calcCbm } from '@/lib/logisticsEstimator';
 
 const STATUS_META = {
   DRAFT:    { label: '초안',     color: 'bg-muted text-muted-foreground' },
@@ -47,6 +49,15 @@ const emptyForm = {
   product_image_url: '',
   status: 'DRAFT',
   raw_file_url: '',
+  cargo_length_cm: '',
+  cargo_width_cm: '',
+  cargo_height_cm: '',
+  cargo_weight_kg: '',
+  cargo_quantity: 1,
+  shipping_mode: 'SEA_LCL',
+  shipping_term: 'FOB',
+  logistics_estimated_usd: '',
+  logistics_estimate_lines: [],
 };
 
 // 통화 변환 헬퍼 — 사용자 입력 환율(1 USD = ? KRW, 1 CNY = ? KRW) 기준으로 CNY 로 환산
@@ -324,6 +335,21 @@ export default function QuotationTab({ card, user }) {
       exchange_rate_date: form.exchange_rate_date,
       exchange_rate_usd: Number(form.exchange_rate_usd) || 0,
       exchange_rate_krw: Number(form.exchange_rate_krw) || 0,
+      cargo_length_cm: Number(form.cargo_length_cm) || 0,
+      cargo_width_cm: Number(form.cargo_width_cm) || 0,
+      cargo_height_cm: Number(form.cargo_height_cm) || 0,
+      cargo_weight_kg: Number(form.cargo_weight_kg) || 0,
+      cargo_quantity: Number(form.cargo_quantity) || 1,
+      cargo_cbm: calcCbm({
+        lengthCm: form.cargo_length_cm,
+        widthCm: form.cargo_width_cm,
+        heightCm: form.cargo_height_cm,
+        quantity: form.cargo_quantity || 1,
+      }),
+      shipping_mode: form.shipping_mode || 'SEA_LCL',
+      shipping_term: form.shipping_term || 'FOB',
+      logistics_estimated_usd: Number(form.logistics_estimated_usd) || 0,
+      logistics_estimate_lines: form.logistics_estimate_lines || [],
     };
     if (editingId) {
       updateMutation.mutate({ id: editingId, data: payload });
@@ -368,6 +394,15 @@ export default function QuotationTab({ card, user }) {
       product_image_url: q.product_image_url || '',
       status: q.status || 'DRAFT',
       raw_file_url: q.raw_file_url || '',
+      cargo_length_cm: q.cargo_length_cm || '',
+      cargo_width_cm: q.cargo_width_cm || '',
+      cargo_height_cm: q.cargo_height_cm || '',
+      cargo_weight_kg: q.cargo_weight_kg || '',
+      cargo_quantity: q.cargo_quantity || 1,
+      shipping_mode: q.shipping_mode || 'SEA_LCL',
+      shipping_term: q.shipping_term || 'FOB',
+      logistics_estimated_usd: q.logistics_estimated_usd || '',
+      logistics_estimate_lines: q.logistics_estimate_lines || [],
     });
     setShowForm(true);
   };
@@ -533,6 +568,23 @@ export default function QuotationTab({ card, user }) {
               )}
             </div>
           </div>
+
+          {/* 부피·중량 기반 물류비 자동 추정 */}
+          <LogisticsEstimator
+            cargo={form}
+            onCargoChange={(next) => setForm(next)}
+            cargoValueUsd={optionsTotalUSD}
+            onApply={(usdTotal, result) => {
+              setForm(f => ({
+                ...f,
+                logistics_cost: usdTotal,
+                logistics_cost_currency: 'USD',
+                logistics_estimated_usd: usdTotal,
+                logistics_estimate_lines: result.lines.map(l => ({ label: l.label, amount: l.amount })),
+              }));
+              toast({ title: `물류비 $${usdTotal.toLocaleString()} 적용 완료`, description: `${result.cbm} CBM · 과금중량 ${result.chargeableKg}kg 기준 근사치` });
+            }}
+          />
 
           <div className="grid grid-cols-2 gap-3">
             <div>

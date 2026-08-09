@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calculator, TrendingUp } from 'lucide-react';
+import LogisticsEstimator from './LogisticsEstimator';
 
 export default function MarginCalculator({
   factoryTotal,
@@ -14,8 +15,10 @@ export default function MarginCalculator({
   onFeeTypeChange,
   onFeeValueChange,
   finalPrice,
+  usdToCny = 7.2,
 }) {
   const baseCost = (factoryTotal || 0) + (logisticsCost || 0);
+  const [cargo, setCargo] = React.useState({ shipping_mode: 'SEA_LCL', shipping_term: 'FOB', cargo_quantity: 1 });
 
   return (
     <Card className="border-primary/20">
@@ -42,6 +45,13 @@ export default function MarginCalculator({
             />
           </div>
         </div>
+
+        <LogisticsEstimator
+          cargo={cargo}
+          onCargoChange={setCargo}
+          cargoValueUsd={(factoryTotal || 0) / (usdToCny || 7.2)}
+          onApply={(usdTotal) => onLogisticsChange(Math.round(usdTotal * (usdToCny || 7.2)))}
+        />
 
         <div className="p-3 rounded-lg bg-secondary">
           <p className="text-xs text-muted-foreground">전체 비용 (원가 + 물류)</p>

@@ -97,6 +97,76 @@
       "default": "USD",
       "description": "\uace0\uac1d PDF \ucd5c\uc885 \uba54\uc778 \ud45c\uc2dc \ud1b5\ud654"
     },
+    "cargo_length_cm": {
+      "type": "number",
+      "description": "\ud3ec\uc7a5 \uae30\uc900 \uac00\ub85c (cm)"
+    },
+    "cargo_width_cm": {
+      "type": "number",
+      "description": "\ud3ec\uc7a5 \uae30\uc900 \uc138\ub85c (cm)"
+    },
+    "cargo_height_cm": {
+      "type": "number",
+      "description": "\ud3ec\uc7a5 \uae30\uc900 \ub192\uc774 (cm)"
+    },
+    "cargo_weight_kg": {
+      "type": "number",
+      "description": "1\uac1c \uae30\uc900 \uc911\ub7c9 (kg)"
+    },
+    "cargo_quantity": {
+      "type": "number",
+      "description": "\ud3ec\uc7a5 \uac1c\uc218"
+    },
+    "cargo_cbm": {
+      "type": "number",
+      "description": "\ucd1d \ubd80\ud53c (CBM, \uc790\ub3d9 \uacc4\uc0b0)"
+    },
+    "cargo_chargeable_kg": {
+      "type": "number",
+      "description": "\uacfc\uae08 \uc911\ub7c9 (\uc2e4\uc911\ub7c9/\ubd80\ud53c\uc911\ub7c9 \uc911 \ud070 \uac12)"
+    },
+    "shipping_mode": {
+      "type": "string",
+      "enum": [
+        "SEA_LCL",
+        "SEA_FCL_20",
+        "SEA_FCL_40",
+        "AIR",
+        "EXPRESS"
+      ],
+      "description": "\uc6b4\uc1a1 \ubc29\uc2dd"
+    },
+    "shipping_term": {
+      "type": "string",
+      "enum": [
+        "EXW",
+        "FOB",
+        "CFR",
+        "CIF",
+        "DAP",
+        "DDP"
+      ],
+      "description": "\ubb3c\ub958\ube44 \uc0b0\uc815 \uc6b4\uc1a1 \uc870\uac74 (D2D = DDP)"
+    },
+    "logistics_estimated_usd": {
+      "type": "number",
+      "description": "\uc790\ub3d9 \ucd94\uc815 \ubb3c\ub958\ube44 \ud569\uacc4 (USD)"
+    },
+    "logistics_estimate_lines": {
+      "type": "array",
+      "description": "\ubb3c\ub958\ube44 \ucd94\uc815 \uc138\ubd80 \ub0b4\uc5ed",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        }
+      }
+    },
     "quote_options": {
       "type": "array",
       "description": "\uc81c\ud488 \uc635\uc158/\uc138\ubd80 \ud56d\ubaa9 \ub9ac\uc2a4\ud2b8 (\ud1b5\ud654\ubcc4 \uc785\ub825, USD \ud658\uc0b0 \uc800\uc7a5)",
@@ -145,14 +215,30 @@
       "rls": {
         "read": {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         },
         "write": {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         }
       }
@@ -163,14 +249,30 @@
       "rls": {
         "read": {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         },
         "write": {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         }
       }
@@ -181,14 +283,30 @@
       "rls": {
         "read": {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         },
         "write": {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         }
       }
@@ -273,14 +391,30 @@
       "rls": {
         "read": {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         },
         "write": {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         }
       }
@@ -291,14 +425,30 @@
       "rls": {
         "read": {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         },
         "write": {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         }
       }
@@ -309,14 +459,30 @@
       "rls": {
         "read": {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         },
         "write": {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         }
       }
@@ -327,14 +493,30 @@
       "rls": {
         "read": {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         },
         "write": {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         }
       }
@@ -371,29 +553,73 @@
   "rls": {
     "create": {
       "$or": [
-        { "user_condition": { "data.account_tier": "master" } },
-        { "user_condition": { "data.account_tier": "service" } },
-        { "user_condition": { "data.account_tier": "sub" } }
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "service"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "sub"
+          }
+        }
       ]
     },
     "read": {
       "$or": [
-        { "user_condition": { "data.account_tier": "master" } },
-        { "user_condition": { "data.account_tier": "service" } },
-        { "user_condition": { "data.account_tier": "sub" } }
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "service"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "sub"
+          }
+        }
       ]
     },
     "update": {
       "$or": [
-        { "user_condition": { "data.account_tier": "master" } },
-        { "user_condition": { "data.account_tier": "service" } },
-        { "user_condition": { "data.account_tier": "sub" } }
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "service"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "sub"
+          }
+        }
       ]
     },
     "delete": {
       "$or": [
-        { "user_condition": { "data.account_tier": "master" } },
-        { "user_condition": { "data.account_tier": "service" } }
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "service"
+          }
+        }
       ]
     }
   }
