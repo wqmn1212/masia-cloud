@@ -15,6 +15,7 @@ import CategorySelect from '@/components/taskcard/CategorySelect';
 import ClientSelect from '@/components/taskcard/ClientSelect';
 import FactoryMultiSelect from '@/components/taskcard/FactoryMultiSelect';
 import { translateFieldsToCN } from '@/lib/translate';
+import EmailBackfillButton from '@/components/email/EmailBackfillButton';
 
 
 const COLUMNS = [
@@ -125,9 +126,12 @@ export default function TaskBoard() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">업무 카드 기반 HQ ↔ 에이전트 협업 플랫폼</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2">
-          <Plus className="w-4 h-4" />신규 카드 생성
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <EmailBackfillButton />
+          <Button onClick={() => setCreateOpen(true)} className="gap-2">
+            <Plus className="w-4 h-4" />신규 카드 생성
+          </Button>
+        </div>
       </div>
 
       {/* Status Summary Widget */}
