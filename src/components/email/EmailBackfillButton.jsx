@@ -41,9 +41,9 @@ export default function EmailBackfillButton() {
   };
 
   return (
-    <Button variant="outline" onClick={run} disabled={running} className="gap-2">
+    <Button variant="secondary" onClick={run} disabled={running} className="gap-2 border border-primary/30 text-primary">
       {running ? <Loader2 className="w-4 h-4 animate-spin" /> : <MailSearch className="w-4 h-4" />}
-      {running ? `연동 중… ${progress.scanned}건 검토 / ${progress.created}건 생성` : '과거 이메일 전체 연동'}
+      {running ? `연동 중… ${progress.scanned}건 검토 / ${progress.created}건 생성` : '전체 메일 가져오기'}
     </Button>
   );
 }
