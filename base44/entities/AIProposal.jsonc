@@ -1,0 +1,140 @@
+{
+  "name": "AIProposal",
+  "type": "object",
+  "properties": {
+    "card_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c TaskCard ID"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac\uba85"
+    },
+    "gmail_message_id": {
+      "type": "string",
+      "description": "\uc6d0\ubcf8 \uc9c0\uba54\uc77c \uba54\uc2dc\uc9c0 ID"
+    },
+    "email_from": {
+      "type": "string",
+      "description": "\ubc1c\uc2e0\uc790"
+    },
+    "email_subject": {
+      "type": "string",
+      "description": "\uba54\uc77c \uc81c\ubaa9"
+    },
+    "email_date": {
+      "type": "string",
+      "description": "\uba54\uc77c \uc218\uc2e0 \uc77c\uc2dc"
+    },
+    "summary": {
+      "type": "string",
+      "description": "AI \uc694\uc57d"
+    },
+    "client_requirements": {
+      "type": "string",
+      "description": "\uace0\uac1d \uc694\uad6c\uc0ac\ud56d \uc815\ub9ac"
+    },
+    "our_commitments": {
+      "type": "string",
+      "description": "\uc6b0\ub9ac\uac00 \uc57d\uc18d/\ud68c\uc2e0\ud55c \ub0b4\uc6a9 \uc815\ub9ac"
+    },
+    "suggested_tasks": {
+      "type": "array",
+      "description": "AI\uac00 \uc81c\uc548\ud55c \uc138\ubd80 \uc791\uc5c5 \ubaa9\ub85d",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "URGENT"
+            ]
+          },
+          "due_date": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "APPROVED",
+        "REJECTED"
+      ],
+      "default": "PENDING",
+      "description": "\uc2b9\uc778 \uc0c1\ud0dc"
+    },
+    "reviewed_by_name": {
+      "type": "string",
+      "description": "\uac80\ud1a0\uc790 \uc774\ub984"
+    }
+  },
+  "required": [
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "service"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "service"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "sub"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "service"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

@@ -13,6 +13,7 @@ import TaskItemsTab from './TaskItemsTab';
 import QCReportPanel from './QCReportPanel';
 import PaymentGatePanel from './PaymentGatePanel';
 import ProcessControlPanel from './ProcessControlPanel';
+import AIProposalPanel from './AIProposalPanel';
 
 const STATUS_META = {
   TODO:        { label: '대기 중',    color: 'bg-muted text-muted-foreground' },
@@ -86,6 +87,7 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
           </TabsList>
 
           <TabsContent value="tasks" className="mt-4">
+            <AIProposalPanel card={card} user={user} />
             <TaskItemsTab card={card} viewLang={viewLang} />
             <QCReportPanel card={card} user={user} />
           </TabsContent>

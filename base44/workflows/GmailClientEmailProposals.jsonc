@@ -1,0 +1,41 @@
+{
+  "trigger": {
+    "condition": "${ .trigger.data.has_new_messages == true }",
+    "config": {
+      "trigger_type": "connector",
+      "events": [
+        "mailbox"
+      ],
+      "integration_type": "gmail",
+      "resource_id": null
+    }
+  },
+  "description": "\uc9c0\uba54\uc77c\uc5d0 \uc0c8 \uba54\uc77c\uc774 \ub3c4\ucc29\ud558\uba74 \ub4f1\ub85d\ub41c \uace0\uac1d\uc0ac \uba54\uc77c\uc778\uc9c0 \ud655\uc778\ud558\uace0, AI\uac00 \uc694\uad6c\uc0ac\ud56d\u00b7\ud68c\uc2e0 \ub0b4\uc6a9\u00b7\uc138\ubd80 \uc791\uc5c5\uc744 \uc815\ub9ac\ud574 \uc2b9\uc778 \ub300\uae30 \uc0c1\ud0dc\ub85c \uc800\uc7a5\ud569\ub2c8\ub2e4.",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "gmail_client_email_proposals",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "process_emails": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "processClientEmails",
+            "args": {
+              "data": "${ .trigger.data }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\uc774\uba54\uc77c \ubd84\uc11d \ubc0f \ucd94\ucc9c \uc0dd\uc131",
+            "description": "AI \uc694\uc57d \ud6c4 \uc2b9\uc778 \ub300\uae30 \uc800\uc7a5"
+          }
+        }
+      }
+    ]
+  },
+  "name": "\uace0\uac1d\uc0ac \uc774\uba54\uc77c AI \ucd94\ucc9c \uc791\uc5c5 \uc0dd\uc131"
+}
