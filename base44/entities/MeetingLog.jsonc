@@ -1,0 +1,128 @@
+{
+  "name": "MeetingLog",
+  "type": "object",
+  "properties": {
+    "card_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c TaskCard ID"
+    },
+    "meeting_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\ubbf8\ud305 \uc77c\uc790"
+    },
+    "meeting_type": {
+      "type": "string",
+      "enum": [
+        "ONLINE",
+        "OFFLINE",
+        "CALL",
+        "WECHAT"
+      ],
+      "default": "ONLINE",
+      "description": "\ubbf8\ud305 \ud615\ud0dc"
+    },
+    "title": {
+      "type": "string",
+      "description": "\ubbf8\ud305 \uc81c\ubaa9"
+    },
+    "attendees": {
+      "type": "string",
+      "description": "\ucc38\uc11d\uc790"
+    },
+    "notes": {
+      "type": "string",
+      "description": "\ubbf8\ud305 \ub0b4\uc6a9/\ub17c\uc758 \uc0ac\ud56d"
+    },
+    "decisions": {
+      "type": "string",
+      "description": "\uacb0\uc815 \uc0ac\ud56d"
+    },
+    "next_steps": {
+      "type": "string",
+      "description": "\ub2e4\uc74c \uc561\uc158"
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "\uc791\uc131\uc790 \uc774\ub984"
+    }
+  },
+  "required": [
+    "card_id",
+    "meeting_date",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "service"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "sub"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "service"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "sub"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "service"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "sub"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "service"
+          }
+        }
+      ]
+    }
+  }
+}

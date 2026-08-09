@@ -14,6 +14,8 @@ import QCReportPanel from './QCReportPanel';
 import PaymentGatePanel from './PaymentGatePanel';
 import ProcessControlPanel from './ProcessControlPanel';
 import AIProposalPanel from './AIProposalPanel';
+import MeetingLogPanel from './MeetingLogPanel';
+import TaskInsightPanel from './TaskInsightPanel';
 
 const STATUS_META = {
   TODO:        { label: '대기 중',    color: 'bg-muted text-muted-foreground' },
@@ -77,9 +79,10 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
         </DialogHeader>
 
         <Tabs defaultValue={initialTab} className="mt-4">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto gap-0.5">
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 h-auto gap-0.5">
             <TabsTrigger value="overview" className="text-xs sm:text-sm py-1.5">오버뷰</TabsTrigger>
             <TabsTrigger value="tasks" className="text-xs sm:text-sm py-1.5">업무</TabsTrigger>
+            <TabsTrigger value="meetings" className="text-xs sm:text-sm py-1.5">미팅·분석</TabsTrigger>
             <TabsTrigger value="quotation" className="text-xs sm:text-sm py-1.5">견적</TabsTrigger>
             <TabsTrigger value="files" className="text-xs sm:text-sm py-1.5">파일</TabsTrigger>
             <TabsTrigger value="chat" className="text-xs sm:text-sm py-1.5">채팅</TabsTrigger>
@@ -94,6 +97,12 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
           <TabsContent value="overview" className="mt-4">
             <OverviewTab card={card} kbAlerts={kbAlerts} viewLang={viewLang} />
             <ProcessControlPanel card={card} user={user} />
+          </TabsContent>
+          <TabsContent value="meetings" className="mt-4 space-y-6">
+            <MeetingLogPanel card={card} user={user} />
+            <div className="border-t pt-4">
+              <TaskInsightPanel card={card} user={user} />
+            </div>
           </TabsContent>
           <TabsContent value="quotation" className="mt-4">
             <QuotationTab card={card} user={user} />
