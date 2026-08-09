@@ -33,11 +33,18 @@ export async function loadMatchingContext(base44) {
 
 export function findClient(clients, participants) {
   const text = participants.toLowerCase();
-  return clients.find((c) => {
+  // 1순위: 등록된 고객사 이메일/도메인 일치
+  const byEmail = clients.find((c) => {
     const email = (c.email || '').trim().toLowerCase();
     if (!email) return false;
     const domain = email.split('@')[1];
     return text.includes(email) || (domain && text.includes(`@${domain}`));
+  });
+  if (byEmail) return byEmail;
+  // 2순위: 발신자명/제목에 고객사명이 포함된 경우
+  return clients.find((c) => {
+    const name = (c.company_name || '').trim().toLowerCase();
+    return name.length >= 2 && text.includes(name);
   });
 }
 
@@ -63,7 +70,7 @@ export async function processMessageIds(base44, messageIds) {
     const subject = header(message, 'Subject');
     const date = header(message, 'Date');
 
-    const client = findClient(clients, `${from} ${to}`);
+    const client = findClient(clients, `${from} ${to} ${subject}`);
     if (!client) {
       results.push({ messageId, skipped: 'no matching client' });
       continue;

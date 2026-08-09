@@ -19,11 +19,17 @@ export default async function (req) {
     const authHeader = { Authorization: `Bearer ${accessToken}` };
 
     const { clients } = await loadMatchingContext(base44);
-    const emails = clients.map((c) => (c.email || '').trim()).filter(Boolean);
-    if (emails.length === 0) {
-      return Response.json({ processed: 0, done: true, reason: '등록된 고객사 이메일이 없습니다' });
+    const terms = [];
+    for (const c of clients) {
+      const email = (c.email || '').trim();
+      if (email) terms.push(`from:${email}`, `to:${email}`);
+      const name = (c.company_name || '').trim();
+      if (name.length >= 2) terms.push(`"${name}"`);
     }
-    const query = emails.map((e) => `from:${e} OR to:${e}`).join(' OR ');
+    if (terms.length === 0) {
+      return Response.json({ processed: 0, done: true, reason: '등록된 고객사가 없습니다' });
+    }
+    const query = terms.join(' OR ');
 
     const listUrl = new URL('https://gmail.googleapis.com/gmail/v1/users/me/messages');
     listUrl.searchParams.set('q', query);
