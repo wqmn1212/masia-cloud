@@ -25,7 +25,7 @@ export default function MeetingLogPanel({ card, user }) {
 
   const updateMut = useMutation({
     mutationFn: ({ id, form }) => base44.entities.MeetingLog.update(id, form),
-    onSuccess: () => { setEditing(null); qc.invalidateQueries({ queryKey: ['meeting-logs', card.id] }); },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['meeting-logs', card.id] }),
   });
 
   const deleteMut = useMutation({
@@ -65,6 +65,7 @@ export default function MeetingLogPanel({ card, user }) {
               <MeetingLogForm
                 key={l.id}
                 initial={l}
+                autoSave
                 saving={updateMut.isPending}
                 onSubmit={(form) => updateMut.mutate({ id: l.id, form })}
                 onCancel={() => setEditing(null)}
