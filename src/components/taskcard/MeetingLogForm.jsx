@@ -14,8 +14,19 @@ const EMPTY = {
   meeting_type: 'ONLINE', title: '', attendees: '', notes: '', decisions: '', next_steps: '',
 };
 
-export default function MeetingLogForm({ onSubmit, onCancel, saving }) {
-  const [form, setForm] = useState(EMPTY);
+export default function MeetingLogForm({ onSubmit, onCancel, saving, initial }) {
+  const [form, setForm] = useState({
+    ...EMPTY,
+    ...(initial ? {
+      meeting_date: initial.meeting_date || EMPTY.meeting_date,
+      meeting_type: initial.meeting_type || 'ONLINE',
+      title: initial.title || '',
+      attendees: initial.attendees || '',
+      notes: initial.notes || '',
+      decisions: initial.decisions || '',
+      next_steps: initial.next_steps || '',
+    } : {}),
+  });
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   return (

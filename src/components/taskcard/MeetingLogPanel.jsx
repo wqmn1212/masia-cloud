@@ -8,6 +8,7 @@ import MeetingLogItem from './MeetingLogItem';
 
 export default function MeetingLogPanel({ card, user }) {
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState(null);
   const qc = useQueryClient();
 
   const { data: logs = [], isLoading } = useQuery({
@@ -22,6 +23,11 @@ export default function MeetingLogPanel({ card, user }) {
     onSuccess: () => { setAdding(false); qc.invalidateQueries({ queryKey: ['meeting-logs', card.id] }); },
   });
 
+  const updateMut = useMutation({
+    mutationFn: ({ id, form }) => base44.entities.MeetingLog.update(id, form),
+    onSuccess: () => { setEditing(null); qc.invalidateQueries({ queryKey: ['meeting-logs', card.id] }); },
+  });
+
   const deleteMut = useMutation({
     mutationFn: (id) => base44.entities.MeetingLog.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['meeting-logs', card.id] }),
@@ -34,7 +40,7 @@ export default function MeetingLogPanel({ card, user }) {
           <CalendarDays className="h-4 w-4" /> 미팅 일정 ({logs.length})
         </h4>
         {!adding && (
-          <Button size="sm" variant="outline" onClick={() => setAdding(true)}>
+          <Button size="sm" variant="outline" onClick={() => { setEditing(null); setAdding(true); }}>
             <Plus className="h-3.5 w-3.5" /> 미팅 추가
           </Button>
         )}
@@ -54,7 +60,24 @@ export default function MeetingLogPanel({ card, user }) {
         <p className="text-xs text-muted-foreground py-4 text-center">등록된 미팅이 없습니다.</p>
       ) : (
         <div className="space-y-2">
-          {logs.map(l => <MeetingLogItem key={l.id} log={l} onDelete={(id) => deleteMut.mutate(id)} />)}
+          {logs.map(l => (
+            editing?.id === l.id ? (
+              <MeetingLogForm
+                key={l.id}
+                initial={l}
+                saving={updateMut.isPending}
+                onSubmit={(form) => updateMut.mutate({ id: l.id, form })}
+                onCancel={() => setEditing(null)}
+              />
+            ) : (
+              <MeetingLogItem
+                key={l.id}
+                log={l}
+                onEdit={(log) => { setAdding(false); setEditing(log); }}
+                onDelete={(id) => deleteMut.mutate(id)}
+              />
+            )
+          ))}
         </div>
       )}
     </div>

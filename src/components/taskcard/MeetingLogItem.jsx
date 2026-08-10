@@ -1,17 +1,20 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Pencil } from 'lucide-react';
 
 const TYPE_LABEL = { ONLINE: '화상', OFFLINE: '대면', CALL: '전화', WECHAT: '위챗' };
 
-export default function MeetingLogItem({ log, onDelete }) {
+export default function MeetingLogItem({ log, onDelete, onEdit }) {
   return (
     <div className="border rounded-lg p-3">
       <div className="flex items-start gap-2 flex-wrap">
         <span className="text-xs font-semibold tabular-nums text-primary">{log.meeting_date}</span>
         <Badge variant="outline" className="text-[10px]">{TYPE_LABEL[log.meeting_type] || log.meeting_type}</Badge>
         <span className="text-sm font-medium flex-1 min-w-0">{log.title}</span>
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(log)}>
+          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+        </Button>
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(log.id)}>
           <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
         </Button>
