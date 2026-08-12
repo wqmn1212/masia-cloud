@@ -16,6 +16,8 @@ import ClientSelect from '@/components/taskcard/ClientSelect';
 import FactoryMultiSelect from '@/components/taskcard/FactoryMultiSelect';
 import { translateFieldsToCN } from '@/lib/translate';
 import EmailBackfillButton from '@/components/email/EmailBackfillButton';
+import EmailProposalDialog from '@/components/email/EmailProposalDialog';
+import { Mail } from 'lucide-react';
 
 
 const COLUMNS = [
@@ -52,6 +54,7 @@ export default function TaskBoard() {
   const [form, setForm] = useState(emptyForm);
   const [candidateFactories, setCandidateFactories] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [inboxOpen, setInboxOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -72,6 +75,10 @@ export default function TaskBoard() {
   const { data: paymentStages = [] } = useQuery({
     queryKey: ['payment-stages-all'],
     queryFn: () => base44.entities.PaymentStage.list('-created_date', 1000),
+  });
+  const { data: pendingProposals = [] } = useQuery({
+    queryKey: ['ai-proposals', 'pending-all'],
+    queryFn: () => base44.entities.AIProposal.filter({ status: 'PENDING' }, '-created_date', 100),
   });
 
 
@@ -128,6 +135,12 @@ export default function TaskBoard() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <EmailBackfillButton />
+          <Button variant="outline" className="gap-2" onClick={() => setInboxOpen(true)}>
+            <Mail className="w-4 h-4" />가져온 메일 연동
+            {pendingProposals.length > 0 && (
+              <Badge variant="secondary" className="text-[10px]">{pendingProposals.length}</Badge>
+            )}
+          </Button>
           <Button onClick={() => setCreateOpen(true)} className="gap-2">
             <Plus className="w-4 h-4" />신규 카드 생성
           </Button>
@@ -309,6 +322,12 @@ export default function TaskBoard() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <EmailProposalDialog
+        open={inboxOpen}
+        onClose={() => setInboxOpen(false)}
+        cards={cards}
+      />
 
       {/* Card Detail Modal */}
       {selectedCard && (
