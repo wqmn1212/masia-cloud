@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, Trash2, CheckCircle2, Circle, Clock, CalendarDays, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Circle, Clock, CalendarDays, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { translateFieldsToCN } from '@/lib/translate';
 
 const STATUS_META = {
@@ -32,8 +32,27 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [expandedId, setExpandedId] = useState(null);
+  const [syncing, setSyncing] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const syncGoogle = async () => {
+    setSyncing(true);
+    try {
+      const res = await base44.functions.invoke('syncGoogleTasks', {});
+      const d = res.data || {};
+      queryClient.invalidateQueries({ queryKey: ['task-items', card.id] });
+      queryClient.invalidateQueries({ queryKey: ['task-items-all'] });
+      toast({
+        title: 'Google Tasks 동기화 완료',
+        description: `신규 ${d.created || 0}건 등록 · 캘린더에서 완료 ${d.completedInApp || 0}건 반영`,
+      });
+    } catch (e) {
+      toast({ title: '동기화 실패', description: e.message, variant: 'destructive' });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['task-items', card.id],
@@ -286,9 +305,14 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
           </div>
         </div>
       ) : (
-        <Button variant="outline" className="w-full gap-2" onClick={() => setShowForm(true)}>
-          <Plus className="w-4 h-4" /> 세부 업무 추가
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" className="flex-1 gap-2" onClick={() => setShowForm(true)}>
+            <Plus className="w-4 h-4" /> 세부 업무 추가
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={syncGoogle} disabled={syncing}>
+            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} /> Google Tasks 동기화
+          </Button>
+        </div>
       )}
     </div>
   );

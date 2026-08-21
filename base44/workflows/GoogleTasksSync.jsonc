@@ -1,0 +1,45 @@
+{
+  "description": "\uc138\ubd80 \uc5c5\ubb34\ub97c Google Tasks\uc5d0 \ub4f1\ub85d\ud558\uace0, \uccb4\ud06c\ubc15\uc2a4\ub85c \uc644\ub8cc\ub41c \ud56d\ubaa9\uc744 \uc571\uc5d0 \ubc18\uc601\ud569\ub2c8\ub2e4 (15\ubd84 \uc8fc\uae30).",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "google_tasks_sync",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "sync_tasks": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "syncGoogleTasks",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Google Tasks \ub3d9\uae30\ud654",
+            "description": "\uc591\ubc29\ud5a5 \ubc18\uc601"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Google Tasks \uc5c5\ubb34 \ub3d9\uae30\ud654",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/15 * * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}
