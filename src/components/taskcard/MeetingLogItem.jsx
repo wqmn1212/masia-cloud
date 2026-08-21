@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trash2, Pencil, ChevronDown, ChevronRight } from 'lucide-react';
+import { Trash2, Pencil, ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
 
 const TYPE_LABEL = { ONLINE: '화상', OFFLINE: '대면', CALL: '전화', WECHAT: '위챗' };
 
-export default function MeetingLogItem({ log, onDelete, onEdit }) {
+export default function MeetingLogItem({ log, onDelete, onEdit, onAnalyze }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border rounded-lg">
@@ -16,6 +16,9 @@ export default function MeetingLogItem({ log, onDelete, onEdit }) {
         <span className="text-xs font-semibold tabular-nums text-primary">{log.meeting_date}</span>
         <Badge variant="outline" className="text-[10px]">{TYPE_LABEL[log.meeting_type] || log.meeting_type}</Badge>
         <span className="text-sm font-medium flex-1 min-w-0 truncate">{log.title}</span>
+        <Button variant="ghost" size="sm" className="h-6 px-2 shrink-0 text-[11px] gap-1" onClick={() => onAnalyze(log)}>
+          <Sparkles className="h-3.5 w-3.5 text-primary" /> AI 분석
+        </Button>
         <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => onEdit(log)}>
           <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
         </Button>

@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Plus, CalendarDays } from 'lucide-react';
 import MeetingLogForm from './MeetingLogForm';
 import MeetingLogItem from './MeetingLogItem';
+import MeetingAnalysisDialog from './MeetingAnalysisDialog';
 
 export default function MeetingLogPanel({ card, user }) {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [analyzing, setAnalyzing] = useState(null);
   const qc = useQueryClient();
 
   const { data: logs = [], isLoading } = useQuery({
@@ -76,10 +78,21 @@ export default function MeetingLogPanel({ card, user }) {
                 log={l}
                 onEdit={(log) => { setAdding(false); setEditing(log); }}
                 onDelete={(id) => deleteMut.mutate(id)}
+                onAnalyze={(log) => setAnalyzing(log)}
               />
             )
           ))}
         </div>
+      )}
+
+      {analyzing && (
+        <MeetingAnalysisDialog
+          open={!!analyzing}
+          log={analyzing}
+          card={card}
+          user={user}
+          onClose={() => setAnalyzing(null)}
+        />
       )}
     </div>
   );
