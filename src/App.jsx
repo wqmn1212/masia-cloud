@@ -26,6 +26,7 @@ import UserPermissions from '@/pages/UserPermissions';
 import FinancialReport from '@/pages/FinancialReport';
 import MasterTeamDashboard from '@/pages/MasterTeamDashboard';
 import Assistant from '@/pages/Assistant';
+import FileCenter from '@/pages/FileCenter';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -62,6 +63,7 @@ const AuthenticatedApp = () => {
         <Route path="/requirements" element={<Requirements />} />
         <Route path="/task-board" element={<TaskBoard />} />
         <Route path="/assistant" element={<Assistant />} />
+        <Route path="/file-center" element={<FileCenter />} />
         <Route path="/factories/:factoryId/dashboard" element={<FactoryDashboard />} />
         <Route path="/clients/:clientId/dashboard" element={<ClientDashboard />} />
         <Route path="/master-admin" element={<MasterAdminDashboard />} />
