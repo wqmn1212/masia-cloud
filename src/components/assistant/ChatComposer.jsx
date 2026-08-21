@@ -1,0 +1,67 @@
+import React, { useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Paperclip, Send, X, Loader2 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+
+export default function ChatComposer({ onSend, disabled }) {
+  const [text, setText] = useState('');
+  const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef(null);
+
+  const handleFiles = async (fileList) => {
+    const picked = Array.from(fileList || []);
+    if (picked.length === 0) return;
+    setUploading(true);
+    const uploaded = [];
+    for (const file of picked) {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      uploaded.push({ name: file.name, url: file_url });
+    }
+    setFiles((prev) => [...prev, ...uploaded]);
+    setUploading(false);
+  };
+
+  const submit = () => {
+    if (disabled || uploading) return;
+    if (!text.trim() && files.length === 0) return;
+    onSend(text.trim(), files.map((f) => f.url), files.map((f) => f.name));
+    setText('');
+    setFiles([]);
+  };
+
+  return (
+    <div className="border-t border-border bg-card p-3">
+      {files.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2">
+          {files.map((f) => (
+            <span key={f.url} className="flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs">
+              <Paperclip className="w-3 h-3" />
+              <span className="max-w-[180px] truncate">{f.name}</span>
+              <button onClick={() => setFiles(files.filter((x) => x.url !== f.url))}>
+                <X className="w-3 h-3 text-muted-foreground hover:text-destructive" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="flex items-end gap-2">
+        <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
+        <Button variant="outline" size="icon" onClick={() => inputRef.current?.click()} disabled={uploading}>
+          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+        </Button>
+        <Textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }}
+          placeholder="업무를 물어보거나 파일을 첨부해 보세요 (Shift+Enter 줄바꿈)"
+          className="min-h-[44px] max-h-32 resize-none"
+        />
+        <Button size="icon" onClick={submit} disabled={disabled || uploading}>
+          <Send className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}

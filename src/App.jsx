@@ -25,6 +25,7 @@ import TeamManagement from '@/pages/TeamManagement';
 import UserPermissions from '@/pages/UserPermissions';
 import FinancialReport from '@/pages/FinancialReport';
 import MasterTeamDashboard from '@/pages/MasterTeamDashboard';
+import Assistant from '@/pages/Assistant';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -60,6 +61,7 @@ const AuthenticatedApp = () => {
         <Route path="/settlement" element={<Settlement />} />
         <Route path="/requirements" element={<Requirements />} />
         <Route path="/task-board" element={<TaskBoard />} />
+        <Route path="/assistant" element={<Assistant />} />
         <Route path="/factories/:factoryId/dashboard" element={<FactoryDashboard />} />
         <Route path="/clients/:clientId/dashboard" element={<ClientDashboard />} />
         <Route path="/master-admin" element={<MasterAdminDashboard />} />
