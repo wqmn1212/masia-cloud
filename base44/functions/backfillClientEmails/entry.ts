@@ -29,7 +29,24 @@ export default async function (req) {
     if (terms.length === 0) {
       return Response.json({ processed: 0, done: true, reason: '등록된 고객사가 없습니다' });
     }
-    const query = terms.join(' OR ');
+    // 날짜 범위 필터 (YYYY-MM-DD → Gmail의 YYYY/MM/DD 형식)
+    const toGmailDate = (v) => {
+      const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m ? `${m[1]}/${m[2]}/${m[3]}` : '';
+    };
+    const after = toGmailDate(body?.after);
+    // Gmail의 before:는 해당 일자를 제외하므로 하루 더해 종료일을 포함시킴
+    const beforeRaw = String(body?.before || '');
+    let before = '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(beforeRaw)) {
+      const d = new Date(`${beforeRaw}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + 1);
+      before = toGmailDate(d.toISOString().slice(0, 10));
+    }
+    const dateParts = [];
+    if (after) dateParts.push(`after:${after}`);
+    if (before) dateParts.push(`before:${before}`);
+    const query = `(${terms.join(' OR ')})${dateParts.length ? ' ' + dateParts.join(' ') : ''}`;
 
     const listUrl = new URL('https://gmail.googleapis.com/gmail/v1/users/me/messages');
     listUrl.searchParams.set('q', query);
