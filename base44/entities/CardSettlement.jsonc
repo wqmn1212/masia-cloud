@@ -2,6 +2,10 @@
   "name": "CardSettlement",
   "type": "object",
   "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
     "card_id": {
       "type": "string",
       "description": "\uc885\uc18d\ub41c TaskCard ID"
@@ -49,23 +53,72 @@
   ],
   "rls": {
     "create": {
-      "$or": [
-        { "user_condition": { "data.account_tier": "master" } },
-        { "user_condition": { "data.account_tier": "service" } }
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
       ]
     },
     "read": {
       "$or": [
-        { "user_condition": { "data.account_tier": "master" } },
-        { "user_condition": { "data.account_tier": "service" } }
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
       ]
     },
     "update": {
       "$or": [
-        { "user_condition": { "data.account_tier": "master" } },
-        { "user_condition": { "data.account_tier": "service" } }
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
       ]
     },
-    "delete": { "user_condition": { "data.account_tier": "master" } }
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
   }
 }
