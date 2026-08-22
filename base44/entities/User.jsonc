@@ -10,11 +10,25 @@
         "sub",
         "client"
       ],
-      "description": "master=\uc2dc\uc2a4\ud15c \ub9c8\uc2a4\ud130, service=\ud300 \uad00\ub9ac\uc790, sub=\ud300\uc6d0, client=\uace0\uac1d\uc0ac \uacc4\uc815"
+      "description": "master=\uc2dc\uc2a4\ud15c \ub9c8\uc2a4\ud130, service=\ud300 \uad00\ub9ac\uc790, sub=\ud300\uc6d0, client=\uace0\uac1d\uc0ac \uacc4\uc815",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
     },
     "tenant_id": {
       "type": "string",
-      "description": "\uc18c\uc18d \ud300 ID"
+      "description": "\uc18c\uc18d \ud300 ID",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
     },
     "company_id": {
       "type": "string",
@@ -67,22 +81,30 @@
           "id": "{{user.id}}"
         },
         {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
           "user_condition": {
             "data.account_tier": "master"
           }
         },
         {
-          "user_condition": {
-            "data.account_tier": "service"
-          }
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -90,34 +112,30 @@
       "$or": [
         {
           "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
             "data.account_tier": "master"
           }
         },
         {
-          "user_condition": {
-            "data.account_tier": "service"
-          }
+          "id": "{{user.id}}"
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
         }
       ]
     },
     "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.account_tier": "master"
-          }
-        }
-      ]
+      "user_condition": {
+        "data.account_tier": "master"
+      }
     }
   }
 }
