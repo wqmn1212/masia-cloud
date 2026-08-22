@@ -2,6 +2,10 @@
   "name": "QCKnowledgeLog",
   "type": "object",
   "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
     "target_category": {
       "type": "string",
       "enum": [
@@ -45,23 +49,103 @@
     "root_cause"
   ],
   "rls": {
-    "create": { "$or": [
-      { "user_condition": { "data.account_tier": "master" } },
-      { "user_condition": { "data.account_tier": "service" } },
-      { "user_condition": { "data.account_tier": "sub" } }
-    ] },
-    "read": { "$or": [
-      { "user_condition": { "data.account_tier": "master" } },
-      { "user_condition": { "data.account_tier": "service" } },
-      { "user_condition": { "data.account_tier": "sub" } }
-    ] },
-    "update": { "$or": [
-      { "user_condition": { "data.account_tier": "master" } },
-      { "user_condition": { "data.account_tier": "service" } }
-    ] },
-    "delete": { "$or": [
-      { "user_condition": { "data.account_tier": "master" } },
-      { "user_condition": { "data.account_tier": "service" } }
-    ] }
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
   }
 }
