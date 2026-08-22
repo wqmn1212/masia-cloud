@@ -63,7 +63,7 @@ export default function Contracts() {
     setForm(prev => ({
       ...prev,
       quotation_id: q.id,
-      contract_title: prev.contract_title || `${q.client_name || ''} ${q.quote_title || q.product_name || ''} 공급계약서`.trim(),
+      contract_title: prev.contract_title || `${q.client_name || ''} ${q.quote_title || q.product_name || ''} 3자 제조위탁 및 생산관리 계약서`.trim(),
       client_name: q.client_name || prev.client_name,
       factory_name: q.factory_name || prev.factory_name,
       amount_usd: q.final_price_usd ?? prev.amount_usd,
@@ -76,7 +76,7 @@ export default function Contracts() {
     if (!q) return;
     setForm(prev => ({
       ...prev,
-      contract_title: prev.contract_title || `${q.client_name || ''} ${q.quote_title || q.product_name || ''} 공급계약서`.trim(),
+      contract_title: prev.contract_title || `${q.client_name || ''} ${q.quote_title || q.product_name || ''} 3자 제조위탁 및 생산관리 계약서`.trim(),
       client_name: q.client_name || prev.client_name,
       factory_name: q.factory_name || prev.factory_name,
       amount_usd: q.final_price_usd ?? prev.amount_usd,
