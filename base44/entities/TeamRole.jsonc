@@ -28,24 +28,97 @@
   ],
   "rls": {
     "read": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
     }
   }
 }
