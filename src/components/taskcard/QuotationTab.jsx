@@ -116,6 +116,7 @@ export default function QuotationTab({ card, user }) {
   const [editingId, setEditingId] = useState(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const isSub = user?.account_tier === 'sub';
 
   const { data: quotations = [], isLoading } = useQuery({
     queryKey: ['quotations-by-card', card.id],
@@ -452,7 +453,14 @@ export default function QuotationTab({ card, user }) {
             </div>
           </div>
 
+          {isSub && (
+            <p className="text-[11px] text-muted-foreground border border-dashed rounded-lg p-3">
+              원가·마진 항목은 팀 관리자 전용입니다. 고객 견적서 PDF 발행은 그대로 가능합니다.
+            </p>
+          )}
+
           {/* 옵션 / 세부 항목 (USD) */}
+          {!isSub && (
           <div className="border rounded-xl p-3 bg-background">
             <QuoteOptionsEditor
               options={form.quote_options}
@@ -482,6 +490,7 @@ export default function QuotationTab({ card, user }) {
               </div>
             </div>
           </div>
+          )}
 
           <div>
             <Label className="text-xs">PDF 최종 메인 통화</Label>
@@ -523,6 +532,7 @@ export default function QuotationTab({ card, user }) {
             </div>
           </div>
 
+          {!isSub && (<>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">공장 원가 {optionsTotalUSD > 0 && <span className="text-[10px] text-primary font-semibold">(옵션 합산 자동 반영)</span>}</Label>
@@ -602,6 +612,7 @@ export default function QuotationTab({ card, user }) {
               <Input type="number" value={form.masir_fee_value} onChange={e => setForm(f => ({ ...f, masir_fee_value: e.target.value }))} className="h-8 text-xs" />
             </div>
           </div>
+          </>)}
 
           <div className="grid grid-cols-3 gap-3">
             <div>
@@ -645,7 +656,7 @@ export default function QuotationTab({ card, user }) {
           </div>
 
           {/* 자동 계산 요약 */}
-          {(calc.base > 0 || calc.fee > 0 || optionsMarginCNY > 0) && (
+          {!isSub && (calc.base > 0 || calc.fee > 0 || optionsMarginCNY > 0) && (
             <div className="rounded-xl border bg-muted/30 p-3 space-y-2">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">고객 제안가 자동 계산</p>
               <div className={`grid ${optionsMarginCNY > 0 ? 'grid-cols-4' : 'grid-cols-3'} gap-2 text-xs`}>

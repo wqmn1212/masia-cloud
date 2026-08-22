@@ -29,6 +29,9 @@ export default function AgentQuotes() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
+  const isSub = me?.account_tier === 'sub';
+
   const { data: factories = [] } = useQuery({
     queryKey: ['factories'],
     queryFn: () => base44.entities.Company.filter({ company_type: 'FACTORY' }),
@@ -178,8 +181,9 @@ export default function AgentQuotes() {
               <QuoteLineEditor items={form.line_items || []} onChange={(items) => updateField('line_items', items)} />
             </CardContent>
           </Card>
-          <div className="flex justify-end">
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !form.factory_id}>
+          <div className="flex justify-end items-center gap-3">
+            {isSub && <p className="text-xs text-muted-foreground">원가 항목 저장은 팀 관리자 전용입니다.</p>}
+            <Button onClick={() => saveMutation.mutate()} disabled={isSub || saveMutation.isPending || !form.factory_id}>
               {saveMutation.isPending ? t('agentquotes.saving') : t('agentquotes.submit')}
             </Button>
           </div>

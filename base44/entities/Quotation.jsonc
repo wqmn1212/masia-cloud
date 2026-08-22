@@ -59,6 +59,23 @@
       ],
       "description": "\uc778\ucf54\ud140\uc988 (Incoterms 2020)"
     },
+    "settlement_route": {
+      "type": "string",
+      "enum": [
+        "CLIENT_TO_FACTORY",
+        "CLIENT_TO_AEGIS"
+      ],
+      "description": "\uc815\uc0b0 \uacbd\ub85c"
+    },
+    "quote_issuer": {
+      "type": "string",
+      "enum": [
+        "AEGIS",
+        "FACTORY"
+      ],
+      "default": "AEGIS",
+      "description": "\uacac\uc801\uc11c \ubc1c\ud589 \uba85\uc758"
+    },
     "quote_title": {
       "type": "string",
       "description": "\uacac\uc801\uc11c \uc81c\ubaa9"
