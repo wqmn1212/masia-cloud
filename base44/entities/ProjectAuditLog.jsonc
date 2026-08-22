@@ -2,6 +2,10 @@
   "name": "ProjectAuditLog",
   "type": "object",
   "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
     "card_id": {
       "type": "string"
     },
@@ -12,7 +16,9 @@
         "QC_RECORDED",
         "PRODUCTION_STARTED",
         "SHIPMENT_COMPLETED",
-        "SHIPMENT_OVERRIDDEN"
+        "SHIPMENT_OVERRIDDEN",
+        "CONTRACT_CREATED",
+        "CONTRACT_STATUS_CHANGED"
       ]
     },
     "actor_id": {
@@ -31,17 +37,71 @@
     "details"
   ],
   "rls": {
-    "create": { "$or": [
-      { "user_condition": { "data.account_tier": "master" } },
-      { "user_condition": { "data.account_tier": "service" } },
-      { "user_condition": { "data.account_tier": "sub" } }
-    ] },
-    "read": { "$or": [
-      { "user_condition": { "data.account_tier": "master" } },
-      { "user_condition": { "data.account_tier": "service" } },
-      { "user_condition": { "data.account_tier": "sub" } }
-    ] },
-    "update": { "user_condition": { "data.account_tier": "master" } },
-    "delete": { "user_condition": { "data.account_tier": "master" } }
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
   }
 }
