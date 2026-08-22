@@ -2,6 +2,10 @@
   "name": "FinancialLedger",
   "type": "object",
   "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
     "card_id": {
       "type": "string",
       "description": "\uc5f0\uacb0\ub41c TaskCard ID"
@@ -55,7 +59,7 @@
     },
     "expected_kickback_usd": {
       "type": "number",
-      "description": "[STEP1] \uc608\uc0c1 \ub9c8\uc9c4 = \uc9c1\uc1a1\uae08 - \uc6d0\uac00 (USD, \uc790\ub3d9\uacc4\uc0b0)"
+      "description": "[STEP1] \uc608\uc0c1 \ub9c8\uc9c4 (USD, \uc790\ub3d9\uacc4\uc0b0)"
     },
     "actual_kickback_rmb": {
       "type": "number",
@@ -128,23 +132,72 @@
   ],
   "rls": {
     "create": {
-      "$or": [
-        { "user_condition": { "data.account_tier": "master" } },
-        { "user_condition": { "data.account_tier": "service" } }
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
       ]
     },
     "read": {
       "$or": [
-        { "user_condition": { "data.account_tier": "master" } },
-        { "user_condition": { "data.account_tier": "service" } }
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
       ]
     },
     "update": {
       "$or": [
-        { "user_condition": { "data.account_tier": "master" } },
-        { "user_condition": { "data.account_tier": "service" } }
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
       ]
     },
-    "delete": { "user_condition": { "data.account_tier": "master" } }
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
   }
 }
