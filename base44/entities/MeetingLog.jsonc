@@ -2,6 +2,10 @@
   "name": "MeetingLog",
   "type": "object",
   "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
     "card_id": {
       "type": "string",
       "description": "\uc5f0\uacb0\ub41c TaskCard ID"
@@ -54,21 +58,28 @@
   ],
   "rls": {
     "create": {
-      "$or": [
+      "$and": [
         {
-          "user_condition": {
-            "data.account_tier": "master"
-          }
+          "data.tenant_id": "{{user.data.tenant_id}}"
         },
         {
-          "user_condition": {
-            "data.account_tier": "service"
-          }
-        },
-        {
-          "user_condition": {
-            "data.account_tier": "sub"
-          }
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
         }
       ]
     },
@@ -80,14 +91,25 @@
           }
         },
         {
-          "user_condition": {
-            "data.account_tier": "service"
-          }
-        },
-        {
-          "user_condition": {
-            "data.account_tier": "sub"
-          }
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -99,14 +121,25 @@
           }
         },
         {
-          "user_condition": {
-            "data.account_tier": "service"
-          }
-        },
-        {
-          "user_condition": {
-            "data.account_tier": "sub"
-          }
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -118,9 +151,16 @@
           }
         },
         {
-          "user_condition": {
-            "data.account_tier": "service"
-          }
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
         }
       ]
     }
