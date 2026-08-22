@@ -16,6 +16,7 @@ import ProcessControlPanel from './ProcessControlPanel';
 import AIProposalPanel from './AIProposalPanel';
 import MeetingLogPanel from './MeetingLogPanel';
 import TaskInsightPanel from './TaskInsightPanel';
+import DecisionsTab from './DecisionsTab';
 
 const STATUS_META = {
   TODO:        { label: '대기 중',    color: 'bg-muted text-muted-foreground' },
@@ -79,7 +80,7 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
         </DialogHeader>
 
         <Tabs defaultValue={initialTab} className="mt-4">
-          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 h-auto gap-0.5">
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 h-auto gap-0.5">
             <TabsTrigger value="overview" className="text-xs sm:text-sm py-1.5">오버뷰</TabsTrigger>
             <TabsTrigger value="tasks" className="text-xs sm:text-sm py-1.5">업무</TabsTrigger>
             <TabsTrigger value="meetings" className="text-xs sm:text-sm py-1.5">미팅·분석</TabsTrigger>
@@ -87,6 +88,7 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
             <TabsTrigger value="files" className="text-xs sm:text-sm py-1.5">파일</TabsTrigger>
             <TabsTrigger value="chat" className="text-xs sm:text-sm py-1.5">채팅</TabsTrigger>
             <TabsTrigger value="settlement" className="text-xs sm:text-sm py-1.5">정산</TabsTrigger>
+            <TabsTrigger value="decisions" className="text-xs sm:text-sm py-1.5">결정</TabsTrigger>
           </TabsList>
 
           <TabsContent value="tasks" className="mt-4">
@@ -116,6 +118,9 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
           <TabsContent value="settlement" className="mt-4">
             <PaymentGatePanel card={card} user={user} />
             <SettlementTab card={card} user={user} />
+          </TabsContent>
+          <TabsContent value="decisions" className="mt-4">
+            <DecisionsTab card={card} user={user} />
           </TabsContent>
         </Tabs>
       </DialogContent>
