@@ -5,6 +5,8 @@ import { useToast } from '@/components/ui/use-toast';
 import ClauseLibraryPanel from '@/components/contract/ClauseLibraryPanel';
 import ContractEditor from '@/components/contract/ContractEditor';
 import ContractList from '@/components/contract/ContractList';
+import { buildStandardContract } from '@/lib/contractTemplate';
+import { generateContractPDF } from '@/lib/generateContractPDF';
 
 const EMPTY_FORM = {
   id: null,
@@ -23,6 +25,7 @@ export default function Contracts() {
   const { toast } = useToast();
   const [form, setForm] = useState(EMPTY_FORM);
   const bodyRef = useRef(null);
+  const [exporting, setExporting] = useState(false);
 
   const { data: contracts = [] } = useQuery({
     queryKey: ['contracts'],
@@ -65,6 +68,30 @@ export default function Contracts() {
       factory_name: q.factory_name || prev.factory_name,
       amount_usd: q.final_price_usd ?? prev.amount_usd,
     }));
+  };
+
+  // 선택한 견적서 정보로 표준 계약서 초안 본문을 생성
+  const generateDraft = () => {
+    const q = quotations.find(x => x.id === form.quotation_id);
+    if (!q) return;
+    setForm(prev => ({
+      ...prev,
+      contract_title: prev.contract_title || `${q.client_name || ''} ${q.quote_title || q.product_name || ''} 공급계약서`.trim(),
+      client_name: q.client_name || prev.client_name,
+      factory_name: q.factory_name || prev.factory_name,
+      amount_usd: q.final_price_usd ?? prev.amount_usd,
+      body: buildStandardContract(q, { contractDate: prev.contract_date }),
+    }));
+    toast({ title: '견적서 정보로 계약서 초안을 생성했습니다.' });
+  };
+
+  const exportPDF = async () => {
+    setExporting(true);
+    try {
+      await generateContractPDF(form);
+    } finally {
+      setExporting(false);
+    }
   };
 
   // 커서 위치에 조항을 삽입 (없으면 본문 끝에 추가)
@@ -121,6 +148,9 @@ export default function Contracts() {
             onApplyQuotation={applyQuotation}
             onSave={save}
             onReset={() => setForm(EMPTY_FORM)}
+            onGenerate={generateDraft}
+            onExportPDF={exportPDF}
+            isExporting={exporting}
             isPending={saveMutation.isPending}
             bodyRef={bodyRef}
           />
