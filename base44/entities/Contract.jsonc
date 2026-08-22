@@ -1,0 +1,163 @@
+{
+  "name": "Contract",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "quotation_id": {
+      "type": "string",
+      "description": "\uae30\ubc18 \uacac\uc801 ID"
+    },
+    "contract_title": {
+      "type": "string",
+      "description": "\uacc4\uc57d\uc11c \uc81c\ubaa9"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac\uba85"
+    },
+    "factory_name": {
+      "type": "string",
+      "description": "\uacf5\uc7a5\uba85 (\ub0b4\ubd80\uc6a9)"
+    },
+    "contract_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uacc4\uc57d \uccb4\uacb0\uc77c"
+    },
+    "amount_usd": {
+      "type": "number",
+      "description": "\uacc4\uc57d \uae08\uc561 (USD)"
+    },
+    "body": {
+      "type": "string",
+      "description": "\uacc4\uc57d\uc11c \ubcf8\ubb38 (\ud2b9\uc57d \uc870\ud56d \ud3ec\ud568)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "REVIEW",
+        "SENT",
+        "SIGNED",
+        "CANCELLED"
+      ],
+      "default": "DRAFT",
+      "description": "\uacc4\uc57d \uc0c1\ud0dc"
+    }
+  },
+  "required": [
+    "contract_title"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

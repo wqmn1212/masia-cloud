@@ -1,0 +1,156 @@
+{
+  "name": "ContractClause",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "PAYMENT",
+        "DELIVERY",
+        "QUALITY",
+        "WARRANTY",
+        "IP",
+        "PENALTY",
+        "DISPUTE",
+        "ETC"
+      ],
+      "default": "ETC",
+      "description": "\uc870\ud56d \ubd84\ub958"
+    },
+    "title": {
+      "type": "string",
+      "description": "\uc870\ud56d \uc81c\ubaa9"
+    },
+    "body": {
+      "type": "string",
+      "description": "\uc870\ud56d \ubcf8\ubb38 (\uacc4\uc57d\uc11c\uc5d0 \uc0bd\uc785\ub418\ub294 \ud14d\uc2a4\ud2b8)"
+    },
+    "is_favorite": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uc790\uc8fc \uc4f0\ub294 \uc870\ud56d"
+    },
+    "usage_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\uc0bd\uc785 \ud69f\uc218"
+    }
+  },
+  "required": [
+    "title",
+    "body"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
