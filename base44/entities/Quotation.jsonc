@@ -2,6 +2,10 @@
   "name": "Quotation",
   "type": "object",
   "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
     "card_id": {
       "type": "string",
       "description": "\uc5f0\uacb0\ub41c TaskCard ID"
@@ -53,7 +57,7 @@
         "FOB_SHANGHAI",
         "FOB_GUANGZHOU"
       ],
-      "description": "\uc778\ucf54\ud140\uc988 (Incoterms 2020 \u2014 11\uac00\uc9c0 \uc870\uac74 + \ub808\uac70\uc2dc \ud56d\uad6c \uc9c0\uc815 FOB)"
+      "description": "\uc778\ucf54\ud140\uc988 (Incoterms 2020)"
     },
     "quote_title": {
       "type": "string",
@@ -123,7 +127,7 @@
     },
     "cargo_chargeable_kg": {
       "type": "number",
-      "description": "\uacfc\uae08 \uc911\ub7c9 (\uc2e4\uc911\ub7c9/\ubd80\ud53c\uc911\ub7c9 \uc911 \ud070 \uac12)"
+      "description": "\uacfc\uae08 \uc911\ub7c9"
     },
     "shipping_mode": {
       "type": "string",
@@ -211,105 +215,15 @@
             "description": "\uae08\uc561 (USD \ud658\uc0b0, \ub9c8\uc9c4 \ubbf8\ud3ec\ud568 \uc6d0\uac00)"
           }
         }
-      },
-      "rls": {
-        "read": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        },
-        "write": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        }
       }
     },
     "options_total_usd": {
       "type": "number",
-      "description": "\uc635\uc158 \ud569\uc0b0 \ucd1d\uc561 (USD) = \uacf5\uc7a5 \uc6d0\uac00",
-      "rls": {
-        "read": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        },
-        "write": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        }
-      }
+      "description": "\uc635\uc158 \ud569\uc0b0 \ucd1d\uc561 (USD) = \uacf5\uc7a5 \uc6d0\uac00"
     },
     "final_price_usd": {
       "type": "number",
-      "description": "\ud56d\ubaa9\ubcc4 \ub9c8\uc9c4 + \uc218\uc218\ub8cc \ud3ec\ud568 \ucd5c\uc885 \uc81c\uc548\uac00 (USD)",
-      "rls": {
-        "read": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        },
-        "write": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        }
-      }
+      "description": "\ud56d\ubaa9\ubcc4 \ub9c8\uc9c4 + \uc218\uc218\ub8cc \ud3ec\ud568 \ucd5c\uc885 \uc81c\uc548\uac00 (USD)"
     },
     "raw_file_url": {
       "type": "string",
@@ -387,139 +301,19 @@
         "PERCENT",
         "FIXED"
       ],
-      "description": "\ub9c8\uc2dc\uc544 \uc218\uc218\ub8cc \uc720\ud615",
-      "rls": {
-        "read": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        },
-        "write": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        }
-      }
+      "description": "\ub9c8\uc2dc\uc544 \uc218\uc218\ub8cc \uc720\ud615"
     },
     "masir_fee_value": {
       "type": "number",
-      "description": "\ub9c8\uc2dc\uc544 \uc218\uc218\ub8cc \uac12 (% \ub610\ub294 CNY \uace0\uc815)",
-      "rls": {
-        "read": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        },
-        "write": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        }
-      }
+      "description": "\ub9c8\uc2dc\uc544 \uc218\uc218\ub8cc \uac12 (% \ub610\ub294 CNY \uace0\uc815)"
     },
     "masir_fee_amount_cny": {
       "type": "number",
-      "description": "\ub9c8\uc2dc\uc544 \uc218\uc218\ub8cc \uacc4\uc0b0 \uae08\uc561 (CNY)",
-      "rls": {
-        "read": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        },
-        "write": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        }
-      }
+      "description": "\ub9c8\uc2dc\uc544 \uc218\uc218\ub8cc \uacc4\uc0b0 \uae08\uc561 (CNY)"
     },
     "final_client_price": {
       "type": "number",
-      "description": "\uace0\uac1d \uc81c\uc548\uac00 (CNY)",
-      "rls": {
-        "read": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        },
-        "write": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        }
-      }
+      "description": "\uace0\uac1d \uc81c\uc548\uac00 (CNY)"
     },
     "exchange_rate_date": {
       "type": "string",
@@ -552,21 +346,28 @@
   ],
   "rls": {
     "create": {
-      "$or": [
+      "$and": [
         {
-          "user_condition": {
-            "data.account_tier": "master"
-          }
+          "data.tenant_id": "{{user.data.tenant_id}}"
         },
         {
-          "user_condition": {
-            "data.account_tier": "service"
-          }
-        },
-        {
-          "user_condition": {
-            "data.account_tier": "sub"
-          }
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
         }
       ]
     },
@@ -578,14 +379,25 @@
           }
         },
         {
-          "user_condition": {
-            "data.account_tier": "service"
-          }
-        },
-        {
-          "user_condition": {
-            "data.account_tier": "sub"
-          }
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -597,14 +409,25 @@
           }
         },
         {
-          "user_condition": {
-            "data.account_tier": "service"
-          }
-        },
-        {
-          "user_condition": {
-            "data.account_tier": "sub"
-          }
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -616,9 +439,16 @@
           }
         },
         {
-          "user_condition": {
-            "data.account_tier": "service"
-          }
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
         }
       ]
     }
