@@ -65,6 +65,7 @@
         "CLIENT_TO_FACTORY",
         "CLIENT_TO_AEGIS"
       ],
+      "default": "CLIENT_TO_AEGIS",
       "description": "\uc815\uc0b0 \uacbd\ub85c"
     },
     "quote_issuer": {

@@ -12,6 +12,7 @@ import { Plus, FileText, Eye } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import QuoteLineEditor from '@/components/quotation/QuoteLineEditor';
 import MarginCalculator from '@/components/quotation/MarginCalculator';
+import SettlementFields from '@/components/quotation/SettlementFields';
 import RiskAlertPopup from '@/components/quotation/RiskAlertPopup';
 
 const CATEGORY_LABELS = {
@@ -62,6 +63,7 @@ export default function Quotations() {
   const [form, setForm] = useState({
     factory_id: '', factory_name: '', client_id: '', client_name: '',
     machine_category: '', incoterms: 'EXW', line_items: [],
+    settlement_route: 'CLIENT_TO_AEGIS', quote_issuer: 'AEGIS',
     factory_total_cost: 0, logistics_cost: 0,
     masir_fee_type: 'PERCENT', masir_fee_value: 0,
     final_client_price: 0, status: 'DRAFT',
@@ -162,6 +164,13 @@ export default function Quotations() {
                   </Select>
                 </div>
               </div>
+
+              <SettlementFields
+                settlementRoute={form.settlement_route}
+                quoteIssuer={form.quote_issuer}
+                onChange={updateField}
+                canEditIssuer={['master', 'service'].includes(me?.account_tier)}
+              />
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">

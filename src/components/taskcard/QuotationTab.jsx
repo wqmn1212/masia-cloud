@@ -12,6 +12,7 @@ import { Plus, FileText, Trash2, ExternalLink, Pencil, Download, X } from 'lucid
 import DropZone from '@/components/ui/drop-zone';
 import { generateQuotationPDF } from '@/lib/generateQuotationPDF';
 import QuoteOptionsEditor, { optionToUSD } from '@/components/quotation/QuoteOptionsEditor';
+import SettlementFields from '@/components/quotation/SettlementFields';
 import { INCOTERMS_2020, LEGACY_INCOTERMS } from '@/lib/incoterms';
 import LogisticsEstimator from '@/components/quotation/LogisticsEstimator';
 import { calcCbm } from '@/lib/logisticsEstimator';
@@ -28,6 +29,8 @@ const STATUS_META = {
 const emptyForm = {
   factory_name: '',
   incoterms: 'EXW',
+  settlement_route: 'CLIENT_TO_AEGIS',
+  quote_issuer: 'AEGIS',
   quote_title: '',
   product_name: '',
   model_name: '',
@@ -117,6 +120,7 @@ export default function QuotationTab({ card, user }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const isSub = user?.account_tier === 'sub';
+  const canEditIssuer = ['master', 'service'].includes(user?.account_tier);
 
   const { data: quotations = [], isLoading } = useQuery({
     queryKey: ['quotations-by-card', card.id],
@@ -370,6 +374,8 @@ export default function QuotationTab({ card, user }) {
     setForm({
       factory_name: q.factory_name || '',
       incoterms: q.incoterms || 'EXW',
+      settlement_route: q.settlement_route || 'CLIENT_TO_AEGIS',
+      quote_issuer: q.quote_issuer || 'AEGIS',
       quote_title: q.quote_title || '',
       product_name: q.product_name || '',
       model_name: q.model_name || '',
@@ -531,6 +537,14 @@ export default function QuotationTab({ card, user }) {
               </Select>
             </div>
           </div>
+
+          <SettlementFields
+            settlementRoute={form.settlement_route}
+            quoteIssuer={form.quote_issuer}
+            onChange={(field, value) => setForm(f => ({ ...f, [field]: value }))}
+            canEditIssuer={canEditIssuer}
+            compact
+          />
 
           {!isSub && (<>
           <div className="grid grid-cols-2 gap-3">

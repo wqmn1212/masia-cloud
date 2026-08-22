@@ -11,6 +11,12 @@ export default async function (req) {
     const { quotation_id } = await req.json();
     if (!quotation_id) return Response.json({ error: 'quotation_id 가 필요합니다' }, { status: 400 });
 
+    // asServiceRole 로 RLS 를 우회하므로 등급을 명시적으로 검사한다 (client 등급 전면 차단)
+    const ALLOWED = ['master', 'service', 'sub'];
+    if (!ALLOWED.includes(user.account_tier)) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const q = await base44.asServiceRole.entities.Quotation.get(quotation_id);
     if (!q) return Response.json({ error: '견적서를 찾을 수 없습니다' }, { status: 404 });
     if (user.account_tier !== 'master' && q.tenant_id !== user.tenant_id) {
