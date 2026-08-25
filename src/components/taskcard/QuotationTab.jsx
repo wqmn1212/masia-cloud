@@ -172,6 +172,7 @@ export default function QuotationTab({ card, user }) {
       resetForm();
       toast({ title: '견적 등록 완료 — 견적관리에서도 확인하세요' });
     },
+    onError: (err) => toast({ title: '견적 등록 실패', description: err?.message || '다시 시도해주세요', variant: 'destructive' }),
   });
 
   const updateMutation = useMutation({
@@ -182,6 +183,7 @@ export default function QuotationTab({ card, user }) {
       resetForm();
       toast({ title: '견적 수정 완료' });
     },
+    onError: (err) => toast({ title: '견적 수정 실패', description: err?.message || '다시 시도해주세요', variant: 'destructive' }),
   });
 
   const updateStatusMutation = useMutation({
@@ -328,6 +330,7 @@ export default function QuotationTab({ card, user }) {
       shipping_days: Number(form.shipping_days) || 0,
       product_image_url: form.product_image_url || '',
       card_id: card.id,
+      tenant_id: user?.tenant_id || card.tenant_id,
       client_name: card.client_name || form.client_name,
       machine_category: card.target_machine_category,
       factory_total_cost: factoryCNY,
