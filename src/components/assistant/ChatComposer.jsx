@@ -16,8 +16,11 @@ export default function ChatComposer({ onSend, disabled }) {
     setUploading(true);
     const uploaded = [];
     for (const file of picked) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      uploaded.push({ name: file.name, url: file_url });
+      const named = file.name
+        ? file
+        : new File([file], `clipboard-${Date.now()}.png`, { type: file.type || 'image/png' });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: named });
+      uploaded.push({ name: named.name, url: file_url });
     }
     setFiles((prev) => [...prev, ...uploaded]);
     setUploading(false);
@@ -55,7 +58,17 @@ export default function ChatComposer({ onSend, disabled }) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }}
-          placeholder="업무를 물어보거나 파일을 첨부해 보세요 (Shift+Enter 줄바꿈)"
+          onPaste={(e) => {
+            const pasted = Array.from(e.clipboardData?.items || [])
+              .filter((it) => it.kind === 'file')
+              .map((it) => it.getAsFile())
+              .filter(Boolean);
+            if (pasted.length > 0) {
+              e.preventDefault();
+              handleFiles(pasted);
+            }
+          }}
+          placeholder="업무를 물어보거나 파일을 첨부해 보세요 (이미지 Ctrl+V 붙여넣기 가능, Shift+Enter 줄바꿈)"
           className="min-h-[44px] max-h-32 resize-none"
         />
         <Button size="icon" onClick={submit} disabled={disabled || uploading}>
