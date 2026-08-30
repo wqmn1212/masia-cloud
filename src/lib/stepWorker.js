@@ -44,23 +44,28 @@ self.onmessage = async (event) => {
     }
 
     const parts = [];
+    // 메시는 TypedArray 로 담아 buffer 를 transfer 한다 —
+    // 일반 배열로 복사하면 42부품 규모에서 메모리가 폭증해 탭이 죽는다.
+    const transfers = [];
+
     for (let i = 0; i < meshes.length; i++) {
       const mesh = meshes[i];
-      const positions = mesh.attributes?.position?.array || [];
-      const indices = mesh.index?.array || [];
+      const rawPositions = mesh.attributes?.position?.array || [];
+      const rawIndices = mesh.index?.array || [];
 
-      if (positions.length === 0 || indices.length === 0) continue;
+      if (rawPositions.length === 0 || rawIndices.length === 0) continue;
+
+      const positions = rawPositions instanceof Float32Array ? rawPositions : new Float32Array(rawPositions);
+      const indices = rawIndices instanceof Uint32Array ? rawIndices : new Uint32Array(rawIndices);
 
       const metrics = analyzeMesh(positions, indices);
 
       parts.push({
         part_name: mesh.name || `PART_${i + 1}`,
         ...metrics,
-        mesh: {
-          positions: Array.from(positions),
-          indices: Array.from(indices),
-        },
+        mesh: { positions, indices },
       });
+      transfers.push(positions.buffer, indices.buffer);
 
       self.postMessage({
         type: 'progress',
@@ -73,7 +78,7 @@ self.onmessage = async (event) => {
       type: 'done',
       parts,
       elapsed_ms: Math.round(performance.now() - startedAt),
-    });
+    }, transfers);
   } catch (error) {
     self.postMessage({ type: 'error', message: error?.message || 'STEP 파싱 실패' });
   }

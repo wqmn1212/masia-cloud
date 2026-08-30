@@ -9,6 +9,9 @@ import { estimateMoldParams } from '@/lib/moldEstimate';
 import BomUploadZone from '@/components/bom/BomUploadZone';
 import BomPartTable from '@/components/bom/BomPartTable';
 import BomSaveBar from '@/components/bom/BomSaveBar';
+import BomPartViewer from '@/components/bom/BomPartViewer';
+import BomEstimatePanel from '@/components/bom/BomEstimatePanel';
+import BomSaveDialog from '@/components/bom/BomSaveDialog';
 
 const PHASE_LABEL = {
   parsing: 'STEP 형상 읽는 중...',
@@ -24,6 +27,8 @@ export default function BomExtractor() {
   const [phase, setPhase] = useState('parsing');
   const [elapsedMs, setElapsedMs] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [viewIndex, setViewIndex] = useState(null);
+  const [saveOpen, setSaveOpen] = useState(false);
 
   const handleFile = async (file) => {
     setIsParsing(true);
@@ -76,14 +81,25 @@ export default function BomExtractor() {
     }));
   };
 
-  const handleSave = async () => {
+  const handleSave = async ({ cardId, newTitle }) => {
     setIsSaving(true);
     try {
       const bomSetId = `BOM-${Date.now()}`;
       const uploaded = await base44.integrations.Core.UploadFile({ file: sourceFile });
 
+      let targetCardId = cardId;
+      if (!targetCardId) {
+        const card = await base44.entities.TaskCard.create({
+          tenant_id: user?.tenant_id,
+          title: newTitle,
+          status: 'TODO',
+        });
+        targetCardId = card.id;
+      }
+
       await base44.entities.BomItem.bulkCreate(parts.map((p) => ({
         tenant_id: user?.tenant_id,
+        card_id: targetCardId,
         bom_set_id: bomSetId,
         source_file_url: uploaded.file_url,
         source_file_name: sourceFile?.name,
@@ -107,7 +123,8 @@ export default function BomExtractor() {
         is_purchased: !!p.is_purchased,
       })));
 
-      toast({ title: 'BOM 저장 완료', description: `${parts.length}개 부품 · ${bomSetId}` });
+      setSaveOpen(false);
+      toast({ title: 'BOM 저장 완료', description: `${parts.length}개 부품 · 업무 카드에 연결됨` });
     } catch (error) {
       toast({ title: 'BOM 저장 실패', description: error.message, variant: 'destructive' });
     } finally {
@@ -145,15 +162,31 @@ export default function BomExtractor() {
               {sourceFile?.name} · {parts.length}개 부품 · 파싱 {(elapsedMs / 1000).toFixed(1)}초
             </p>
           )}
-          <BomPartTable parts={parts} onPartChange={handlePartChange} />
+          <BomPartTable parts={parts} onPartChange={handlePartChange} onViewPart={setViewIndex} />
+          <BomEstimatePanel parts={parts} unconfirmedCount={unconfirmedCount} />
           <BomSaveBar
             parts={parts}
             unconfirmedCount={unconfirmedCount}
-            onSave={handleSave}
+            onSave={() => setSaveOpen(true)}
             isSaving={isSaving}
           />
         </>
       )}
+
+      <BomPartViewer
+        open={viewIndex !== null}
+        onOpenChange={(v) => !v && setViewIndex(null)}
+        part={viewIndex !== null ? parts[viewIndex] : null}
+        mesh={viewIndex !== null ? parts[viewIndex]?.mesh : null}
+      />
+
+      <BomSaveDialog
+        open={saveOpen}
+        onOpenChange={setSaveOpen}
+        onConfirm={handleSave}
+        isSaving={isSaving}
+        partCount={parts.length}
+      />
     </div>
   );
 }

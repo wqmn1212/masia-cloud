@@ -8,13 +8,13 @@ import { MATERIAL_OPTIONS } from '@/lib/materialGuess';
 
 const num = (v, digits = 2) => (v == null ? '-' : Number(v).toFixed(digits));
 
-export default function BomPartRow({ part, onChange }) {
+export default function BomPartRow({ part, onChange, onView }) {
   const set = (patch) => onChange({ ...part, ...patch });
 
   return (
     <tr className="border-b last:border-0 hover:bg-muted/40">
       <td className="p-2">
-        <BomPartThumbnail mesh={part.mesh} />
+        <BomPartThumbnail mesh={part.mesh} onClick={onView} />
       </td>
       <td className="p-2">
         <Input

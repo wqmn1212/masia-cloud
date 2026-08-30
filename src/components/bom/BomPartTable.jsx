@@ -6,7 +6,7 @@ const HEAD = [
   '캐비티', '사이클 (s)', '기계', '수량', '구매품',
 ];
 
-export default function BomPartTable({ parts, onPartChange }) {
+export default function BomPartTable({ parts, onPartChange, onViewPart }) {
   return (
     <div className="border rounded-xl overflow-x-auto bg-card">
       <table className="w-full text-sm">
@@ -23,6 +23,7 @@ export default function BomPartTable({ parts, onPartChange }) {
               key={`${part.part_name}-${index}`}
               part={part}
               onChange={(next) => onPartChange(index, next)}
+              onView={() => onViewPart(index)}
             />
           ))}
         </tbody>
