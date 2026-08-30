@@ -29,6 +29,7 @@ import Assistant from '@/pages/Assistant';
 import FileCenter from '@/pages/FileCenter';
 import Contracts from '@/pages/Contracts';
 import Decisions from '@/pages/Decisions';
+import BomExtractor from '@/pages/BomExtractor';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -68,6 +69,7 @@ const AuthenticatedApp = () => {
         <Route path="/file-center" element={<FileCenter />} />
         <Route path="/contracts" element={<Contracts />} />
         <Route path="/decisions" element={<Decisions />} />
+        <Route path="/bom-extractor" element={<BomExtractor />} />
         <Route path="/factories/:factoryId/dashboard" element={<FactoryDashboard />} />
         <Route path="/clients/:clientId/dashboard" element={<ClientDashboard />} />
         <Route path="/master-admin" element={<MasterAdminDashboard />} />
