@@ -59,7 +59,7 @@ function buildHTML(p) {
         </div>
       </div>
 
-      ${p.quote_title ? `<div style="font-size:16px; font-weight:700; margin-bottom:16px; text-align:center; padding:10px; background:#f1f5f9; border-radius:8px;">${p.quote_title}</div>` : ''}
+      ${p.quote_title ? `<div style="font-size:16px; font-weight:700; margin-bottom:16px; text-align:center; padding:12px 10px 10px; background:#f1f5f9; border-radius:8px; line-height:1.4; ${CELL_V}">${p.quote_title}</div>` : ''}
 
       ${p.product_image_url ? `
       <div style="text-align:center; margin-bottom:20px;">
@@ -67,14 +67,14 @@ function buildHTML(p) {
         ${p.product_name ? `<div style="font-size:10px; color:#64748b; margin-top:6px;">${p.product_name}${p.model_name ? ` · ${p.model_name}` : ''}</div>` : ''}
       </div>` : ''}
 
-      <div style="display:flex; gap:16px; margin-bottom:20px;">
-        <div style="flex:1; border:1px solid #e5e7eb; border-radius:8px; padding:12px; background:#f8fafc;">
-          <div style="font-size:10px; color:#64748b; font-weight:600; letter-spacing:0.5px; margin-bottom:4px;">TO · 수신처 (고객사)</div>
-          <div style="font-size:15px; font-weight:700;">${p.client_name || '-'}</div>
+      <div style="display:flex; gap:16px; margin-bottom:20px; align-items:stretch;">
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; border:1px solid #e5e7eb; border-radius:8px; padding:13px 12px 11px; background:#f8fafc;">
+          <div style="font-size:10px; color:#64748b; font-weight:600; letter-spacing:0.5px; margin-bottom:4px; line-height:1.5; ${CELL_V}">TO · 수신처 (고객사)</div>
+          <div style="font-size:15px; font-weight:700; line-height:1.4; ${CELL_V}">${p.client_name || '-'}</div>
         </div>
-        <div style="flex:1; border:1px solid #e5e7eb; border-radius:8px; padding:12px; background:#f8fafc;">
-          <div style="font-size:10px; color:#64748b; font-weight:600; letter-spacing:0.5px; margin-bottom:4px;">FROM · 발행처</div>
-          <div style="font-size:13px; font-weight:700;">${issuer}</div>
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; border:1px solid #e5e7eb; border-radius:8px; padding:13px 12px 11px; background:#f8fafc;">
+          <div style="font-size:10px; color:#64748b; font-weight:600; letter-spacing:0.5px; margin-bottom:4px; line-height:1.5; ${CELL_V}">FROM · 발행처</div>
+          <div style="font-size:13px; font-weight:700; line-height:1.4; ${CELL_V}">${issuer}</div>
         </div>
       </div>
 
@@ -126,8 +126,8 @@ function buildHTML(p) {
         </div>
       </div>
 
-      <div style="border:1px solid #e5e7eb; border-radius:8px; padding:14px; background:#fafafa; font-size:10.5px; color:#475569; line-height:1.7; margin-bottom:28px;">
-        <div style="color:#0f172a; font-size:11px; font-weight:700; margin-bottom:6px;">계약 조건 · Terms &amp; Conditions</div>
+      <div style="display:flex; flex-direction:column; justify-content:center; border:1px solid #e5e7eb; border-radius:8px; padding:15px 14px 13px; background:#fafafa; font-size:10.5px; color:#475569; line-height:1.7; margin-bottom:28px; ${CELL_V.replace('line-height:1.35;', '')}">
+        <div style="color:#0f172a; font-size:11px; font-weight:700; margin-bottom:6px; line-height:1.5;">계약 조건 · Terms &amp; Conditions</div>
         <div>1. 인코텀즈 / Incoterms: ${INCOTERMS_LABEL[p.incoterms] || '별도 협의'}</div>
         <div>2. 견적 유효기간 / Validity: 발행일로부터 30일 (30 days from issue date)</div>
         <div>3. 결제 조건 / Payment: 계약 시 선금 ${adv}%, 출하 전 잔금 ${bal}% (T/T)</div>
@@ -136,13 +136,13 @@ function buildHTML(p) {
       </div>
 
       ${p.remarks ? `
-      <div style="border:1px solid #fde68a; border-radius:8px; padding:14px; background:#fffbeb; font-size:10.5px; color:#475569; line-height:1.7; margin-bottom:28px;">
-        <div style="color:#0f172a; font-size:11px; font-weight:700; margin-bottom:6px;">비고 · Remarks</div>
-        <div style="white-space:pre-wrap;">${p.remarks}</div>
+      <div style="display:flex; flex-direction:column; justify-content:center; border:1px solid #fde68a; border-radius:8px; padding:15px 14px 13px; background:#fffbeb; font-size:10.5px; color:#475569; line-height:1.7; margin-bottom:28px; vertical-align:middle;">
+        <div style="color:#0f172a; font-size:11px; font-weight:700; margin-bottom:6px; line-height:1.5;">비고 · Remarks</div>
+        <div style="white-space:pre-wrap; line-height:1.7; vertical-align:middle;">${p.remarks}</div>
       </div>` : ''}
 
-      <div style="padding-top:14px; border-top:2px solid #2563eb; text-align:center; font-size:9.5px; color:#64748b;">
-        <strong style="color:#2563eb;">${issuer}</strong> · Generated automatically on ${today}
+      <div style="display:flex; align-items:center; justify-content:center; padding-top:16px; padding-bottom:2px; border-top:2px solid #2563eb; text-align:center; font-size:9.5px; color:#64748b; line-height:1.6; ${CELL_V}">
+        <span style="line-height:1.6;"><strong style="color:#2563eb;">${issuer}</strong> · Generated automatically on ${today}</span>
       </div>
     </div>
   `;

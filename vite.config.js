@@ -16,5 +16,23 @@ export default defineConfig({
       visualEditAgent: true
     }),
     react(),
-  ]
+  ],
+  // occt-import-js (OpenCascade WASM) 지원
+  assetsInclude: ['**/*.wasm'],
+  optimizeDeps: {
+    exclude: ['occt-import-js'],
+  },
+  worker: {
+    format: 'es',
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('three')) return 'three';
+          if (id.includes('occt-import-js')) return 'occt';
+        },
+      },
+    },
+  },
 });
