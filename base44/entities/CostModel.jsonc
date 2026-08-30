@@ -1,0 +1,165 @@
+{
+  "name": "CostModel",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "name": {
+      "type": "string",
+      "default": "\uae30\ubcf8 \uc6d0\uac00 \ubaa8\ub378",
+      "description": "\ubaa8\ub378\uba85"
+    },
+    "currency": {
+      "type": "string",
+      "enum": [
+        "CNY",
+        "USD",
+        "KRW"
+      ],
+      "default": "CNY",
+      "description": "\uacc4\uc0b0 \ud1b5\ud654"
+    },
+    "material_price_per_kg": {
+      "type": "object",
+      "description": "\uc7ac\uc9c8\ubcc4 kg \ub2e8\uac00",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "default_material_price_per_kg": {
+      "type": "number",
+      "default": 18,
+      "description": "\uae30\ubcf8 \uc7ac\ub8cc \ub2e8\uac00"
+    },
+    "scrap_rate_percent": {
+      "type": "number",
+      "default": 6,
+      "description": "\uc2a4\ud06c\ub7a9\ub960 %"
+    },
+    "machine_rate_per_hour": {
+      "type": "object",
+      "description": "\uae30\uacc4 \ub4f1\uae09\ubcc4 \uc2dc\uac04\ub2f9 \uc784\ub960",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "finish_cost_per_part": {
+      "type": "object",
+      "description": "\ud6c4\ucc98\ub9ac \ub2e8\uac00",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "insert_cost_each": {
+      "type": "number",
+      "default": 0.35,
+      "description": "\uc778\uc11c\ud2b8 \ub2e8\uac00"
+    },
+    "mold_base_cost": {
+      "type": "number",
+      "default": 9000,
+      "description": "\uae08\ud615 \uae30\ubcf8\ube44"
+    },
+    "mold_cost_per_cavity": {
+      "type": "number",
+      "default": 3500,
+      "description": "\uce90\ube44\ud2f0\ub2f9 \uae08\ud615\ube44"
+    },
+    "mold_cost_per_cm2": {
+      "type": "number",
+      "default": 90,
+      "description": "\ud22c\uc601\uba74\uc801\ub2f9 \uae08\ud615\ube44"
+    }
+  },
+  "required": [
+    "tenant_id"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

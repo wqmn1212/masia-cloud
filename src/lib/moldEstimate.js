@@ -11,13 +11,13 @@ export const DEFAULT_CYCLE_COEFFS = {
 /**
  * 캐비티 수 추정 — 최대 bbox 변 기준
  *   > 100mm  → 1
- *   50~100mm → 1
+ *   50~100mm → 2
  *   20~50mm  → 2
  *   < 20mm   → 4
  */
 export function estimateCavityCount(maxEdgeMm) {
   const edge = Number(maxEdgeMm || 0);
-  if (edge >= 50) return 1;
+  if (edge > 100) return 1;
   if (edge >= 20) return 2;
   return 4;
 }

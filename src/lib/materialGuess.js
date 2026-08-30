@@ -20,7 +20,6 @@ const RULES = [
   { test: /(SCREW|BOLT|NUT|WASHER)/i, material: '구매품', density: 0, is_purchased: true },
   { test: /(RUBBER|PAD|SEAL|GASKET)/i, material: '실리콘', density: 1.15 },
   { test: /(WINDOW|LENS|LAMP)/i, material: 'PMMA', density: 1.18 },
-  { test: /COVER/i, material: 'PMMA', density: 1.18 },
   { test: /(HEAD[+-]|ELECTRODE)/i, material: 'PC/ABS', density: 1.13 },
 ];
 
