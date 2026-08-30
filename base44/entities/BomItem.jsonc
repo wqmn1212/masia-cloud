@@ -1,0 +1,231 @@
+{
+  "name": "BomItem",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "card_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c TaskCard"
+    },
+    "bom_set_id": {
+      "type": "string",
+      "description": "\ub3d9\uc77c STEP \ud30c\uc77c\uc5d0\uc11c \ucd94\ucd9c\ub41c \ubb36\uc74c ID"
+    },
+    "source_file_url": {
+      "type": "string",
+      "description": "\uc6d0\ubcf8 STEP \ud30c\uc77c URL"
+    },
+    "source_file_name": {
+      "type": "string",
+      "description": "\uc6d0\ubcf8 \ud30c\uc77c\uba85"
+    },
+    "revision_label": {
+      "type": "string",
+      "description": "\ub3c4\uba74 \ub9ac\ube44\uc804"
+    },
+    "part_name": {
+      "type": "string",
+      "description": "STEP \ub0b4\ubd80 \ubd80\ud488\uba85"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "\ud45c\uc2dc\uc6a9 \uc774\ub984 (\uc0ac\uc6a9\uc790 \uc218\uc815 \uac00\ub2a5)"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 1,
+      "description": "\uc5b4\uc148\ube14\ub9ac \ub0b4 \ub3d9\uc77c \ubd80\ud488 \uc218"
+    },
+    "volume_cm3": {
+      "type": "number",
+      "description": "\uba54\uc2dc \uadfc\uc0ac \ubd80\ud53c (cm\u00b3)"
+    },
+    "bbox_x_mm": {
+      "type": "number",
+      "description": "\uc678\uacfd \uce58\uc218 X (mm)"
+    },
+    "bbox_y_mm": {
+      "type": "number",
+      "description": "\uc678\uacfd \uce58\uc218 Y (mm)"
+    },
+    "bbox_z_mm": {
+      "type": "number",
+      "description": "\uc678\uacfd \uce58\uc218 Z (mm)"
+    },
+    "projected_area_cm2": {
+      "type": "number",
+      "description": "\ucd5c\ub300 \ud22c\uc601\uba74\uc801 (cm\u00b2)"
+    },
+    "material": {
+      "type": "string",
+      "description": "\uc7ac\uc9c8 (\uc790\ub3d9 \ucd94\uc815 \ud6c4 \uc0ac\uc6a9\uc790 \ud655\uc815)"
+    },
+    "material_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uc7ac\uc9c8 \ud655\uc815 \uc5ec\ubd80"
+    },
+    "density": {
+      "type": "number",
+      "description": "\ube44\uc911 g/cm\u00b3"
+    },
+    "weight_g": {
+      "type": "number",
+      "description": "\ubd80\ud53c \u00d7 \ube44\uc911 (g)"
+    },
+    "color_spec": {
+      "type": "string",
+      "description": "\uc0c9\uc0c1 / PANTONE"
+    },
+    "finish": {
+      "type": "string",
+      "enum": [
+        "RAW",
+        "PAINT",
+        "PLATING",
+        "NCVM",
+        "PRINT",
+        "OTHER"
+      ],
+      "default": "RAW",
+      "description": "\ud45c\uba74 \ucc98\ub9ac"
+    },
+    "insert_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\uc778\uc11c\ud2b8 \ub108\ud2b8 \ub4f1 \ubd80\uc790\uc7ac \uc218"
+    },
+    "cavity_count": {
+      "type": "number",
+      "description": "\uce90\ube44\ud2f0 \uc218 (\ucd94\uc815 \ud6c4 \ud655\uc815)"
+    },
+    "cycle_time_sec": {
+      "type": "number",
+      "description": "\uc0ac\uc774\ud074\ud0c0\uc784 \ucd94\uc815 (\ucd08)"
+    },
+    "machine_class": {
+      "type": "string",
+      "enum": [
+        "SMALL",
+        "MEDIUM",
+        "LARGE"
+      ],
+      "description": "\uae30\uacc4 \ub4f1\uae09"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "3D \ub80c\ub354 \uc378\ub124\uc77c"
+    },
+    "is_purchased": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uad6c\ub9e4\ud488 \uc5ec\ubd80 (\uc0ac\ucd9c \ub300\uc0c1 \uc544\ub2d8)"
+    },
+    "note": {
+      "type": "string",
+      "description": "\ube44\uace0"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "part_name"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
