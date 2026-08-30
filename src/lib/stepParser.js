@@ -42,7 +42,8 @@ export function parseStepFile(buffer, options = {}) {
 
     worker.onerror = (err) => {
       worker.terminate();
-      reject(new Error(err?.message || 'STEP 파싱 워커 오류'));
+      const where = err?.filename ? ` (${err.filename}:${err.lineno})` : '';
+      reject(new Error(`STEP 파싱 워커 로드 실패: ${err?.message || '원인 불명'}${where}`));
     };
 
     worker.postMessage(

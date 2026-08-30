@@ -8,6 +8,9 @@ let occtPromise = null;
 
 function loadOcct() {
   if (!occtPromise) {
+    if (typeof occtimportjs !== 'function') {
+      throw new Error('occt-import-js 모듈을 불러오지 못했습니다 (WASM 로더 초기화 실패)');
+    }
     occtPromise = occtimportjs({
       locateFile: () => occtWasmUrl,
     });
