@@ -5,6 +5,7 @@ import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import { cn } from '@/lib/utils';
 import { LanguageProvider } from '@/lib/LanguageContext';
+import { SearchProvider } from '@/lib/SearchContext';
 import { base44 } from '@/api/base44Client';
 import AccountInactive from '@/components/AccountInactive';
 import AccessDenied from '@/components/AccessDenied';
@@ -57,6 +58,7 @@ export default function AppLayout() {
 
   return (
     <LanguageProvider>
+      <SearchProvider>
       <div className="min-h-screen bg-background">
         <Sidebar
           collapsed={collapsed}
@@ -75,6 +77,7 @@ export default function AppLayout() {
           </main>
         </div>
       </div>
+      </SearchProvider>
     </LanguageProvider>
   );
 }

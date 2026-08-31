@@ -3,9 +3,11 @@ import { Bell, Search, Menu } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useSearch } from '@/lib/SearchContext';
 
 export default function TopBar({ onMenuClick }) {
   const { lang, toggleLang, t } = useLanguage();
+  const { query, setQuery } = useSearch();
   return (
     <header className="h-16 bg-card border-b border-border flex items-center justify-between px-3 md:px-6 sticky top-0 z-30 gap-2">
       <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -15,6 +17,8 @@ export default function TopBar({ onMenuClick }) {
         <div className="relative w-full max-w-xs md:w-80 md:max-w-none">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder={t('topbar.search')}
             className="pl-10 bg-secondary/50 border-0 focus-visible:ring-1"
           />

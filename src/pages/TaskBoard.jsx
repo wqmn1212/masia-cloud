@@ -15,6 +15,7 @@ import CategorySelect from '@/components/taskcard/CategorySelect';
 import ClientSelect from '@/components/taskcard/ClientSelect';
 import FactoryMultiSelect from '@/components/taskcard/FactoryMultiSelect';
 import { translateFieldsToCN } from '@/lib/translate';
+import { useSearch } from '@/lib/SearchContext';
 import EmailBackfillButton from '@/components/email/EmailBackfillButton';
 import EmailProposalDialog from '@/components/email/EmailProposalDialog';
 import { Mail } from 'lucide-react';
@@ -55,7 +56,7 @@ export default function TaskBoard() {
   const [candidateFactories, setCandidateFactories] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
   const [inboxOpen, setInboxOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const { query: search, setQuery: setSearch } = useSearch();
   const [filterCategory, setFilterCategory] = useState('ALL');
   const queryClient = useQueryClient();
   const { toast } = useToast();
