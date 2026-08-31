@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, MessageSquare, Paperclip, LayoutGrid, CalendarDays } from 'lucide-react';
+import { Plus, MessageSquare, Paperclip, LayoutGrid, CalendarDays, Search, X } from 'lucide-react';
 import CardModal from '@/components/taskcard/CardModal';
 import CategorySelect from '@/components/taskcard/CategorySelect';
 import ClientSelect from '@/components/taskcard/ClientSelect';
@@ -55,6 +55,8 @@ export default function TaskBoard() {
   const [candidateFactories, setCandidateFactories] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
   const [inboxOpen, setInboxOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [filterCategory, setFilterCategory] = useState('ALL');
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -121,7 +123,22 @@ export default function TaskBoard() {
     if (card && card.status !== newStatus) updateStatusMutation.mutate({ id: draggableId, status: newStatus });
   };
 
-  const columnCards = (colId) => cards.filter(c => c.status === colId);
+  const filteredCards = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return cards.filter((c) => {
+      if (filterCategory !== 'ALL' && c.target_machine_category !== filterCategory) return false;
+      if (!q) return true;
+      const hay = [
+        c.title, c.title_cn, c.client_name, c.factory_name,
+        c.candidate_factory_names?.join(' '),
+        catMap[c.target_machine_category],
+        c.hq_requirements,
+      ].filter(Boolean).join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+  }, [cards, search, filterCategory, catMap]);
+
+  const columnCards = (colId) => filteredCards.filter(c => c.status === colId);
 
 
   return (
@@ -145,6 +162,38 @@ export default function TaskBoard() {
             <Plus className="w-4 h-4" />신규 카드 생성
           </Button>
         </div>
+      </div>
+
+      {/* Search & Filter Bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[220px] max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="제목 · 고객사 · 공장명 · 카테고리 검색"
+            className="pl-10 pr-9"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-muted"
+            >
+              <X className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          )}
+        </div>
+        <Select value={filterCategory} onValueChange={setFilterCategory}>
+          <SelectTrigger className="w-[160px] h-9 text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">전체 카테고리</SelectItem>
+            {Object.entries(catMap).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        {(search || filterCategory !== 'ALL') && (
+          <span className="text-xs text-muted-foreground">{filteredCards.length}건 표시</span>
+        )}
       </div>
 
       {/* Status Summary Widget */}
