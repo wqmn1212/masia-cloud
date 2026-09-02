@@ -10,13 +10,18 @@
       "type": "string",
       "enum": [
         "service",
-        "sub"
+        "sub",
+        "client"
       ],
       "description": "\uac00\uc785 \uc2dc \uc801\uc6a9\ub420 \uacc4\uc815 \ub4f1\uae09"
     },
     "tenant_id": {
       "type": "string",
       "description": "\uac00\uc785\ud560 \ud300 ID"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "client \ucd08\ub300 \uc2dc \uc18c\uc18d \uace0\uac1d\uc0ac Company ID (\ub370\uc774\ud130 \uc2a4\ucf54\ud504 \ud0a4)"
     },
     "service_admin_id": {
       "type": "string",
@@ -53,9 +58,25 @@
     "tenant_id"
   ],
   "rls": {
-    "create": { "user_condition": { "data.account_tier": "master" } },
-    "read": { "user_condition": { "data.account_tier": "master" } },
-    "update": { "user_condition": { "data.account_tier": "master" } },
-    "delete": { "user_condition": { "data.account_tier": "master" } }
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
   }
 }

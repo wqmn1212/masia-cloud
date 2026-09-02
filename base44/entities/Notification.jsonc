@@ -1,0 +1,98 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc218\uc2e0\uc790 \uc18c\uc18d \ud300 ID (\ucc38\uc870\uc6a9 \u2014 \uad8c\ud55c \ud0a4\ub294 recipient_id)"
+    },
+    "recipient_id": {
+      "type": "string",
+      "description": "\uc218\uc2e0\uc790 User ID (RLS \uc2a4\ucf54\ud504 \ud0a4). cross-tenant \uc54c\ub9bc\uc744 \uc704\ud574 tenant_id \uac00 \uc544\ub2cc \uc774 \ud544\ub4dc\ub85c \uaca9\ub9ac\ud55c\ub2e4"
+    },
+    "recipient_email": {
+      "type": "string",
+      "description": "\uc218\uc2e0\uc790 \uc774\uba54\uc77c (\uc774\uba54\uc77c \ubcd1\ud589 \ubc1c\uc1a1\uc6a9)"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "card_moved",
+        "card_shared",
+        "chat_message",
+        "quote_published",
+        "settlement_due"
+      ],
+      "description": "\uc54c\ub9bc \uc720\ud615"
+    },
+    "title": {
+      "type": "string",
+      "description": "\uc54c\ub9bc \uc81c\ubaa9"
+    },
+    "body": {
+      "type": "string",
+      "description": "\uc54c\ub9bc \ubcf8\ubb38"
+    },
+    "link": {
+      "type": "string",
+      "description": "\ud074\ub9ad \uc2dc \uc774\ub3d9 \uacbd\ub85c"
+    },
+    "task_card_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c TaskCard ID"
+    },
+    "read": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uc77d\uc74c \uc5ec\ubd80"
+    }
+  },
+  "required": [
+    "recipient_id",
+    "type",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.recipient_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.recipient_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.recipient_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      ]
+    }
+  }
+}

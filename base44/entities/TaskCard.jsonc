@@ -42,7 +42,25 @@
     },
     "client_id": {
       "type": "string",
-      "description": "\uace0\uac1d\uc0ac Company ID"
+      "description": "\uace0\uac1d\uc0ac Company ID \u2014 client \uacc4\uc815\uc758 User.company_id \uc640 \ub9e4\uce6d\ub418\ub294 \ub370\uc774\ud130 \uc2a4\ucf54\ud504 \ud0a4"
+    },
+    "client_visible": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uace0\uac1d \ud3ec\ud138 \uacf5\uac1c \uc5ec\ubd80 (\uc5b4\ub4dc\ubbfc \uc218\ub3d9 \ud1a0\uae00)"
+    },
+    "lead_id": {
+      "type": "string",
+      "description": "\ub79c\ub529 \ubb38\uc758(ManufacturingLead) \ucd9c\ucc98 ID"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "landing_lead"
+      ],
+      "default": "manual",
+      "description": "\uce74\ub4dc \uc0dd\uc131 \uacbd\ub85c"
     },
     "candidate_factory_names": {
       "type": "array",
@@ -68,7 +86,7 @@
     },
     "hq_requirements": {
       "type": "string",
-      "description": "HQ \ubc0f \uace0\uac1d\uc0ac \uc694\uad6c\uc0ac\ud56d (\ub9c8\ud06c\ub2e4\uc6b4)"
+      "description": "HQ \ubc0f \uace0\uac1d\uc0ac \uc694\uad6c\uc0ac\ud56d (\ub9c8\ud06c\ub2e4\uc6b4) \u2014 \uace0\uac1d\uc774 \ud3b8\uc9d1 \uac00\ub2a5\ud55c \uc720\uc77c\ud55c \ud544\ub4dc"
     },
     "hq_requirements_cn": {
       "type": "string",
