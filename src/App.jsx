@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -30,17 +30,9 @@ import FileCenter from '@/pages/FileCenter';
 import Contracts from '@/pages/Contracts';
 import Decisions from '@/pages/Decisions';
 import BomExtractor from '@/pages/BomExtractor';
-import Landing from '@/pages/Landing';
-import Leads from '@/pages/Leads';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
-  const location = useLocation();
-
-  // 공개 랜딩: 로그인 여부와 무관하게 렌더링 (auth_required 리다이렉트 제외)
-  if (location.pathname === '/') {
-    return <Landing />;
-  }
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -62,8 +54,7 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/leads" element={<Leads />} />
+        <Route path="/" element={<Dashboard />} />
         <Route path="/factories" element={<Factories />} />
         <Route path="/clients" element={<Clients />} />
         <Route path="/quotations" element={<Quotations />} />

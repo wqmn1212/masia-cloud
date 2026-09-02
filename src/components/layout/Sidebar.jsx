@@ -4,7 +4,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import {
   LayoutDashboard, Factory, FileText, Shield, Users,
   Clock, Wrench, Package, ChevronLeft, ChevronRight, Cloud, Calculator, ListChecks, Kanban,
-  ShieldCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, Inbox
+  ShieldCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { canAccessPath } from '@/lib/menuPermissions';
@@ -13,8 +13,7 @@ const navSectionDefs = [
   {
     labelKey: 'nav.hq',
     items: [
-      { path: '/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
-      { path: '/leads', icon: Inbox, label: '문의 접수' },
+      { path: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
       { path: '/quotations', icon: FileText, labelKey: 'nav.quotations' },
       { path: '/contracts', icon: FileSignature, label: '계약서 관리' },
       { path: '/decisions', icon: BookMarked, label: '결정 기록' },

@@ -1,6 +1,5 @@
 export const TEAM_MENU_OPTIONS = [
-  { path: '/dashboard', label: '대시보드' },
-  { path: '/leads', label: '문의 접수' },
+  { path: '/', label: '대시보드' },
   { path: '/quotations', label: '견적 관리' },
   { path: '/contracts', label: '계약서 관리' },
   { path: '/decisions', label: '결정 기록' },
@@ -19,13 +18,10 @@ export const TEAM_MENU_OPTIONS = [
   { path: '/as-requests', label: 'A/S 요청' },
 ];
 
-// 레거시 allowed_tabs 의 '/' 는 대시보드('/dashboard')로 취급
-const normalize = (p) => (p === '/' ? '/dashboard' : p);
-
-const matchesPath = (allowedPath, pathname) => {
-  const allowed = normalize(allowedPath);
-  return pathname === allowed || pathname.startsWith(`${allowed}/`);
-};
+const matchesPath = (allowedPath, pathname) =>
+  allowedPath === '/'
+    ? pathname === '/'
+    : pathname === allowedPath || pathname.startsWith(`${allowedPath}/`);
 
 const SERVICE_ADMIN_PATHS = ['/team', '/user-permissions'];
 
