@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { LEAD_STATUS } from './leadMeta';
 import LeadAttachments from './LeadAttachments';
+import LeadProvisionPanel from './LeadProvisionPanel';
 
 const Field = ({ label, children }) => (
   <div>
@@ -66,6 +67,8 @@ export default function LeadDetailDialog({ lead, open, onClose, onSave, saving }
         <Field label="첨부 (NNN 적용 · 비공개 저장)">
           <div className="mt-1"><LeadAttachments attachments={lead.attachments} /></div>
         </Field>
+
+        <LeadProvisionPanel lead={lead} />
 
         <div className="border-t pt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">

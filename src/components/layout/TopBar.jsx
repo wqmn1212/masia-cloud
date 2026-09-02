@@ -1,11 +1,12 @@
 import React from 'react';
-import { Bell, Search, Menu } from 'lucide-react';
+import { Search, Menu } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useSearch } from '@/lib/SearchContext';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
-export default function TopBar({ onMenuClick }) {
+export default function TopBar({ onMenuClick, user }) {
   const { lang, toggleLang, t } = useLanguage();
   const { query, setQuery } = useSearch();
   return (
@@ -25,10 +26,7 @@ export default function TopBar({ onMenuClick }) {
         </div>
       </div>
       <div className="flex items-center gap-1 md:gap-3 shrink-0">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="w-[18px] h-[18px]" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
-        </Button>
+        <NotificationBell user={user} />
         <Button
           variant="outline"
           size="sm"

@@ -29,6 +29,14 @@ const matchesPath = (allowedPath, pathname) => {
 
 const SERVICE_ADMIN_PATHS = ['/team', '/user-permissions'];
 
+// 고객사(client) 등급 전용 메뉴 — 대시보드 · 소싱 칸반보드 읽기 전용
+export const CLIENT_MENU_OPTIONS = [
+  { path: '/client/dashboard', label: '고객 대시보드' },
+  { path: '/client/board', label: '소싱 보드' },
+];
+
+export const CLIENT_CARD_TABS = ['overview', 'quotation', 'chat', 'settlement'];
+
 export const canAccessPath = (user, pathname) => {
   if (!user) return false;
   if (user.account_tier === 'master') return true;
@@ -38,6 +46,9 @@ export const canAccessPath = (user, pathname) => {
   }
   if (user.account_tier === 'sub') {
     return (user.allowed_tabs || []).some(path => matchesPath(path, pathname));
+  }
+  if (user.account_tier === 'client') {
+    return CLIENT_MENU_OPTIONS.some(item => matchesPath(item.path, pathname));
   }
   return false;
 };

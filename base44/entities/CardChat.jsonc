@@ -22,9 +22,15 @@
       "type": "string",
       "enum": [
         "HQ",
-        "AGENT"
+        "AGENT",
+        "CLIENT"
       ],
       "description": "\ubc1c\uc2e0\uc790 \uc5ed\ud560"
+    },
+    "is_client_visible": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uace0\uac1d \ud3ec\ud138 \ub178\ucd9c \uc5ec\ubd80. \ub0b4\ubd80 \ub17c\uc758\ub97c \ubcf4\ud638\ud558\uae30 \uc704\ud574 \uae30\ubcf8 false"
     },
     "message_text": {
       "type": "string",

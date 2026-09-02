@@ -32,6 +32,8 @@ import Decisions from '@/pages/Decisions';
 import BomExtractor from '@/pages/BomExtractor';
 import Landing from '@/pages/Landing';
 import Leads from '@/pages/Leads';
+import ClientPortalDashboard from '@/pages/ClientPortalDashboard';
+import ClientBoard from '@/pages/ClientBoard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -62,6 +64,9 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route element={<AppLayout />}>
+        {/* 고객 포털 — 내부 관리 화면과 라우트 단위로 분리 */}
+        <Route path="/client/dashboard" element={<ClientPortalDashboard />} />
+        <Route path="/client/board" element={<ClientBoard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/leads" element={<Leads />} />
         <Route path="/factories" element={<Factories />} />

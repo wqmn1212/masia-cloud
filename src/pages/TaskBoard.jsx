@@ -101,7 +101,11 @@ export default function TaskBoard() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }) => base44.entities.TaskCard.update(id, { status }),
+    mutationFn: async ({ id, status }) => {
+      await base44.entities.TaskCard.update(id, { status });
+      // 고객에게 공개된 카드라면 진행 단계 변경을 알린다 (서버가 공개 여부를 재검증)
+      await base44.functions.invoke('notifyCardEvent', { card_id: id, type: 'card_moved' }).catch(() => {});
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['task-cards'] }),
   });
 

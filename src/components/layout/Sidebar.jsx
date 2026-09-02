@@ -7,7 +7,9 @@ import {
   ShieldCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, Inbox
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { canAccessPath } from '@/lib/menuPermissions';
+import { canAccessPath, CLIENT_MENU_OPTIONS } from '@/lib/menuPermissions';
+
+const CLIENT_ICONS = { '/client/dashboard': LayoutDashboard, '/client/board': Kanban };
 
 const navSectionDefs = [
   {
@@ -65,6 +67,11 @@ export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobil
       : section);
   } else if (user?.account_tier === 'sub') {
     navSections = navSectionDefs;
+  } else if (user?.account_tier === 'client') {
+    navSections = [{
+      label: '고객 포털',
+      items: CLIENT_MENU_OPTIONS.map(item => ({ ...item, icon: CLIENT_ICONS[item.path] || LayoutDashboard })),
+    }];
   }
 
   navSections = navSections

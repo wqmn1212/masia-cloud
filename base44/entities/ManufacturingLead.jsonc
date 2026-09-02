@@ -114,9 +114,17 @@
       "type": "string",
       "description": "\uc804\ud658\ub41c Quotation id"
     },
+    "task_card_id": {
+      "type": "string",
+      "description": "\ubb38\uc758 \uc811\uc218 \uc2dc \uc790\ub3d9 \uc0dd\uc131\ub41c TaskCard id"
+    },
+    "client_tenant_id": {
+      "type": "string",
+      "description": "\ubc1c\uae09\ub41c \uace0\uac1d\uc0ac \ud300 Tenant id"
+    },
     "client_id": {
       "type": "string",
-      "description": "\uc804\ud658\ub41c Client id"
+      "description": "\uc804\ud658\ub41c Client(Company) id"
     },
     "internal_note": {
       "type": "string"

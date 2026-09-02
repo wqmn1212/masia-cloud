@@ -35,6 +35,8 @@ Deno.serve(async (req) => {
       account_label: invite.account_label || '',
     };
     if (invite.service_admin_id) updateData.service_admin_id = invite.service_admin_id;
+    // client 초대는 고객사 스코프 키(company_id)를 반드시 승계해야 포털 데이터가 조회된다
+    if (invite.company_id) updateData.company_id = invite.company_id;
 
     await base44.asServiceRole.entities.User.update(user.id, updateData);
     if (invite.account_tier === 'service') {

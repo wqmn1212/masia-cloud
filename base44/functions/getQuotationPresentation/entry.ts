@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { quotationVisibleToClient } from '../../shared/clientAccess.ts';
 
 // 고객 견적서 표시용 데이터만 반환한다.
 // 원가·수수료·마진 필드는 서버 내부 계산에만 사용하고 절대 응답에 포함하지 않는다.
@@ -11,15 +12,22 @@ export default async function (req) {
     const { quotation_id } = await req.json();
     if (!quotation_id) return Response.json({ error: 'quotation_id 가 필요합니다' }, { status: 400 });
 
-    // asServiceRole 로 RLS 를 우회하므로 등급을 명시적으로 검사한다 (client 등급 전면 차단)
-    const ALLOWED = ['master', 'service', 'sub'];
+    // asServiceRole 로 RLS 를 우회하므로 등급을 명시적으로 검사한다
+    const ALLOWED = ['master', 'service', 'sub', 'client'];
     if (!ALLOWED.includes(user.account_tier)) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
+    if (user.is_active === false) return Response.json({ error: '비활성 계정입니다' }, { status: 403 });
 
     const q = await base44.asServiceRole.entities.Quotation.get(quotation_id);
     if (!q) return Response.json({ error: '견적서를 찾을 수 없습니다' }, { status: 404 });
-    if (user.account_tier !== 'master' && q.tenant_id !== user.tenant_id) {
+
+    if (user.account_tier === 'client') {
+      // 고객은 tenant_id 가 다르므로 소유 고객사 + 공개 여부로 검사한다
+      if (!quotationVisibleToClient(q, user.company_id)) {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } else if (user.account_tier !== 'master' && q.tenant_id !== user.tenant_id) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 

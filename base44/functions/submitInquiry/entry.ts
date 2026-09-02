@@ -78,12 +78,35 @@ export default async function (req) {
       invitation_sent: false,
     });
 
+    // 문의 접수 즉시 본사 팀 TaskCard 자동 생성 (고객 공개는 팀 발급 후 수동 토글)
+    try {
+      const card = await svc.entities.TaskCard.create({
+        tenant_id: tenant.id,
+        title: `[문의] ${lead.company} · ${categories[0] || '미분류'}`,
+        status: 'TODO',
+        priority: 'MEDIUM',
+        source: 'landing_lead',
+        lead_id: lead.id,
+        client_name: lead.company,
+        client_visible: false,
+        hq_requirements: [
+          `담당자: ${lead.contact_name} · ${lead.phone} · ${lead.email}`,
+          `카테고리: ${categories.join(', ') || '-'}`,
+          `수량: ${lead.quantity || '-'} / 희망 단가: ${lead.target_price || '-'}`,
+          `첨부: ${attachments.length}건 (문의 접수 메뉴에서 다운로드)`,
+          ``,
+          lead.detail || '',
+        ].join('\n'),
+      });
+      await svc.entities.ManufacturingLead.update(lead.id, { task_card_id: card.id });
+    } catch (_e) { /* 카드 생성 실패가 접수 자체를 막지 않음 */ }
+
     // 담당자 알림 (등록 사용자 → 항상 발송 가능)
     if (tenant.master_email) {
       try {
         await svc.integrations.Core.SendEmail({
           to: tenant.master_email,
-          from_name: 'AEGIS Cloud',
+          from_name: 'AEGIS',
           subject: `[문의 접수] ${lead.company} · ${lead.contact_name}`,
           body: [
             `새 제조 문의가 접수되었습니다.`,

@@ -71,7 +71,7 @@ export default function AppLayout() {
           "transition-all duration-300",
           collapsed ? "md:ml-[68px]" : "md:ml-[240px]"
         )}>
-          <TopBar onMenuClick={() => setMobileOpen(true)} />
+          <TopBar onMenuClick={() => setMobileOpen(true)} user={user} />
           <main className="p-3 md:p-6">
             {canAccessPath(user, location.pathname) ? <Outlet /> : <AccessDenied />}
           </main>

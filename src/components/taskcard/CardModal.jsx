@@ -18,6 +18,8 @@ import MeetingLogPanel from './MeetingLogPanel';
 import TaskInsightPanel from './TaskInsightPanel';
 import DecisionsTab from './DecisionsTab';
 import BomTab from './BomTab';
+import ClientVisibilityToggle from './ClientVisibilityToggle';
+import QuotationPublishPanel from './QuotationPublishPanel';
 
 const STATUS_META = {
   TODO:        { label: '대기 중',    color: 'bg-muted text-muted-foreground' },
@@ -100,6 +102,7 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
           </TabsContent>
           <TabsContent value="overview" className="mt-4">
             <OverviewTab card={card} kbAlerts={kbAlerts} viewLang={viewLang} />
+            <div className="mt-4"><ClientVisibilityToggle card={card} /></div>
             <ProcessControlPanel card={card} user={user} />
           </TabsContent>
           <TabsContent value="meetings" className="mt-4 space-y-6">
@@ -109,6 +112,7 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
             </div>
           </TabsContent>
           <TabsContent value="quotation" className="mt-4">
+            <QuotationPublishPanel card={card} />
             <QuotationTab card={card} user={user} />
           </TabsContent>
           <TabsContent value="bom" className="mt-4">
