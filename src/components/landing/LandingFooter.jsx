@@ -1,3 +1,4 @@
+import React from 'react';
 import { footer, tx } from '@/lib/landingContent';
 
 export default function LandingFooter({ lang }) {

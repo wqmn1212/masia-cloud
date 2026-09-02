@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import useLandingLang from '@/lib/useLandingLang';
 import LandingHeader from '@/components/landing/LandingHeader';
@@ -17,7 +17,8 @@ export default function Landing() {
 
   return (
     <div
-      className="font-landing bg-landing-page text-landing-ink min-w-[320px] antialiased"
+      lang={lang}
+      className="font-landing bg-landing-page text-landing-ink min-w-[320px] antialiased min-h-screen"
       style={{ wordBreak: lang === 'zh' ? 'normal' : 'keep-all', overflowWrap: 'break-word' }}
     >
       <LandingHeader lang={lang} setLang={setLang} isAuthenticated={isAuthenticated} />

@@ -55,7 +55,7 @@ module.exports = {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			},
-  			// 공개 랜딩 전용 고정 팔레트 (Wanted 디자인 시스템) — 앱 테마와 분리
+  			// 공개 랜딩 전용 고정 팔레트 (앱 테마와 분리)
   			landing: {
   				brand: '#0066FF',
   				'brand-hover': '#005EEB',
@@ -74,13 +74,13 @@ module.exports = {
   				line3: '#DBDCDF',
   				page: '#F7F7F8',
   				input: '#FAFAFB',
-  				'toggle-bg': '#F1F0F5',
+  				toggle: '#F1F0F5',
   				'dark-card': '#232427',
   				'dark-line': '#35363A',
   				'dark-body': '#C2C4C8',
   				'dark-accent': '#7FAFFF',
   				danger: '#B9464B',
-  				'danger-bg': '#FDEDED'
+  				'danger-bg': '#FDEDED',
   			},
   			sidebar: {
   				DEFAULT: 'hsl(var(--sidebar-background))',

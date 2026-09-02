@@ -1,3 +1,4 @@
+import React from 'react';
 import { about, tx } from '@/lib/landingContent';
 import SectionHeading from './SectionHeading';
 
@@ -12,7 +13,7 @@ export default function AboutSection({ lang }) {
               <div className="w-[34px] h-[34px] rounded-[9px] bg-landing-ink text-white flex items-center justify-center text-[13px] font-extrabold font-mono">
                 {String(i + 1).padStart(2, '0')}
               </div>
-              <h3 className="mt-[18px] text-lg font-bold tracking-[-0.5px]">{tx(c.t, lang)}</h3>
+              <h3 className="mt-[18px] text-lg font-bold tracking-[-0.5px] text-landing-ink">{tx(c.t, lang)}</h3>
               <p className="mt-2.5 text-[14.5px] leading-[1.66] text-landing-ink3">{tx(c.d, lang)}</p>
             </div>
           ))}

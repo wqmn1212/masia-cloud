@@ -1,3 +1,4 @@
+import React from 'react';
 import { trust, tx } from '@/lib/landingContent';
 import SectionHeading from './SectionHeading';
 

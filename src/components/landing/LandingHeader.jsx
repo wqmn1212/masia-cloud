@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { nav, header, tx, LANDING_LANGS } from '@/lib/landingContent';
 import { cn } from '@/lib/utils';
@@ -19,7 +20,7 @@ export default function LandingHeader({ lang, setLang, isAuthenticated }) {
           ))}
         </nav>
         <div className="flex-1" />
-        <div className="flex items-center gap-0.5 p-[3px] bg-landing-toggle-bg rounded-lg flex-none">
+        <div className="flex items-center gap-0.5 p-[3px] bg-landing-toggle rounded-lg flex-none">
           {LANDING_LANGS.map((l) => (
             <button
               key={l}
@@ -27,7 +28,7 @@ export default function LandingHeader({ lang, setLang, isAuthenticated }) {
               onClick={() => setLang(l)}
               className={cn(
                 'text-xs font-bold px-2.5 py-[5px] rounded-md transition-colors',
-                lang === l ? 'bg-white text-landing-ink shadow-[0_1px_2px_rgba(0,0,0,.08)]' : 'text-landing-muted'
+                lang === l ? 'bg-white text-landing-ink shadow-[0_1px_2px_rgba(0,0,0,.08)]' : 'bg-transparent text-landing-muted'
               )}
             >
               {LANG_LABEL[l]}

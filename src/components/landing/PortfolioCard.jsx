@@ -1,3 +1,4 @@
+import React from 'react';
 import { tx } from '@/lib/landingContent';
 
 export default function PortfolioCard({ item, lang }) {
@@ -12,7 +13,7 @@ export default function PortfolioCard({ item, lang }) {
       )}
       <div className="p-[18px]">
         <div className="text-[11px] font-bold text-landing-brand font-mono">{tx(item.tag, lang)}</div>
-        <h3 className="mt-2 text-[15.5px] font-bold tracking-[-0.3px]">{tx(item.t, lang)}</h3>
+        <h3 className="mt-2 text-[15.5px] font-bold tracking-[-0.3px] text-landing-ink">{tx(item.t, lang)}</h3>
         <p className="mt-[7px] text-[13.5px] leading-[1.6] text-landing-muted">{tx(item.d, lang)}</p>
       </div>
     </article>

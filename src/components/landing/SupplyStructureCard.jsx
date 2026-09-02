@@ -1,3 +1,4 @@
+import React from 'react';
 import { supply, tx } from '@/lib/landingContent';
 
 const Connector = () => (
