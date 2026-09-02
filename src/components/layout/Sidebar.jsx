@@ -4,10 +4,11 @@ import { useLanguage } from '@/lib/LanguageContext';
 import {
   LayoutDashboard, Factory, FileText, Shield, Users,
   Clock, Wrench, Package, ChevronLeft, ChevronRight, Cloud, Calculator, ListChecks, Kanban,
-  ShieldCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes
+  ShieldCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { canAccessPath } from '@/lib/menuPermissions';
+import { useAuth } from '@/lib/AuthContext';
 
 const navSectionDefs = [
   {
@@ -47,6 +48,7 @@ const navSectionDefs = [
 export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobileClose }) {
   const location = useLocation();
   const { t } = useLanguage();
+  const { logout } = useAuth();
 
   // 계정 등급별 후보 메뉴를 만든 뒤 동일한 권한 함수로 최종 필터링
   let navSections = [];
@@ -131,6 +133,19 @@ export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobil
           </div>
         ))}
       </nav>
+
+      {/* Logout Button */}
+      <button
+        onClick={() => logout()}
+        title="로그아웃"
+        className={cn(
+          "h-12 flex items-center gap-3 border-t border-sidebar-border text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors text-sm",
+          collapsed ? "justify-center" : "px-5"
+        )}
+      >
+        <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
+        {!collapsed && <span className="font-medium">로그아웃</span>}
+      </button>
 
       {/* Collapse Button */}
       <button
