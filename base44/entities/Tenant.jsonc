@@ -22,6 +22,11 @@
       "type": "boolean",
       "default": true,
       "description": "\ud300 \ud65c\uc131 \uc0c1\ud0dc"
+    },
+    "is_hq": {
+      "type": "boolean",
+      "default": false,
+      "description": "\ubcf8\uc0ac \ud14c\ub10c\ud2b8 \uc5ec\ubd80 \u2014 \ub79c\ub529 \ubb38\uc758(ManufacturingLead)\uac00 \uadc0\uc18d\ub418\ub294 \ud300"
     }
   },
   "required": [
@@ -29,9 +34,25 @@
     "slug"
   ],
   "rls": {
-    "create": { "user_condition": { "data.account_tier": "master" } },
-    "read": { "user_condition": { "data.account_tier": "master" } },
-    "update": { "user_condition": { "data.account_tier": "master" } },
-    "delete": { "user_condition": { "data.account_tier": "master" } }
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
   }
 }

@@ -1,0 +1,203 @@
+{
+  "name": "ManufacturingLead",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\ubcf8\uc0ac \ud14c\ub10c\ud2b8 id (\uc11c\ubc84\uc5d0\uc11c \uc8fc\uc785)"
+    },
+    "company": {
+      "type": "string",
+      "description": "\ud68c\uc0ac\uba85"
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "\ub2f4\ub2f9\uc790\uba85"
+    },
+    "phone": {
+      "type": "string",
+      "description": "\uc5f0\ub77d\ucc98"
+    },
+    "email": {
+      "type": "string",
+      "description": "\uc774\uba54\uc77c. AEGIS Cloud \uacc4\uc815 \ubc1c\uae09 \ud0a4"
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "\uae30\uacc4\uc124\ube44",
+          "\uc815\ubc00\uac00\uacf5",
+          "\uc804\uc790 \u00b7 \uc804\uae30",
+          "\ubdf0\ud2f0 \u00b7 \uc758\ub8cc",
+          "\ub9ac\ube59 \u00b7 \uacf5\uad6c",
+          "\uad7f\uc988 \u00b7 \uc870\ud615",
+          "\uae30\ud0c0"
+        ]
+      },
+      "description": "\ubb38\uc758 \ud488\ubaa9 \uce74\ud14c\uace0\ub9ac (\ubcf5\uc218 \uc120\ud0dd)"
+    },
+    "quantity": {
+      "type": "string",
+      "description": "\ubc1c\uc8fc \uc608\uc815 \uc218\ub7c9 (\uc790\uc720 \uc785\ub825)"
+    },
+    "target_price": {
+      "type": "string",
+      "description": "\ud76c\ub9dd \ub2e8\uac00 (\uc790\uc720 \uc785\ub825)"
+    },
+    "detail": {
+      "type": "string",
+      "description": "\uc694\uad6c\uc0ac\ud56d \uc0c1\uc138"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          },
+          "url": {
+            "type": "string",
+            "description": "\ube44\uacf5\uac1c \ud30c\uc77c URI (\uc11c\uba85 URL \ub85c \ub2e4\uc6b4\ub85c\ub4dc)"
+          }
+        }
+      },
+      "description": "\ub3c4\uba74 \u00b7 \uc0ac\uc9c4 \ucca8\ubd80 (STEP/DWG/PDF/JPG)"
+    },
+    "lang": {
+      "type": "string",
+      "enum": [
+        "ko",
+        "en",
+        "zh"
+      ],
+      "default": "ko"
+    },
+    "source": {
+      "type": "string",
+      "default": "landing"
+    },
+    "referrer": {
+      "type": "string"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "contacted",
+        "quoting",
+        "converted",
+        "dropped"
+      ],
+      "default": "new",
+      "description": "converted = Quotation \uc0dd\uc131 \ubc0f \uacc4\uc815 \ubc1c\uae09 \uc644\ub8cc"
+    },
+    "assignee_email": {
+      "type": "string",
+      "description": "\ub2f4\ub2f9 \uc601\uc5c5/PM"
+    },
+    "invitation_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "PendingInvitation \ubc1c\uc1a1 \uc5ec\ubd80"
+    },
+    "quotation_id": {
+      "type": "string",
+      "description": "\uc804\ud658\ub41c Quotation id"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "\uc804\ud658\ub41c Client id"
+    },
+    "internal_note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "company",
+    "contact_name",
+    "phone",
+    "email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}
