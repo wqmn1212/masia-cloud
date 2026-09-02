@@ -27,6 +27,28 @@
       "type": "boolean",
       "default": false,
       "description": "\ubcf8\uc0ac \ud14c\ub10c\ud2b8 \uc5ec\ubd80 \u2014 \ub79c\ub529 \ubb38\uc758(ManufacturingLead)\uac00 \uadc0\uc18d\ub418\ub294 \ud300"
+    },
+    "tenant_type": {
+      "type": "string",
+      "enum": [
+        "internal",
+        "client"
+      ],
+      "default": "internal",
+      "description": "internal=\ubcf8\uc0ac/\uc11c\ube44\uc2a4 \ud300, client=\uace0\uac1d\uc0ac \ud300"
+    },
+    "hq_tenant_id": {
+      "type": "string",
+      "description": "client \ud300\uc758 \uc0c1\uc704 \ubcf8\uc0ac \ud14c\ub10c\ud2b8 ID"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "client \ud300\uc5d0 \uc5f0\uacb0\ub41c \uace0\uac1d\uc0ac Company ID"
+    },
+    "seat_limit": {
+      "type": "number",
+      "default": 2,
+      "description": "\ucd08\ub300 \uac00\ub2a5\ud55c \ub2f4\ub2f9\uc790 \uc218 \uc0c1\ud55c (\uc720\ub8cc\ud654 \ub300\ube44)"
     }
   },
   "required": [
@@ -40,9 +62,16 @@
       }
     },
     "read": {
-      "user_condition": {
-        "data.account_tier": "master"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "id": "{{user.data.tenant_id}}"
+        }
+      ]
     },
     "update": {
       "user_condition": {
