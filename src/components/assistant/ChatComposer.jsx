@@ -8,19 +8,25 @@ export default function ChatComposer({ onSend, disabled }) {
   const [text, setText] = useState('');
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
   const inputRef = useRef(null);
 
   const handleFiles = async (fileList) => {
     const picked = Array.from(fileList || []);
     if (picked.length === 0) return;
     setUploading(true);
+    setUploadError(null);
     const uploaded = [];
-    for (const file of picked) {
-      const named = file.name
-        ? file
-        : new File([file], `clipboard-${Date.now()}.png`, { type: file.type || 'image/png' });
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: named });
-      uploaded.push({ name: named.name, url: file_url });
+    try {
+      for (const file of picked) {
+        const named = file.name
+          ? file
+          : new File([file], `clipboard-${Date.now()}.png`, { type: file.type || 'image/png' });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: named });
+        uploaded.push({ name: named.name, url: file_url });
+      }
+    } catch (e) {
+      setUploadError('파일 업로드에 실패했습니다. 다시 시도해 주세요.');
     }
     setFiles((prev) => [...prev, ...uploaded]);
     setUploading(false);
@@ -36,6 +42,9 @@ export default function ChatComposer({ onSend, disabled }) {
 
   return (
     <div className="border-t border-border bg-card p-3">
+      {uploadError && (
+        <p className="mb-2 text-xs text-destructive">{uploadError}</p>
+      )}
       {files.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
           {files.map((f) => (

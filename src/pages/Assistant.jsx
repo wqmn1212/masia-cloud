@@ -3,7 +3,8 @@ import { base44 } from '@/api/base44Client';
 import ConversationList from '@/components/assistant/ConversationList';
 import MessageBubble from '@/components/assistant/MessageBubble';
 import ChatComposer from '@/components/assistant/ChatComposer';
-import { Bot, Loader2 } from 'lucide-react';
+import { Bot, Loader2, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const AGENT_NAME = 'masia_assistant';
 
@@ -13,6 +14,7 @@ export default function Assistant() {
   const [messages, setMessages] = useState([]);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const endRef = useRef(null);
 
   const loadConversations = async () => {
@@ -21,12 +23,20 @@ export default function Assistant() {
     return list || [];
   };
 
-  useEffect(() => {
-    (async () => {
+  const init = async () => {
+    setLoading(true);
+    setError(null);
+    try {
       const list = await loadConversations();
       if (list.length > 0) await openConversation(list[0].id);
-      setLoading(false);
-    })();
+    } catch (e) {
+      setError('대화를 불러오지 못했습니다. 다시 시도해 주세요.');
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    init();
   }, []);
 
   useEffect(() => {
@@ -60,16 +70,21 @@ export default function Assistant() {
 
   const handleSend = async (text, fileUrls, fileNames) => {
     setSending(true);
-    let conv = conversation;
-    if (!conv) conv = await startConversation();
-    const content = fileNames?.length
-      ? `${text}${text ? '\n\n' : ''}첨부 파일: ${fileNames.join(', ')}`
-      : text;
-    await base44.agents.addMessage(conv, {
-      role: 'user',
-      content,
-      ...(fileUrls?.length ? { file_urls: fileUrls } : {}),
-    });
+    setError(null);
+    try {
+      let conv = conversation;
+      if (!conv) conv = await startConversation();
+      const content = fileNames?.length
+        ? `${text}${text ? '\n\n' : ''}첨부 파일: ${fileNames.join(', ')}`
+        : text;
+      await base44.agents.addMessage(conv, {
+        role: 'user',
+        content,
+        ...(fileUrls?.length ? { file_urls: fileUrls } : {}),
+      });
+    } catch (e) {
+      setError('메시지를 보내지 못했습니다. 다시 시도해 주세요.');
+    }
     setSending(false);
   };
 
@@ -94,6 +109,15 @@ export default function Assistant() {
         />
         <div className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+            {error && (
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
+                <span className="flex items-center gap-2 text-sm text-destructive">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  {error}
+                </span>
+                <Button size="sm" variant="outline" onClick={init}>다시 시도</Button>
+              </div>
+            )}
             {loading ? (
               <div className="flex justify-center pt-10"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
             ) : messages.length === 0 ? (
