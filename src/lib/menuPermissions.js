@@ -1,6 +1,7 @@
 export const TEAM_MENU_OPTIONS = [
   { path: '/dashboard', label: '대시보드' },
   { path: '/leads', label: '문의 접수' },
+  { path: '/portfolio-admin', label: '포트폴리오 관리' },
   { path: '/quotations', label: '견적 관리' },
   { path: '/contracts', label: '계약서 관리' },
   { path: '/decisions', label: '결정 기록' },

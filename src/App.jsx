@@ -34,6 +34,8 @@ import Landing from '@/pages/Landing';
 import Leads from '@/pages/Leads';
 import ClientPortalDashboard from '@/pages/ClientPortalDashboard';
 import ClientBoard from '@/pages/ClientBoard';
+import PortfolioAdmin from '@/pages/PortfolioAdmin';
+import PortfolioDetail from '@/pages/PortfolioDetail';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -42,6 +44,15 @@ const AuthenticatedApp = () => {
   // 공개 랜딩: 로그인 여부와 무관하게 렌더링 (auth_required 리다이렉트 제외)
   if (location.pathname === '/') {
     return <Landing />;
+  }
+
+  // 공개 포트폴리오 상세 — 비로그인 접근 허용
+  if (location.pathname.startsWith('/portfolio/')) {
+    return (
+      <Routes>
+        <Route path="/portfolio/:slug" element={<PortfolioDetail />} />
+      </Routes>
+    );
   }
 
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -69,6 +80,7 @@ const AuthenticatedApp = () => {
         <Route path="/client/board" element={<ClientBoard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/leads" element={<Leads />} />
+        <Route path="/portfolio-admin" element={<PortfolioAdmin />} />
         <Route path="/factories" element={<Factories />} />
         <Route path="/clients" element={<Clients />} />
         <Route path="/quotations" element={<Quotations />} />

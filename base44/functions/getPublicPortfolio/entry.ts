@@ -50,6 +50,8 @@ const toDetail = (p) => ({
   })),
   spec_files: (Array.isArray(p.spec_files) ? p.spec_files : []).map((f, index) => ({
     index,
+    // 문의 후 제공 자료는 URL 을 내려주지 않는다
+    url: f.require_lead ? '' : (f.url || ''),
     label: trio(f.label_ko, f.label_en, f.label_zh),
     lang: f.lang || 'multi',
     size_kb: f.size_kb || 0,
