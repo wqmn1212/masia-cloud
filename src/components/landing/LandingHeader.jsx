@@ -11,6 +11,7 @@ export default function LandingHeader({ lang, setLang, isAuthenticated, user }) 
   const [loginOpen, setLoginOpen] = useState(false);
   const dashboardHref = user?.account_tier === 'client' ? '/client/board' : '/dashboard';
   return (
+    <>
     <header className="sticky top-0 z-50 bg-landing-page/90 backdrop-blur-[14px] border-b border-landing-line">
       <div className="max-w-[1200px] mx-auto px-5 lg:px-8 h-[66px] flex items-center gap-9">
         <a href="#top" className="flex items-center flex-none">
@@ -58,7 +59,8 @@ export default function LandingHeader({ lang, setLang, isAuthenticated, user }) 
           </>
         )}
       </div>
-      <LoginModal lang={lang} open={loginOpen} onClose={() => setLoginOpen(false)} />
     </header>
+    <LoginModal lang={lang} open={loginOpen} onClose={() => setLoginOpen(false)} />
+    </>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Loader2, LogIn } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
@@ -33,7 +34,7 @@ export default function LoginModal({ lang, open, onClose }) {
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
       <div
         className="w-full max-w-sm bg-white rounded-2xl p-7 shadow-[0_20px_60px_rgba(23,23,25,.25)]"
@@ -78,6 +79,7 @@ export default function LoginModal({ lang, open, onClose }) {
           <p className="text-[11.5px] text-landing-muted2 text-center leading-relaxed">{c.hint}</p>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
