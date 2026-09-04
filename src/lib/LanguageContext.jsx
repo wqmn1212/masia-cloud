@@ -4,12 +4,12 @@ import { translations } from './translations';
 const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState(() => localStorage.getItem('masia_lang') || 'ko');
+  const [lang, setLang] = useState(() => localStorage.getItem('chinasourcing_lang') || 'ko');
 
   const toggleLang = () => {
     const next = lang === 'ko' ? 'zh' : 'ko';
     setLang(next);
-    localStorage.setItem('masia_lang', next);
+    localStorage.setItem('chinasourcing_lang', next);
   };
 
   const t = (key, fallback) => {

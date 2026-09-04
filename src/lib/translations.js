@@ -6,7 +6,7 @@ export const translations = {
     'nav.settlement': '정산 대시보드', 'nav.knowledge': '지식 베이스', 'nav.factories': '공장 관리',
     'nav.agentquotes': '견적 업로드', 'nav.requirements': '요구사항 트래커', 'nav.clients': '고객사 관리',
     'nav.timeline': '생산 타임라인', 'nav.asrequests': 'AS 접수',
-    'brand.name': '마시아 클라우드',
+    'brand.name': '중국소싱 클라우드',
     // TopBar
     'topbar.search': '견적, 공장, 고객사 검색...', 'topbar.admin': '관리자', 'topbar.hq': '본사',
     // Common
@@ -144,7 +144,7 @@ export const translations = {
     'nav.settlement': '结算概览', 'nav.knowledge': '知识库', 'nav.factories': '工厂管理',
     'nav.agentquotes': '上传报价', 'nav.requirements': '需求跟踪', 'nav.clients': '客户管理',
     'nav.timeline': '生产时间轴', 'nav.asrequests': '售后申请',
-    'brand.name': 'Masia 云平台',
+    'brand.name': 'ChinaSourcing 云平台',
     // TopBar
     'topbar.search': '搜索报价、工厂、客户...', 'topbar.admin': '管理员', 'topbar.hq': '总部',
     // Common
@@ -183,7 +183,7 @@ export const translations = {
     'taskboard.form.factories.hint': '* 最终确认工厂可在卡片详情中稍后指定',
     'taskboard.form.cancel': '取消', 'taskboard.form.create': '创建', 'taskboard.pct': '% 占比',
     // Dashboard
-    'dashboard.title': '仪表盘', 'dashboard.subtitle': 'Masia云平台综合概况',
+    'dashboard.title': '仪表盘', 'dashboard.subtitle': 'ChinaSourcing云平台综合概况',
     'dashboard.factories': '注册工厂', 'dashboard.clients': '客户',
     'dashboard.quotations': '进行中报价', 'dashboard.openAS': '待处理售后', 'dashboard.asSubtitle': '按接收统计',
     // Factories

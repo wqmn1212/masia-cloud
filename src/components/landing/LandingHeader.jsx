@@ -10,7 +10,7 @@ export default function LandingHeader({ lang, setLang, isAuthenticated }) {
     <header className="sticky top-0 z-50 bg-landing-page/90 backdrop-blur-[14px] border-b border-landing-line">
       <div className="max-w-[1200px] mx-auto px-5 lg:px-8 h-[66px] flex items-center gap-9">
         <a href="#top" className="flex items-center flex-none">
-          <span className="text-[23px] font-extrabold tracking-[-0.6px] text-landing-ink leading-none">AEGIS</span>
+          <span className="text-[23px] font-extrabold tracking-[-0.6px] text-landing-ink leading-none">ChinaSourcing</span>
         </a>
         <nav className="hidden lg:flex items-center gap-7 text-sm font-semibold">
           {nav.map((n) => (

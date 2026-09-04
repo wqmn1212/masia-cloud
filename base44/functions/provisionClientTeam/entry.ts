@@ -130,15 +130,15 @@ export default async function (req) {
         await svc.integrations.Core.SendEmail({
           to: email,
           from_name: FROM_NAME,
-          subject: `${lead.company} · AEGIS Cloud 고객 포털 계정이 발급되었습니다`,
+          subject: `${lead.company} · ChinaSourcing Cloud 고객 포털 계정이 발급되었습니다`,
           body: [
             `${lead.contact_name} 님, 안녕하세요.`,
             ``,
-            `AEGIS Cloud 고객 포털 계정이 발급되었습니다. 초대 메일의 링크로 가입하시면 진행 상황과 견적서를 확인하실 수 있습니다.`,
+            `ChinaSourcing Cloud 고객 포털 계정이 발급되었습니다. 초대 메일의 링크로 가입하시면 진행 상황과 견적서를 확인하실 수 있습니다.`,
             ``,
             `계정 접근이 어려우실 경우 담당자에게 문의해 주세요.`,
             ``,
-            'AEGIS',
+            'ChinaSourcing',
           ].join('\n'),
         });
       } catch (_e) { /* 메일 실패가 초대 자체를 막지 않는다 */ }

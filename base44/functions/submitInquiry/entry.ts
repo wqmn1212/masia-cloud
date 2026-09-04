@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 
 // 랜딩 페이지 공개 문의 접수 — 비로그인 호출. 사용자 토큰을 신뢰하지 않고 서버가 tenant_id 를 결정한다.
 const REQUIRED = ['company', 'contact_name', 'phone', 'email'];
-const CATEGORIES = ['기계설비', '정밀가공', '전자 · 전기', '뷰티 · 의료', '리빙 · 공구', '굿즈 · 조형', '기타'];
+const CATEGORIES = ['기계 · 측정', '정밀가공', '전자 · IT액세서리', '뷰티 · 화장품', '가구 · 리빙', '반려동물용품', '부자재 · 원자재', '기타'];
 const MAX_FILES = 5;
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const RATE_LIMIT_MS = 10 * 60 * 1000;
@@ -123,7 +123,7 @@ export default async function (req) {
             `요구사항:`,
             lead.detail || '-',
             ``,
-            `AEGIS Cloud → 문의 접수 메뉴에서 확인하세요.`,
+            `ChinaSourcing Cloud → 문의 접수 메뉴에서 확인하세요.`,
           ].join('\n'),
         });
       } catch (_e) { /* 알림 실패는 접수 자체를 막지 않음 */ }
@@ -133,13 +133,13 @@ export default async function (req) {
     try {
       await svc.integrations.Core.SendEmail({
         to: email,
-        from_name: 'AEGIS',
-        subject: lang === 'en' ? 'We received your request — AEGIS' : lang === 'zh' ? '已收到您的询价 — AEGIS' : '문의가 접수되었습니다 — AEGIS',
+        from_name: 'ChinaSourcing',
+        subject: lang === 'en' ? 'We received your request — ChinaSourcing' : lang === 'zh' ? '已收到您的询价 — ChinaSourcing' : '문의가 접수되었습니다 — 중국소싱',
         body: lang === 'en'
-          ? `Hello ${lead.contact_name},\n\nWe received your manufacturing request for ${lead.company}. We will reply within one business day with next steps and your AEGIS Cloud account details.\n\nAEGIS`
+          ? `Hello ${lead.contact_name},\n\nWe received your manufacturing request for ${lead.company}. We will reply within one business day with next steps and your ChinaSourcing Cloud account details.\n\nChinaSourcing`
           : lang === 'zh'
-            ? `${lead.contact_name} 您好，\n\n我们已收到 ${lead.company} 的制造询价。我们将在一个工作日内回复后续步骤及 AEGIS Cloud 账号信息。\n\nAEGIS`
-            : `${lead.contact_name} 님, 안녕하세요.\n\n${lead.company} 의 제조 문의가 접수되었습니다. 영업일 기준 1일 이내에 담당자가 회신드리며, AEGIS Cloud 계정 발급 안내도 함께 보내드립니다.\n\nAEGIS`,
+            ? `${lead.contact_name} 您好，\n\n我们已收到 ${lead.company} 的制造询价。我们将在一个工作日内回复后续步骤及 ChinaSourcing Cloud 账号信息。\n\nChinaSourcing`
+            : `${lead.contact_name} 님, 안녕하세요.\n\n${lead.company} 의 제조 문의가 접수되었습니다. 영업일 기준 1일 이내에 담당자가 회신드리며, ChinaSourcing Cloud 계정 발급 안내도 함께 보내드립니다.\n\n중국소싱`,
       });
     } catch (_e) { /* 미등록 주소 발송 실패 허용 */ }
 

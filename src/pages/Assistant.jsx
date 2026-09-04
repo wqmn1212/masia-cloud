@@ -6,7 +6,7 @@ import ChatComposer from '@/components/assistant/ChatComposer';
 import { Bot, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const AGENT_NAME = 'masia_assistant';
+const AGENT_NAME = 'chinasourcing_assistant';
 
 export default function Assistant() {
   const [conversations, setConversations] = useState([]);
@@ -60,7 +60,7 @@ export default function Assistant() {
   const startConversation = async () => {
     const conv = await base44.agents.createConversation({
       agent_name: AGENT_NAME,
-      metadata: { name: `업무 상담 ${new Date().toLocaleDateString('ko-KR')}`, description: 'Masia AI 비서 대화' },
+      metadata: { name: `업무 상담 ${new Date().toLocaleDateString('ko-KR')}`, description: '중국소싱 AI 비서 대화' },
     });
     setConversation(conv);
     setMessages(conv.messages || []);

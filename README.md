@@ -1,3 +1,7 @@
+# 중국소싱 (ChinaSourcing) — AEGIS Inc.
+
+중국 공장 직거래 제조 소싱 플랫폼. 한국 본사(운영사: (주)이지스, 대표 이호민)와 중국 선전 지사가 공장 검증, 견적, QC, 배송·통관까지 한 번에 진행하며, 서비스 도메인은 [chinasourcing.kr](https://chinasourcing.kr) 입니다.
+
 **Welcome to your Base44 project** 
 
 **About**

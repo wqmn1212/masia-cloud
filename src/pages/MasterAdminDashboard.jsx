@@ -212,7 +212,7 @@ export default function MasterAdminDashboard() {
                 required
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
-                placeholder="예: MASIA"
+                placeholder="예: 중국소싱"
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">

@@ -1,7 +1,9 @@
 import React from 'react';
-import { tx } from '@/lib/landingContent';
+import { categories, tx } from '@/lib/landingContent';
+import { cn } from '@/lib/utils';
 
 export default function PortfolioCard({ item, lang }) {
+  const priceLabel = categories.priceLegend[item.priceType];
   return (
     <article className="border border-landing-line rounded-[13px] overflow-hidden bg-white">
       {item.image ? (
@@ -12,7 +14,19 @@ export default function PortfolioCard({ item, lang }) {
         </div>
       )}
       <div className="p-[18px]">
-        <div className="text-[11px] font-bold text-landing-brand font-mono">{tx(item.tag, lang)}</div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-[11px] font-bold text-landing-brand font-mono">{tx(item.tag, lang)}</div>
+          {priceLabel && (
+            <span
+              className={cn(
+                'flex-none text-[10px] font-bold px-2 py-[3px] rounded-full',
+                item.priceType === 'catalog' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+              )}
+            >
+              {tx(priceLabel, lang)}
+            </span>
+          )}
+        </div>
         <h3 className="mt-2 text-[15.5px] font-bold tracking-[-0.3px] text-landing-ink">{tx(item.t, lang)}</h3>
         <p className="mt-[7px] text-[13.5px] leading-[1.6] text-landing-muted">{tx(item.d, lang)}</p>
       </div>

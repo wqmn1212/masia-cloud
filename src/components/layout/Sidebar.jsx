@@ -97,7 +97,7 @@ export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobil
         {!collapsed && (
           <div className="ml-3 overflow-hidden">
             <h1 className="text-base font-bold tracking-tight text-sidebar-foreground">{t('brand.name')}</h1>
-            <p className="text-[10px] text-sidebar-foreground/50 tracking-widest uppercase">Masia Cloud</p>
+            <p className="text-[10px] text-sidebar-foreground/50 tracking-widest uppercase">ChinaSourcing Cloud</p>
           </div>
         )}
       </div>

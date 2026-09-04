@@ -1,7 +1,7 @@
 // 앱 내 알림 + 이메일 병행 발송 공용 모듈.
 // Notification 의 권한 키는 recipient_id 이므로 cross-tenant(본사 ↔ 고객사) 알림이 동작한다.
 // 발신자명은 앱 전체에서 'AEGIS' 로 단일화한다.
-export const FROM_NAME = 'AEGIS';
+export const FROM_NAME = 'ChinaSourcing';
 
 const DEBOUNCE_MS = 5 * 60 * 1000;
 
@@ -48,7 +48,7 @@ export async function notifyUsers(svc, recipients, payload) {
           to: u.email,
           from_name: FROM_NAME,
           subject: payload.title,
-          body: `${payload.body || payload.title}\n\nAEGIS Cloud 에서 확인하세요.`,
+          body: `${payload.body || payload.title}\n\nChinaSourcing Cloud 에서 확인하세요.`,
         });
       } catch (_e) { /* 메일 실패가 알림 생성을 막지 않는다 */ }
     }

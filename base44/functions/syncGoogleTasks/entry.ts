@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
-const LIST_TITLE = 'Masia 업무';
+const LIST_TITLE = '중국소싱 업무';
 const API = 'https://tasks.googleapis.com/tasks/v1';
 
 async function gapi(path, token, options = {}) {
