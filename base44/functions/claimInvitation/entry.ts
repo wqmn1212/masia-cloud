@@ -37,6 +37,8 @@ Deno.serve(async (req) => {
     if (invite.service_admin_id) updateData.service_admin_id = invite.service_admin_id;
     // client 초대는 고객사 스코프 키(company_id)를 반드시 승계해야 포털 데이터가 조회된다
     if (invite.company_id) updateData.company_id = invite.company_id;
+    // 고객 계정은 담당자가 발급한 초대 링크로 처음 들어오므로, 다음 로그인부터는 본인이 정한 비밀번호를 쓰도록 강제한다
+    if (invite.account_tier === 'client') updateData.must_change_password = true;
 
     await base44.asServiceRole.entities.User.update(user.id, updateData);
     if (invite.account_tier === 'service') {

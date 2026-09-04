@@ -3,7 +3,7 @@ import { contact, tx } from '@/lib/landingContent';
 import SectionHeading from './SectionHeading';
 import InquiryForm from './InquiryForm';
 
-export default function ContactSection({ lang }) {
+export default function ContactSection({ lang, prefill }) {
   return (
     <section id="contact" className="px-5 lg:px-8 py-16 lg:py-[88px]">
       <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row gap-10 lg:gap-14 items-stretch lg:items-start">
@@ -21,7 +21,7 @@ export default function ContactSection({ lang }) {
             </div>
           </div>
         </div>
-        <InquiryForm lang={lang} />
+        <InquiryForm lang={lang} prefill={prefill} />
       </div>
     </section>
   );

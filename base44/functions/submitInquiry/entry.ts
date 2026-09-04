@@ -58,6 +58,8 @@ export default async function (req) {
       ? body.categories.filter((c) => CATEGORIES.includes(c))
       : [];
     const lang = ['ko', 'en', 'zh'].includes(body.lang) ? body.lang : 'ko';
+    const intent = body.intent === 'purchase' ? 'purchase' : 'quote';
+    const productName = clean(body.product_name, 200);
 
     const lead = await svc.entities.ManufacturingLead.create({
       tenant_id: tenant.id,
@@ -71,6 +73,8 @@ export default async function (req) {
       detail: clean(body.detail, 5000),
       attachments,
       lang,
+      intent,
+      product_name: productName,
       source: 'landing',
       referrer: clean(body.referrer, 500),
       submitted_at: new Date().toISOString(),
@@ -78,39 +82,19 @@ export default async function (req) {
       invitation_sent: false,
     });
 
-    // 문의 접수 즉시 본사 팀 TaskCard 자동 생성 (고객 공개는 팀 발급 후 수동 토글)
-    try {
-      const card = await svc.entities.TaskCard.create({
-        tenant_id: tenant.id,
-        title: `[문의] ${lead.company} · ${categories[0] || '미분류'}`,
-        status: 'TODO',
-        priority: 'MEDIUM',
-        source: 'landing_lead',
-        lead_id: lead.id,
-        client_name: lead.company,
-        client_visible: false,
-        hq_requirements: [
-          `담당자: ${lead.contact_name} · ${lead.phone} · ${lead.email}`,
-          `카테고리: ${categories.join(', ') || '-'}`,
-          `수량: ${lead.quantity || '-'} / 희망 단가: ${lead.target_price || '-'}`,
-          `첨부: ${attachments.length}건 (문의 접수 메뉴에서 다운로드)`,
-          ``,
-          lead.detail || '',
-        ].join('\n'),
-      });
-      await svc.entities.ManufacturingLead.update(lead.id, { task_card_id: card.id });
-    } catch (_e) { /* 카드 생성 실패가 접수 자체를 막지 않음 */ }
+    // TaskCard 는 문의 접수 시점이 아니라 담당자가 "문의 접수" 메뉴에서 승인할 때 생성된다.
 
     // 담당자 알림 (등록 사용자 → 항상 발송 가능)
     if (tenant.master_email) {
       try {
         await svc.integrations.Core.SendEmail({
           to: tenant.master_email,
-          from_name: 'AEGIS',
+          from_name: 'ChinaSourcing',
           subject: `[문의 접수] ${lead.company} · ${lead.contact_name}`,
           body: [
             `새 제조 문의가 접수되었습니다.`,
             ``,
+            `유형: ${intent === 'purchase' ? '구매 문의' : '견적 문의'}${productName ? ` · ${productName}` : ''}`,
             `회사명: ${lead.company}`,
             `담당자: ${lead.contact_name}`,
             `연락처: ${lead.phone}`,
@@ -123,7 +107,7 @@ export default async function (req) {
             `요구사항:`,
             lead.detail || '-',
             ``,
-            `ChinaSourcing Cloud → 문의 접수 메뉴에서 확인하세요.`,
+            `ChinaSourcing Cloud → 문의 접수 메뉴에서 확인 후 승인해 주세요.`,
           ].join('\n'),
         });
       } catch (_e) { /* 알림 실패는 접수 자체를 막지 않음 */ }

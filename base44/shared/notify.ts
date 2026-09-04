@@ -1,6 +1,6 @@
 // 앱 내 알림 + 이메일 병행 발송 공용 모듈.
 // Notification 의 권한 키는 recipient_id 이므로 cross-tenant(본사 ↔ 고객사) 알림이 동작한다.
-// 발신자명은 앱 전체에서 'AEGIS' 로 단일화한다.
+// 발신자명은 앱 전체에서 'ChinaSourcing' 으로 단일화한다.
 export const FROM_NAME = 'ChinaSourcing';
 
 const DEBOUNCE_MS = 5 * 60 * 1000;

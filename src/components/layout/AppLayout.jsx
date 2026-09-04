@@ -9,6 +9,7 @@ import { SearchProvider } from '@/lib/SearchContext';
 import { base44 } from '@/api/base44Client';
 import AccountInactive from '@/components/AccountInactive';
 import AccessDenied from '@/components/AccessDenied';
+import RequirePasswordChange from '@/components/RequirePasswordChange';
 import { canAccessPath } from '@/lib/menuPermissions';
 
 export default function AppLayout() {
@@ -54,6 +55,11 @@ export default function AppLayout() {
   // 비활성 계정 차단
   if (user && user.account_tier && user.is_active === false) {
     return <AccountInactive />;
+  }
+
+  // 초대로 발급된 계정의 최초 로그인 — 비밀번호를 바꾸기 전에는 다른 화면을 볼 수 없다
+  if (user && user.account_tier && user.must_change_password) {
+    return <RequirePasswordChange user={user} onDone={refetch} />;
   }
 
   return (

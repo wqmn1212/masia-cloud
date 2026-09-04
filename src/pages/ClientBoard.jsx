@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import useClientCards from '@/lib/useClientCards';
 import { CLIENT_COLUMNS } from '@/components/client/clientBoardMeta';
 import ClientCardTile from '@/components/client/ClientCardTile';
 import ClientCardModal from '@/components/client/ClientCardModal';
+import ClientNewInquiryDialog from '@/components/client/ClientNewInquiryDialog';
 
 export default function ClientBoard() {
   const { data: cards = [], isLoading } = useClientCards();
   const [selectedId, setSelectedId] = useState(null);
+  const [newOpen, setNewOpen] = useState(false);
 
   // 알림 링크(/client/board?card=xxx)로 진입한 경우 해당 카드를 바로 연다
   useEffect(() => {
@@ -18,9 +21,15 @@ export default function ClientBoard() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">소싱 보드</h1>
-        <p className="text-sm text-muted-foreground mt-1">단계는 담당자가 업데이트하며, 카드를 눌러 상세 내용을 확인하실 수 있습니다</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">소싱 보드</h1>
+          <p className="text-sm text-muted-foreground mt-1">단계는 담당자가 업데이트하며, 카드를 눌러 상세 내용을 확인하실 수 있습니다</p>
+        </div>
+        <Button size="sm" onClick={() => setNewOpen(true)} className="flex-none gap-1.5">
+          <Plus className="w-4 h-4" />
+          새 문의 등록
+        </Button>
       </div>
 
       {isLoading ? (
@@ -46,6 +55,7 @@ export default function ClientBoard() {
       )}
 
       <ClientCardModal cardId={selectedId} open={!!selectedId} onClose={() => setSelectedId(null)} />
+      <ClientNewInquiryDialog open={newOpen} onClose={() => setNewOpen(false)} />
     </div>
   );
 }

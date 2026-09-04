@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { LEAD_STATUS } from './leadMeta';
 import LeadAttachments from './LeadAttachments';
+import LeadApprovalPanel from './LeadApprovalPanel';
 import LeadProvisionPanel from './LeadProvisionPanel';
 
 const Field = ({ label, children }) => (
@@ -50,6 +51,10 @@ export default function LeadDetailDialog({ lead, open, onClose, onSave, saving }
           <Field label="연락처">{lead.phone}</Field>
           <Field label="이메일"><a href={`mailto:${lead.email}`} className="text-primary hover:underline">{lead.email}</a></Field>
           <Field label="언어 / 유입">{lead.lang?.toUpperCase()} · {lead.source}</Field>
+          <Field label="유형">
+            <Badge variant={lead.intent === 'purchase' ? 'default' : 'secondary'}>{lead.intent === 'purchase' ? '구매 문의' : '견적 문의'}</Badge>
+            {lead.product_name && <span className="ml-1.5 text-muted-foreground">{lead.product_name}</span>}
+          </Field>
           <Field label="발주 예정 수량">{lead.quantity}</Field>
           <Field label="희망 단가">{lead.target_price}</Field>
         </div>
@@ -68,6 +73,7 @@ export default function LeadDetailDialog({ lead, open, onClose, onSave, saving }
           <div className="mt-1"><LeadAttachments attachments={lead.attachments} /></div>
         </Field>
 
+        <LeadApprovalPanel lead={lead} />
         <LeadProvisionPanel lead={lead} />
 
         <div className="border-t pt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">

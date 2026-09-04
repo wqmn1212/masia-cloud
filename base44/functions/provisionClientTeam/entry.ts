@@ -155,6 +155,7 @@ export default async function (req) {
       await svc.entities.TaskCard.update(lead.task_card_id, {
         client_id: company.id,
         client_name: lead.company,
+        client_visible: true,
       });
     }
 

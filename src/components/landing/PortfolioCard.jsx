@@ -1,9 +1,10 @@
 import React from 'react';
-import { categories, tx } from '@/lib/landingContent';
+import { categories, CAT_TO_FORM_VALUE, tx } from '@/lib/landingContent';
 import { cn } from '@/lib/utils';
 
-export default function PortfolioCard({ item, lang }) {
+export default function PortfolioCard({ item, lang, onInquire }) {
   const priceLabel = categories.priceLegend[item.priceType];
+  const ctaLabel = categories.cta[item.priceType];
   return (
     <article className="border border-landing-line rounded-[13px] overflow-hidden bg-white">
       {item.image ? (
@@ -29,6 +30,21 @@ export default function PortfolioCard({ item, lang }) {
         </div>
         <h3 className="mt-2 text-[15.5px] font-bold tracking-[-0.3px] text-landing-ink">{tx(item.t, lang)}</h3>
         <p className="mt-[7px] text-[13.5px] leading-[1.6] text-landing-muted">{tx(item.d, lang)}</p>
+        {onInquire && (
+          <button
+            type="button"
+            onClick={() =>
+              onInquire({
+                formValue: CAT_TO_FORM_VALUE[item.cat] || '',
+                title: tx(item.t, lang),
+                priceType: item.priceType,
+              })
+            }
+            className="mt-3.5 w-full text-[13px] font-bold py-2 rounded-lg border border-landing-line2 text-landing-ink2 hover:border-landing-brand hover:text-landing-brand transition-colors"
+          >
+            {tx(ctaLabel, lang)}
+          </button>
+        )}
       </div>
     </article>
   );

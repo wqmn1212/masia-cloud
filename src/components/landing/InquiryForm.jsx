@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { form, formTags, tx } from '@/lib/landingContent';
@@ -9,6 +9,12 @@ const EMPTY = { company: '', contact_name: '', phone: '', email: '', quantity: '
 const ACCEPT = '.step,.stp,.dwg,.pdf,.jpg,.jpeg,.png';
 const MAX_FILES = 5;
 
+const PREFILL_DETAIL = {
+  ko: (name) => `[${name}] 문의드립니다.\n\n`,
+  en: (name) => `Inquiring about: ${name}\n\n`,
+  zh: (name) => `咨询品类：${name}\n\n`,
+};
+
 const toBase64 = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -17,12 +23,23 @@ const toBase64 = (file) =>
     reader.readAsDataURL(file);
   });
 
-export default function InquiryForm({ lang }) {
+export default function InquiryForm({ lang, prefill }) {
   const [values, setValues] = useState(EMPTY);
   const [tags, setTags] = useState([]);
   const [files, setFiles] = useState([]);
   const [status, setStatus] = useState('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const [intent, setIntent] = useState('quote');
+  const [productName, setProductName] = useState('');
+
+  useEffect(() => {
+    if (!prefill) return;
+    setTags(prefill.categoryValue ? [prefill.categoryValue] : []);
+    setIntent(prefill.intent || 'quote');
+    setProductName(prefill.productName || '');
+    setValues((v) => ({ ...v, detail: (PREFILL_DETAIL[lang] || PREFILL_DETAIL.ko)(prefill.productName || '') }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefill?.nonce]);
 
   const set = (k) => (e) => setValues((v) => ({ ...v, [k]: e.target.value }));
   const toggleTag = (val) => setTags((t) => (t.includes(val) ? t.filter((x) => x !== val) : [...t, val]));
@@ -40,6 +57,8 @@ export default function InquiryForm({ lang }) {
         categories: tags,
         attachments,
         lang,
+        intent,
+        product_name: productName,
         referrer: document.referrer || '',
       });
       setStatus('done');
@@ -50,7 +69,10 @@ export default function InquiryForm({ lang }) {
     }
   };
 
-  const reset = () => { setValues(EMPTY); setTags([]); setFiles([]); setStatus('idle'); setErrorMsg(''); };
+  const reset = () => {
+    setValues(EMPTY); setTags([]); setFiles([]); setStatus('idle'); setErrorMsg('');
+    setIntent('quote'); setProductName('');
+  };
 
   if (status === 'done') {
     return (
@@ -69,6 +91,12 @@ export default function InquiryForm({ lang }) {
 
   return (
     <form onSubmit={handleSubmit} className="w-full lg:w-[520px] lg:flex-none bg-white border border-landing-line rounded-2xl p-[30px] shadow-[0_10px_32px_rgba(23,23,25,.08)]">
+      {productName && (
+        <div className="mb-4 flex items-center gap-2 bg-landing-tint border border-landing-brand/30 rounded-lg px-3 py-2 text-[13px] font-semibold text-landing-brand">
+          {intent === 'purchase' ? (lang === 'en' ? 'Purchase inquiry' : lang === 'zh' ? '购买咨询' : '구매 문의') : (lang === 'en' ? 'Quote inquiry' : lang === 'zh' ? '报价咨询' : '견적 문의')}
+          <span className="text-landing-ink font-normal">· {productName}</span>
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <InquiryField label={tx(form.company, lang)} placeholder={tx(form.companyPh, lang)} value={values.company} onChange={set('company')} required />
         <InquiryField label={tx(form.name, lang)} placeholder={tx(form.namePh, lang)} value={values.contact_name} onChange={set('contact_name')} required />

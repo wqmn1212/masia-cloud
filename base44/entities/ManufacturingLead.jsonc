@@ -79,6 +79,19 @@
       ],
       "default": "ko"
     },
+    "intent": {
+      "type": "string",
+      "enum": [
+        "quote",
+        "purchase"
+      ],
+      "default": "quote",
+      "description": "메인페이지 CTA 종류 — quote=견적 문의, purchase=구매 문의"
+    },
+    "product_name": {
+      "type": "string",
+      "description": "품목 카드에서 문의한 경우 해당 품목명"
+    },
     "source": {
       "type": "string",
       "default": "landing"
@@ -94,13 +107,14 @@
       "type": "string",
       "enum": [
         "new",
+        "approved",
         "contacted",
         "quoting",
         "converted",
         "dropped"
       ],
       "default": "new",
-      "description": "converted = Quotation \uc0dd\uc131 \ubc0f \uacc4\uc815 \ubc1c\uae09 \uc644\ub8cc"
+      "description": "new=\uc811\uc218 \u00b7 approved=\ub2f4\ub2f9\uc790 \uc2b9\uc778(TaskCard \uc0dd\uc131\ub428) \u00b7 converted=\uace0\uac1d \ud300 \ubc1c\uae09 \ubc0f \uacc4\uc815 \ucd08\ub300 \uc644\ub8cc"
     },
     "assignee_email": {
       "type": "string",
@@ -117,7 +131,7 @@
     },
     "task_card_id": {
       "type": "string",
-      "description": "\ubb38\uc758 \uc811\uc218 \uc2dc \uc790\ub3d9 \uc0dd\uc131\ub41c TaskCard id"
+      "description": "\ub2f4\ub2f9\uc790 \uc2b9\uc778 \uc2dc \uc0dd\uc131\ub41c TaskCard id"
     },
     "client_tenant_id": {
       "type": "string",

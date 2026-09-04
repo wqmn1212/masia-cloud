@@ -21,7 +21,8 @@
         "card_shared",
         "chat_message",
         "quote_published",
-        "settlement_due"
+        "settlement_due",
+        "client_inquiry"
       ],
       "description": "\uc54c\ub9bc \uc720\ud615"
     },

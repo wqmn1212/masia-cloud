@@ -71,7 +71,7 @@ export default function LeadProvisionPanel({ lead }) {
       </div>
       <p className="text-[11px] text-muted-foreground">
         팀은 최초 1회만 생성되며, 이후에는 같은 팀에 담당자 초대만 추가됩니다 (기본 좌석 2명).
-        발급 후 각 카드의 "고객 포털 공개"를 켜야 고객에게 노출됩니다.
+        발급 시 이 문의로 승인된 카드가 자동으로 고객 포털에 공개됩니다. 다른 카드를 추가로 보여주려면 카드의 "고객 포털 공개" 토글을 사용하세요.
       </p>
     </div>
   );

@@ -94,6 +94,10 @@ export const categories = {
     catalog: ['기성품 · 가격 공개', 'Ready-made · Price listed', '现货 · 价格公开'],
     custom: ['주문제작 · 옵션 추가비용', 'Made-to-order · Extra for options', '定制生产 · 选项另计费用'],
   },
+  cta: {
+    catalog: ['구매 문의', 'Purchase inquiry', '购买咨询'],
+    custom: ['견적 문의', 'Quote inquiry', '报价咨询'],
+  },
   tabs: [
     { id: 'all', label: ['전체', 'All', '全部'] },
     { id: 'machine', label: ['기계 · 측정', 'Machinery & measuring', '机械与测量'] },
@@ -169,6 +173,17 @@ export const contact = {
   hq: ['계약 · 정산 · 지원 업무', 'All contracts, settlement and support', '合同、结算与支持'],
   szLabel: ['중국 선전 지사', 'SHENZHEN BRANCH', '深圳分公司'],
   sz: ['가격 협상 · 공장 검증 · QC · 출하', 'Negotiation, factory audit, QC, shipping', '议价、验厂、QC、运输'],
+};
+
+// 품목 카드(portfolio.cat) → 문의 폼 카테고리 태그(formTags.value) 매핑
+export const CAT_TO_FORM_VALUE = {
+  machine: '기계 · 측정',
+  precision: '정밀가공',
+  electronics: '전자 · IT액세서리',
+  beauty: '뷰티 · 화장품',
+  living: '가구 · 리빙',
+  pet: '반려동물용품',
+  material: '부자재 · 원자재',
 };
 
 export const form = {

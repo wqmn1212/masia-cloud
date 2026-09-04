@@ -71,6 +71,11 @@
     "account_label": {
       "type": "string",
       "description": "\ud68c\uc0ac/\ud300 \ub610\ub294 \uc0ac\uc6a9\uc790 \ud45c\uc2dc\uba85"
+    },
+    "must_change_password": {
+      "type": "boolean",
+      "default": false,
+      "description": "\ucd08\ub300\ub85c \ubc1c\uae09\ub41c \uacc4\uc815\uc758 \ucd5c\ucd08 \ub85c\uadf8\uc778 \uc2dc \ube44\ubc00\ubc88\ud638 \ubcc0\uacbd \uac15\uc81c \uc5ec\ubd80"
     }
   },
   "rls": {

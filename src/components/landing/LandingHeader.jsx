@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { nav, header, tx, LANDING_LANGS } from '@/lib/landingContent';
 import { cn } from '@/lib/utils';
+import LoginModal from './LoginModal';
 
 const LANG_LABEL = { ko: 'KO', en: 'EN', zh: '中' };
+const LOGIN_LABEL = { ko: '로그인', en: 'Log in', zh: '登录' };
 
-export default function LandingHeader({ lang, setLang, isAuthenticated }) {
+export default function LandingHeader({ lang, setLang, isAuthenticated, user }) {
+  const [loginOpen, setLoginOpen] = useState(false);
+  const dashboardHref = user?.account_tier === 'client' ? '/client/board' : '/dashboard';
   return (
     <header className="sticky top-0 z-50 bg-landing-page/90 backdrop-blur-[14px] border-b border-landing-line">
       <div className="max-w-[1200px] mx-auto px-5 lg:px-8 h-[66px] flex items-center gap-9">
@@ -36,15 +40,25 @@ export default function LandingHeader({ lang, setLang, isAuthenticated }) {
           ))}
         </div>
         {isAuthenticated ? (
-          <Link to="/dashboard" className="flex-none bg-landing-ink hover:bg-landing-brand-hover text-white text-sm font-bold px-[18px] py-2.5 rounded-[9px] transition-colors">
+          <Link to={dashboardHref} className="flex-none bg-landing-ink hover:bg-landing-brand-hover text-white text-sm font-bold px-[18px] py-2.5 rounded-[9px] transition-colors">
             {tx(header.dashboard, lang)}
           </Link>
         ) : (
-          <a href="#contact" className="flex-none bg-landing-ink hover:bg-landing-brand-hover text-white text-sm font-bold px-[18px] py-2.5 rounded-[9px] transition-colors">
-            {tx(header.cta, lang)}
-          </a>
+          <>
+            <button
+              type="button"
+              onClick={() => setLoginOpen(true)}
+              className="flex-none text-landing-ink2 hover:text-landing-brand text-sm font-bold transition-colors"
+            >
+              {LOGIN_LABEL[lang] || LOGIN_LABEL.ko}
+            </button>
+            <a href="#contact" className="flex-none bg-landing-ink hover:bg-landing-brand-hover text-white text-sm font-bold px-[18px] py-2.5 rounded-[9px] transition-colors">
+              {tx(header.cta, lang)}
+            </a>
+          </>
         )}
       </div>
+      <LoginModal lang={lang} open={loginOpen} onClose={() => setLoginOpen(false)} />
     </header>
   );
 }
