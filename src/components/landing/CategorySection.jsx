@@ -4,8 +4,9 @@ import SectionHeading from './SectionHeading';
 import PortfolioCard from './PortfolioCard';
 import { cn } from '@/lib/utils';
 
-export default function CategorySection({ lang, cat, setCat }) {
-  const items = cat === 'all' ? portfolio : portfolio.filter((p) => p.cat === cat);
+export default function CategorySection({ lang, cat, setCat, source }) {
+  const all = source?.length ? source : portfolio;
+  const items = cat === 'all' ? all : all.filter((p) => p.cat === cat);
   return (
     <section id="category" className="border-t border-landing-line bg-white px-5 lg:px-8 py-16 lg:py-[88px]">
       <div className="max-w-[1200px] mx-auto">

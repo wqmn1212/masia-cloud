@@ -1,0 +1,291 @@
+{
+  "name": "PortfolioItem",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "slug": {
+      "type": "string",
+      "description": "URL \uc2dd\ubcc4\uc790. \ud14c\ub10c\ud2b8 \ub0b4 \uc720\uc77c"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "machine",
+        "precision",
+        "electronics",
+        "health",
+        "living",
+        "goods",
+        "chem",
+        "material"
+      ],
+      "description": "landingContent.js \uc758 cat \uac12\uacfc \ub3d9\uc77c"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    },
+    "title_ko": {
+      "type": "string"
+    },
+    "title_en": {
+      "type": "string"
+    },
+    "title_zh": {
+      "type": "string"
+    },
+    "summary_ko": {
+      "type": "string",
+      "description": "\uce74\ub4dc \ud55c \uc904 \uc124\uba85"
+    },
+    "summary_en": {
+      "type": "string"
+    },
+    "summary_zh": {
+      "type": "string"
+    },
+    "body_ko": {
+      "type": "string",
+      "description": "\uc0c1\uc138 \ubcf8\ubb38 (\ub9c8\ud06c\ub2e4\uc6b4)"
+    },
+    "body_en": {
+      "type": "string"
+    },
+    "body_zh": {
+      "type": "string"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "\uce74\ub4dc \ub300\ud45c \uc774\ubbf8\uc9c0"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "caption_ko": {
+            "type": "string"
+          },
+          "caption_en": {
+            "type": "string"
+          },
+          "caption_zh": {
+            "type": "string"
+          },
+          "order": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "videos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "UPLOAD",
+              "YOUTUBE",
+              "VIMEO"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "title_ko": {
+            "type": "string"
+          },
+          "title_en": {
+            "type": "string"
+          },
+          "title_zh": {
+            "type": "string"
+          },
+          "order": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "spec_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "label_ko": {
+            "type": "string"
+          },
+          "label_en": {
+            "type": "string"
+          },
+          "label_zh": {
+            "type": "string"
+          },
+          "lang": {
+            "type": "string",
+            "enum": [
+              "ko",
+              "en",
+              "zh",
+              "multi"
+            ]
+          },
+          "size_kb": {
+            "type": "number"
+          },
+          "require_lead": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "moq": {
+      "type": "string",
+      "description": "\ucd5c\uc18c \ubc1c\uc8fc \uc218\ub7c9"
+    },
+    "lead_time": {
+      "type": "string",
+      "description": "\ud1b5\uc0c1 \ub0a9\uae30"
+    },
+    "certifications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ub300\uc751 \uac00\ub2a5 \uc778\uc99d"
+    },
+    "is_published": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false
+    },
+    "featured_order": {
+      "type": "number",
+      "default": 0
+    },
+    "view_count": {
+      "type": "number",
+      "default": 0
+    },
+    "internal_note": {
+      "type": "string",
+      "description": "\uacf5\uac1c \uc751\ub2f5\uc5d0 \ud3ec\ud568 \uae08\uc9c0"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "slug",
+    "category",
+    "title_ko"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

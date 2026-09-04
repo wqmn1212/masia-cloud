@@ -110,6 +110,9 @@ const TAG = {
   raw: ['원자재', 'RAW MATERIALS', '原材料'],
 };
 
+// 카테고리 → 카드 태그 (엔티티 항목에도 동일하게 적용)
+export const CATEGORY_TAG = { ...TAG, material: TAG.raw };
+
 export const portfolio = [
   { cat: 'machine', tag: TAG.machine, t: ['산업기계', 'Industrial machinery', '工业机械'], d: ['도면 기반 생산라인 및 공정 설비 제작', 'Production lines and process equipment built to drawing.', '按图纸定制的生产线与工艺设备。'], image: '' },
   { cat: 'machine', tag: TAG.machine, t: ['식품기계 · 포장기계', 'Food & packaging machinery', '食品与包装机械'], d: ['충전 · 실링 · 라벨링 및 소량 식품 라인', 'Filling, sealing, labelling and small-batch food lines.', '灌装、封口、贴标及小批量食品线。'], image: '' },
