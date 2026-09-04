@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import useLandingLang from '@/lib/useLandingLang';
+import { getHomePath } from '@/lib/menuPermissions';
 import LandingHeader from '@/components/landing/LandingHeader';
 import HeroSection from '@/components/landing/HeroSection';
 import AboutSection from '@/components/landing/AboutSection';
@@ -13,7 +14,7 @@ import LandingFooter from '@/components/landing/LandingFooter';
 export default function Landing() {
   const [lang, setLang] = useLandingLang();
   const [cat, setCat] = useState('all');
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, navigateToLogin } = useAuth();
 
   return (
     <div
@@ -21,7 +22,13 @@ export default function Landing() {
       className="font-landing bg-landing-page text-landing-ink min-w-[320px] antialiased min-h-screen"
       style={{ wordBreak: lang === 'zh' ? 'normal' : 'keep-all', overflowWrap: 'break-word' }}
     >
-      <LandingHeader lang={lang} setLang={setLang} isAuthenticated={isAuthenticated} />
+      <LandingHeader
+        lang={lang}
+        setLang={setLang}
+        isAuthenticated={isAuthenticated}
+        homePath={getHomePath(user)}
+        onLogin={navigateToLogin}
+      />
       <HeroSection lang={lang} />
       <AboutSection lang={lang} />
       <ProcessSection lang={lang} />

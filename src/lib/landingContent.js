@@ -12,6 +12,7 @@ export const nav = [
 
 export const header = {
   cta: ['견적 요청', 'Request a quote', '索取报价'],
+  login: ['로그인', 'Log in', '登录'],
   dashboard: ['대시보드로 이동', 'Go to dashboard', '前往控制台'],
 };
 

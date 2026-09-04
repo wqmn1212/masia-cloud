@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 const LANG_LABEL = { ko: 'KO', en: 'EN', zh: '中' };
 
-export default function LandingHeader({ lang, setLang, isAuthenticated }) {
+export default function LandingHeader({ lang, setLang, isAuthenticated, homePath, onLogin }) {
   return (
     <header className="sticky top-0 z-50 bg-landing-page/90 backdrop-blur-[14px] border-b border-landing-line">
       <div className="max-w-[1200px] mx-auto px-5 lg:px-8 h-[66px] flex items-center gap-9">
@@ -36,13 +36,22 @@ export default function LandingHeader({ lang, setLang, isAuthenticated }) {
           ))}
         </div>
         {isAuthenticated ? (
-          <Link to="/dashboard" className="flex-none bg-landing-ink hover:bg-landing-brand-hover text-white text-sm font-bold px-[18px] py-2.5 rounded-[9px] transition-colors">
+          <Link to={homePath} className="flex-none bg-landing-ink hover:bg-landing-brand-hover text-white text-sm font-bold px-[18px] py-2.5 rounded-[9px] transition-colors">
             {tx(header.dashboard, lang)}
           </Link>
         ) : (
-          <a href="#contact" className="flex-none bg-landing-ink hover:bg-landing-brand-hover text-white text-sm font-bold px-[18px] py-2.5 rounded-[9px] transition-colors">
-            {tx(header.cta, lang)}
-          </a>
+          <div className="flex items-center gap-2 flex-none">
+            <button
+              type="button"
+              onClick={onLogin}
+              className="border border-landing-line3 bg-white hover:border-landing-brand hover:text-landing-brand text-landing-ink2 text-sm font-bold px-[16px] py-2.5 rounded-[9px] transition-colors"
+            >
+              {tx(header.login, lang)}
+            </button>
+            <a href="#contact" className="bg-landing-ink hover:bg-landing-brand-hover text-white text-sm font-bold px-[18px] py-2.5 rounded-[9px] transition-colors">
+              {tx(header.cta, lang)}
+            </a>
+          </div>
         )}
       </div>
     </header>

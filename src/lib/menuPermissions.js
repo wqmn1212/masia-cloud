@@ -35,6 +35,10 @@ export const CLIENT_MENU_OPTIONS = [
   { path: '/client/board', label: '소싱 보드' },
 ];
 
+// 로그인 후 진입할 기본 화면 — 고객사(client) 등급은 고객 포털로 보낸다
+export const getHomePath = (user) =>
+  user?.account_tier === 'client' ? CLIENT_MENU_OPTIONS[0].path : '/dashboard';
+
 export const CLIENT_CARD_TABS = ['overview', 'quotation', 'chat', 'settlement'];
 
 export const canAccessPath = (user, pathname) => {
