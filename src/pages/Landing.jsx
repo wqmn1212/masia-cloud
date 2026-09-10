@@ -9,6 +9,7 @@ import CategorySection from '@/components/landing/CategorySection';
 import TrustSection from '@/components/landing/TrustSection';
 import ContactSection from '@/components/landing/ContactSection';
 import LandingFooter from '@/components/landing/LandingFooter';
+import ConsultChatWidget from '@/components/landing/ConsultChatWidget';
 
 export default function Landing() {
   const [lang, setLang] = useLandingLang();
@@ -40,6 +41,7 @@ export default function Landing() {
       <TrustSection lang={lang} />
       <ContactSection lang={lang} prefill={prefill} />
       <LandingFooter lang={lang} />
+      <ConsultChatWidget lang={lang} />
     </div>
   );
 }

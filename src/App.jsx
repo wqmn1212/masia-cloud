@@ -32,6 +32,7 @@ import Decisions from '@/pages/Decisions';
 import BomExtractor from '@/pages/BomExtractor';
 import Landing from '@/pages/Landing';
 import Leads from '@/pages/Leads';
+import ChatConsultations from '@/pages/ChatConsultations';
 import ClientPortalDashboard from '@/pages/ClientPortalDashboard';
 import ClientBoard from '@/pages/ClientBoard';
 
@@ -69,6 +70,7 @@ const AuthenticatedApp = () => {
         <Route path="/client/board" element={<ClientBoard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/leads" element={<Leads />} />
+        <Route path="/chat-consultations" element={<ChatConsultations />} />
         <Route path="/factories" element={<Factories />} />
         <Route path="/clients" element={<Clients />} />
         <Route path="/quotations" element={<Quotations />} />

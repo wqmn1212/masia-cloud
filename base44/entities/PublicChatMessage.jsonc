@@ -1,0 +1,117 @@
+{
+  "name": "PublicChatMessage",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "본사 테넌트 id (참조용 — 권한 키는 thread_id)"
+    },
+    "thread_id": {
+      "type": "string",
+      "description": "소속된 PublicChatThread ID"
+    },
+    "sender_role": {
+      "type": "string",
+      "enum": [
+        "VISITOR",
+        "STAFF"
+      ]
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "발신자 이름 (방문자 입력명 또는 담당자 이름)"
+    },
+    "message_text": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "thread_id",
+    "sender_role",
+    "message_text"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
