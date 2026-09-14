@@ -42,7 +42,6 @@ export default function Quotations() {
   const { toast } = useToast();
 
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
-  const isSub = me?.account_tier === 'sub';
 
   const { data: quotations = [] } = useQuery({
     queryKey: ['quotations'],
@@ -170,7 +169,7 @@ export default function Quotations() {
                 settlementRoute={form.settlement_route}
                 quoteIssuer={form.quote_issuer}
                 onChange={updateField}
-                canEditIssuer={['master', 'service'].includes(me?.account_tier)}
+                canEditIssuer={['master', 'service', 'sub'].includes(me?.account_tier)}
               />
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -178,11 +177,6 @@ export default function Quotations() {
                   <QuoteLineEditor items={form.line_items || []} onChange={(items) => updateField('line_items', items)} />
                 </div>
                 <div>
-                  {isSub ? (
-                    <p className="text-xs text-muted-foreground border border-dashed rounded-lg p-4">
-                      원가·수수료 및 마진 계산은 팀 관리자 전용입니다.
-                    </p>
-                  ) : (
                   <MarginCalculator
                     factoryTotal={form.factory_total_cost}
                     logisticsCost={form.logistics_cost}
@@ -193,7 +187,6 @@ export default function Quotations() {
                     onFeeValueChange={(v) => updateField('masir_fee_value', v)}
                     finalPrice={form.final_client_price}
                   />
-                  )}
                 </div>
               </div>
 
@@ -250,7 +243,7 @@ export default function Quotations() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>{t('quotations.detail')}</DialogTitle>
-              {['master', 'service'].includes(me?.account_tier) && <div><QuotationHistoryButton quotation={detailQuote} /></div>}
+              {['master', 'service', 'sub'].includes(me?.account_tier) && <div><QuotationHistoryButton quotation={detailQuote} /></div>}
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -259,7 +252,7 @@ export default function Quotations() {
                 <div><p className="text-xs text-muted-foreground">{t('quotations.detail.category')}</p><p className="font-semibold">{detailQuote.machine_category ? t(`cat.${detailQuote.machine_category}`) : '-'}</p></div>
                 <div><p className="text-xs text-muted-foreground">{t('quotations.detail.status')}</p><Badge className={`${(STATUS_MAP[detailQuote.status] || STATUS_MAP.DRAFT).className} border-0`}>{t(`qstatus.${detailQuote.status}`)}</Badge></div>
               </div>
-              <div className={`grid grid-cols-3 gap-3 ${isSub ? 'hidden' : ''}`}>
+              <div className="grid grid-cols-3 gap-3">
                 <div className="p-3 rounded-lg bg-muted">
                   <p className="text-xs text-muted-foreground">{t('quotations.detail.factorycost')}</p>
                   <p className="text-lg font-bold">¥{(detailQuote.factory_total_cost || 0).toLocaleString()}</p>
