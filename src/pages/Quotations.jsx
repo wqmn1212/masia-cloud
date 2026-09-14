@@ -14,6 +14,7 @@ import QuoteLineEditor from '@/components/quotation/QuoteLineEditor';
 import MarginCalculator from '@/components/quotation/MarginCalculator';
 import SettlementFields from '@/components/quotation/SettlementFields';
 import RiskAlertPopup from '@/components/quotation/RiskAlertPopup';
+import QuotationHistoryButton from '@/components/quotation/QuotationHistoryButton';
 
 const CATEGORY_LABELS = {
   DRIP_BAG: '드립백 포장기',
@@ -249,6 +250,7 @@ export default function Quotations() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>{t('quotations.detail')}</DialogTitle>
+              {['master', 'service'].includes(me?.account_tier) && <div><QuotationHistoryButton quotation={detailQuote} /></div>}
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">

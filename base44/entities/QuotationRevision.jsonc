@@ -1,0 +1,84 @@
+{
+  "name": "QuotationRevision",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string"
+    },
+    "quotation_id": {
+      "type": "string"
+    },
+    "card_id": {
+      "type": "string"
+    },
+    "revision_no": {
+      "type": "number"
+    },
+    "source_updated_date": {
+      "type": "string"
+    },
+    "snapshot_uri": {
+      "type": "string"
+    },
+    "changed_by_id": {
+      "type": "string"
+    },
+    "changed_by_name": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "changed_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "tenant_id",
+    "quotation_id",
+    "revision_no",
+    "source_updated_date",
+    "snapshot_uri"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
