@@ -15,9 +15,11 @@ export default async function(req) {
     const tenants = await base44.asServiceRole.entities.Tenant.filter({ id: tenantId });
     if (!tenants[0]) return Response.json({ error: '팀을 찾을 수 없습니다' }, { status: 404 });
 
-    const subs = await base44.asServiceRole.entities.User.filter({ tenant_id: tenantId, account_tier: 'sub' });
-    const pending = await base44.asServiceRole.entities.PendingInvitation.filter({ tenant_id: tenantId, account_tier: 'sub', claimed: false });
-    return Response.json({ subs, pending });
+    const tenant = tenants[0];
+    const accountTier = tenant.tenant_type === 'client' ? 'client' : 'sub';
+    const members = await base44.asServiceRole.entities.User.filter({ tenant_id: tenantId, account_tier: accountTier });
+    const pending = await base44.asServiceRole.entities.PendingInvitation.filter({ tenant_id: tenantId, account_tier: accountTier, claimed: false });
+    return Response.json({ members, subs: members, pending, tenant_type: tenant.tenant_type || 'internal' });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

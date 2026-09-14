@@ -59,6 +59,13 @@ export const AuthProvider = ({ children }) => {
               message: 'Authentication required'
             });
           } else if (reason === 'user_not_registered') {
+            if (appParams.token) {
+              const claim = await base44.functions.invoke('claimInvitation', {});
+              if (claim.data?.claimed) {
+                await checkAppState();
+                return;
+              }
+            }
             setAuthError({
               type: 'user_not_registered',
               message: 'User not registered for this app'

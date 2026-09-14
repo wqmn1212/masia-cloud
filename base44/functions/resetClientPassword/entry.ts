@@ -18,8 +18,18 @@ export default async function (req) {
       return Response.json({ error: '유효한 이메일이 아닙니다' }, { status: 400 });
     }
 
+    const svc = base44.asServiceRole;
+    const users = await svc.entities.User.filter({ email: target });
+    const client = users.find((item) => item.account_tier === 'client');
+    if (!client) return Response.json({ error: '등록된 고객 계정을 찾을 수 없습니다' }, { status: 404 });
+
+    const clientTenant = client.tenant_id ? await svc.entities.Tenant.get(client.tenant_id) : null;
+    const canReset = user.account_tier === 'master'
+      || (user.account_tier === 'service' && clientTenant?.hq_tenant_id === user.tenant_id);
+    if (!canReset) return Response.json({ error: '해당 고객 계정에 대한 권한이 없습니다' }, { status: 403 });
+
     await base44.auth.resetPasswordRequest(target);
-    return Response.json({ ok: true });
+    return Response.json({ ok: true, email: target });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

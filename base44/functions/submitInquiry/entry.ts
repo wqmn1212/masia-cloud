@@ -1,10 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { uploadPrivateAttachments, linkCardAttachments } from '../../shared/privateAttachments.ts';
 
 // 랜딩 페이지 공개 문의 접수 — 비로그인 호출. 사용자 토큰을 신뢰하지 않고 서버가 tenant_id 를 결정한다.
 const REQUIRED = ['company', 'contact_name', 'phone', 'email'];
 const CATEGORIES = ['기계설비', '정밀가공', '전자 · 전기', '뷰티 · 의료', '리빙 · 공구', '굿즈 · 조형', '기타'];
-const MAX_FILES = 5;
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const RATE_LIMIT_MS = 10 * 60 * 1000;
 
 const clean = (v, max = 500) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -35,24 +34,8 @@ export default async function (req) {
       return Response.json({ error: 'too many requests' }, { status: 429 });
     }
 
-    // 첨부: base64 → 비공개 스토리지 업로드 (NNN 대상이므로 공개 버킷 사용 금지)
-    const attachments = [];
-    const incoming = Array.isArray(body.attachments) ? body.attachments.slice(0, MAX_FILES) : [];
-    for (const f of incoming) {
-      if (!f || typeof f.data !== 'string' || !clean(f.name, 255)) continue;
-      const bytes = Uint8Array.from(atob(f.data), (c) => c.charCodeAt(0));
-      if (bytes.length === 0 || bytes.length > MAX_FILE_BYTES) continue;
-      const name = clean(f.name, 255);
-      let url = '';
-      try {
-        const file = new File([bytes], name, { type: clean(f.type, 100) || 'application/octet-stream' });
-        const res = await svc.integrations.Core.UploadPrivateFile({ file });
-        url = res?.file_uri || '';
-      } catch (_e) {
-        url = '';
-      }
-      attachments.push({ name, size: bytes.length, url });
-    }
+    // 첨부는 비공개 스토리지에 저장하며 실패 시 문의자에게 즉시 알린다.
+    const attachments = await uploadPrivateAttachments(svc, body.attachments);
 
     const categories = Array.isArray(body.categories)
       ? body.categories.filter((c) => CATEGORIES.includes(c))
@@ -79,43 +62,31 @@ export default async function (req) {
     });
 
     // 문의 접수 즉시 본사 팀 TaskCard 자동 생성 (고객 공개는 팀 발급 후 수동 토글)
-    try {
-      const card = await svc.entities.TaskCard.create({
-        tenant_id: tenant.id,
-        title: `[문의] ${lead.company} · ${categories[0] || '미분류'}`,
-        status: 'TODO',
-        priority: 'MEDIUM',
-        source: 'landing_lead',
-        lead_id: lead.id,
-        client_name: lead.company,
-        client_visible: false,
-        hq_requirements: [
-          `담당자: ${lead.contact_name} · ${lead.phone} · ${lead.email}`,
-          `카테고리: ${categories.join(', ') || '-'}`,
-          `수량: ${lead.quantity || '-'} / 희망 단가: ${lead.target_price || '-'}`,
-          `첨부: ${attachments.length}건 (문의 접수 메뉴에서 다운로드)`,
-          ``,
-          lead.detail || '',
-        ].join('\n'),
-      });
-      await svc.entities.ManufacturingLead.update(lead.id, { task_card_id: card.id });
-
-      // 문의 첨부 파일을 카드 파일 탭에 연동
-      for (const a of attachments) {
-        if (!a.url) continue;
-        try {
-          await svc.entities.CardAttachment.create({
-            tenant_id: tenant.id,
-            card_id: card.id,
-            file_name: a.name,
-            file_type: (a.name.split('.').pop() || '').toLowerCase(),
-            file_url: a.url,
-            uploader_name: lead.company,
-            uploader_role: 'HQ',
-          });
-        } catch (_e) { /* 개별 파일 연동 실패는 무시 */ }
-      }
-    } catch (_e) { /* 카드 생성 실패가 접수 자체를 막지 않음 */ }
+    const card = await svc.entities.TaskCard.create({
+      tenant_id: tenant.id,
+      title: `[문의] ${lead.company} · ${categories[0] || '미분류'}`,
+      status: 'TODO',
+      priority: 'MEDIUM',
+      source: 'landing_lead',
+      lead_id: lead.id,
+      client_name: lead.company,
+      client_visible: false,
+      hq_requirements: [
+        `담당자: ${lead.contact_name} · ${lead.phone} · ${lead.email}`,
+        `카테고리: ${categories.join(', ') || '-'}`,
+        `수량: ${lead.quantity || '-'} / 희망 단가: ${lead.target_price || '-'}`,
+        `첨부: ${attachments.length}건 (파일 탭에서 확인)`,
+        ``,
+        lead.detail || '',
+      ].join('\n'),
+    });
+    await svc.entities.ManufacturingLead.update(lead.id, { task_card_id: card.id });
+    await linkCardAttachments(svc, {
+      tenantId: tenant.id,
+      cardId: card.id,
+      attachments,
+      uploaderName: lead.company,
+    });
 
     // 담당자 알림 (등록 사용자 → 항상 발송 가능)
     if (tenant.master_email) {

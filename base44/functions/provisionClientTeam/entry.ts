@@ -114,7 +114,10 @@ export default async function (req) {
           account_label: lead.company,
           is_active: true,
         });
-        invited.push({ email, applied: true });
+        try {
+          await base44.auth.resetPasswordRequest(email);
+        } catch (_e) { /* 기존 계정은 초대 대신 비밀번호 설정 메일을 우선 안내한다 */ }
+        invited.push({ email, applied: true, password_setup_sent: true });
         continue;
       }
       await base44.users.inviteUser(email, 'user');
