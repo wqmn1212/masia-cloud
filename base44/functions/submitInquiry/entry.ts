@@ -99,6 +99,22 @@ export default async function (req) {
         ].join('\n'),
       });
       await svc.entities.ManufacturingLead.update(lead.id, { task_card_id: card.id });
+
+      // 문의 첨부 파일을 카드 파일 탭에 연동
+      for (const a of attachments) {
+        if (!a.url) continue;
+        try {
+          await svc.entities.CardAttachment.create({
+            tenant_id: tenant.id,
+            card_id: card.id,
+            file_name: a.name,
+            file_type: (a.name.split('.').pop() || '').toLowerCase(),
+            file_url: a.url,
+            uploader_name: lead.company,
+            uploader_role: 'HQ',
+          });
+        } catch (_e) { /* 개별 파일 연동 실패는 무시 */ }
+      }
     } catch (_e) { /* 카드 생성 실패가 접수 자체를 막지 않음 */ }
 
     // 담당자 알림 (등록 사용자 → 항상 발송 가능)

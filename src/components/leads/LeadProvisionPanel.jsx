@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { UserPlus, Loader2, Plus, X } from 'lucide-react';
+import { UserPlus, Loader2, Plus, X, KeyRound } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,16 @@ export default function LeadProvisionPanel({ lead }) {
       toast({ title: '고객사 팀이 발급되었습니다', description: `${data.invited?.length || 0}명에게 초대를 보냈습니다` });
     },
     onError: (err) => toast({ title: '발급 실패', description: err.message, variant: 'destructive' }),
+  });
+
+  const resetPassword = useMutation({
+    mutationFn: async (email) => {
+      const res = await base44.functions.invoke('resetClientPassword', { email });
+      if (res.data?.error) throw new Error(res.data.error);
+      return res.data;
+    },
+    onSuccess: () => toast({ title: '비밀번호 재설정 메일이 발송되었습니다', description: lead.email }),
+    onError: (err) => toast({ title: '발송 실패', description: err.message, variant: 'destructive' }),
   });
 
   return (
@@ -69,6 +79,22 @@ export default function LeadProvisionPanel({ lead }) {
           {provision.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : lead.invitation_sent ? '초대 추가' : '팀 발급'}
         </Button>
       </div>
+      {lead.invitation_sent && (
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8"
+            disabled={resetPassword.isPending}
+            onClick={() => resetPassword.mutate(lead.email)}
+          >
+            {resetPassword.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <KeyRound className="w-3.5 h-3.5" />}
+            비밀번호 재설정 메일 발송
+          </Button>
+          <span className="text-[11px] text-muted-foreground">고객 이메일({lead.email})로 재설정 링크가 발송됩니다</span>
+        </div>
+      )}
       <p className="text-[11px] text-muted-foreground">
         팀은 최초 1회만 생성되며, 이후에는 같은 팀에 담당자 초대만 추가됩니다 (기본 좌석 2명).
         발급 후 각 카드의 "고객 포털 공개"를 켜야 고객에게 노출됩니다.
