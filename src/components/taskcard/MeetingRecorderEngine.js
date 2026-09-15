@@ -29,7 +29,7 @@ export default class MeetingRecorderEngine {
         if (this.recorder?.state === 'recording') {
           this.seconds++; this.segmentSeconds++;
           this.report('recording', this.failed ? '일부 구간 저장 실패 — 녹음 종료 후 재시도하세요' : '');
-          if (this.segmentSeconds >= 600) this.recorder.stop();
+          if (this.segmentSeconds >= 30) this.recorder.stop();
         }
       }, 1000);
       if (navigator.wakeLock) this.wake = await navigator.wakeLock.request('screen').catch(() => null);

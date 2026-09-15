@@ -6,6 +6,7 @@ import { Plus, CalendarDays } from 'lucide-react';
 import MeetingLogForm from './MeetingLogForm';
 import MeetingLogItem from './MeetingLogItem';
 import MeetingAnalysisDialog from './MeetingAnalysisDialog';
+import MeetingRecordingLibrary from './MeetingRecordingLibrary';
 
 export default function MeetingLogPanel({ card, user, onRecordingBusy = () => {} }) {
   const [adding, setAdding] = useState(false);
@@ -90,6 +91,8 @@ export default function MeetingLogPanel({ card, user, onRecordingBusy = () => {}
           ))}
         </div>
       )}
+
+      <MeetingRecordingLibrary logs={logs} />
 
       {analyzing && (
         <MeetingAnalysisDialog

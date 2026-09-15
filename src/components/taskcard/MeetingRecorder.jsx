@@ -18,6 +18,6 @@ export default function MeetingRecorder({ log, userId, onComplete, onBusy, disab
       {rec.phase === 'error' && <Button size="sm" variant="outline" disabled={disabled} onClick={rec.retry}>저장된 녹음 복구·전사 재시도</Button>}
     </div>
     {rec.error && <p role="alert" className="text-xs text-destructive">{rec.error}</p>}
-    <p className="text-[11px] leading-relaxed text-muted-foreground">약 10분마다 비공개 저장합니다. 화면 잠금·앱 전환·탭 종료 시 녹음이 중단될 수 있으니 이 화면을 유지하세요. 기기 마이크 소리만 녹음되며, 통화 상대나 시스템 오디오가 자동 녹음되지는 않습니다.</p>
+    <p className="text-[11px] leading-relaxed text-muted-foreground">약 30초마다 비공개 저장합니다. 창이나 카드를 닫으면 녹음이 종료되고 저장된 구간은 녹음 보관함에 남습니다. 기기 마이크 소리만 녹음되며, 통화 상대나 시스템 오디오가 자동 녹음되지는 않습니다.</p>
   </div>;
 }

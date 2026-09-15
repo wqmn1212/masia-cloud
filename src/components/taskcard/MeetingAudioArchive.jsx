@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import call from '@/components/taskcard/meetingAudioClient';
-export default function MeetingAudioArchive({ log }) {
+export default function MeetingAudioArchive({ log, expanded = false }) {
   const [data, setData] = useState(null), [loading, setLoading] = useState(false), [error, setError] = useState('');
   const load = async () => {
     setLoading(true); setError('');
@@ -10,7 +10,7 @@ export default function MeetingAudioArchive({ log }) {
     finally { setLoading(false); }
   };
   if (!log.transcript && !log.recording_uris?.length) return null;
-  return <details className="border-t pt-2" onToggle={e => { if (e.currentTarget.open) load(); }}>
+  return <details open={expanded || undefined} className="border-t pt-2" onToggle={e => { if (e.currentTarget.open && !data && !loading) load(); }}>
     <summary className="cursor-pointer text-xs font-medium">전사 전문·녹음 파일 ({log.recording_uris?.length || 0}구간)</summary>
     {loading && <p className="py-2 text-xs text-muted-foreground">비공개 기록을 불러오는 중...</p>}
     {error && <p role="alert" className="text-xs text-destructive">{error} <Button size="sm" variant="ghost" onClick={load}>재시도</Button></p>}
