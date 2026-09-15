@@ -8,6 +8,7 @@ import ClientOverviewPanel from './ClientOverviewPanel';
 import ClientQuotationTab from './ClientQuotationTab';
 import ClientChatPanel from './ClientChatPanel';
 import ClientSettlementPanel from './ClientSettlementPanel';
+import ClientSharedFiles from '@/components/client/ClientSharedFiles';
 
 // 고객 전용 카드 모달 — 오버뷰 · 견적 · 채팅 · 정산 4개 탭만 존재한다.
 // 어드민 CardModal 에 조건 분기를 넣지 않고 별도 컴포넌트로 분리해 원가 노출 경로를 원천 차단한다.
@@ -32,11 +33,12 @@ export default function ClientCardModal({ cardId, open, onClose }) {
               <DialogTitle className="text-base pr-6">{data.card.title}</DialogTitle>
             </DialogHeader>
             <Tabs defaultValue="overview" className="mt-3">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="overview" className="text-xs sm:text-sm">진행 정보</TabsTrigger>
                 <TabsTrigger value="quotation" className="text-xs sm:text-sm">견적서</TabsTrigger>
                 <TabsTrigger value="chat" className="text-xs sm:text-sm">문의</TabsTrigger>
                 <TabsTrigger value="settlement" className="text-xs sm:text-sm">결제</TabsTrigger>
+                <TabsTrigger value="files" className="text-xs sm:text-sm">파일</TabsTrigger>
               </TabsList>
               <TabsContent value="overview" className="mt-4">
                 <ClientOverviewPanel card={data.card} />
@@ -47,6 +49,7 @@ export default function ClientCardModal({ cardId, open, onClose }) {
               <TabsContent value="chat" className="mt-4">
                 <ClientChatPanel cardId={data.card.id} chats={data.chats || []} />
               </TabsContent>
+              <TabsContent value="files" className="mt-4"><ClientSharedFiles cardId={data.card.id} /></TabsContent>
               <TabsContent value="settlement" className="mt-4">
                 <ClientSettlementPanel stages={data.payment_stages || []} />
               </TabsContent>

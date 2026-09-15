@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import TaskCardSummaryItem from '@/components/taskcard/TaskCardSummaryItem';
 import CardModal from '@/components/taskcard/CardModal';
+import FactoryDocumentTabs from '@/components/factory/FactoryDocumentTabs';
 
 const STATUS_FILTERS = [
   { key: 'ALL',         label: '전체' },
@@ -160,6 +161,7 @@ export default function FactoryDashboard() {
         </Card>
       </div>
 
+      <FactoryDocumentTabs factory={factory} />
       {/* Status filter */}
       <div className="flex items-center gap-2 flex-wrap">
         {STATUS_FILTERS.map(f => (

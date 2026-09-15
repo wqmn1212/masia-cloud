@@ -1,64 +1,41 @@
 {
-  "name": "CardAttachment",
+  "name": "FactoryDocument",
   "type": "object",
   "properties": {
+    "company_id": {
+      "type": "string"
+    },
     "tenant_id": {
-      "type": "string",
-      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
-    },
-    "card_id": {
-      "type": "string",
-      "description": "\uc885\uc18d\ub41c TaskCard ID"
-    },
-    "folder_id": {
-      "type": "string",
-      "description": "\uc18d\ud55c \ud3f4\ub354 ID (\uc5c6\uc73c\uba74 \ub8e8\ud2b8)"
+      "type": "string"
     },
     "file_name": {
-      "type": "string",
-      "description": "\ud30c\uc77c\uba85"
+      "type": "string"
     },
     "file_type": {
-      "type": "string",
-      "description": "\ud655\uc7a5\uc790 (pdf, xlsx, mp4, jpg \ub4f1)"
+      "type": "string"
     },
     "file_url": {
       "type": "string",
-      "description": "\uc5c5\ub85c\ub4dc\ub41c \ud30c\uc77c URL \ub610\ub294 \ube44\uacf5\uac1c URI"
+      "description": "\ube44\uacf5\uac1c \ud30c\uc77c URI"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
     },
     "client_visible": {
       "type": "boolean",
-      "default": false,
-      "description": "\uace0\uac1d \ud3ec\ud138 \uacf5\uac1c \uc5ec\ubd80. \uba85\uc2dc\uc801\uc73c\ub85c true\uc778 \ud30c\uc77c\ub9cc \uacf5\uac1c"
+      "default": false
     },
     "uploader_name": {
-      "type": "string",
-      "description": "\uc5c5\ub85c\ub354 \uc774\ub984"
+      "type": "string"
     },
-    "uploader_role": {
-      "type": "string",
-      "enum": [
-        "HQ",
-        "AGENT"
-      ],
-      "description": "\uc5c5\ub85c\ub354 \uc5ed\ud560"
-    },
-    "ai_parsed_text": {
-      "type": "string",
-      "description": "AI \ud30c\uc2f1 \uacb0\uacfc \ud14d\uc2a4\ud2b8"
-    },
-    "ai_parse_status": {
-      "type": "string",
-      "enum": [
-        "NONE",
-        "PENDING",
-        "DONE",
-        "FAILED"
-      ]
+    "created_by_name": {
+      "type": "string"
     }
   },
   "required": [
-    "card_id",
+    "company_id",
+    "tenant_id",
     "file_name",
     "file_url"
   ],
@@ -132,18 +109,9 @@
               "data.tenant_id": "{{user.data.tenant_id}}"
             },
             {
-              "$or": [
-                {
-                  "user_condition": {
-                    "data.account_tier": "service"
-                  }
-                },
-                {
-                  "user_condition": {
-                    "data.account_tier": "sub"
-                  }
-                }
-              ]
+              "user_condition": {
+                "data.account_tier": "service"
+              }
             }
           ]
         }

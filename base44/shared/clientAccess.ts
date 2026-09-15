@@ -3,7 +3,7 @@
 // TaskCard/Quotation 의 read RLS 는 tenant_id 기준이므로, 다른 테넌트인 고객은 직접 쿼리로 접근할 수 없다.
 
 export const CLIENT_MENU = ['/client/dashboard', '/client/board'];
-export const CLIENT_CARD_TABS = ['overview', 'quotation', 'chat', 'settlement'];
+export const CLIENT_CARD_TABS = ['overview', 'quotation', 'chat', 'settlement', 'files'];
 
 // 고객 요청의 유효성 검사 — 통과 시 { user, companyId } 반환, 실패 시 Response 반환
 export async function requireClient(base44) {

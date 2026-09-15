@@ -7,9 +7,13 @@ import Breadcrumbs from './files/Breadcrumbs';
 import FolderRow from './files/FolderRow';
 import FileRow from './files/FileRow';
 import NewFolderDialog from './files/NewFolderDialog';
+import useAttachmentVisibility from '@/components/files/useAttachmentVisibility';
+import CardFactoryDocuments from '@/components/taskcard/CardFactoryDocuments';
 
 export default function FilesTab({ card }) {
   const qc = useQueryClient();
+  const visibility = useAttachmentVisibility(card.id);
+  const [uploadError, setUploadError] = useState('');
   const fileInputRef = useRef(null);
   const folderInputRef = useRef(null);
   const [currentFolderId, setCurrentFolderId] = useState(null); // null = 루트
@@ -47,23 +51,28 @@ export default function FilesTab({ card }) {
     mutationFn: async (name) => {
       const user = await base44.auth.me().catch(() => null);
       return base44.entities.CardFolder.create({
+        tenant_id: card.tenant_id,
         card_id: card.id,
         parent_folder_id: currentFolderId || undefined,
         folder_name: name,
         created_by_name: user?.full_name || '',
       });
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: foldersKey }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: foldersKey }); setShowNewFolder(false); },
+    onError: error => setUploadError(error.message),
   });
 
   const handleUpload = async (file) => {
-    if (!file) return;
+    if (!file || uploading || folderUploading) return;
+    setUploadError('');
     setUploading(true);
     try {
       const user = await base44.auth.me().catch(() => null);
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_uri: file_url } = await base44.integrations.Core.UploadPrivateFile({ file });
       const ext = (file.name.split('.').pop() || '').toLowerCase();
       await base44.entities.CardAttachment.create({
+        tenant_id: card.tenant_id,
+        client_visible: false,
         card_id: card.id,
         folder_id: currentFolderId || undefined,
         file_name: file.name,
@@ -73,13 +82,16 @@ export default function FilesTab({ card }) {
         uploader_role: 'HQ',
       });
       qc.invalidateQueries({ queryKey: filesKey });
+    } catch (error) {
+      setUploadError(error.response?.data?.error || error.message);
     } finally {
       setUploading(false);
     }
   };
 
   const handleFolderUpload = async (fileList) => {
-    if (!fileList || fileList.length === 0) return;
+    if (!fileList || fileList.length === 0 || uploading || folderUploading) return;
+    setUploadError('');
     const filesArr = Array.from(fileList);
     setFolderUploading(true);
     setFolderProgress({ current: 0, total: filesArr.length });
@@ -108,6 +120,7 @@ export default function FilesTab({ card }) {
         const parentPath = parts.slice(0, -1).join('/');
         const parentId = parentPath ? pathToId.get(parentPath) : currentFolderId;
         const created = await base44.entities.CardFolder.create({
+          tenant_id: card.tenant_id,
           card_id: card.id,
           parent_folder_id: parentId || undefined,
           folder_name: name,
@@ -123,9 +136,11 @@ export default function FilesTab({ card }) {
         const parts = rel.split('/');
         const parentPath = parts.slice(0, -1).join('/');
         const folderId = parentPath ? pathToId.get(parentPath) : currentFolderId;
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        const { file_uri: file_url } = await base44.integrations.Core.UploadPrivateFile({ file });
         const ext = (file.name.split('.').pop() || '').toLowerCase();
         await base44.entities.CardAttachment.create({
+          tenant_id: card.tenant_id,
+          client_visible: false,
           card_id: card.id,
           folder_id: folderId || undefined,
           file_name: file.name,
@@ -140,7 +155,11 @@ export default function FilesTab({ card }) {
 
       qc.invalidateQueries({ queryKey: foldersKey });
       qc.invalidateQueries({ queryKey: filesKey });
+    } catch (error) {
+      setUploadError(error.response?.data?.error || error.message);
     } finally {
+      qc.invalidateQueries({ queryKey: foldersKey });
+      qc.invalidateQueries({ queryKey: filesKey });
       setFolderUploading(false);
       setFolderProgress({ current: 0, total: 0 });
     }
@@ -273,6 +292,9 @@ export default function FilesTab({ card }) {
           <p className="text-[11px] text-muted-foreground mt-1">파일과 폴더 모두 지원</p>
         </div>
       )}
+      <p className="text-xs text-muted-foreground">고객 노출 스위치를 켠 파일만 고객에게 표시됩니다. 기존 파일과 새 파일은 기본 비공개이며, 카드 자체도 고객 공개 상태여야 합니다.</p>
+      <p className="text-xs text-muted-foreground">이전에 공개 URL로 업로드한 파일은 포털에서 숨겨도 이미 전달된 원본 URL은 회수되지 않습니다. 새 업로드는 비공개로 저장됩니다.</p>
+      {uploadError && <p role="alert" className="text-xs text-destructive">작업 실패: {uploadError}</p>}
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <Breadcrumbs path={path} onNavigate={navigateTo} />
@@ -289,7 +311,7 @@ export default function FilesTab({ card }) {
             size="sm"
             variant="outline"
             onClick={() => folderInputRef.current?.click()}
-            disabled={folderUploading}
+            disabled={folderUploading || uploading}
             className="h-8 text-xs gap-1"
           >
             {folderUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FolderUp className="w-3.5 h-3.5" />}
@@ -300,7 +322,7 @@ export default function FilesTab({ card }) {
           <Button
             size="sm"
             onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
+            disabled={uploading || folderUploading}
             className="h-8 text-xs gap-1"
           >
             {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
@@ -357,6 +379,8 @@ export default function FilesTab({ card }) {
               <FileRow
                 key={file.id}
                 file={file}
+                onVisibilityChange={visible => visibility.mutate({ id: file.id, visible })}
+                visibilityPending={visibility.isPending}
                 onDelete={() => deleteFileMutation.mutate(file.id)}
               />
             ))}
@@ -371,12 +395,12 @@ export default function FilesTab({ card }) {
         </div>
       )}
 
+      <CardFactoryDocuments card={card} />
       <NewFolderDialog
         open={showNewFolder}
         onClose={() => setShowNewFolder(false)}
         onCreate={(name) => {
           createFolderMutation.mutate(name);
-          setShowNewFolder(false);
         }}
         parentName={currentFolderName}
       />

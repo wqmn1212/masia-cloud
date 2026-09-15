@@ -12,6 +12,7 @@ import {
 import { Plus, Factory, MapPin, Users, Calendar, DollarSign, LayoutDashboard } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
+import FactoryDocumentTabs from '@/components/factory/FactoryDocumentTabs';
 
 const emptyFactory = {
   company_type: 'FACTORY',
@@ -38,11 +39,14 @@ export default function Factories() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Company.create({
-      ...data,
-      annual_revenue: data.annual_revenue ? Number(data.annual_revenue) : undefined,
-      employee_count: data.employee_count ? Number(data.employee_count) : undefined,
-    }),
+    mutationFn: async (data) => {
+      const user = await base44.auth.me();
+      return base44.entities.Company.create({
+        ...data, tenant_id: user.tenant_id,
+        annual_revenue: data.annual_revenue ? Number(data.annual_revenue) : undefined,
+        employee_count: data.employee_count ? Number(data.employee_count) : undefined,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies-factory'] });
       setOpen(false);
@@ -178,6 +182,7 @@ export default function Factories() {
                     팭토리 대시보드 열기
                   </Link>
                 </Button>
+                <FactoryDocumentTabs factory={f} />
               </CardContent>
             </Card>
           ))}

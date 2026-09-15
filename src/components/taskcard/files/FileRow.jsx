@@ -1,4 +1,6 @@
-import { FileText, FileImage, FileVideo, FileSpreadsheet, Download, Trash2, ExternalLink } from 'lucide-react';
+import { FileText, FileImage, FileVideo, FileSpreadsheet, Trash2 } from 'lucide-react';
+import DocumentOpenButton from '@/components/files/DocumentOpenButton';
+import FileVisibilitySwitch from '@/components/files/FileVisibilitySwitch';
 
 function getIcon(type) {
   const t = (type || '').toLowerCase();
@@ -8,7 +10,7 @@ function getIcon(type) {
   return FileText;
 }
 
-export default function FileRow({ file, onDelete }) {
+export default function FileRow({ file, onDelete, onVisibilityChange, visibilityPending }) {
   const Icon = getIcon(file.file_type);
 
   const handleDelete = () => {
@@ -29,23 +31,8 @@ export default function FileRow({ file, onDelete }) {
         )}
       </div>
       <div className="flex items-center gap-1">
-        <a
-          href={file.file_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-muted-foreground hover:text-primary p-1.5 rounded"
-          title="새 탭에서 열기"
-        >
-          <ExternalLink className="w-3.5 h-3.5" />
-        </a>
-        <a
-          href={file.file_url}
-          download={file.file_name}
-          className="text-muted-foreground hover:text-primary p-1.5 rounded"
-          title="다운로드"
-        >
-          <Download className="w-3.5 h-3.5" />
-        </a>
+        {onVisibilityChange && <FileVisibilitySwitch visible={file.client_visible} disabled={visibilityPending} onChange={onVisibilityChange} />}
+        <DocumentOpenButton document={file} />
         <button
           onClick={handleDelete}
           className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive p-1.5 rounded transition-opacity"
