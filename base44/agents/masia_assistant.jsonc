@@ -63,6 +63,10 @@
         "create",
         "update"
       ]
+    },
+    {
+      "function_name": "parseQuotationExcel",
+      "description": "\ucca8\ubd80\ub41c \uc5d1\uc140 \uacac\uc801\uc11c\uc5d0\uc11c \uacf5\uc7a5, \uc81c\ud488, \uc870\uac74, \ubb3c\ub958\ube44\uc640 \ud488\ubaa9 \uc6d0\uac00\ub97c \ucd94\ucd9c\ud569\ub2c8\ub2e4."
     }
   ],
   "context_files": [],
