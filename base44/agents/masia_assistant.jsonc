@@ -75,7 +75,7 @@
   "app_user_connector_configs": [],
   "selected_skill_names": [],
   "selected_workspace_skill_ids": [],
-  "model": "claude_opus_4_8",
+  "model": "gemini_3_1_pro",
   "whatsapp_greeting": null,
   "telegram_greeting": null,
   "line_greeting": null,
