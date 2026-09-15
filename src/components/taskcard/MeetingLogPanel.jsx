@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -7,10 +7,12 @@ import MeetingLogForm from './MeetingLogForm';
 import MeetingLogItem from './MeetingLogItem';
 import MeetingAnalysisDialog from './MeetingAnalysisDialog';
 
-export default function MeetingLogPanel({ card, user }) {
+export default function MeetingLogPanel({ card, user, onRecordingBusy = () => {} }) {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
   const [analyzing, setAnalyzing] = useState(null);
+  const [recordingId, setRecordingId] = useState(null);
+  useEffect(() => { onRecordingBusy(!!recordingId); }, [recordingId]);
   const qc = useQueryClient();
 
   const { data: logs = [], isLoading } = useQuery({
@@ -20,7 +22,7 @@ export default function MeetingLogPanel({ card, user }) {
 
   const createMut = useMutation({
     mutationFn: (form) => base44.entities.MeetingLog.create({
-      ...form, card_id: card.id, created_by_name: user?.full_name || user?.email || '',
+      ...form, tenant_id: card.tenant_id, card_id: card.id, created_by_name: user?.full_name || user?.email || '',
     }),
     onSuccess: () => { setAdding(false); qc.invalidateQueries({ queryKey: ['meeting-logs', card.id] }); },
   });
@@ -42,7 +44,7 @@ export default function MeetingLogPanel({ card, user }) {
           <CalendarDays className="h-4 w-4" /> 미팅 일정 ({logs.length})
         </h4>
         {!adding && (
-          <Button size="sm" variant="outline" onClick={() => { setEditing(null); setAdding(true); }}>
+          <Button size="sm" variant="outline" disabled={!!recordingId} onClick={() => { setEditing(null); setAdding(true); }}>
             <Plus className="h-3.5 w-3.5" /> 미팅 추가
           </Button>
         )}
@@ -76,6 +78,10 @@ export default function MeetingLogPanel({ card, user }) {
               <MeetingLogItem
                 key={l.id}
                 log={l}
+                userId={user?.id}
+                disabled={!!recordingId}
+                recordDisabled={!!recordingId && recordingId !== l.id}
+                onBusy={busy => setRecordingId(prev => busy ? l.id : prev === l.id ? null : prev)}
                 onEdit={(log) => { setAdding(false); setEditing(log); }}
                 onDelete={(id) => deleteMut.mutate(id)}
                 onAnalyze={(log) => setAnalyzing(log)}

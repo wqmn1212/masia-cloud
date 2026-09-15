@@ -7,13 +7,11 @@
       "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
     },
     "card_id": {
-      "type": "string",
-      "description": "\uc5f0\uacb0\ub41c TaskCard ID"
+      "type": "string"
     },
     "meeting_date": {
       "type": "string",
-      "format": "date",
-      "description": "\ubbf8\ud305 \uc77c\uc790"
+      "format": "date"
     },
     "meeting_type": {
       "type": "string",
@@ -23,32 +21,76 @@
         "CALL",
         "WECHAT"
       ],
-      "default": "ONLINE",
-      "description": "\ubbf8\ud305 \ud615\ud0dc"
+      "default": "ONLINE"
     },
     "title": {
-      "type": "string",
-      "description": "\ubbf8\ud305 \uc81c\ubaa9"
+      "type": "string"
     },
     "attendees": {
-      "type": "string",
-      "description": "\ucc38\uc11d\uc790"
+      "type": "string"
     },
     "notes": {
-      "type": "string",
-      "description": "\ubbf8\ud305 \ub0b4\uc6a9/\ub17c\uc758 \uc0ac\ud56d"
+      "type": "string"
     },
     "decisions": {
-      "type": "string",
-      "description": "\uacb0\uc815 \uc0ac\ud56d"
+      "type": "string"
     },
     "next_steps": {
-      "type": "string",
-      "description": "\ub2e4\uc74c \uc561\uc158"
+      "type": "string"
     },
     "created_by_name": {
+      "type": "string"
+    },
+    "transcript": {
       "type": "string",
-      "description": "\uc791\uc131\uc790 \uc774\ub984"
+      "description": "\uc804\uc0ac\ubb38 \ubbf8\ub9ac\ubcf4\uae30, \uae34 \uc804\ubb38\uc740 transcript_uri\uc5d0 \ubcf4\uad00"
+    },
+    "transcript_uri": {
+      "type": "string"
+    },
+    "recording_uris": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "audio_status": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "RECORDING",
+        "UPLOADING",
+        "TRANSCRIBING",
+        "DONE",
+        "FAILED"
+      ],
+      "default": "NONE"
+    },
+    "audio_session": {
+      "type": "string"
+    },
+    "audio_parts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "uri": {
+            "type": "string"
+          },
+          "transcript_uri": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "analysis_uri": {
+      "type": "string"
+    },
+    "analysis_applied_uri": {
+      "type": "string"
     }
   },
   "required": [

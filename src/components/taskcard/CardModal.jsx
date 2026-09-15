@@ -36,6 +36,9 @@ const CAT_LABEL = {
 export default function CardModal({ card, open, onClose, initialTab = 'overview' }) {
   const [user, setUser] = useState(null);
   const [viewLang, setViewLang] = useState('KR');
+  const [recordingBusy, setRecordingBusy] = useState(false);
+  const [activeTab, setActiveTab] = useState(initialTab);
+  useEffect(() => { if (open) setActiveTab(initialTab); }, [open, card?.id, initialTab]);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -51,7 +54,7 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
   const st = STATUS_META[card.status] || STATUS_META.TODO;
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={value => { if (!value && !recordingBusy) onClose(); }}>
       <DialogContent className="max-w-4xl w-[95vw] max-h-[92vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader className="pb-0">
           <div className="flex items-start gap-2 sm:gap-3 flex-wrap">
@@ -82,17 +85,18 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
           )}
         </DialogHeader>
 
-        <Tabs defaultValue={initialTab} className="mt-4">
+        {recordingBusy && <p className="mt-3 text-xs text-primary" role="status">녹음·전사가 완료될 때까지 이 카드를 유지해 주세요.</p>}
+        <Tabs value={activeTab} onValueChange={value => { if (!recordingBusy) setActiveTab(value); }} className="mt-4">
           <TabsList className="grid w-full grid-cols-3 sm:grid-cols-9 h-auto gap-0.5">
-            <TabsTrigger value="overview" className="text-xs sm:text-sm py-1.5">오버뷰</TabsTrigger>
-            <TabsTrigger value="tasks" className="text-xs sm:text-sm py-1.5">업무</TabsTrigger>
-            <TabsTrigger value="meetings" className="text-xs sm:text-sm py-1.5">미팅·분석</TabsTrigger>
-            <TabsTrigger value="quotation" className="text-xs sm:text-sm py-1.5">견적</TabsTrigger>
-            <TabsTrigger value="bom" className="text-xs sm:text-sm py-1.5">BOM</TabsTrigger>
-            <TabsTrigger value="files" className="text-xs sm:text-sm py-1.5">파일</TabsTrigger>
-            <TabsTrigger value="chat" className="text-xs sm:text-sm py-1.5">채팅</TabsTrigger>
-            <TabsTrigger value="settlement" className="text-xs sm:text-sm py-1.5">정산</TabsTrigger>
-            <TabsTrigger value="decisions" className="text-xs sm:text-sm py-1.5">결정</TabsTrigger>
+            <TabsTrigger disabled={recordingBusy} value="overview" className="text-xs sm:text-sm py-1.5">오버뷰</TabsTrigger>
+            <TabsTrigger disabled={recordingBusy} value="tasks" className="text-xs sm:text-sm py-1.5">업무</TabsTrigger>
+            <TabsTrigger disabled={recordingBusy} value="meetings" className="text-xs sm:text-sm py-1.5">미팅·분석</TabsTrigger>
+            <TabsTrigger disabled={recordingBusy} value="quotation" className="text-xs sm:text-sm py-1.5">견적</TabsTrigger>
+            <TabsTrigger disabled={recordingBusy} value="bom" className="text-xs sm:text-sm py-1.5">BOM</TabsTrigger>
+            <TabsTrigger disabled={recordingBusy} value="files" className="text-xs sm:text-sm py-1.5">파일</TabsTrigger>
+            <TabsTrigger disabled={recordingBusy} value="chat" className="text-xs sm:text-sm py-1.5">채팅</TabsTrigger>
+            <TabsTrigger disabled={recordingBusy} value="settlement" className="text-xs sm:text-sm py-1.5">정산</TabsTrigger>
+            <TabsTrigger disabled={recordingBusy} value="decisions" className="text-xs sm:text-sm py-1.5">결정</TabsTrigger>
           </TabsList>
 
           <TabsContent value="tasks" className="mt-4">
@@ -106,7 +110,7 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
             <ProcessControlPanel card={card} user={user} />
           </TabsContent>
           <TabsContent value="meetings" className="mt-4 space-y-6">
-            <MeetingLogPanel card={card} user={user} />
+            <MeetingLogPanel card={card} user={user} onRecordingBusy={setRecordingBusy} />
             <div className="border-t pt-4">
               <TaskInsightPanel card={card} user={user} />
             </div>
