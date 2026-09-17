@@ -15,7 +15,7 @@ export default function MarginCalculator({
   onFeeTypeChange,
   onFeeValueChange,
   finalPrice,
-  usdToCny = 7.2,
+  usdToCny = 0,
 }) {
   const baseCost = (factoryTotal || 0) + (logisticsCost || 0);
   const [cargo, setCargo] = React.useState({ shipping_mode: 'SEA_LCL', shipping_term: 'FOB', cargo_quantity: 1 });
@@ -49,8 +49,8 @@ export default function MarginCalculator({
         <LogisticsEstimator
           cargo={cargo}
           onCargoChange={setCargo}
-          cargoValueUsd={(factoryTotal || 0) / (usdToCny || 7.2)}
-          onApply={(usdTotal) => onLogisticsChange(Math.round(usdTotal * (usdToCny || 7.2)))}
+          cargoValueUsd={usdToCny > 0 ? (factoryTotal || 0) / usdToCny : 0}
+          onApply={(usdTotal) => onLogisticsChange(usdToCny > 0 ? Math.round(usdTotal * usdToCny) : 0)}
         />
 
         <div className="p-3 rounded-lg bg-secondary">

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import { INCOTERMS_2020, LEGACY_INCOTERMS } from '@/lib/incoterms';
 import LogisticsEstimator from '@/components/quotation/LogisticsEstimator';
 import { calcCbm } from '@/lib/logisticsEstimator';
 import QuotationHistoryButton from '@/components/quotation/QuotationHistoryButton';
+import ManualExchangeRates from '@/components/quotation/ManualExchangeRates';
 
 const STATUS_META = {
   DRAFT:    { label: '초안',     color: 'bg-muted text-muted-foreground' },
@@ -36,16 +37,16 @@ const emptyForm = {
   product_name: '',
   model_name: '',
   quote_options: [],
-  final_currency: 'USD',
+  final_currency: 'CNY',
   factory_total_cost: '',
   factory_cost_currency: 'CNY',
   logistics_cost: '',
   logistics_cost_currency: 'CNY',
   masir_fee_type: 'PERCENT',
   masir_fee_value: '',
-  exchange_rate_date: new Date().toISOString().slice(0, 10),
-  exchange_rate_usd: '1380',
-  exchange_rate_krw: '190',
+  exchange_rate_date: '',
+  exchange_rate_usd: '',
+  exchange_rate_krw: '',
   remarks: '',
   advance_payment_percent: '30',
   balance_payment_percent: '70',
@@ -128,37 +129,6 @@ export default function QuotationTab({ card, user }) {
     queryKey: ['quotations-by-card', card.id],
     queryFn: () => base44.entities.Quotation.filter({ card_id: card.id }, '-created_date'),
   });
-
-  // 최신 환율 자동 조회 — 오늘 환율이 없으면 백엔드에서 즉시 갱신
-  const { data: latestRate } = useQuery({
-    queryKey: ['latest-exchange-rate'],
-    staleTime: 1000 * 60 * 30,
-    queryFn: async () => {
-      const today = new Date().toLocaleDateString('en-CA');
-      let rows = await base44.entities.ExchangeRate.list('-rate_date', 1);
-      if (!rows[0] || rows[0].rate_date < today) {
-        try {
-          await base44.functions.invoke('updateExchangeRates', {});
-          rows = await base44.entities.ExchangeRate.list('-rate_date', 1);
-        } catch {
-          // 갱신 실패 시 마지막 저장 환율 사용
-        }
-      }
-      return rows[0] || null;
-    },
-  });
-
-  // 신규 견적 작성 시 최신 환율 자동 적용 (수정 모드에서는 기존 환율 유지)
-  useEffect(() => {
-    if (latestRate && !editingId) {
-      setForm(f => ({
-        ...f,
-        exchange_rate_date: latestRate.rate_date,
-        exchange_rate_usd: String(latestRate.usd_krw),
-        exchange_rate_krw: String(latestRate.cny_krw),
-      }));
-    }
-  }, [latestRate, editingId]);
 
   const resetForm = () => {
     setShowForm(false);
@@ -321,7 +291,7 @@ export default function QuotationTab({ card, user }) {
         specification: o.specification || '',
         quantity: Number(o.quantity) || 0,
         unit_price: Number(o.unit_price) || 0,
-        currency: o.currency || 'USD',
+        currency: o.currency || 'CNY',
         margin_percent: Number(o.margin_percent) || 0,
         total_usd: (Number(o.quantity) || 0) * optionToUSD(o.unit_price, o.currency, usdR, cnyR),
       }));
@@ -399,16 +369,16 @@ export default function QuotationTab({ card, user }) {
           ? { ...o, unit_price: o.unit_price_usd, currency: 'USD' }
           : o
       )),
-      final_currency: q.final_currency || 'USD',
+      final_currency: q.final_currency || 'CNY',
       factory_total_cost: fDisp === 0 ? '' : fDisp,
       factory_cost_currency: fCur,
       logistics_cost: lDisp === 0 ? '' : lDisp,
       logistics_cost_currency: lCur,
       masir_fee_type: q.masir_fee_type || 'PERCENT',
       masir_fee_value: q.masir_fee_value ?? '',
-      exchange_rate_date: q.exchange_rate_date || new Date().toISOString().slice(0, 10),
-      exchange_rate_usd: q.exchange_rate_usd ?? '1380',
-      exchange_rate_krw: q.exchange_rate_krw ?? '190',
+      exchange_rate_date: q.exchange_rate_date || '',
+      exchange_rate_usd: q.exchange_rate_usd || '',
+      exchange_rate_krw: q.exchange_rate_krw || '',
       remarks: q.remarks || '',
       advance_payment_percent: q.advance_payment_percent ?? '30',
       balance_payment_percent: q.balance_payment_percent ?? '70',
@@ -476,7 +446,7 @@ export default function QuotationTab({ card, user }) {
             </div>
           </div>
 
-          {/* 옵션 / 세부 항목 (USD) */}
+          {/* 옵션 / 세부 항목 (CNY/RMB 기준) */}
           <div className="border rounded-xl p-3 bg-background">
             <QuoteOptionsEditor
               options={form.quote_options}
@@ -484,27 +454,7 @@ export default function QuotationTab({ card, user }) {
               usdToKrw={Number(form.exchange_rate_usd) || 0}
               cnyToKrw={Number(form.exchange_rate_krw) || 0}
             />
-            {latestRate && !editingId && (
-              <p className="text-[10px] text-accent mt-2">✓ {latestRate.rate_date} 기준 최신 환율 자동 적용 (매일 오전 9시 자동 갱신 · 직접 수정 가능)</p>
-            )}
-            <div className="mt-2 flex gap-3 flex-wrap">
-              <div>
-                <Label className="text-[10px]">당일 환율: $1 = ? 원</Label>
-                <Input type="number" step="0.01" value={form.exchange_rate_usd} onChange={e => setForm(f => ({ ...f, exchange_rate_usd: e.target.value }))} className="h-7 text-xs w-32" placeholder="예: 1380" />
-              </div>
-              <div>
-                <Label className="text-[10px]">당일 환율: ¥1 = ? 원</Label>
-                <Input type="number" step="0.01" value={form.exchange_rate_krw} onChange={e => setForm(f => ({ ...f, exchange_rate_krw: e.target.value }))} className="h-7 text-xs w-32" placeholder="예: 190" />
-              </div>
-              <div>
-                <Label className="text-[10px]">자동 환산: $1 = ? 위안</Label>
-                <div className="h-7 flex items-center px-2 rounded-md border bg-muted/40 text-xs w-32 font-semibold">
-                  {Number(form.exchange_rate_usd) > 0 && Number(form.exchange_rate_krw) > 0
-                    ? `¥${(Number(form.exchange_rate_usd) / Number(form.exchange_rate_krw)).toFixed(3)}`
-                    : '—'}
-                </div>
-              </div>
-            </div>
+            <div className="mt-3"><ManualExchangeRates compact values={form} onChange={(field, value) => setForm(f => ({ ...f, [field]: value }))} /></div>
           </div>
 
           <div>
@@ -700,21 +650,7 @@ export default function QuotationTab({ card, user }) {
                   <p className="font-bold text-primary">¥{Math.round(calc.total + optionsMarginCNY).toLocaleString()}</p>
                 </div>
               </div>
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mt-1">환율 입력 → 통화 환산</p>
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <Label className="text-[10px]">환율 기준일</Label>
-                  <Input type="date" value={form.exchange_rate_date} onChange={e => setForm(f => ({ ...f, exchange_rate_date: e.target.value }))} className="h-7 text-xs" />
-                </div>
-                <div>
-                  <Label className="text-[10px]">1 USD = ? KRW (송금기준)</Label>
-                  <Input type="number" step="0.01" value={form.exchange_rate_usd} onChange={e => setForm(f => ({ ...f, exchange_rate_usd: e.target.value }))} className="h-7 text-xs" placeholder="예: 1380" />
-                </div>
-                <div>
-                  <Label className="text-[10px]">1 CNY = ? KRW</Label>
-                  <Input type="number" step="0.01" value={form.exchange_rate_krw} onChange={e => setForm(f => ({ ...f, exchange_rate_krw: e.target.value }))} className="h-7 text-xs" placeholder="예: 190" />
-                </div>
-              </div>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mt-1">입력한 고정 환율 기준 통화 환산</p>
               {(calc.total + optionsMarginCNY) > 0 && <CurrencyPanel cny={calc.total + optionsMarginCNY} usdRate={Number(form.exchange_rate_usd)} krwRate={Number(form.exchange_rate_krw)} />}
             </div>
           )}

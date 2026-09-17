@@ -15,6 +15,7 @@ import MarginCalculator from '@/components/quotation/MarginCalculator';
 import SettlementFields from '@/components/quotation/SettlementFields';
 import RiskAlertPopup from '@/components/quotation/RiskAlertPopup';
 import QuotationHistoryButton from '@/components/quotation/QuotationHistoryButton';
+import ManualExchangeRates from '@/components/quotation/ManualExchangeRates';
 
 const CATEGORY_LABELS = {
   DRIP_BAG: '드립백 포장기',
@@ -66,7 +67,8 @@ export default function Quotations() {
     settlement_route: 'CLIENT_TO_AEGIS', quote_issuer: 'AEGIS',
     factory_total_cost: 0, logistics_cost: 0,
     masir_fee_type: 'PERCENT', masir_fee_value: 0,
-    final_client_price: 0, status: 'DRAFT',
+    final_client_price: 0, final_currency: 'CNY', status: 'DRAFT',
+    exchange_rate_date: '', exchange_rate_usd: '', exchange_rate_krw: '',
   });
 
   const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -101,10 +103,11 @@ export default function Quotations() {
   }, [form.machine_category, qcLogs]);
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Quotation.create(data),
+    mutationFn: (data) => base44.entities.Quotation.create({ ...data, exchange_rate_usd: Number(data.exchange_rate_usd), exchange_rate_krw: Number(data.exchange_rate_krw), tenant_id: me?.tenant_id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
       setCreateOpen(false);
+      setForm(f => ({ ...f, exchange_rate_date: '', exchange_rate_usd: '', exchange_rate_krw: '' }));
       toast({ title: t('quotations.add') });
     },
   });
@@ -165,6 +168,8 @@ export default function Quotations() {
                 </div>
               </div>
 
+              <ManualExchangeRates values={form} onChange={updateField} />
+
               <SettlementFields
                 settlementRoute={form.settlement_route}
                 quoteIssuer={form.quote_issuer}
@@ -186,6 +191,7 @@ export default function Quotations() {
                     onFeeTypeChange={(v) => updateField('masir_fee_type', v)}
                     onFeeValueChange={(v) => updateField('masir_fee_value', v)}
                     finalPrice={form.final_client_price}
+                    usdToCny={Number(form.exchange_rate_usd) > 0 && Number(form.exchange_rate_krw) > 0 ? Number(form.exchange_rate_usd) / Number(form.exchange_rate_krw) : 0}
                   />
                 </div>
               </div>
