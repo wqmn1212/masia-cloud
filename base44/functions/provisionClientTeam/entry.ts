@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { CLIENT_MENU } from '../../shared/clientAccess.ts';
-import { FROM_NAME } from '../../shared/notify.ts';
+
 
 // 리드 → 고객사 팀 생성 및 담당자 초대. 초대는 어드민만 가능하다 (고객의 자체 초대 없음).
 // 최초 호출에서 Tenant · Company · TeamRole 을 만들고, 이후 호출은 기존 팀에 초대만 추가한다.
@@ -39,6 +39,13 @@ export default async function (req) {
     if (inviteList.length === 0) return Response.json({ error: '유효한 이메일이 없습니다' }, { status: 400 });
 
     const hqTenantId = lead.tenant_id;
+    if (!hqTenantId) return Response.json({ error: '문의의 소속 팀을 확인하세요.' }, { status: 400 });
+    for (const email of inviteList) {
+      const users = await svc.entities.User.filter({ email });
+      if (users.some(u => u.account_tier && (u.account_tier !== 'client' || !lead.client_id || u.company_id !== lead.client_id))) return Response.json({ error: `${email}: 다른 회사 또는 직원 계정으로 사용 중입니다.` }, { status: 409 });
+      const pending = await svc.entities.PendingInvitation.filter({ email, claimed: false });
+      if (pending.some(i => i.account_tier !== 'client' || !lead.client_id || i.company_id !== lead.client_id)) return Response.json({ error: `${email}: 다른 팀의 대기 중 초대가 있습니다.` }, { status: 409 });
+    }
 
     // 1. 고객사 팀 (최초 1회)
     let tenant = lead.client_tenant_id ? await svc.entities.Tenant.get(lead.client_tenant_id) : null;
@@ -75,6 +82,10 @@ export default async function (req) {
         menu_paths: CLIENT_MENU,
       });
     }
+
+    if (company.tenant_id !== hqTenantId || tenant.company_id !== company.id || tenant.hq_tenant_id !== hqTenantId || tenant.tenant_type !== 'client') return Response.json({ error: '고객사 팀 연결을 확인하세요.' }, { status: 409 });
+    // 초대 발송 실패 후에도 동일 팀으로 재시도할 수 있도록 연결부터 보관한다.
+    await svc.entities.ManufacturingLead.update(lead.id, { client_id: company.id, client_tenant_id: tenant.id });
 
     // 2. 좌석 상한 검사 (유료화 대비)
     const seatLimit = Number(tenant.seat_limit) || 2;
@@ -114,37 +125,17 @@ export default async function (req) {
           account_label: lead.company,
           is_active: true,
         });
-        try {
-          await base44.auth.resetPasswordRequest(email);
-        } catch (_e) { /* 기존 계정은 초대 대신 비밀번호 설정 메일을 우선 안내한다 */ }
-        invited.push({ email, applied: true, password_setup_sent: true });
+        invited.push({ email, applied: true, existing_account: true });
         continue;
       }
-      await base44.users.inviteUser(email, 'user');
       const pending = await svc.entities.PendingInvitation.filter({ email, tenant_id: tenant.id, claimed: false });
       if (pending[0]) {
         await svc.entities.PendingInvitation.update(pending[0].id, inviteData);
       } else {
         await svc.entities.PendingInvitation.create(inviteData);
       }
+      await base44.users.inviteUser(email, 'user');
       invited.push({ email, pending: true });
-
-      try {
-        await svc.integrations.Core.SendEmail({
-          to: email,
-          from_name: FROM_NAME,
-          subject: `${lead.company} · AEGIS Cloud 고객 포털 계정이 발급되었습니다`,
-          body: [
-            `${lead.contact_name} 님, 안녕하세요.`,
-            ``,
-            `AEGIS Cloud 고객 포털 계정이 발급되었습니다. 초대 메일의 링크로 접속해 비밀번호를 설정하시면 이메일/비밀번호 또는 구글 로그인으로 접속하실 수 있습니다. 진행 상황과 견적서를 확인하실 수 있습니다.`,
-            ``,
-            `계정 접근이 어려우실 경우 담당자에게 문의해 주세요.`,
-            ``,
-            'AEGIS',
-          ].join('\n'),
-        });
-      } catch (_e) { /* 메일 실패가 초대 자체를 막지 않는다 */ }
     }
 
     // 4. 리드 · 카드 연결

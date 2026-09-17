@@ -1,0 +1,1 @@
+export const DOCUMENT_TYPES = { GENERAL: '일반 파일', INVOICE_CI: '인보이스 (CI)', INVOICE_PI: '인보이스 (PI)', PACKING_LIST: '패킹리스트 (PL)', QUOTATION: '견적서', REMITTANCE_ACCOUNT: '송금계좌' };

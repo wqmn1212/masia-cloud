@@ -1,0 +1,116 @@
+{
+  "name": "CollaborationChange",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string"
+    },
+    "card_id": {
+      "type": "string"
+    },
+    "company_id": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "SCHEDULE",
+        "PAYMENT"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string",
+      "maxLength": 8000
+    },
+    "reason": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "actor_name": {
+      "type": "string"
+    },
+    "actor_id": {
+      "type": "string"
+    },
+    "email_status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "SENDING",
+        "SENT",
+        "FAILED",
+        "SKIPPED"
+      ],
+      "default": "PENDING"
+    },
+    "email_lock_token": {
+      "type": "string"
+    },
+    "sent_user_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "email_error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "card_id",
+    "kind",
+    "title",
+    "body"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

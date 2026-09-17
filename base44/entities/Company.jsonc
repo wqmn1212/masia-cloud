@@ -3,65 +3,80 @@
   "type": "object",
   "properties": {
     "tenant_id": {
-      "type": "string",
-      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+      "type": "string"
     },
     "company_type": {
       "type": "string",
       "enum": [
         "CLIENT",
         "FACTORY"
-      ],
-      "description": "\uc5c5\uccb4 \uc720\ud615 (\uace0\uac1d\uc0ac/\uacf5\uc7a5)"
+      ]
     },
     "company_name": {
-      "type": "string",
-      "description": "\uc5c5\uccb4\uba85"
+      "type": "string"
     },
     "address": {
-      "type": "string",
-      "description": "\uc8fc\uc18c"
+      "type": "string"
     },
     "factory_address": {
-      "type": "string",
-      "description": "\uc911\uad6d \uacf5\uc7a5 \uc8fc\uc18c"
+      "type": "string"
     },
     "annual_revenue": {
-      "type": "number",
-      "description": "\uc5f0\uac04 \ub9e4\ucd9c\uc561 (CNY)"
+      "type": "number"
     },
     "employee_count": {
-      "type": "number",
-      "description": "\uc784\uc9c1\uc6d0 \uc218"
+      "type": "number"
     },
     "establishment_date": {
       "type": "string",
-      "format": "date",
-      "description": "\uc124\ub9bd\uc77c"
+      "format": "date"
     },
     "contact_person": {
-      "type": "string",
-      "description": "\ub2f4\ub2f9\uc790\uba85"
+      "type": "string"
     },
     "wechat_id": {
-      "type": "string",
-      "description": "\uc704\ucc57 ID"
+      "type": "string"
     },
     "phone": {
-      "type": "string",
-      "description": "\uc5f0\ub77d\ucc98"
+      "type": "string"
     },
     "email": {
-      "type": "string",
-      "description": "\uc774\uba54\uc77c"
+      "type": "string"
     },
     "business_registration_url": {
-      "type": "string",
-      "description": "\uc0ac\uc5c5\uc790\ub4f1\ub85d\uc99d \ud30c\uc77c URL"
+      "type": "string"
     },
     "memo": {
-      "type": "string",
-      "description": "\uba54\ubaa8"
+      "type": "string"
+    },
+    "remittance_documents": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "file_name": {
+            "type": "string"
+          },
+          "file_type": {
+            "type": "string"
+          },
+          "file_uri": {
+            "type": "string"
+          },
+          "uploaded_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "file_name",
+          "file_uri"
+        ]
+      }
     }
   },
   "required": [

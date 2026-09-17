@@ -1,4 +1,6 @@
 import { Card } from '@/components/ui/card';
+import DocumentOpenButton from '@/components/files/DocumentOpenButton';
+import { DOCUMENT_TYPES } from '@/components/files/documentTypes';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FileText, FileImage, FileVideo, FileSpreadsheet, ExternalLink, Inbox } from 'lucide-react';
@@ -36,6 +38,7 @@ export default function ClientFilesPanel({ attachments, cardsById, onCardClick }
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium text-sm truncate">{file.file_name}</span>
+                <Badge variant="secondary" className="text-[10px]">{DOCUMENT_TYPES[file.document_type] || '일반 파일'}</Badge>
                 {file.file_type && (
                   <Badge variant="outline" className="text-[10px] uppercase">{file.file_type}</Badge>
                 )}
@@ -54,11 +57,7 @@ export default function ClientFilesPanel({ attachments, cardsById, onCardClick }
                 {file.created_date && <span>· {format(new Date(file.created_date), 'yyyy-MM-dd')}</span>}
               </div>
             </div>
-            <Button asChild size="sm" variant="ghost" className="h-8">
-              <a href={file.file_url} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </Button>
+            <DocumentOpenButton document={file} />
           </div>
         );
       })}

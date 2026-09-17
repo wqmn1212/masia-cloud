@@ -9,7 +9,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import TaskCardSummaryItem from '@/components/taskcard/TaskCardSummaryItem';
 import CardModal from '@/components/taskcard/CardModal';
-import ClientFilesPanel from '@/components/client/ClientFilesPanel';
+import CompanyFilesLibrary from '@/components/files/CompanyFilesLibrary';
+import CompanyBankDocuments from '@/components/files/CompanyBankDocuments';
 import ClientQuotationsPanel from '@/components/client/ClientQuotationsPanel';
 import ClientTasksPanel from '@/components/client/ClientTasksPanel';
 
@@ -48,7 +49,14 @@ export default function ClientDashboard() {
   // 카드별 통계 데이터 (한 번에 가져와 클라이언트 그룹핑)
   const { data: attachments = [] } = useQuery({
     queryKey: ['client-attachments', clientId],
-    queryFn: () => base44.entities.CardAttachment.list('-created_date', 1000),
+    queryFn: async () => {
+      const rows = [];
+      for (let skip = 0; ; skip += 200) {
+        const page = await base44.entities.CardAttachment.filter({ card_id: { $in: cardIds } }, '-created_date', 200, skip);
+        rows.push(...page);
+        if (page.length < 200) return rows;
+      }
+    },
     enabled: hasCards,
   });
 
@@ -248,11 +256,7 @@ export default function ClientDashboard() {
         </TabsContent>
 
         <TabsContent value="files" className="mt-4">
-          <ClientFilesPanel
-            attachments={clientAttachments}
-            cardsById={cardsById}
-            onCardClick={setSelectedCard}
-          />
+          <div className="space-y-5"><CompanyBankDocuments companyId={clientId} /><CompanyFilesLibrary companyId={clientId} onCardClick={card => base44.entities.TaskCard.get(card.id).then(setSelectedCard)} /></div>
         </TabsContent>
 
         <TabsContent value="quotations" className="mt-4">

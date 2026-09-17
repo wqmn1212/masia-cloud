@@ -26,7 +26,7 @@ export async function clientCardDocuments(svc, cards) {
   });
 }
 export function documentMetadata(doc) {
-  return { id: `${doc.document_kind}:${doc.id}:${doc.card_id}`, document_id: doc.id, document_kind: doc.document_kind, card_id: doc.card_id, file_name: doc.file_name, file_type: doc.file_type, created_date: doc.created_date, client_visible: true };
+  return { id: `${doc.document_kind}:${doc.id}:${doc.card_id}`, document_id: doc.id, document_kind: doc.document_kind, card_id: doc.card_id, file_name: doc.file_name, file_type: doc.file_type, document_type: doc.document_type || 'GENERAL', created_date: doc.created_date, client_visible: true };
 }
 export async function documentUrl(svc, uri) {
   if (/^https?:\/\//i.test(uri || '')) return uri;

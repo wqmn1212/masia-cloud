@@ -1,6 +1,7 @@
 import { FileText, FileImage, FileVideo, FileSpreadsheet, Trash2 } from 'lucide-react';
 import DocumentOpenButton from '@/components/files/DocumentOpenButton';
 import FileVisibilitySwitch from '@/components/files/FileVisibilitySwitch';
+import { DOCUMENT_TYPES } from '@/components/files/documentTypes';
 
 function getIcon(type) {
   const t = (type || '').toLowerCase();
@@ -24,6 +25,7 @@ export default function FileRow({ file, onDelete, onVisibilityChange, visibility
       <div className="flex items-center gap-2.5 flex-1 min-w-0">
         <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         <span className="text-sm truncate" title={file.file_name}>{file.file_name}</span>
+        {file.document_type && file.document_type !== 'GENERAL' && <span className="text-[10px] text-primary">{DOCUMENT_TYPES[file.document_type]}</span>}
         {file.file_type && (
           <span className="text-[10px] text-muted-foreground uppercase bg-muted px-1.5 py-0.5 rounded">
             {file.file_type}

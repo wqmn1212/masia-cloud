@@ -12,7 +12,7 @@ export default function DocumentOpenButton({ document, kind = 'attachment' }) {
     const tab = window.open('about:blank', '_blank');
     if (tab) tab.opener = null;
     try {
-      const { data } = await base44.functions.invoke('getDocumentAccess', { document_id: document.id, kind });
+      const { data } = await base44.functions.invoke('getDocumentAccess', { document_id: document.document_id || document.id, kind: document.document_kind || kind, card_id: document.card_id, company_id: document.company_id });
       if (!data.url) throw new Error('파일 주소를 가져오지 못했습니다.');
       if (tab) tab.location.replace(data.url);
       else toast({ title: '팝업을 허용하고 다시 열어 주세요.' });

@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { CLIENT_STATUS_LABEL, CLIENT_PRIORITY } from './clientBoardMeta';
+import ScheduleSummary from '@/components/taskcard/ScheduleSummary';
 
 // 고객이 편집 가능한 필드는 요구사항(hq_requirements) 하나뿐이다. 나머지는 읽기 전용.
 export default function ClientOverviewPanel({ card }) {
@@ -30,6 +31,7 @@ export default function ClientOverviewPanel({ card }) {
 
   return (
     <div className="space-y-4">
+      <ScheduleSummary card={card} />
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="secondary">{CLIENT_STATUS_LABEL[card.status] || card.status}</Badge>
         <Badge className={`${p.className} border-0`}>{p.label}</Badge>

@@ -11,8 +11,7 @@
       "description": "\uc18c\uc2f1 \uc5c5\ubb34 \uc81c\ubaa9"
     },
     "title_cn": {
-      "type": "string",
-      "description": "\uc81c\ubaa9 \uc911\uad6d\uc5b4 \ubc88\uc5ed (\uc790\ub3d9)"
+      "type": "string"
     },
     "status": {
       "type": "string",
@@ -23,8 +22,7 @@
         "PRODUCTION",
         "DONE",
         "CANCELLED"
-      ],
-      "description": "\uce78\ubc18 \uc0c1\ud0dc"
+      ]
     },
     "target_machine_category": {
       "type": "string",
@@ -33,25 +31,21 @@
         "SLEEVE",
         "DESKTOP_LABELER",
         "TUBE_SEALER"
-      ],
-      "description": "\ub300\uc0c1 \uc7a5\ube44 \uce74\ud14c\uace0\ub9ac"
+      ]
     },
     "client_name": {
-      "type": "string",
-      "description": "\uc5f0\ub3d9 \uace0\uac1d\uc0ac\uba85"
+      "type": "string"
     },
     "client_id": {
       "type": "string",
-      "description": "\uace0\uac1d\uc0ac Company ID \u2014 client \uacc4\uc815\uc758 User.company_id \uc640 \ub9e4\uce6d\ub418\ub294 \ub370\uc774\ud130 \uc2a4\ucf54\ud504 \ud0a4"
+      "description": "\uace0\uac1d\uc0ac Company ID"
     },
     "client_visible": {
       "type": "boolean",
-      "default": false,
-      "description": "\uace0\uac1d \ud3ec\ud138 \uacf5\uac1c \uc5ec\ubd80 (\uc5b4\ub4dc\ubbfc \uc218\ub3d9 \ud1a0\uae00)"
+      "default": false
     },
     "lead_id": {
-      "type": "string",
-      "description": "\ub79c\ub529 \ubb38\uc758(ManufacturingLead) \ucd9c\ucc98 ID"
+      "type": "string"
     },
     "source": {
       "type": "string",
@@ -59,46 +53,37 @@
         "manual",
         "landing_lead"
       ],
-      "default": "manual",
-      "description": "\uce74\ub4dc \uc0dd\uc131 \uacbd\ub85c"
+      "default": "manual"
     },
     "candidate_factory_names": {
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "\uacac\uc801 \uc694\uccad \ud6c4\ubcf4 \uacf5\uc7a5\uba85 \ubaa9\ub85d"
+      }
     },
     "candidate_factory_ids": {
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "\uacac\uc801 \uc694\uccad \ud6c4\ubcf4 \uacf5\uc7a5 ID \ubaa9\ub85d"
+      }
     },
     "factory_name": {
-      "type": "string",
-      "description": "\ucd5c\uc885 \ud655\uc815 \uacf5\uc7a5\uba85"
+      "type": "string"
     },
     "factory_id": {
-      "type": "string",
-      "description": "\ucd5c\uc885 \ud655\uc815 \uacf5\uc7a5 Company ID"
+      "type": "string"
     },
     "hq_requirements": {
-      "type": "string",
-      "description": "HQ \ubc0f \uace0\uac1d\uc0ac \uc694\uad6c\uc0ac\ud56d (\ub9c8\ud06c\ub2e4\uc6b4) \u2014 \uace0\uac1d\uc774 \ud3b8\uc9d1 \uac00\ub2a5\ud55c \uc720\uc77c\ud55c \ud544\ub4dc"
+      "type": "string"
     },
     "hq_requirements_cn": {
-      "type": "string",
-      "description": "HQ \uc694\uad6c\uc0ac\ud56d \uc911\uad6d\uc5b4 \ubc88\uc5ed (\uc790\ub3d9)"
+      "type": "string"
     },
     "agent_meeting_notes": {
-      "type": "string",
-      "description": "\uc5d0\uc774\uc804\ud2b8 \ubbf8\ud305 \ubc0f \ud2b9\uc774\uc0ac\ud56d"
+      "type": "string"
     },
     "agent_meeting_notes_cn": {
-      "type": "string",
-      "description": "\ubbf8\ud305 \ub178\ud2b8 \uc911\uad6d\uc5b4 \ubc88\uc5ed (\uc790\ub3d9)"
+      "type": "string"
     },
     "priority": {
       "type": "string",
@@ -107,13 +92,36 @@
         "MEDIUM",
         "HIGH",
         "URGENT"
-      ],
-      "description": "\uc6b0\uc120\uc21c\uc704"
+      ]
     },
     "due_date": {
       "type": "string",
-      "format": "date",
-      "description": "\ub9c8\uac10\uc77c"
+      "format": "date"
+    },
+    "quote_deadline": {
+      "type": "string",
+      "description": "\uacac\uc801 \ubc1c\uc1a1 \uae30\ud55c YYYY-MM-DD, \ube48 \uac12\uc740 \ubbf8\uc815"
+    },
+    "advance_paid_date": {
+      "type": "string",
+      "description": "\uc120\uae08 \uc785\uae08 \uae30\uc900\uc77c YYYY-MM-DD"
+    },
+    "delivery_business_days": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3650
+    },
+    "delivery_date": {
+      "type": "string",
+      "description": "\uc608\uc815 \ub0a9\ud488\uc77c YYYY-MM-DD"
+    },
+    "delivery_date_mode": {
+      "type": "string",
+      "enum": [
+        "AUTO",
+        "MANUAL"
+      ],
+      "default": "AUTO"
     }
   },
   "required": [

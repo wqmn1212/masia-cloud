@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // 가입 직후 호출: 이메일로 저장된 PendingInvitation 을 찾아 본인 계정에 tier/service_admin_id 적용
-Deno.serve(async (req) => {
+export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -15,9 +15,9 @@ Deno.serve(async (req) => {
     }
 
     const invites = await base44.asServiceRole.entities.PendingInvitation.filter({
-      email: user.email,
+      email: user.email.trim().toLowerCase(),
       claimed: false,
-    });
+    }, '-created_date', 100);
 
     if (invites.length === 0) {
       return Response.json({ ok: true, noInvite: true });
@@ -25,6 +25,14 @@ Deno.serve(async (req) => {
 
     // 가장 최근 초대 1건 적용
     const invite = invites[0];
+    if (new Set(invites.map(i => `${i.tenant_id}:${i.company_id || ''}:${i.account_tier}`)).size > 1) return Response.json({ error: '여러 팀의 초대가 연결되어 있습니다. 관리자에게 소속 확인을 요청하세요.' }, { status: 409 });
+    const tenant = await base44.asServiceRole.entities.Tenant.get(invite.tenant_id);
+    if (!tenant || tenant.is_active === false) return Response.json({ error: '초대받은 팀이 활성 상태가 아닙니다.' }, { status: 403 });
+    if (invite.account_tier === 'client') {
+      if (!invite.company_id || tenant.tenant_type !== 'client' || tenant.company_id !== invite.company_id) return Response.json({ error: '고객사 연결을 관리자에게 확인해주세요.' }, { status: 403 });
+      const company = await base44.asServiceRole.entities.Company.get(invite.company_id);
+      if (!company || company.company_type !== 'CLIENT' || company.tenant_id !== tenant.hq_tenant_id) return Response.json({ error: '고객사 연결이 올바르지 않습니다.' }, { status: 403 });
+    }
     const updateData = {
       account_tier: invite.account_tier,
       tenant_id: invite.tenant_id,
@@ -48,4 +56,4 @@ Deno.serve(async (req) => {
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
-});
+}

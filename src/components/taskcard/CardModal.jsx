@@ -20,6 +20,8 @@ import DecisionsTab from './DecisionsTab';
 import BomTab from './BomTab';
 import ClientVisibilityToggle from './ClientVisibilityToggle';
 import QuotationPublishPanel from './QuotationPublishPanel';
+import CardSchedulePanel from '@/components/taskcard/CardSchedulePanel';
+import TradeDocumentsTab from '@/components/taskcard/TradeDocumentsTab';
 
 const STATUS_META = {
   TODO:        { label: '대기 중',    color: 'bg-muted text-muted-foreground' },
@@ -86,13 +88,14 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-9 h-auto gap-0.5">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto gap-0.5">
             <TabsTrigger value="overview" className="text-xs sm:text-sm py-1.5">오버뷰</TabsTrigger>
             <TabsTrigger value="tasks" className="text-xs sm:text-sm py-1.5">업무</TabsTrigger>
             <TabsTrigger value="meetings" className="text-xs sm:text-sm py-1.5">미팅·분석</TabsTrigger>
             <TabsTrigger value="quotation" className="text-xs sm:text-sm py-1.5">견적</TabsTrigger>
             <TabsTrigger value="bom" className="text-xs sm:text-sm py-1.5">BOM</TabsTrigger>
             <TabsTrigger value="files" className="text-xs sm:text-sm py-1.5">파일</TabsTrigger>
+            <TabsTrigger value="trade" className="text-xs sm:text-sm py-1.5">무역서류</TabsTrigger>
             <TabsTrigger value="chat" className="text-xs sm:text-sm py-1.5">채팅</TabsTrigger>
             <TabsTrigger value="settlement" className="text-xs sm:text-sm py-1.5">정산</TabsTrigger>
             <TabsTrigger value="decisions" className="text-xs sm:text-sm py-1.5">결정</TabsTrigger>
@@ -106,6 +109,7 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
           <TabsContent value="overview" className="mt-4">
             <OverviewTab card={card} kbAlerts={kbAlerts} viewLang={viewLang} />
             <div className="mt-4"><ClientVisibilityToggle card={card} /></div>
+            <div className="mt-5"><CardSchedulePanel key={card.id} card={card} user={user} /></div>
             <ProcessControlPanel card={card} user={user} />
           </TabsContent>
           <TabsContent value="meetings" className="mt-4 space-y-6">
@@ -121,6 +125,7 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
           <TabsContent value="bom" className="mt-4">
             <BomTab card={card} />
           </TabsContent>
+          <TabsContent value="trade" className="mt-4"><TradeDocumentsTab card={card} user={user} /></TabsContent>
           <TabsContent value="files" className="mt-4">
             <FilesTab card={card} user={user} />
           </TabsContent>

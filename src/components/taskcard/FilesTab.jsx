@@ -10,7 +10,7 @@ import NewFolderDialog from './files/NewFolderDialog';
 import useAttachmentVisibility from '@/components/files/useAttachmentVisibility';
 import CardFactoryDocuments from '@/components/taskcard/CardFactoryDocuments';
 
-export default function FilesTab({ card }) {
+export default function FilesTab({ card, tradeOnly = false }) {
   const qc = useQueryClient();
   const visibility = useAttachmentVisibility(card.id);
   const [uploadError, setUploadError] = useState('');
@@ -43,8 +43,8 @@ export default function FilesTab({ card }) {
     [folders, currentFolderId]
   );
   const currentFiles = useMemo(
-    () => files.filter(f => (f.folder_id || null) === currentFolderId),
-    [files, currentFolderId]
+    () => files.filter(f => (f.folder_id || null) === currentFolderId && (!tradeOnly || (f.document_type && f.document_type !== 'GENERAL'))),
+    [files, currentFolderId, tradeOnly]
   );
 
   const createFolderMutation = useMutation({
@@ -280,10 +280,10 @@ export default function FilesTab({ card }) {
   return (
     <div
       className="space-y-3 relative"
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
+      onDragEnter={tradeOnly ? undefined : handleDragEnter}
+      onDragLeave={tradeOnly ? undefined : handleDragLeave}
       onDragOver={handleDragOver}
-      onDrop={handleDrop}
+      onDrop={tradeOnly ? e => e.preventDefault() : handleDrop}
     >
       {isDragging && (
         <div className="absolute inset-0 z-20 rounded-lg border-2 border-dashed border-primary bg-primary/10 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none">
@@ -307,7 +307,7 @@ export default function FilesTab({ card }) {
           >
             <FolderPlus className="w-3.5 h-3.5" /> 새 폴더
           </Button>
-          <Button
+          {!tradeOnly && <><Button
             size="sm"
             variant="outline"
             onClick={() => folderInputRef.current?.click()}
@@ -348,8 +348,8 @@ export default function FilesTab({ card }) {
               const list = e.target.files;
               if (list && list.length > 0) handleFolderUpload(list);
               e.target.value = '';
-            }}
-          />
+              }}
+              /></>}
         </div>
       </div>
 
@@ -395,7 +395,7 @@ export default function FilesTab({ card }) {
         </div>
       )}
 
-      <CardFactoryDocuments card={card} />
+      {!tradeOnly && <CardFactoryDocuments card={card} />}
       <NewFolderDialog
         open={showNewFolder}
         onClose={() => setShowNewFolder(false)}

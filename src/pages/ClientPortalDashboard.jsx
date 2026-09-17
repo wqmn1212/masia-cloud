@@ -8,6 +8,7 @@ import ClientStatusSummary from '@/components/client/ClientStatusSummary';
 import ClientCardTile from '@/components/client/ClientCardTile';
 import ClientSupportCard from '@/components/client/ClientSupportCard';
 import ClientCardModal from '@/components/client/ClientCardModal';
+import CompanyFilesLibrary from '@/components/files/CompanyFilesLibrary';
 
 export default function ClientPortalDashboard() {
   const { data: cards = [], isLoading } = useClientCards();
@@ -51,6 +52,7 @@ export default function ClientPortalDashboard() {
         </>
       )}
 
+      <CompanyFilesLibrary onCardClick={card => setSelectedId(card.id)} />
       <ClientCardModal cardId={selectedId} open={!!selectedId} onClose={() => setSelectedId(null)} />
     </div>
   );

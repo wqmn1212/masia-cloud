@@ -13,7 +13,7 @@ import ClientSharedFiles from '@/components/client/ClientSharedFiles';
 // 고객 전용 카드 모달 — 오버뷰 · 견적 · 채팅 · 정산 4개 탭만 존재한다.
 // 어드민 CardModal 에 조건 분기를 넣지 않고 별도 컴포넌트로 분리해 원가 노출 경로를 원천 차단한다.
 export default function ClientCardModal({ cardId, open, onClose }) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['client-card-detail', cardId],
     queryFn: async () => {
       const res = await base44.functions.invoke('getClientCardDetail', { card_id: cardId });
@@ -25,12 +25,13 @@ export default function ClientCardModal({ cardId, open, onClose }) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl w-[95vw] max-h-[92vh] overflow-y-auto">
-        {isLoading || !data?.card ? (
+        {isError ? <div className="py-8 space-y-3"><p role="alert" className="text-sm text-destructive">카드 정보를 불러오지 못했습니다.</p><button type="button" onClick={() => refetch()} disabled={isFetching} className="text-sm text-primary">다시 불러오기</button></div> : isLoading || !data?.card ? (
           <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
         ) : (
           <>
             <DialogHeader>
               <DialogTitle className="text-base pr-6">{data.card.title}</DialogTitle>
+              <button type="button" className="text-xs text-primary self-start" disabled={isFetching} onClick={() => refetch()}>{isFetching ? '불러오는 중...' : '최신 일정·입금 상태 새로고침'}</button>
             </DialogHeader>
             <Tabs defaultValue="overview" className="mt-3">
               <TabsList className="grid w-full grid-cols-5">

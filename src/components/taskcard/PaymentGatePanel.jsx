@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+import PaymentConfirmationDialog from '@/components/taskcard/PaymentConfirmationDialog';
+import CollaborationHistory from '@/components/taskcard/CollaborationHistory';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -8,19 +10,24 @@ import { useToast } from '@/components/ui/use-toast';
 const LABELS = { DOWN_PAYMENT: '선금', INTERIM_PAYMENT: '중도금', BALANCE_PAYMENT: '잔금' };
 export default function PaymentGatePanel({ card, user }) {
   const client = useQueryClient(); const { toast } = useToast();
+  const [selected, setSelected] = useState(null);
   const query = useQuery({ queryKey: ['payment-stages', card.id], queryFn: () => base44.entities.PaymentStage.filter({ card_id: card.id }) });
   const refresh = () => {
     client.invalidateQueries({ queryKey: ['payment-stages', card.id] });
     client.invalidateQueries({ queryKey: ['payment-stages-all'] });
+    client.invalidateQueries({ queryKey: ['card-schedule', card.id] });
+    client.invalidateQueries({ queryKey: ['collaboration-history', card.id] });
+    client.invalidateQueries({ queryKey: ['client-card-detail', card.id] });
+    client.invalidateQueries({ queryKey: ['task-cards'] });
   };
-  const initialize = useMutation({ mutationFn: () => base44.entities.PaymentStage.bulkCreate([
-    { card_id: card.id, stage_type: 'DOWN_PAYMENT', percentage: 50, approval_status: 'PENDING' },
-    { card_id: card.id, stage_type: 'BALANCE_PAYMENT', percentage: 50, approval_status: 'PENDING' },
-  ]), onSuccess: refresh });
-  const approve = useMutation({ mutationFn: async stage => { await base44.entities.PaymentStage.update(stage.id, { approval_status: 'APPROVED', approved_at: new Date().toISOString(), approved_by_id: user?.id || '', approved_by_name: user?.full_name || user?.email || '' }); await base44.entities.ProjectAuditLog.create({ card_id: card.id, event_type: 'PAYMENT_APPROVED', actor_id: user?.id || '', actor_name: user?.full_name || user?.email || '', details: `${LABELS[stage.stage_type]} ${stage.percentage}% 입금 승인` }); }, onSuccess: () => { refresh(); toast({ title: '입금 승인 완료 — 공정 잠금에 즉시 반영됩니다' }); } });
+  const initialize = useMutation({ mutationFn: () => base44.functions.invoke('manageCardCollaboration', { action: 'initialize', card_id: card.id }), onSuccess: refresh });
+  const approve = useMutation({ mutationFn: ({ stage, reason, paid_date }) => base44.functions.invoke('manageCardCollaboration', { action: 'payment', card_id: card.id, stage_id: stage.id, expected_updated_date: stage.updated_date, confirmed: stage.approval_status !== 'APPROVED', reason, paid_date }), onSuccess: () => { refresh(); setSelected(null); toast({ title: '입금 상태 저장 완료', description: '수금률에 반영되었습니다. 고객 알림은 변경 이력에서 확인하세요.' }); }, onError: refresh });
   const stages = query.data || [];
-  const canApprove = user?.account_tier === 'master' || user?.account_tier === 'service';
-  return <section className="mb-5 space-y-3 rounded-xl border p-3"><div><h3 className="text-sm font-semibold">공정 잠금용 수금 승인</h3><p className="text-xs text-muted-foreground">이번 단계에서는 선금·잔금 승인 상태를 공정 제어에 연결합니다.</p></div>
-    {!query.isLoading && !stages.length ? (canApprove ? <Button size="sm" onClick={() => initialize.mutate()} disabled={initialize.isPending}>기본 선금 50% · 잔금 50% 설정</Button> : <p className="text-xs text-muted-foreground">아직 결제 단계가 설정되지 않았습니다.</p>) : stages.map(stage => <div key={stage.id} className="flex items-center justify-between rounded-lg bg-muted/30 p-2"><div className="text-xs"><span className="font-medium">{LABELS[stage.stage_type]}</span> · {stage.percentage}%</div>{stage.approval_status === 'APPROVED' ? <Badge className="border-0 bg-accent/15 text-accent">승인 완료</Badge> : canApprove ? <Button size="sm" className="h-7 text-xs" onClick={() => approve.mutate(stage)} disabled={approve.isPending}>입금 승인</Button> : <Badge variant="secondary" className="border-0 text-[10px]">승인 대기중</Badge>}</div>)}
+  const canApprove = ['master', 'service', 'sub'].includes(user?.account_tier);
+  return <section className="mb-5 space-y-3 rounded-xl border p-3"><div><h3 className="text-sm font-semibold">선금·잔금 입금 확인</h3><p className="text-xs text-muted-foreground">직원만 확인·취소·재확정할 수 있습니다. 변경 시각과 처리자는 이력에 남습니다.</p></div>
+    {query.isLoading ? <p className="text-sm">불러오는 중...</p> : query.isError ? <p role="alert" className="text-sm text-destructive">입금 단계를 불러오지 못했습니다.</p> : !stages.length ? (canApprove ? <Button size="sm" onClick={() => initialize.mutate()} disabled={initialize.isPending}>기본 선금 50% · 잔금 50% 설정</Button> : <p className="text-xs text-muted-foreground">아직 결제 단계가 설정되지 않았습니다.</p>) : stages.map(stage => <div key={stage.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-muted/30 p-2"><div className="text-xs flex-1"><span className="font-medium">{LABELS[stage.stage_type]}</span> · {stage.percentage}%</div><Badge variant={stage.approval_status === 'APPROVED' ? 'default' : 'secondary'}>{stage.approval_status === 'APPROVED' ? '입금 확인' : '확인 대기'}</Badge>{canApprove && <Button size="sm" variant="outline" className="h-7 text-xs" disabled={approve.isPending} onClick={() => { approve.reset(); setSelected(stage); }}>{stage.approval_status === 'APPROVED' ? '확인 취소' : '입금 확인'}</Button>}</div>)}
+    {initialize.isError && <p role="alert" className="text-sm text-destructive">{initialize.error?.response?.data?.error || '결제 단계 설정에 실패했습니다.'}</p>}
+    <PaymentConfirmationDialog stage={selected} onClose={() => setSelected(null)} onConfirm={data => approve.mutate(data)} pending={approve.isPending} error={approve.error} />
+    <CollaborationHistory cardId={card.id} />
   </section>;
 }

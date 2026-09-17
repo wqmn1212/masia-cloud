@@ -1,0 +1,40 @@
+{
+  "name": "\uc77c\uc815\u00b7\uc785\uae08 \ubcc0\uacbd \uace0\uac1d \uc774\uba54\uc77c",
+  "description": "\ud655\uc815\ub41c \ubcc0\uacbd \uc774\ub825\uc744 \uae30\uc900\uc73c\ub85c \ud574\ub2f9 \uace0\uac1d\uc0ac \ub2f4\ub2f9\uc790\uc5d0\uac8c \uc774\uba54\uc77c\uc744 \ubc1c\uc1a1\ud569\ub2c8\ub2e4. \ubc1c\uc1a1 \uc2e4\ud328\ub294 \ubcf4\ub958 \uc0c1\ud0dc\ub85c \ub0a8\uae41\ub2c8\ub2e4.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "CollaborationChange",
+      "events": [
+        "create"
+      ]
+    },
+    "condition": "${ .trigger.data.email_status == \"PENDING\" }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "collaboration_change_email",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_email": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "deliverCollaborationEmail",
+            "args": {
+              "change_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\uace0\uac1d \ub2f4\ub2f9\uc790\uc5d0\uac8c \ubcc0\uacbd \uba54\uc77c \ubc1c\uc1a1",
+            "description": "\ubc1c\uc1a1 \ub0b4\uc5ed\uacfc \ubcf4\ub958 \uc0ac\uc720 \uae30\ub85d"
+          }
+        }
+      }
+    ]
+  }
+}
