@@ -66,9 +66,9 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title={t('dashboard.factories')} value={factories.length} icon={Factory} trend="2건" trendUp />
+        <StatCard title={t('dashboard.factories')} value={factories.length} icon={Factory} trend={`2${t('common.count')}`} trendUp />
         <StatCard title={t('dashboard.clients')} value={clients.length} icon={Users} />
-        <StatCard title={t('dashboard.quotations')} value={quotations.length} icon={FileText} trend="5건" trendUp />
+        <StatCard title={t('dashboard.quotations')} value={quotations.length} icon={FileText} trend={`5${t('common.count')}`} trendUp />
         <StatCard title={t('dashboard.openAS')} value={openAS.length} icon={Wrench} subtitle={t('dashboard.asSubtitle')} />
       </div>
 

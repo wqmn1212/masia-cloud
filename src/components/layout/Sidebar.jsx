@@ -57,20 +57,20 @@ export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobil
   if (user?.account_tier === 'master') {
     navSections = [
       {
-        label: '관리',
-        items: [{ path: '/master-admin', icon: ShieldCheck, label: '마스터 관리자' }],
+        labelKey: 'nav.management',
+        items: [{ path: '/master-admin', icon: ShieldCheck, labelKey: 'nav.masterAdmin' }],
       },
       ...navSectionDefs,
     ];
   } else if (user?.account_tier === 'service') {
     navSections = navSectionDefs.map((section, index) => index === 0
-      ? { ...section, items: [...section.items, { path: '/team', icon: UserCog, label: '팀 관리' }, { path: '/user-permissions', icon: KeyRound, label: '사용자 권한' }] }
+      ? { ...section, items: [...section.items, { path: '/team', icon: UserCog, labelKey: 'nav.team' }, { path: '/user-permissions', icon: KeyRound, labelKey: 'nav.permissions' }] }
       : section);
   } else if (user?.account_tier === 'sub') {
     navSections = navSectionDefs;
   } else if (user?.account_tier === 'client') {
     navSections = [{
-      label: '고객 포털',
+      labelKey: 'nav.clientPortal',
       items: CLIENT_MENU_OPTIONS.map(item => ({ ...item, icon: CLIENT_ICONS[item.path] || LayoutDashboard })),
     }];
   }
@@ -106,7 +106,7 @@ export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobil
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-2">
         {navSections.map((section) => (
-          <div key={section.label} className="mb-5">
+          <div key={section.labelKey || section.label} className="mb-5">
             {!collapsed && (
               <p className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40 px-3 mb-2">
                 {section.labelKey ? t(section.labelKey) : section.label}

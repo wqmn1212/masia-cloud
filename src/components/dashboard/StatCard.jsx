@@ -1,8 +1,10 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export default function StatCard({ title, value, subtitle, icon: Icon, trend, trendUp }) {
+  const { t } = useLanguage();
   return (
     <Card className="p-5 relative overflow-hidden group hover:shadow-lg transition-shadow duration-300">
       <div className="flex justify-between items-start">
@@ -23,7 +25,7 @@ export default function StatCard({ title, value, subtitle, icon: Icon, trend, tr
           )}>
             {trendUp ? '↑' : '↓'} {trend}
           </span>
-          <span className="text-xs text-muted-foreground">지난 달 대비</span>
+          <span className="text-xs text-muted-foreground">{t('dashboard.vsLastMonth')}</span>
         </div>
       )}
     </Card>

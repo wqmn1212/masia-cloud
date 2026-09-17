@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const STAGE_LABELS = {
   CONTRACT: '계약 완료',
@@ -12,15 +13,16 @@ const STAGE_LABELS = {
 };
 
 export default function PipelineChart({ timelines }) {
+  const { t } = useLanguage();
   const stageData = Object.entries(STAGE_LABELS).map(([key, label]) => ({
-    name: label,
+    name: t(`stage.${key}`, label),
     count: timelines.filter(t => t.current_stage === key).length,
   }));
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">파이프라인 현황</CardTitle>
+        <CardTitle className="text-base font-semibold">{t('dashboard.pipeline')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[220px]">
@@ -37,7 +39,7 @@ export default function PipelineChart({ timelines }) {
                   fontSize: '12px'
                 }}
               />
-              <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} name="건수" />
+              <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} name={t('dashboard.countLabel')} />
             </BarChart>
           </ResponsiveContainer>
         </div>

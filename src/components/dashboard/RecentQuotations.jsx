@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { quotePriceLabel } from '@/components/quotation/quoteCurrency';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const CATEGORY_LABELS = {
   DRIP_BAG: '드립백 포장기',
@@ -22,17 +23,18 @@ const STATUS_MAP = {
 };
 
 export default function RecentQuotations({ quotations }) {
+  const { t } = useLanguage();
   return (
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold">최근 견적</CardTitle>
-          <Link to="/quotations" className="text-xs text-primary hover:underline">전체 보기</Link>
+          <CardTitle className="text-base font-semibold">{t('dashboard.recentQuotes')}</CardTitle>
+          <Link to="/quotations" className="text-xs text-primary hover:underline">{t('dashboard.viewAll')}</Link>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         {quotations.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">등록된 견적이 없습니다</p>
+          <p className="text-sm text-muted-foreground text-center py-8">{t('quotations.empty')}</p>
         ) : (
           quotations.slice(0, 5).map((q) => {
             const st = STATUS_MAP[q.status] || STATUS_MAP.DRAFT;
@@ -42,13 +44,13 @@ export default function RecentQuotations({ quotations }) {
                   <FileText className="w-4 h-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{q.factory_name || '미지정 공장'}</p>
+                  <p className="text-sm font-medium truncate">{q.factory_name || t('dashboard.unspecifiedFactory')}</p>
                   <p className="text-xs text-muted-foreground">
-                    {CATEGORY_LABELS[q.machine_category] || q.machine_category || '카테고리 없음'}
+                    {t(`cat.${q.machine_category}`, CATEGORY_LABELS[q.machine_category] || q.machine_category || t('quotations.nocat'))}
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <Badge className={`${st.className} border-0 text-[10px]`}>{st.label}</Badge>
+                  <Badge className={`${st.className} border-0 text-[10px]`}>{t(`qstatus.${q.status || 'DRAFT'}`, st.label)}</Badge>
                   {q.final_client_price > 0 && (
                     <p className="text-xs font-semibold mt-1">
                       {quotePriceLabel(q)}

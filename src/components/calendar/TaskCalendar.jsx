@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/lib/LanguageContext';
 
 // 인라인 스타일 기반 색상 (Tailwind 퍼지 문제 방지)
 const STATUS_BG = {
@@ -43,6 +44,7 @@ const ITEM_STATUS_BG = {
 };
 
 export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, onDateClick }) {
+  const { lang, t, content } = useLanguage();
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth()); // 0-indexed
@@ -128,13 +130,13 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <CalendarDays className="w-5 h-5 text-primary" />
           <h2 className="text-base sm:text-lg font-bold">
-            {currentYear}년 {currentMonth + 1}월
-          </h2>
-          <Badge variant="outline" className="text-[10px] sm:text-xs">{cardsWithDueDate}개 카드 · {itemsWithDueDate}개 세부업무</Badge>
+            {lang === 'zh' ? `${currentYear}年 ${currentMonth + 1}月` : `${currentYear}년 ${currentMonth + 1}월`}
+            </h2>
+            <Badge variant="outline" className="text-[10px] sm:text-xs">{cardsWithDueDate}{t('calendar.cards')} · {itemsWithDueDate}{t('calendar.tasks')}</Badge>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={goToday} className="text-xs h-7 px-3">
-            오늘
+            {t('calendar.today')}
           </Button>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevMonth}>
             <ChevronLeft className="w-4 h-4" />
@@ -147,7 +149,7 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
 
       {/* Week header */}
       <div className="grid grid-cols-7 border-b">
-        {WEEK_DAYS.map((day, i) => (
+        {(lang === 'zh' ? ['日', '一', '二', '三', '四', '五', '六'] : WEEK_DAYS).map((day, i) => (
           <div key={day} className={`text-center text-xs font-medium py-2 ${i === 0 ? 'text-destructive' : i === 6 ? 'text-primary' : 'text-muted-foreground'}`}>
             {day}
           </div>
@@ -201,13 +203,13 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
                         backgroundColor: getCardBg(entry.priority, entry.status),
                         textDecoration: entry.status === 'DONE' ? 'line-through' : 'none',
                       }}
-                      title={`[${entry.priority || '우선순위없음'}] ${entry.title}`}
+                      title={`[${entry.priority ? t(`priority.${entry.priority}`) : t('calendar.noPriority')}] ${content(entry, 'title')}`}
                     >
                       {PRIORITY_EMOJI[entry.priority] && (
                         <span className="mr-0.5 text-[9px]">{PRIORITY_EMOJI[entry.priority]}</span>
                       )}
-                      {entry.title}
-                    </div>
+                      {content(entry, 'title')}
+                      </div>
                   ) : (
                     <div
                       key={entry.id}
@@ -217,15 +219,15 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
                         opacity: 0.85,
                         textDecoration: entry.status === 'DONE' ? 'line-through' : 'none',
                       }}
-                      title={`[세부업무] ${entry.title}`}
+                      title={`[${t('calendar.detailTask')}] ${content(entry, 'title')}`}
                     >
-                      ↳ {PRIORITY_EMOJI[entry.priority] || ''}{entry.title}
+                      ↳ {PRIORITY_EMOJI[entry.priority] || ''}{content(entry, 'title')}
                     </div>
                   )
                 ))}
                 {allDayEntries.length > 3 && (
                   <div className="text-[9px] text-muted-foreground px-1 font-medium">
-                    +{allDayEntries.length - 3}개 더
+                    +{allDayEntries.length - 3}{t('calendar.more')}
                   </div>
                 )}
               </div>
@@ -236,14 +238,14 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
 
       {/* Legend */}
       <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-3 border-t bg-muted/20 flex-wrap">
-        <span className="text-[10px] font-semibold text-muted-foreground mr-1">우선순위:</span>
-        {[['URGENT','#ef4444','긴급'], ['HIGH','#f97316','높음'], ['MEDIUM',null,'보통'], ['LOW','#94a3b8','낮음']].map(([k, color, v]) => (
+        <span className="text-[10px] font-semibold text-muted-foreground mr-1">{t('calendar.priority')}:</span>
+        {[['URGENT','#ef4444'], ['HIGH','#f97316'], ['MEDIUM',null], ['LOW','#94a3b8']].map(([k, color]) => (
           <div key={k} className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color || '#6366f1' }} />
-            <span className="text-[10px] text-muted-foreground">{v}</span>
+            <span className="text-[10px] text-muted-foreground">{t(`priority.${k}`)}</span>
           </div>
         ))}
-        <span className="text-[10px] font-semibold text-muted-foreground ml-2 mr-1">↳ 세부업무</span>
+        <span className="text-[10px] font-semibold text-muted-foreground ml-2 mr-1">↳ {t('calendar.detailTask')}</span>
       </div>
     </div>
   );
