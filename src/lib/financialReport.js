@@ -4,14 +4,15 @@ export const CURRENCIES = {
   KRW: { symbol: '₩', label: 'KRW' },
 };
 
-const rates = (quote) => ({ usd: Number(quote.exchange_rate_usd) || 1380, cny: Number(quote.exchange_rate_krw) || 190 });
+const rates = (quote) => ({ usdKrw: Number(quote.exchange_rate_usd) || 0, usdCny: Number(quote.exchange_rate_usd_cny) || 0, legacyCnyKrw: Number(quote.exchange_rate_krw) || 0 });
 
 export const quoteAmounts = (quote, currency) => {
   const rate = rates(quote);
-  const revenueCny = Number(quote.final_client_price) || ((Number(quote.final_price_usd) || 0) * rate.usd / rate.cny);
-  const costCny = (Number(quote.factory_total_cost) || 0) + (Number(quote.logistics_cost) || 0);
-  const convert = (value) => currency === 'USD' ? value * rate.cny / rate.usd : currency === 'KRW' ? value * rate.cny : value;
-  return { revenue: convert(revenueCny), margin: convert(Math.max(0, revenueCny - costCny)) };
+  const modern = rate.usdCny > 0;
+  const revenueUSD = modern ? Number(quote.final_client_price) || Number(quote.final_price_usd) || 0 : rate.usdKrw > 0 && rate.legacyCnyKrw > 0 ? (Number(quote.final_client_price) || 0) * rate.legacyCnyKrw / rate.usdKrw : 0;
+  const costUSD = modern ? ((Number(quote.factory_total_cost) || 0) + (Number(quote.logistics_cost) || 0)) / rate.usdCny : rate.usdKrw > 0 && rate.legacyCnyKrw > 0 ? ((Number(quote.factory_total_cost) || 0) + (Number(quote.logistics_cost) || 0)) * rate.legacyCnyKrw / rate.usdKrw : 0;
+  const convert = (value) => currency === 'USD' ? value : currency === 'KRW' ? value * rate.usdKrw : value * (modern ? rate.usdCny : rate.usdKrw / rate.legacyCnyKrw);
+  return { revenue: convert(revenueUSD), margin: convert(Math.max(0, revenueUSD - costUSD)) };
 };
 
 export const buildMonthlyTrend = (quotes, currency) => {

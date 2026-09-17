@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { quotePriceLabel } from '@/components/quotation/quoteCurrency';
 
 const CATEGORY_LABELS = {
   DRIP_BAG: '드립백 포장기',
@@ -50,7 +51,7 @@ export default function RecentQuotations({ quotations }) {
                   <Badge className={`${st.className} border-0 text-[10px]`}>{st.label}</Badge>
                   {q.final_client_price > 0 && (
                     <p className="text-xs font-semibold mt-1">
-                      ¥{q.final_client_price?.toLocaleString()}
+                      {quotePriceLabel(q)}
                     </p>
                   )}
                 </div>

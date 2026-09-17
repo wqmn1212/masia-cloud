@@ -16,6 +16,8 @@ import SettlementFields from '@/components/quotation/SettlementFields';
 import RiskAlertPopup from '@/components/quotation/RiskAlertPopup';
 import QuotationHistoryButton from '@/components/quotation/QuotationHistoryButton';
 import ManualExchangeRates from '@/components/quotation/ManualExchangeRates';
+import CurrencyPanel from '@/components/quotation/CurrencyPanel';
+import { quotePriceLabel } from '@/components/quotation/quoteCurrency';
 
 const CATEGORY_LABELS = {
   DRIP_BAG: '드립백 포장기',
@@ -67,23 +69,18 @@ export default function Quotations() {
     settlement_route: 'CLIENT_TO_AEGIS', quote_issuer: 'AEGIS',
     factory_total_cost: 0, logistics_cost: 0,
     masir_fee_type: 'PERCENT', masir_fee_value: 0,
-    final_client_price: 0, final_currency: 'CNY', status: 'DRAFT',
-    exchange_rate_date: '', exchange_rate_usd: '', exchange_rate_krw: '',
+    final_client_price: 0, final_currency: 'USD', status: 'DRAFT',
+    exchange_rate_date: '', exchange_rate_usd: '', exchange_rate_usd_cny: '', exchange_rate_krw: '',
   });
 
   const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
-  // Calculate final price
   useEffect(() => {
-    const base = (form.factory_total_cost || 0) + (form.logistics_cost || 0);
-    let final_price;
-    if (form.masir_fee_type === 'PERCENT') {
-      final_price = base * (1 + (form.masir_fee_value || 0) / 100);
-    } else {
-      final_price = base + (form.masir_fee_value || 0);
-    }
-    updateField('final_client_price', Math.round(final_price * 100) / 100);
-  }, [form.factory_total_cost, form.logistics_cost, form.masir_fee_type, form.masir_fee_value]);
+    const usdToCny = Number(form.exchange_rate_usd_cny) || 0;
+    const baseUSD = usdToCny > 0 ? ((form.factory_total_cost || 0) + (form.logistics_cost || 0)) / usdToCny : 0;
+    const feeUSD = form.masir_fee_type === 'PERCENT' ? baseUSD * (form.masir_fee_value || 0) / 100 : Number(form.masir_fee_value) || 0;
+    updateField('final_client_price', Math.round((baseUSD + feeUSD) * 100) / 100);
+  }, [form.factory_total_cost, form.logistics_cost, form.masir_fee_type, form.masir_fee_value, form.exchange_rate_usd_cny]);
 
   // Recalculate factory total from line items
   useEffect(() => {
@@ -103,11 +100,11 @@ export default function Quotations() {
   }, [form.machine_category, qcLogs]);
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Quotation.create({ ...data, exchange_rate_usd: Number(data.exchange_rate_usd), exchange_rate_krw: Number(data.exchange_rate_krw), tenant_id: me?.tenant_id }),
+    mutationFn: (data) => base44.entities.Quotation.create({ ...data, final_currency: 'USD', final_price_usd: data.final_client_price, exchange_rate_usd: Number(data.exchange_rate_usd), exchange_rate_usd_cny: Number(data.exchange_rate_usd_cny), tenant_id: me?.tenant_id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
       setCreateOpen(false);
-      setForm(f => ({ ...f, exchange_rate_date: '', exchange_rate_usd: '', exchange_rate_krw: '' }));
+      setForm(f => ({ ...f, exchange_rate_date: '', exchange_rate_usd: '', exchange_rate_usd_cny: '', exchange_rate_krw: '' }));
       toast({ title: t('quotations.add') });
     },
   });
@@ -191,7 +188,8 @@ export default function Quotations() {
                     onFeeTypeChange={(v) => updateField('masir_fee_type', v)}
                     onFeeValueChange={(v) => updateField('masir_fee_value', v)}
                     finalPrice={form.final_client_price}
-                    usdToCny={Number(form.exchange_rate_usd) > 0 && Number(form.exchange_rate_krw) > 0 ? Number(form.exchange_rate_usd) / Number(form.exchange_rate_krw) : 0}
+                    usdToCny={Number(form.exchange_rate_usd_cny) || 0}
+                    usdToKrw={Number(form.exchange_rate_usd) || 0}
                   />
                 </div>
               </div>
@@ -230,7 +228,7 @@ export default function Quotations() {
                   <div className="flex items-center gap-4">
                     <Badge className={`${st.className} border-0`}>{t(`qstatus.${q.status}`)}</Badge>
                     {q.final_client_price > 0 && (
-                      <p className="text-sm font-bold">¥{q.final_client_price?.toLocaleString()}</p>
+                      <p className="text-sm font-bold">{quotePriceLabel(q)}</p>
                     )}
                     <Eye className="w-4 h-4 text-muted-foreground" />
                   </div>
@@ -269,9 +267,10 @@ export default function Quotations() {
                 </div>
                 <div className="p-3 rounded-lg bg-primary/10">
                   <p className="text-xs text-primary">{t('quotations.detail.finalprice')}</p>
-                  <p className="text-lg font-bold text-primary">¥{(detailQuote.final_client_price || 0).toLocaleString()}</p>
+                  <p className="text-lg font-bold text-primary">{quotePriceLabel(detailQuote)}</p>
                 </div>
               </div>
+              {detailQuote.final_client_price > 0 && <CurrencyPanel {...(detailQuote.exchange_rate_usd_cny ? { usd: detailQuote.final_client_price, usdToCny: detailQuote.exchange_rate_usd_cny, usdToKrw: detailQuote.exchange_rate_usd } : { legacyCny: detailQuote.final_client_price, usdToKrw: detailQuote.exchange_rate_usd, legacyCnyToKrw: detailQuote.exchange_rate_krw })} />}
               {detailQuote.line_items?.length > 0 && (
                 <div>
                   <p className="text-sm font-semibold mb-2">{t('quotations.detail.items')}</p>

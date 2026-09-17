@@ -18,6 +18,8 @@ import LogisticsEstimator from '@/components/quotation/LogisticsEstimator';
 import { calcCbm } from '@/lib/logisticsEstimator';
 import QuotationHistoryButton from '@/components/quotation/QuotationHistoryButton';
 import ManualExchangeRates from '@/components/quotation/ManualExchangeRates';
+import CurrencyPanel from '@/components/quotation/CurrencyPanel';
+import { calculateQuote, fromUSD, isUsdQuote } from '@/components/quotation/quoteCurrency';
 
 const STATUS_META = {
   DRAFT:    { label: '초안',     color: 'bg-muted text-muted-foreground' },
@@ -37,7 +39,7 @@ const emptyForm = {
   product_name: '',
   model_name: '',
   quote_options: [],
-  final_currency: 'CNY',
+  final_currency: 'USD',
   factory_total_cost: '',
   factory_cost_currency: 'CNY',
   logistics_cost: '',
@@ -46,6 +48,7 @@ const emptyForm = {
   masir_fee_value: '',
   exchange_rate_date: '',
   exchange_rate_usd: '',
+  exchange_rate_usd_cny: '',
   exchange_rate_krw: '',
   remarks: '',
   advance_payment_percent: '30',
@@ -64,53 +67,6 @@ const emptyForm = {
   logistics_estimated_usd: '',
   logistics_estimate_lines: [],
 };
-
-// 통화 변환 헬퍼 — 사용자 입력 환율(1 USD = ? KRW, 1 CNY = ? KRW) 기준으로 CNY 로 환산
-function toCNY(value, currency, usdToKrw, cnyToKrw) {
-  const v = Number(value) || 0;
-  if (!currency || currency === 'CNY') return v;
-  if (currency === 'KRW') return cnyToKrw > 0 ? v / cnyToKrw : 0;
-  if (currency === 'USD') return (cnyToKrw > 0 && usdToKrw > 0) ? (v * usdToKrw) / cnyToKrw : 0;
-  return v;
-}
-function fromCNY(cny, currency, usdToKrw, cnyToKrw) {
-  const v = Number(cny) || 0;
-  if (!currency || currency === 'CNY') return v;
-  if (currency === 'KRW') return cnyToKrw > 0 ? Math.round(v * cnyToKrw) : 0;
-  if (currency === 'USD') return (cnyToKrw > 0 && usdToKrw > 0) ? Number(((v * cnyToKrw) / usdToKrw).toFixed(2)) : 0;
-  return v;
-}
-
-// 견적 금액 계산 헬퍼
-function calcQuote(factory_total_cost, logistics_cost, masir_fee_type, masir_fee_value) {
-  const base = (Number(factory_total_cost) || 0) + (Number(logistics_cost) || 0);
-  const fee = masir_fee_type === 'PERCENT'
-    ? base * (Number(masir_fee_value) || 0) / 100
-    : (Number(masir_fee_value) || 0);
-  return { base, fee, total: base + fee };
-}
-
-function CurrencyPanel({ cny, usdRate, krwRate }) {
-  const krwAmount = krwRate ? cny * krwRate : 0;
-  const usd = usdRate && krwRate ? (krwAmount / usdRate).toFixed(2) : null;
-  const krw = krwRate ? Math.round(cny * krwRate).toLocaleString() : null;
-  return (
-    <div className="grid grid-cols-3 gap-2 mt-2">
-      <div className="rounded-lg bg-amber-50 border border-amber-200 p-2 text-center">
-        <p className="text-[10px] text-amber-600 font-medium">CNY 위안</p>
-        <p className="text-sm font-bold text-amber-700">¥{cny.toLocaleString()}</p>
-      </div>
-      <div className="rounded-lg bg-blue-50 border border-blue-200 p-2 text-center">
-        <p className="text-[10px] text-blue-600 font-medium">USD 달러</p>
-        <p className="text-sm font-bold text-blue-700">{usd ? `$${usd}` : '—'}</p>
-      </div>
-      <div className="rounded-lg bg-green-50 border border-green-200 p-2 text-center">
-        <p className="text-[10px] text-green-600 font-medium">KRW 원화</p>
-        <p className="text-sm font-bold text-green-700">{krw ? `₩${krw}` : '—'}</p>
-      </div>
-    </div>
-  );
-}
 
 export default function QuotationTab({ card, user }) {
   const [showForm, setShowForm] = useState(false);
@@ -250,35 +206,13 @@ export default function QuotationTab({ card, user }) {
     setUploadingImage(false);
   };
 
-  const { factoryCNY, logisticsCNY, calc, optionsTotalUSD, optionsMarginUSD, optionsMarginCNY } = useMemo(() => {
-    const usdR = Number(form.exchange_rate_usd) || 0;
-    const krwR = Number(form.exchange_rate_krw) || 0;
-    const optUSD = (form.quote_options || []).reduce((s, o) => s + (Number(o.quantity) || 0) * optionToUSD(o.unit_price, o.currency, usdR, krwR), 0);
-    // 항목별 마진 합산 (USD)
-    const marginUSD = (form.quote_options || []).reduce((s, o) => s + (Number(o.quantity) || 0) * optionToUSD(o.unit_price, o.currency, usdR, krwR) * (Number(o.margin_percent) || 0) / 100, 0);
-    // 옵션이 있으면 옵션 합산(USD)이 공장 원가로 자동 반영
-    const fCNY = optUSD > 0 ? toCNY(optUSD, 'USD', usdR, krwR) : toCNY(form.factory_total_cost, form.factory_cost_currency, usdR, krwR);
-    const lCNY = toCNY(form.logistics_cost, form.logistics_cost_currency, usdR, krwR);
-    return {
-      factoryCNY: fCNY,
-      logisticsCNY: lCNY,
-      optionsTotalUSD: optUSD,
-      optionsMarginUSD: marginUSD,
-      optionsMarginCNY: toCNY(marginUSD, 'USD', usdR, krwR),
-      calc: calcQuote(fCNY, lCNY, form.masir_fee_type, form.masir_fee_value),
-    };
-  }, [
-    form.quote_options,
-    form.factory_total_cost, form.factory_cost_currency,
-    form.logistics_cost, form.logistics_cost_currency,
-    form.masir_fee_type, form.masir_fee_value,
-    form.exchange_rate_usd, form.exchange_rate_krw,
-  ]);
+  const quoteCalc = useMemo(() => calculateQuote(form), [form]);
+  const { factoryCNY, logisticsCNY, optionBaseUSD: optionsTotalUSD, optionMarginUSD: optionsMarginUSD, baseUSD, feeUSD, totalUSD } = quoteCalc;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const usdR = Number(form.exchange_rate_usd) || 0;
-    const cnyR = Number(form.exchange_rate_krw) || 0;
+    const cnyR = Number(form.exchange_rate_usd_cny) || 0;
     const normalizedOptions = (form.quote_options || [])
       .filter(o => o.option_name || o.unit_price)
       .map(o => ({
@@ -292,12 +226,11 @@ export default function QuotationTab({ card, user }) {
       }));
     const optTotalUSD = normalizedOptions.reduce((s, o) => s + o.total_usd, 0);
     const optMarginUSD = normalizedOptions.reduce((s, o) => s + o.total_usd * (o.margin_percent || 0) / 100, 0);
-    const feeUSD = (usdR > 0 && cnyR > 0) ? calc.fee * cnyR / usdR : 0;
     const payload = {
       ...form,
       quote_options: normalizedOptions,
       options_total_usd: optTotalUSD,
-      final_price_usd: optTotalUSD > 0 ? Number((optTotalUSD + optMarginUSD + feeUSD).toFixed(2)) : 0,
+      final_price_usd: totalUSD,
       remarks: form.remarks || '',
       advance_payment_percent: Number(form.advance_payment_percent) || 0,
       balance_payment_percent: Number(form.balance_payment_percent) || 0,
@@ -312,10 +245,12 @@ export default function QuotationTab({ card, user }) {
       logistics_cost: logisticsCNY,
       logistics_cost_currency: form.logistics_cost_currency || 'CNY',
       masir_fee_value: Number(form.masir_fee_value) || 0,
-      masir_fee_amount_cny: calc.fee,
-      final_client_price: calc.total + optionsMarginCNY,
+      masir_fee_amount_cny: feeUSD * cnyR,
+      final_client_price: totalUSD,
+      final_currency: 'USD',
       exchange_rate_date: form.exchange_rate_date,
-      exchange_rate_usd: Number(form.exchange_rate_usd) || 0,
+      exchange_rate_usd: usdR,
+      exchange_rate_usd_cny: cnyR,
       exchange_rate_krw: Number(form.exchange_rate_krw) || 0,
       cargo_length_cm: Number(form.cargo_length_cm) || 0,
       cargo_width_cm: Number(form.cargo_width_cm) || 0,
@@ -344,9 +279,9 @@ export default function QuotationTab({ card, user }) {
     const fCur = q.factory_cost_currency || 'CNY';
     const lCur = q.logistics_cost_currency || 'CNY';
     const usdR = Number(q.exchange_rate_usd) || 0;
-    const krwR = Number(q.exchange_rate_krw) || 0;
-    const fDisp = q.factory_total_cost != null ? fromCNY(q.factory_total_cost, fCur, usdR, krwR) : '';
-    const lDisp = q.logistics_cost != null ? fromCNY(q.logistics_cost, lCur, usdR, krwR) : '';
+    const cnyR = Number(q.exchange_rate_usd_cny) || 0;
+    const fDisp = q.factory_total_cost != null ? (fCur === 'CNY' || !cnyR ? q.factory_total_cost : fromUSD(q.factory_total_cost / cnyR, fCur, usdR, cnyR)) : '';
+    const lDisp = q.logistics_cost != null ? (lCur === 'CNY' || !cnyR ? q.logistics_cost : fromUSD(q.logistics_cost / cnyR, lCur, usdR, cnyR)) : '';
     setEditingId(q.id);
     updateMutation.reset();
     setForm({
@@ -362,7 +297,7 @@ export default function QuotationTab({ card, user }) {
           ? { ...o, unit_price: o.unit_price_usd, currency: 'USD' }
           : o
       )),
-      final_currency: q.final_currency || 'CNY',
+      final_currency: q.exchange_rate_usd_cny ? 'USD' : (q.final_currency || 'CNY'),
       factory_total_cost: fDisp === 0 ? '' : fDisp,
       factory_cost_currency: fCur,
       logistics_cost: lDisp === 0 ? '' : lDisp,
@@ -371,6 +306,7 @@ export default function QuotationTab({ card, user }) {
       masir_fee_value: q.masir_fee_value ?? '',
       exchange_rate_date: q.exchange_rate_date || '',
       exchange_rate_usd: q.exchange_rate_usd || '',
+      exchange_rate_usd_cny: q.exchange_rate_usd_cny || '',
       exchange_rate_krw: q.exchange_rate_krw || '',
       remarks: q.remarks || '',
       advance_payment_percent: q.advance_payment_percent ?? '30',
@@ -444,23 +380,12 @@ export default function QuotationTab({ card, user }) {
               options={form.quote_options}
               onChange={(opts) => setForm(f => ({ ...f, quote_options: opts }))}
               usdToKrw={Number(form.exchange_rate_usd) || 0}
-              cnyToKrw={Number(form.exchange_rate_krw) || 0}
+              usdToCny={Number(form.exchange_rate_usd_cny) || 0}
             />
             <div className="mt-3"><ManualExchangeRates compact values={form} onChange={(field, value) => setForm(f => ({ ...f, [field]: value }))} /></div>
           </div>
 
-          <div>
-            <Label className="text-xs">PDF 최종 메인 통화</Label>
-            <Select value={form.final_currency} onValueChange={v => setForm(f => ({ ...f, final_currency: v }))}>
-              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="USD" className="text-xs">$ USD · 달러</SelectItem>
-                <SelectItem value="CNY" className="text-xs">¥ CNY · 위안</SelectItem>
-                <SelectItem value="KRW" className="text-xs">₩ KRW · 원</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-[10px] text-muted-foreground mt-1">PDF 다운로드 시 모든 옵션 단가와 합계가 이 통화로 환산됩니다.</p>
-          </div>
+          <div className="rounded-lg border bg-primary/5 px-3 py-2"><p className="text-xs font-semibold text-primary">거래 및 PDF 기준 통화: USD</p><p className="text-[10px] text-muted-foreground">CNY 공장 원가는 직접 USD/CNY 환율로 환산되며 KRW는 참고가로만 표시됩니다.</p></div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -567,12 +492,12 @@ export default function QuotationTab({ card, user }) {
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="PERCENT">% (원가+물류비 기준)</SelectItem>
-                  <SelectItem value="FIXED">고정 (CNY ¥)</SelectItem>
+                  <SelectItem value="FIXED">고정 (USD $)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs">수수료 {form.masir_fee_type === 'PERCENT' ? '(%)' : '(CNY ¥)'}</Label>
+              <Label className="text-xs">수수료 {form.masir_fee_type === 'PERCENT' ? '(%)' : '(USD $)'}</Label>
               <Input type="number" value={form.masir_fee_value} onChange={e => setForm(f => ({ ...f, masir_fee_value: e.target.value }))} className="h-8 text-xs" />
             </div>
           </div>
@@ -619,31 +544,16 @@ export default function QuotationTab({ card, user }) {
           </div>
 
           {/* 자동 계산 요약 */}
-          {(calc.base > 0 || calc.fee > 0 || optionsMarginCNY > 0) && (
+          {(baseUSD > 0 || feeUSD > 0 || optionsMarginUSD > 0) && (
             <div className="rounded-xl border bg-muted/30 p-3 space-y-2">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">고객 제안가 자동 계산</p>
-              <div className={`grid ${optionsMarginCNY > 0 ? 'grid-cols-4' : 'grid-cols-3'} gap-2 text-xs`}>
-                <div className="text-center">
-                  <p className="text-muted-foreground text-[10px]">원가 + 물류비</p>
-                  <p className="font-semibold">¥{Math.round(calc.base).toLocaleString()}</p>
-                </div>
-                {optionsMarginCNY > 0 && (
-                  <div className="text-center">
-                    <p className="text-muted-foreground text-[10px]">항목별 마진</p>
-                    <p className="font-semibold text-accent">¥{Math.round(optionsMarginCNY).toLocaleString()}</p>
-                  </div>
-                )}
-                <div className="text-center">
-                  <p className="text-muted-foreground text-[10px]">수수료 {form.masir_fee_type === 'PERCENT' ? `(${form.masir_fee_value}%)` : '(고정)'}</p>
-                  <p className="font-semibold text-accent">¥{Math.round(calc.fee).toLocaleString()}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-muted-foreground text-[10px]">고객 제안가</p>
-                  <p className="font-bold text-primary">¥{Math.round(calc.total + optionsMarginCNY).toLocaleString()}</p>
-                </div>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">고객 제안가 자동 계산 (USD 거래 기준)</p>
+              <div className="grid grid-cols-4 gap-2 text-xs">
+                <div className="text-center"><p className="text-muted-foreground text-[10px]">원가 + 물류</p><p className="font-semibold">${baseUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p></div>
+                <div className="text-center"><p className="text-muted-foreground text-[10px]">항목별 마진</p><p className="font-semibold text-accent">${optionsMarginUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p></div>
+                <div className="text-center"><p className="text-muted-foreground text-[10px]">수수료</p><p className="font-semibold text-accent">${feeUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p></div>
+                <div className="text-center"><p className="text-muted-foreground text-[10px]">최종 거래가</p><p className="font-bold text-primary">${totalUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p></div>
               </div>
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mt-1">입력한 고정 환율 기준 통화 환산</p>
-              {(calc.total + optionsMarginCNY) > 0 && <CurrencyPanel cny={calc.total + optionsMarginCNY} usdRate={Number(form.exchange_rate_usd)} krwRate={Number(form.exchange_rate_krw)} />}
+              <CurrencyPanel usd={totalUSD} usdToCny={Number(form.exchange_rate_usd_cny)} usdToKrw={Number(form.exchange_rate_usd)} />
             </div>
           )}
 
@@ -666,9 +576,6 @@ export default function QuotationTab({ card, user }) {
         <div className="space-y-2">
           {quotations.map(q => {
             const st = STATUS_META[q.status] || STATUS_META.DRAFT;
-            const margin = q.final_client_price && q.factory_total_cost
-              ? ((q.final_client_price - q.factory_total_cost - (q.logistics_cost || 0)) / q.final_client_price * 100).toFixed(1)
-              : null;
             return (
               <div key={q.id} className="border rounded-xl p-3 space-y-2 hover:bg-muted/20 transition-colors">
                 <div className="flex items-center justify-between">
@@ -715,8 +622,9 @@ export default function QuotationTab({ card, user }) {
                     {q.logistics_cost > 0 && <span>물류비: <strong className="text-foreground">¥{q.logistics_cost?.toLocaleString()}</strong></span>}
                     {q.masir_fee_amount_cny > 0 && <span>수수료: <strong className="text-accent">¥{q.masir_fee_amount_cny?.toLocaleString()} {q.masir_fee_type === 'PERCENT' ? `(${q.masir_fee_value}%)` : '(고정)'}</strong></span>}
                   </div>
-                  {q.final_client_price > 0 && (
-                    <CurrencyPanel cny={q.final_client_price} usdRate={q.exchange_rate_usd} krwRate={q.exchange_rate_krw} />
+                  {q.final_client_price > 0 && (isUsdQuote(q)
+                    ? <CurrencyPanel usd={q.final_client_price} usdToCny={q.exchange_rate_usd_cny} usdToKrw={q.exchange_rate_usd} />
+                    : <CurrencyPanel legacyCny={q.final_client_price} usdToKrw={q.exchange_rate_usd} legacyCnyToKrw={q.exchange_rate_krw} />
                   )}
                 </div>
                 {q.raw_file_url && (

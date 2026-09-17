@@ -32,8 +32,9 @@ export default async function (req) {
     }
 
     const usdToKrw = Number(q.exchange_rate_usd) || 0;
-    const cnyToKrw = Number(q.exchange_rate_krw) || 0;
-    const usdToCny = usdToKrw > 0 && cnyToKrw > 0 ? usdToKrw / cnyToKrw : 0;
+    const usdToCny = Number(q.exchange_rate_usd_cny) || 0;
+    const legacyCnyToKrw = Number(q.exchange_rate_krw) || 0;
+    const modernUSD = usdToCny > 0;
 
     const options = Array.isArray(q.quote_options) ? q.quote_options : [];
     const baseOf = (o) =>
@@ -43,33 +44,23 @@ export default async function (req) {
     let totalDisplay = 0;
     let currency = 'USD';
 
-    if (options.length > 0) {
-      const feeUSD = usdToKrw > 0 && cnyToKrw > 0 ? ((Number(q.masir_fee_amount_cny) || 0) * cnyToKrw) / usdToKrw : 0;
-      const withMarginUSD = options.reduce(
-        (s, o) => s + baseOf(o) * (1 + (Number(o.margin_percent) || 0) / 100),
-        0
-      );
+    if (options.length > 0 && modernUSD) {
+      const feeUSD = Number(q.final_price_usd) > 0 ? 0 : (Number(q.masir_fee_amount_cny) || 0) / usdToCny;
+      const withMarginUSD = options.reduce((s, o) => s + baseOf(o) * (1 + (Number(o.margin_percent) || 0) / 100), 0);
       const totalUSD = Number(q.final_price_usd) > 0 ? Number(q.final_price_usd) : withMarginUSD + feeUSD;
       const factor = withMarginUSD > 0 ? totalUSD / withMarginUSD : 1;
-
-      const optCurs = [...new Set(options.map((o) => o.currency || 'USD'))];
-      const inferred = optCurs.length === 1 ? optCurs[0] : 'USD';
-      currency = ['USD', 'CNY', 'KRW'].includes(q.final_currency) ? q.final_currency : inferred;
-      const fromUSD = (v) =>
-        currency === 'USD' ? v : currency === 'CNY' ? (usdToCny > 0 ? v * usdToCny : 0) : usdToKrw > 0 ? Math.round(v * usdToKrw) : 0;
-
+      currency = 'USD';
       lineItems = options.map((o) => {
-        const total = fromUSD(baseOf(o) * (1 + (Number(o.margin_percent) || 0) / 100) * factor);
+        const total = baseOf(o) * (1 + (Number(o.margin_percent) || 0) / 100) * factor;
         const qty = Number(o.quantity) || 0;
-        return {
-          option_name: o.option_name || '',
-          specification: o.specification || '',
-          quantity: o.quantity ?? null,
-          unit_price_display: qty > 0 ? total / qty : total,
-          total_display: total,
-        };
+        return { option_name: o.option_name || '', specification: o.specification || '', quantity: o.quantity ?? null, unit_price_display: qty > 0 ? total / qty : total, total_display: total };
       });
-      totalDisplay = fromUSD(totalUSD);
+      totalDisplay = totalUSD;
+    } else if (modernUSD) {
+      currency = 'USD';
+      const totalUSD = Number(q.final_client_price) || Number(q.final_price_usd) || 0;
+      lineItems = [{ option_name: q.product_name || '장비 본체 일체', specification: q.model_name || '-', quantity: 1, unit_price_display: totalUSD, total_display: totalUSD }];
+      totalDisplay = totalUSD;
     } else {
       // 레거시 경로: CNY 기준 (제품 금액에 수수료 합산, 물류비 별도 행)
       currency = 'CNY';
@@ -111,7 +102,8 @@ export default async function (req) {
       final_currency: currency,
       exchange_rate_date: q.exchange_rate_date || '',
       exchange_rate_usd: usdToKrw,
-      exchange_rate_krw: cnyToKrw,
+      exchange_rate_usd_cny: usdToCny,
+      exchange_rate_krw: legacyCnyToKrw,
       quote_issuer: issuer,
       issuer_name: issuer === 'FACTORY' ? q.factory_name || '' : 'DONGGUAN AEGIS TRADE CO., LTD',
       remarks: q.remarks || '',

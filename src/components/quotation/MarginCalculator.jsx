@@ -16,8 +16,11 @@ export default function MarginCalculator({
   onFeeValueChange,
   finalPrice,
   usdToCny = 0,
+  usdToKrw = 0,
 }) {
   const baseCost = (factoryTotal || 0) + (logisticsCost || 0);
+  const finalCNY = usdToCny > 0 ? (Number(finalPrice) || 0) * usdToCny : 0;
+  const finalKRW = usdToKrw > 0 ? (Number(finalPrice) || 0) * usdToKrw : 0;
   const [cargo, setCargo] = React.useState({ shipping_mode: 'SEA_LCL', shipping_term: 'FOB', cargo_quantity: 1 });
 
   return (
@@ -67,13 +70,13 @@ export default function MarginCalculator({
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="FIXED" id="fixed" />
-              <Label htmlFor="fixed" className="text-sm cursor-pointer">정액 (¥)</Label>
+              <Label htmlFor="fixed" className="text-sm cursor-pointer">정액 ($)</Label>
             </div>
           </RadioGroup>
         </div>
 
         <div>
-          <Label className="text-xs">수수료 값 {feeType === 'PERCENT' ? '(%)' : '(¥)'}</Label>
+          <Label className="text-xs">수수료 값 {feeType === 'PERCENT' ? '(%)' : '($)'}</Label>
           <Input
             type="number"
             step="0.01"
@@ -88,9 +91,8 @@ export default function MarginCalculator({
             <TrendingUp className="w-4 h-4 text-primary" />
             <p className="text-xs font-semibold text-primary">최종 고객사 제안가</p>
           </div>
-          <p className="text-3xl font-extrabold text-primary">
-            ¥{(finalPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
+          <p className="text-3xl font-extrabold text-primary">${(finalPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <p className="text-xs text-muted-foreground mt-1">참고: {finalCNY > 0 ? `¥${finalCNY.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : 'CNY 환율 입력 필요'} · {finalKRW > 0 ? `₩${Math.round(finalKRW).toLocaleString()}` : 'KRW 환율 입력 필요'}</p>
         </div>
       </CardContent>
     </Card>

@@ -36,10 +36,12 @@ function buildHTML(p) {
   const bal = p.balance_payment_percent || (100 - adv);
   const shipDays = p.shipping_days || 0;
   const issuer = p.issuer_name || 'DONGGUAN AEGIS TRADE CO., LTD';
+  const referenceCny = cur === 'USD' && p.exchange_rate_usd_cny > 0 ? p.total_display * p.exchange_rate_usd_cny : null;
+  const referenceKrw = cur === 'USD' && p.exchange_rate_usd > 0 ? p.total_display * p.exchange_rate_usd : null;
 
   const rateParts = [];
+  if (p.exchange_rate_usd_cny > 0) rateParts.push(`$1 = ¥${Number(p.exchange_rate_usd_cny).toLocaleString()}`);
   if (p.exchange_rate_usd > 0) rateParts.push(`$1 = ₩${Number(p.exchange_rate_usd).toLocaleString()}`);
-  if (p.exchange_rate_krw > 0) rateParts.push(`¥1 = ₩${Number(p.exchange_rate_krw).toLocaleString()}`);
 
   return `
     <div style="font-family: 'Noto Sans KR', 'Malgun Gothic', -apple-system, sans-serif; color: #0f172a; padding: 40px; background: #fff; width: 794px; box-sizing: border-box; line-height:1.4;">
@@ -118,8 +120,9 @@ function buildHTML(p) {
           <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#2563eb; color:#fff; border-radius:8px; line-height:1.2;">
             <span style="font-weight:700; letter-spacing:0.3px; line-height:1.2;">TOTAL · 합계</span>
             <strong style="font-size:18px; line-height:1.2;">${fmt(p.total_display, cur)}</strong>
-          </div>
-          ${rateParts.length ? `
+            </div>
+            ${referenceCny != null || referenceKrw != null ? `<div style="margin-top:7px;text-align:right;font-size:10.5px;color:#475569;">참고 환산: ${referenceCny != null ? fmt(referenceCny, 'CNY') : ''}${referenceCny != null && referenceKrw != null ? ' · ' : ''}${referenceKrw != null ? fmt(referenceKrw, 'KRW') : ''}</div>` : ''}
+            ${rateParts.length ? `
           <div style="margin-top:8px; font-size:10.5px; color:#64748b; text-align:right; line-height:1.6;">
             당일 적용 환율: ${rateParts.join(' · ')}${p.exchange_rate_date ? ` (기준일: ${p.exchange_rate_date})` : ''}
           </div>` : ''}

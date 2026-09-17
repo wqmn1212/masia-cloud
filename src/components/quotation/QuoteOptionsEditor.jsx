@@ -3,19 +3,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2 } from 'lucide-react';
+import { toUSD } from '@/components/quotation/quoteCurrency';
 
 const fmtCNY = (v) => '¥' + Number(v || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 });
+export const optionToUSD = toUSD;
 
-// 통화별 금액을 USD 로 환산 (usdToKrw: 1 USD = ? KRW, cnyToKrw: 1 CNY = ? KRW)
-export function optionToUSD(value, currency, usdToKrw, cnyToKrw) {
-  const v = Number(value) || 0;
-  if (!currency || currency === 'USD') return v;
-  if (currency === 'KRW') return usdToKrw > 0 ? v / usdToKrw : 0;
-  if (currency === 'CNY') return (usdToKrw > 0 && cnyToKrw > 0) ? (v * cnyToKrw) / usdToKrw : 0;
-  return v;
-}
-
-export default function QuoteOptionsEditor({ options = [], onChange, usdToKrw = 0, cnyToKrw = 0 }) {
+export default function QuoteOptionsEditor({ options = [], onChange, usdToKrw = 0, usdToCny = 0 }) {
   const [bulkMargin, setBulkMargin] = useState('');
 
   const update = (i, field, value) => {
@@ -28,17 +21,13 @@ export default function QuoteOptionsEditor({ options = [], onChange, usdToKrw = 
     onChange(options.map(o => ({ ...o, margin_percent: bulkMargin })));
   };
 
-  const toCNY = (value, currency) => {
-    const amount = Number(value) || 0;
-    if (!currency || currency === 'CNY') return amount;
-    if (currency === 'KRW') return cnyToKrw > 0 ? amount / cnyToKrw : 0;
-    return usdToKrw > 0 && cnyToKrw > 0 ? amount * usdToKrw / cnyToKrw : 0;
-  };
+  const toCNY = (value, currency) => currency === 'CNY' || !currency ? Number(value) || 0 : toUSD(value, currency, usdToKrw, usdToCny) * usdToCny;
   const lineBaseCNY = (o) => (Number(o.quantity) || 0) * toCNY(o.unit_price, o.currency);
   const lineClientCNY = (o) => lineBaseCNY(o) * (1 + (Number(o.margin_percent) || 0) / 100);
   const baseTotalCNY = options.reduce((s, o) => s + lineBaseCNY(o), 0);
   const clientTotalCNY = options.reduce((s, o) => s + lineClientCNY(o), 0);
-  const totalKRW = cnyToKrw > 0 ? Math.round(clientTotalCNY * cnyToKrw) : null;
+  const clientTotalUSD = options.reduce((s, o) => s + (Number(o.quantity) || 0) * toUSD(o.unit_price, o.currency || 'CNY', usdToKrw, usdToCny) * (1 + (Number(o.margin_percent) || 0) / 100), 0);
+  const totalKRW = usdToKrw > 0 && usdToCny > 0 ? Math.round(clientTotalUSD * usdToKrw) : null;
 
   return (
     <div className="space-y-2">
@@ -90,10 +79,9 @@ export default function QuoteOptionsEditor({ options = [], onChange, usdToKrw = 
           <div className="flex items-center justify-end gap-3 border-t pt-2 mt-1 flex-wrap">
             <span className="text-[11px] text-muted-foreground">원가 합계 {fmtCNY(baseTotalCNY)}</span>
             <span className="text-[11px] text-muted-foreground">합산 총액 (마진 포함)</span>
-            <span className="text-sm font-bold text-primary">{fmtCNY(clientTotalCNY)}</span>
-            {totalKRW != null && (
-              <span className="text-[11px] text-muted-foreground">≈ ₩{totalKRW.toLocaleString()} <span className="opacity-70">(¥1 = ₩{Number(cnyToKrw).toLocaleString()})</span></span>
-            )}
+            <span className="text-sm font-bold text-primary">{usdToCny > 0 ? `$${clientTotalUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : '직접 환율 입력 필요'}</span>
+            <span className="text-[11px] text-muted-foreground">≈ {fmtCNY(clientTotalCNY)}</span>
+            {totalKRW != null && <span className="text-[11px] text-muted-foreground">≈ ₩{totalKRW.toLocaleString()}</span>}
           </div>
         </div>
       )}
