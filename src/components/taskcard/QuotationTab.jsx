@@ -119,8 +119,6 @@ export default function QuotationTab({ card, user }) {
   const [parsing, setParsing] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [editingTimestamp, setEditingTimestamp] = useState('');
-  const [revisionReason, setRevisionReason] = useState('');
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const canEditIssuer = ['master', 'service', 'sub'].includes(user?.account_tier);
@@ -133,8 +131,6 @@ export default function QuotationTab({ card, user }) {
   const resetForm = () => {
     setShowForm(false);
     setEditingId(null);
-    setEditingTimestamp('');
-    setRevisionReason('');
     setForm({ ...emptyForm, factory_name: card.factory_name || '', client_name: card.client_name || '' });
   };
 
@@ -150,14 +146,13 @@ export default function QuotationTab({ card, user }) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.functions.invoke('quotationHistory', { action: 'update', quotation_id: id, data, expected_updated_date: editingTimestamp, reason: revisionReason }),
-    onSuccess: (_result, { id }) => {
+    mutationFn: ({ id, data }) => base44.entities.Quotation.update(id, data),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotations-by-card', card.id] });
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
       queryClient.invalidateQueries({ queryKey: ['card-quotations-publish', card.id] });
-      queryClient.invalidateQueries({ queryKey: ['quotation-history', id] });
       resetForm();
-      toast({ title: '견적 수정 완료', description: '변경된 내용이 있으면 수정 전 견적이 이력에 보관됩니다.' });
+      toast({ title: '견적 수정 완료' });
     },
     onError: (err) => {
       queryClient.invalidateQueries({ queryKey: ['quotations-by-card', card.id] });
@@ -353,8 +348,6 @@ export default function QuotationTab({ card, user }) {
     const fDisp = q.factory_total_cost != null ? fromCNY(q.factory_total_cost, fCur, usdR, krwR) : '';
     const lDisp = q.logistics_cost != null ? fromCNY(q.logistics_cost, lCur, usdR, krwR) : '';
     setEditingId(q.id);
-    setEditingTimestamp(q.updated_date);
-    setRevisionReason('');
     updateMutation.reset();
     setForm({
       factory_name: q.factory_name || '',
@@ -412,7 +405,6 @@ export default function QuotationTab({ card, user }) {
       {showForm && (
         <form onSubmit={handleSubmit} className="border rounded-xl p-4 space-y-3 bg-muted/20">
           <p className="text-xs font-semibold">{editingId ? '견적 수정' : '신규 견적 등록'}</p>
-          {editingId && <div className="space-y-1"><Label htmlFor="quotation-revision-reason" className="text-xs">수정 사유 (선택)</Label><Input id="quotation-revision-reason" value={revisionReason} onChange={e => setRevisionReason(e.target.value)} maxLength={2000} placeholder="예: 환율 조정 / 수량 변경 / 추가 옵션 반영" /><p className="text-xs text-muted-foreground">초안도 포함하여 내용이 변경되면 수정 전 견적을 보관합니다. 상태만 변경하면 새 버전은 만들지 않습니다.</p></div>}
           {editingId && updateMutation.isError && <p role="alert" className="text-xs text-destructive">{updateMutation.error?.response?.data?.error || '수정 저장에 실패했습니다. 다시 시도해주세요.'}</p>}
 
           {/* 파일 업로드 */}
