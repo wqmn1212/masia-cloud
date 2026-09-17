@@ -18,7 +18,9 @@
       ]
     },
     "percentage": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
     },
     "approval_status": {
       "type": "string",
@@ -28,6 +30,11 @@
         "REJECTED"
       ],
       "default": "PENDING"
+    },
+    "paid_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc2e4\uc81c \uc785\uae08\uc77c"
     },
     "approved_at": {
       "type": "string",

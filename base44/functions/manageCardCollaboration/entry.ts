@@ -39,15 +39,15 @@ export default async function(req) {
       if (input.expected_updated_date !== stage.updated_date) return Response.json({ error: '입금 상태가 변경되었습니다. 다시 불러오세요.' }, { status: 409 });
       const next = input.confirmed ? 'APPROVED' : 'PENDING';
       if (stage.approval_status === next) return Response.json({ saved: true, unchanged: true });
+      if (input.confirmed && !validDate(input.paid_date)) return Response.json({ error: '실제 입금일을 입력하세요.' }, { status: 400 });
       const label = { DOWN_PAYMENT: '선금', INTERIM_PAYMENT: '중도금', BALANCE_PAYMENT: '잔금' }[stage.stage_type];
       lines = [`${label} ${stage.percentage}%: ${stage.approval_status === 'APPROVED' ? '입금 확인' : '미확인'} → ${input.confirmed ? '입금 확인' : '확인 취소'}`];
       if (stage.stage_type === 'DOWN_PAYMENT') {
-        if (input.confirmed && !validDate(input.paid_date)) return Response.json({ error: '실제 선금 입금일을 입력하세요.' }, { status: 400 });
         patch.advance_paid_date = input.confirmed ? input.paid_date : '';
         if (card.delivery_date_mode !== 'MANUAL') patch.delivery_date = deliveryDate(patch.advance_paid_date, card.delivery_business_days);
         lines.push(...scheduleDiff(card, { ...card, ...patch }));
       }
-      await svc.entities.PaymentStage.update(stage.id, { tenant_id: card.tenant_id, approval_status: next, ...(input.confirmed ? { approved_at: new Date().toISOString(), approved_by_id: user.id, approved_by_name: user.full_name || user.email } : {}) });
+      await svc.entities.PaymentStage.update(stage.id, { tenant_id: card.tenant_id, approval_status: next, paid_date: input.confirmed ? input.paid_date : '', ...(input.confirmed ? { approved_at: new Date().toISOString(), approved_by_id: user.id, approved_by_name: user.full_name || user.email } : {}) });
       title = `[AEGIS] ${card.title} ${label} ${input.confirmed ? '입금 확인' : '확인 취소'}`; kind = 'PAYMENT';
     }
     if (Object.keys(patch).length) await svc.entities.TaskCard.update(card.id, patch);

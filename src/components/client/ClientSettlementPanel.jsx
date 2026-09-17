@@ -36,7 +36,7 @@ export default function ClientSettlementPanel({ stages }) {
           return (
             <div key={s.id} className="flex items-center gap-3 border rounded-lg px-3 py-2.5">
               <span className="text-sm font-medium">{STAGE_LABEL[s.stage_type] || s.stage_type}</span>
-              <span className="text-sm text-muted-foreground">{s.percentage}%</span>
+              <span className="text-sm text-muted-foreground">{s.percentage}%{s.paid_date ? ` · 입금일 ${s.paid_date}` : ''}</span>
               <Badge className={`${m.cls} border-0 ml-auto`}>{m.label}</Badge>
             </div>
           );
