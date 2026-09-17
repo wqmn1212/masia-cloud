@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, BookMarked } from 'lucide-react';
 import DecisionCard from '@/components/decisions/DecisionCard';
 import DecisionForm from '@/components/decisions/DecisionForm';
+import { translateFieldsToCN } from '@/lib/translate';
 
 export default function DecisionsTab({ card, user }) {
   const qc = useQueryClient();
@@ -20,9 +21,13 @@ export default function DecisionsTab({ card, user }) {
   const invalidate = () => qc.invalidateQueries({ queryKey: ['decisions'] });
 
   const saveMut = useMutation({
-    mutationFn: (data) => editing?.id
-      ? base44.entities.DecisionLog.update(editing.id, data)
-      : base44.entities.DecisionLog.create({ ...data, card_id: card.id }),
+    mutationFn: async (data) => {
+      const cn = await translateFieldsToCN({ topic: data.topic, decision: data.decision, rationale: data.rationale });
+      const translated = Object.fromEntries(Object.entries(cn).filter(([k]) => !k.startsWith('__')).map(([k, v]) => [`${k}_cn`, v]));
+      return editing?.id
+        ? base44.entities.DecisionLog.update(editing.id, { ...data, ...translated })
+        : base44.entities.DecisionLog.create({ ...data, ...translated, tenant_id: card.tenant_id, card_id: card.id });
+    },
     onSuccess: () => { invalidate(); setFormOpen(false); setEditing(null); },
   });
   const delMut = useMutation({

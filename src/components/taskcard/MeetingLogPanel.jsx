@@ -7,6 +7,7 @@ import MeetingLogForm from './MeetingLogForm';
 import MeetingLogItem from './MeetingLogItem';
 import MeetingAnalysisDialog from './MeetingAnalysisDialog';
 import MeetingRecordingLibrary from './MeetingRecordingLibrary';
+import { translateFieldsToCN } from '@/lib/translate';
 
 export default function MeetingLogPanel({ card, user, onRecordingBusy = () => {} }) {
   const [adding, setAdding] = useState(false);
@@ -22,14 +23,19 @@ export default function MeetingLogPanel({ card, user, onRecordingBusy = () => {}
   });
 
   const createMut = useMutation({
-    mutationFn: (form) => base44.entities.MeetingLog.create({
-      ...form, tenant_id: card.tenant_id, card_id: card.id, created_by_name: user?.full_name || user?.email || '',
-    }),
+    mutationFn: async (form) => {
+      const cn = await translateFieldsToCN({ title: form.title, attendees: form.attendees, notes: form.notes, decisions: form.decisions, next_steps: form.next_steps });
+      return base44.entities.MeetingLog.create({ ...form, ...Object.fromEntries(Object.entries(cn).filter(([k]) => !k.startsWith('__')).map(([k, v]) => [`${k}_cn`, v])), tenant_id: card.tenant_id, card_id: card.id, created_by_name: user?.full_name || user?.email || '' });
+    },
     onSuccess: () => { setAdding(false); qc.invalidateQueries({ queryKey: ['meeting-logs', card.id] }); },
   });
 
   const updateMut = useMutation({
-    mutationFn: ({ id, form }) => base44.entities.MeetingLog.update(id, form),
+    mutationFn: async ({ id, form }) => {
+      const cn = await translateFieldsToCN({ title: form.title, attendees: form.attendees, notes: form.notes, decisions: form.decisions, next_steps: form.next_steps });
+      const translated = Object.fromEntries(Object.entries(cn).filter(([k]) => !k.startsWith('__')).map(([k, v]) => [`${k}_cn`, v]));
+      return base44.entities.MeetingLog.update(id, { ...form, ...translated });
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['meeting-logs', card.id] }),
   });
 

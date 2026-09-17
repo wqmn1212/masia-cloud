@@ -3,9 +3,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronRight, Pencil, Trash2, CornerDownRight } from 'lucide-react';
 import { CATEGORY_LABELS, STATUS_META } from './decisionMeta';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export default function DecisionCard({ decision, cardTitle, canEdit, onEdit, onDelete }) {
   const [showAlts, setShowAlts] = useState(false);
+  const { content, lang } = useLanguage();
   const st = STATUS_META[decision.status] || STATUS_META.CONFIRMED;
   const alts = decision.alternatives || [];
 
@@ -14,7 +16,7 @@ export default function DecisionCard({ decision, cardTitle, canEdit, onEdit, onD
       <div className="flex items-start gap-2 flex-wrap">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-semibold text-sm">{decision.topic}</h3>
+            <h3 className="font-semibold text-sm">{content(decision, 'topic')}</h3>
             <Badge variant="outline" className="text-[10px]">{CATEGORY_LABELS[decision.category] || decision.category}</Badge>
             <Badge className={`${st.color} border-0 text-[10px]`}>{st.label}</Badge>
           </div>
@@ -28,9 +30,9 @@ export default function DecisionCard({ decision, cardTitle, canEdit, onEdit, onD
         )}
       </div>
 
-      <p className="text-sm mt-2 whitespace-pre-wrap">{decision.decision}</p>
+      <p className="text-sm mt-2 whitespace-pre-wrap">{content(decision, 'decision')}</p>
       {decision.rationale && (
-        <p className="text-xs text-muted-foreground mt-1.5 whitespace-pre-wrap">근거: {decision.rationale}</p>
+        <p className="text-xs text-muted-foreground mt-1.5 whitespace-pre-wrap">{lang === 'zh' ? '依据' : '근거'}: {content(decision, 'rationale')}</p>
       )}
 
       {(decision.status === 'REVERSED' || decision.status === 'SUPERSEDED') && decision.reverse_reason && (

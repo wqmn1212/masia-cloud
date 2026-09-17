@@ -11,6 +11,7 @@ import CategorySelect from './CategorySelect';
 import ClientSelect from './ClientSelect';
 import FactoryMultiSelect from './FactoryMultiSelect';
 import { translateFieldsToCN } from '@/lib/translate';
+import ChineseContentEditor from '@/components/language/ChineseContentEditor';
 
 const CATEGORY_LABELS = {
   DRIP_BAG: '드립백 포장기',
@@ -19,7 +20,7 @@ const CATEGORY_LABELS = {
   TUBE_SEALER: '튜브 실링기',
 };
 
-export default function OverviewTab({ card, kbAlerts, viewLang = 'KR' }) {
+export default function OverviewTab({ card, kbAlerts, viewLang = 'KR', user }) {
   const [form, setForm] = useState({
     title: card.title || '',
     client_name: card.client_name || '',
@@ -46,8 +47,13 @@ export default function OverviewTab({ card, kbAlerts, viewLang = 'KR' }) {
 
   const updateMutation = useMutation({
     mutationFn: async (data) => {
+      if (data.__manualChinese) {
+        const { __manualChinese, ...manualData } = data;
+        return base44.entities.TaskCard.update(card.id, manualData);
+      }
       const saved = await base44.entities.TaskCard.update(card.id, data);
       queryClient.invalidateQueries({ queryKey: ['task-cards'] });
+      if (card.cn_manual) return saved;
       const cn = await translateFieldsToCN({
         title: data.title,
         hq_requirements: data.hq_requirements,
@@ -109,11 +115,10 @@ export default function OverviewTab({ card, kbAlerts, viewLang = 'KR' }) {
           <Label className="text-[11px] text-muted-foreground">代理会谈 / 工厂备注</Label>
           <pre className="text-xs whitespace-pre-wrap font-sans mt-1 leading-relaxed">{card.agent_meeting_notes_cn || card.agent_meeting_notes || '-'}</pre>
         </div>
-        {!hasAny && (
-          <p className="text-xs text-muted-foreground text-center py-2">
-            中文翻译尚未缓存 · 이 카드를 한국어 모드에서 한 번 저장하면 자동 번역됩니다.
-          </p>
-        )}
+        {!hasAny && <p className="text-xs text-muted-foreground text-center py-2">中文翻译尚未缓存，保存韩文后将自动翻译。</p>}
+        {['master', 'service', 'sub'].includes(user?.account_tier) && <ChineseContentEditor record={card} saving={updateMutation.isPending}
+          fields={[{ key: 'title', label: '业务标题' }, { key: 'hq_requirements', label: 'HQ 要求事项', multiline: true }, { key: 'agent_meeting_notes', label: '代理会谈 / 工厂备注', multiline: true }]}
+          onSave={(data) => updateMutation.mutate({ ...data, __manualChinese: true })} />}
       </div>
     );
   }

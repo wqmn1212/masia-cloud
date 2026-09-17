@@ -6,6 +6,8 @@ export const translations = {
     'nav.settlement': '정산 대시보드', 'nav.knowledge': '지식 베이스', 'nav.factories': '공장 관리',
     'nav.agentquotes': '견적 업로드', 'nav.requirements': '요구사항 트래커', 'nav.clients': '고객사 관리',
     'nav.timeline': '생산 타임라인', 'nav.asrequests': 'AS 접수',
+    'nav.leads': '문의 접수', 'nav.portfolio': '포트폴리오 관리', 'nav.contracts': '계약서 관리', 'nav.decisions': '결정 기록',
+    'nav.bom': 'STEP 도면 분석', 'nav.financial': '재무 리포트', 'nav.assistant': 'AI 업무 비서', 'nav.files': '파일 센터',
     'brand.name': '마시아 클라우드',
     // TopBar
     'topbar.search': '견적, 공장, 고객사 검색...', 'topbar.admin': '관리자', 'topbar.hq': '본사',
@@ -44,6 +46,9 @@ export const translations = {
     'taskboard.form.client': '고객사', 'taskboard.form.factories': '견적 요청 공장',
     'taskboard.form.factories.hint': '* 최종 확정 공장은 카드 상세에서 나중에 지정할 수 있습니다',
     'taskboard.form.cancel': '취소', 'taskboard.form.create': '생성', 'taskboard.pct': '% 점유',
+    'taskboard.search': '제목 · 고객사 · 공장명 · 카테고리 검색', 'taskboard.allCategories': '전체 카테고리',
+    'card.tab.overview': '오버뷰', 'card.tab.tasks': '업무', 'card.tab.meetings': '미팅·분석', 'card.tab.quotation': '견적',
+    'card.tab.files': '파일', 'card.tab.trade': '무역서류', 'card.tab.chat': '채팅', 'card.tab.settlement': '정산', 'card.tab.decisions': '결정',
     // Dashboard
     'dashboard.title': '대시보드', 'dashboard.subtitle': '마시아 클라우드 통합 현황',
     'dashboard.factories': '등록 공장', 'dashboard.clients': '고객사',
@@ -144,6 +149,8 @@ export const translations = {
     'nav.settlement': '结算概览', 'nav.knowledge': '知识库', 'nav.factories': '工厂管理',
     'nav.agentquotes': '上传报价', 'nav.requirements': '需求跟踪', 'nav.clients': '客户管理',
     'nav.timeline': '生产时间轴', 'nav.asrequests': '售后申请',
+    'nav.leads': '咨询受理', 'nav.portfolio': '案例管理', 'nav.contracts': '合同管理', 'nav.decisions': '决策记录',
+    'nav.bom': 'STEP图纸分析', 'nav.financial': '财务报告', 'nav.assistant': 'AI工作助手', 'nav.files': '文件中心',
     'brand.name': 'Masia 云平台',
     // TopBar
     'topbar.search': '搜索报价、工厂、客户...', 'topbar.admin': '管理员', 'topbar.hq': '总部',
@@ -182,6 +189,9 @@ export const translations = {
     'taskboard.form.client': '客户', 'taskboard.form.factories': '询价工厂',
     'taskboard.form.factories.hint': '* 最终确认工厂可在卡片详情中稍后指定',
     'taskboard.form.cancel': '取消', 'taskboard.form.create': '创建', 'taskboard.pct': '% 占比',
+    'taskboard.search': '搜索标题、客户、工厂、类别', 'taskboard.allCategories': '全部类别',
+    'card.tab.overview': '概览', 'card.tab.tasks': '任务', 'card.tab.meetings': '会议·分析', 'card.tab.quotation': '报价',
+    'card.tab.files': '文件', 'card.tab.trade': '贸易文件', 'card.tab.chat': '聊天', 'card.tab.settlement': '结算', 'card.tab.decisions': '决策',
     // Dashboard
     'dashboard.title': '仪表盘', 'dashboard.subtitle': 'Masia云平台综合概况',
     'dashboard.factories': '注册工厂', 'dashboard.clients': '客户',

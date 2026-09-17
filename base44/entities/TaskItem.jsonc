@@ -11,20 +11,16 @@
       "description": "\uc5f0\uacb0\ub41c TaskCard ID"
     },
     "title": {
-      "type": "string",
-      "description": "\uc138\ubd80 \uc5c5\ubb34 \uc81c\ubaa9"
+      "type": "string"
     },
     "title_cn": {
-      "type": "string",
-      "description": "\uc81c\ubaa9 \uc911\uad6d\uc5b4 \ubc88\uc5ed (\uc790\ub3d9)"
+      "type": "string"
     },
     "description": {
-      "type": "string",
-      "description": "\uc0c1\uc138 \ub0b4\uc6a9"
+      "type": "string"
     },
     "description_cn": {
-      "type": "string",
-      "description": "\uc0c1\uc138 \ub0b4\uc6a9 \uc911\uad6d\uc5b4 \ubc88\uc5ed (\uc790\ub3d9)"
+      "type": "string"
     },
     "status": {
       "type": "string",
@@ -32,17 +28,14 @@
         "TODO",
         "IN_PROGRESS",
         "DONE"
-      ],
-      "description": "\uc138\ubd80 \uc5c5\ubb34 \uc9c4\ud589 \uc0c1\ud0dc"
+      ]
     },
     "due_date": {
       "type": "string",
-      "format": "date",
-      "description": "\ub9c8\uac10\uc77c"
+      "format": "date"
     },
     "assignee_name": {
-      "type": "string",
-      "description": "\ub2f4\ub2f9\uc790 \uc774\ub984"
+      "type": "string"
     },
     "priority": {
       "type": "string",
@@ -51,17 +44,19 @@
         "MEDIUM",
         "HIGH",
         "URGENT"
-      ],
-      "description": "\uc6b0\uc120\uc21c\uc704"
+      ]
     },
     "google_task_id": {
-      "type": "string",
-      "description": "\uc5f0\ub3d9\ub41c Google Tasks \ud56d\ubaa9 ID"
+      "type": "string"
     },
     "google_synced_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "\ub9c8\uc9c0\ub9c9 Google Tasks \ub3d9\uae30\ud654 \uc2dc\uac01"
+      "format": "date-time"
+    },
+    "cn_manual": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uc911\uad6d\uc5b4 \uc218\ub3d9 \ud655\uc815 \u2014 \uc790\ub3d9 \ubc88\uc5ed \ub36e\uc5b4\uc4f0\uae30 \ubc29\uc9c0"
     }
   },
   "required": [

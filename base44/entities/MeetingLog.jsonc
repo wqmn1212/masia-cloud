@@ -3,8 +3,7 @@
   "type": "object",
   "properties": {
     "tenant_id": {
-      "type": "string",
-      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+      "type": "string"
     },
     "card_id": {
       "type": "string"
@@ -26,24 +25,38 @@
     "title": {
       "type": "string"
     },
+    "title_cn": {
+      "type": "string"
+    },
     "attendees": {
+      "type": "string"
+    },
+    "attendees_cn": {
       "type": "string"
     },
     "notes": {
       "type": "string"
     },
+    "notes_cn": {
+      "type": "string"
+    },
     "decisions": {
       "type": "string"
     },
+    "decisions_cn": {
+      "type": "string"
+    },
     "next_steps": {
+      "type": "string"
+    },
+    "next_steps_cn": {
       "type": "string"
     },
     "created_by_name": {
       "type": "string"
     },
     "transcript": {
-      "type": "string",
-      "description": "\uc804\uc0ac\ubb38 \ubbf8\ub9ac\ubcf4\uae30, \uae34 \uc804\ubb38\uc740 transcript_uri\uc5d0 \ubcf4\uad00"
+      "type": "string"
     },
     "transcript_uri": {
       "type": "string"
@@ -91,6 +104,10 @@
     },
     "analysis_applied_uri": {
       "type": "string"
+    },
+    "cn_manual": {
+      "type": "boolean",
+      "default": false
     }
   },
   "required": [

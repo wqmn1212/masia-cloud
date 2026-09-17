@@ -22,6 +22,7 @@ import ClientVisibilityToggle from './ClientVisibilityToggle';
 import QuotationPublishPanel from './QuotationPublishPanel';
 import CardSchedulePanel from '@/components/taskcard/CardSchedulePanel';
 import TradeDocumentsTab from '@/components/taskcard/TradeDocumentsTab';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const STATUS_META = {
   TODO:        { label: '대기 중',    color: 'bg-muted text-muted-foreground' },
@@ -37,7 +38,8 @@ const CAT_LABEL = {
 
 export default function CardModal({ card, open, onClose, initialTab = 'overview' }) {
   const [user, setUser] = useState(null);
-  const [viewLang, setViewLang] = useState('KR');
+  const { lang, t, content } = useLanguage();
+  const viewLang = lang === 'zh' ? 'CN' : 'KR';
   const [recordingBusy, setRecordingBusy] = useState(false);
   const [activeTab, setActiveTab] = useState(initialTab);
   useEffect(() => { if (open) setActiveTab(initialTab); }, [open, card?.id, initialTab]);
@@ -61,17 +63,10 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
         <DialogHeader className="pb-0">
           <div className="flex items-start gap-2 sm:gap-3 flex-wrap">
             <DialogTitle className="text-base sm:text-lg flex-1 min-w-0 pr-6">
-              {viewLang === 'CN' ? (card.title_cn || card.title) : card.title}
+              {content(card, 'title')}
             </DialogTitle>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setViewLang(l => l === 'KR' ? 'CN' : 'KR')}
-                className="text-[11px] px-2 py-1 rounded-md border bg-background hover:bg-muted transition-colors font-medium"
-                title="한국어 / 중국어 보기 전환"
-              >
-                {viewLang === 'KR' ? '中文 보기' : '한국어 보기'}
-              </button>
+
               {card.target_machine_category && (
                 <Badge variant="outline" className="text-[10px]">{CAT_LABEL[card.target_machine_category]}</Badge>
               )}
@@ -89,16 +84,16 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
           <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto gap-0.5">
-            <TabsTrigger value="overview" className="text-xs sm:text-sm py-1.5">오버뷰</TabsTrigger>
-            <TabsTrigger value="tasks" className="text-xs sm:text-sm py-1.5">업무</TabsTrigger>
-            <TabsTrigger value="meetings" className="text-xs sm:text-sm py-1.5">미팅·분석</TabsTrigger>
-            <TabsTrigger value="quotation" className="text-xs sm:text-sm py-1.5">견적</TabsTrigger>
+            <TabsTrigger value="overview" className="text-xs sm:text-sm py-1.5">{t('card.tab.overview', '오버뷰')}</TabsTrigger>
+            <TabsTrigger value="tasks" className="text-xs sm:text-sm py-1.5">{t('card.tab.tasks', '업무')}</TabsTrigger>
+            <TabsTrigger value="meetings" className="text-xs sm:text-sm py-1.5">{t('card.tab.meetings', '미팅·분석')}</TabsTrigger>
+            <TabsTrigger value="quotation" className="text-xs sm:text-sm py-1.5">{t('card.tab.quotation', '견적')}</TabsTrigger>
             <TabsTrigger value="bom" className="text-xs sm:text-sm py-1.5">BOM</TabsTrigger>
-            <TabsTrigger value="files" className="text-xs sm:text-sm py-1.5">파일</TabsTrigger>
-            <TabsTrigger value="trade" className="text-xs sm:text-sm py-1.5">무역서류</TabsTrigger>
-            <TabsTrigger value="chat" className="text-xs sm:text-sm py-1.5">채팅</TabsTrigger>
-            <TabsTrigger value="settlement" className="text-xs sm:text-sm py-1.5">정산</TabsTrigger>
-            <TabsTrigger value="decisions" className="text-xs sm:text-sm py-1.5">결정</TabsTrigger>
+            <TabsTrigger value="files" className="text-xs sm:text-sm py-1.5">{t('card.tab.files', '파일')}</TabsTrigger>
+            <TabsTrigger value="trade" className="text-xs sm:text-sm py-1.5">{t('card.tab.trade', '무역서류')}</TabsTrigger>
+            <TabsTrigger value="chat" className="text-xs sm:text-sm py-1.5">{t('card.tab.chat', '채팅')}</TabsTrigger>
+            <TabsTrigger value="settlement" className="text-xs sm:text-sm py-1.5">{t('card.tab.settlement', '정산')}</TabsTrigger>
+            <TabsTrigger value="decisions" className="text-xs sm:text-sm py-1.5">{t('card.tab.decisions', '결정')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="tasks" className="mt-4">
@@ -107,7 +102,7 @@ export default function CardModal({ card, open, onClose, initialTab = 'overview'
             <QCReportPanel card={card} user={user} />
           </TabsContent>
           <TabsContent value="overview" className="mt-4">
-            <OverviewTab card={card} kbAlerts={kbAlerts} viewLang={viewLang} />
+            <OverviewTab card={card} kbAlerts={kbAlerts} viewLang={viewLang} user={user} />
             <div className="mt-4"><ClientVisibilityToggle card={card} /></div>
             <div className="mt-5"><CardSchedulePanel key={card.id} card={card} user={user} /></div>
             <ProcessControlPanel card={card} user={user} />

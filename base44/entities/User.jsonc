@@ -71,6 +71,15 @@
     "account_label": {
       "type": "string",
       "description": "\ud68c\uc0ac/\ud300 \ub610\ub294 \uc0ac\uc6a9\uc790 \ud45c\uc2dc\uba85"
+    },
+    "preferred_language": {
+      "type": "string",
+      "enum": [
+        "ko",
+        "zh"
+      ],
+      "default": "ko",
+      "description": "\uc0ac\uc6a9\uc790 \uae30\ubcf8 \ud45c\uc2dc \uc5b8\uc5b4"
     }
   },
   "rls": {

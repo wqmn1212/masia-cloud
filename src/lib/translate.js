@@ -28,7 +28,8 @@ ${JSON.stringify(input, null, 2)}`;
       response_json_schema: { type: 'object', properties },
     });
     return result && typeof result === 'object' ? result : {};
-  } catch {
-    return {};
+  } catch (error) {
+    window.dispatchEvent(new CustomEvent('translation-unavailable', { detail: error?.message || 'translation unavailable' }));
+    return { __translation_failed: true, __translation_error: error?.message || 'translation unavailable' };
   }
 }

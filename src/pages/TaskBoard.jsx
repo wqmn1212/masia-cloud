@@ -16,6 +16,8 @@ import ClientSelect from '@/components/taskcard/ClientSelect';
 import FactoryMultiSelect from '@/components/taskcard/FactoryMultiSelect';
 import { translateFieldsToCN } from '@/lib/translate';
 import { useSearch } from '@/lib/SearchContext';
+import { useLanguage } from '@/lib/LanguageContext';
+import ChineseBackfillButton from '@/components/language/ChineseBackfillButton';
 import EmailBackfillButton from '@/components/email/EmailBackfillButton';
 import EmailProposalDialog from '@/components/email/EmailProposalDialog';
 import { Mail } from 'lucide-react';
@@ -57,10 +59,12 @@ export default function TaskBoard() {
   const [selectedCard, setSelectedCard] = useState(null);
   const [inboxOpen, setInboxOpen] = useState(false);
   const { query: search, setQuery: setSearch } = useSearch();
+  const { lang, t, content } = useLanguage();
   const [filterCategory, setFilterCategory] = useState('ALL');
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  const { data: user } = useQuery({ queryKey: ['current-user'], queryFn: () => base44.auth.me() });
   const { data: categoryList = [] } = useQuery({
     queryKey: ['machine-categories'],
     queryFn: () => base44.entities.MachineCategory.list('label_kr', 100),
@@ -151,11 +155,12 @@ export default function TaskBoard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <LayoutGrid className="w-6 h-6 text-primary" /> 소싱 칸반 보드
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">업무 카드 기반 HQ ↔ 에이전트 협업 플랫폼</p>
+            <LayoutGrid className="w-6 h-6 text-primary" /> {t('taskboard.title')}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">{t('taskboard.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <ChineseBackfillButton user={user} />
           <EmailBackfillButton />
           <Button variant="outline" className="gap-2" onClick={() => setInboxOpen(true)}>
             <Mail className="w-4 h-4" />가져온 메일 연동
@@ -164,7 +169,7 @@ export default function TaskBoard() {
             )}
           </Button>
           <Button onClick={() => setCreateOpen(true)} className="gap-2">
-            <Plus className="w-4 h-4" />신규 카드 생성
+            <Plus className="w-4 h-4" />{t('taskboard.newcard')}
           </Button>
         </div>
       </div>
@@ -176,7 +181,7 @@ export default function TaskBoard() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="제목 · 고객사 · 공장명 · 카테고리 검색"
+            placeholder={t('taskboard.search')}
             className="pl-10 pr-9"
           />
           {search && (
@@ -192,7 +197,7 @@ export default function TaskBoard() {
         <Select value={filterCategory} onValueChange={setFilterCategory}>
           <SelectTrigger className="w-[160px] h-9 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">전체 카테고리</SelectItem>
+            <SelectItem value="ALL">{t('taskboard.allCategories')}</SelectItem>
             {Object.entries(catMap).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
@@ -212,7 +217,7 @@ export default function TaskBoard() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <div className={`w-2 h-2 rounded-full ${col.dotColor}`} />
-                  <span className="text-xs font-medium">{col.label}</span>
+                  <span className="text-xs font-medium">{t(`status.${col.id}`, col.label)}</span>
                 </div>
                 <span className="text-lg font-bold">{count}</span>
               </div>
@@ -238,7 +243,7 @@ export default function TaskBoard() {
                 {/* Column header */}
                 <div className={`flex items-center gap-2 px-3 py-2 rounded-t-xl ${col.color} border border-border border-b-0`}>
                   <div className={`w-2 h-2 rounded-full ${col.dotColor}`} />
-                  <span className="text-xs font-semibold">{col.label}</span>
+                  <span className="text-xs font-semibold">{t(`status.${col.id}`, col.label)}</span>
                   <Badge variant="secondary" className="ml-auto text-[10px] h-4 px-1.5">{colCards.length}</Badge>
                 </div>
 
@@ -274,7 +279,7 @@ export default function TaskBoard() {
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 {card.priority && card.priority !== 'MEDIUM' && (
                                   <Badge className={`${PRIORITY_META[card.priority]?.className} border-0 text-[9px] h-4 px-1`}>
-                                    {PRIORITY_META[card.priority]?.label}
+                                    {t(`priority.${card.priority}`, PRIORITY_META[card.priority]?.label)}
                                   </Badge>
                                 )}
                                 {card.target_machine_category && (
@@ -282,7 +287,7 @@ export default function TaskBoard() {
                                 )}
                               </div>
 
-                              <p className="text-sm font-medium leading-snug line-clamp-2">{card.title}</p>
+                              <p className="text-sm font-medium leading-snug line-clamp-2">{content(card, 'title')}</p>
 
                               {(card.client_name || (card.candidate_factory_names?.length > 0) || card.factory_name) && (
                                                      <p className="text-[10px] text-muted-foreground truncate">
@@ -323,7 +328,7 @@ export default function TaskBoard() {
       {/* Create Card Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>신규 소싱 카드 생성</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('taskboard.create.title')}</DialogTitle></DialogHeader>
           <form onSubmit={(e) => {
             e.preventDefault();
             createMutation.mutate({
@@ -333,8 +338,8 @@ export default function TaskBoard() {
             });
           }} className="space-y-4">
             <div>
-              <Label className="text-xs">업무 제목 *</Label>
-              <Input value={form.title} onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))} placeholder="예: (주)카페로스팅 드립백 포장기 소싱" required />
+              <Label className="text-xs">{t('taskboard.form.title')}</Label>
+              <Input value={form.title} onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))} placeholder={t('taskboard.form.title.placeholder')} required />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -370,8 +375,8 @@ export default function TaskBoard() {
               <p className="text-[10px] text-muted-foreground mt-1">* 최종 확정 공장은 카드 상세에서 나중에 지정할 수 있습니다</p>
             </div>
             <div className="flex justify-end gap-2 pt-1">
-              <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>취소</Button>
-              <Button type="submit" disabled={createMutation.isPending}>생성</Button>
+              <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit" disabled={createMutation.isPending}>{t('common.create')}</Button>
             </div>
           </form>
         </DialogContent>

@@ -7,8 +7,14 @@ import { useSearch } from '@/lib/SearchContext';
 import NotificationBell from '@/components/notifications/NotificationBell';
 
 export default function TopBar({ onMenuClick, user }) {
-  const { lang, toggleLang, t } = useLanguage();
+  const { lang, setLang, t } = useLanguage();
   const { query, setQuery } = useSearch();
+  const [translationPaused, setTranslationPaused] = React.useState(false);
+  React.useEffect(() => {
+    const markPaused = () => setTranslationPaused(true);
+    window.addEventListener('translation-unavailable', markPaused);
+    return () => window.removeEventListener('translation-unavailable', markPaused);
+  }, []);
   return (
     <header className="h-16 bg-card border-b border-border flex items-center justify-between px-3 md:px-6 sticky top-0 z-30 gap-2">
       <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -27,16 +33,11 @@ export default function TopBar({ onMenuClick, user }) {
       </div>
       <div className="flex items-center gap-1 md:gap-3 shrink-0">
         <NotificationBell user={user} />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleLang}
-          className="h-8 px-2 md:px-3 text-xs font-bold tracking-wide border-2"
-          title={lang === 'ko' ? '中文으로 전환' : '한국어로 전환'}
-        >
-          <span>🇨🇳</span>
-          <span className="hidden sm:inline ml-1">{lang === 'ko' ? '中文' : '한국어'}</span>
-        </Button>
+        {translationPaused && <span className="hidden lg:inline text-[10px] text-chart-3 font-medium">{lang === 'zh' ? '自动翻译暂停' : '자동 번역 일시 중지'}</span>}
+        <div className="flex h-8 rounded-md border bg-muted/40 p-0.5" aria-label="Language">
+          <button onClick={() => setLang('ko')} className={`rounded px-2 text-[11px] font-bold transition-colors ${lang === 'ko' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground'}`}>KR</button>
+          <button onClick={() => setLang('zh')} className={`rounded px-2 text-[11px] font-bold transition-colors ${lang === 'zh' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground'}`}>中文</button>
+        </div>
         <div className="flex items-center gap-2.5 pl-2 md:pl-3 md:border-l md:border-border">
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
             M

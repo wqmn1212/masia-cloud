@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Trash2, CheckCircle2, Circle, Clock, CalendarDays, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { translateFieldsToCN } from '@/lib/translate';
+import ChineseContentEditor from '@/components/language/ChineseContentEditor';
 
 const STATUS_META = {
   TODO:        { label: '대기',   icon: Circle,        className: 'text-muted-foreground' },
@@ -81,7 +82,13 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }) => {
+      if (data.__manualChinese) {
+        const { __manualChinese, ...manualData } = data;
+        return base44.entities.TaskItem.update(id, manualData);
+      }
+      const current = items.find(item => item.id === id);
       const extra = {};
+      if (current?.cn_manual) return base44.entities.TaskItem.update(id, data);
       if (data.title !== undefined) {
         const cn = await translateFieldsToCN({ title: data.title });
         extra.title_cn = cn.title || '';
@@ -212,13 +219,16 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
                   <div>
                     <Label className="text-[10px]">상세 내용</Label>
                     <Textarea
-                      defaultValue={item.description}
+                      defaultValue={viewLang === 'CN' ? (item.description_cn || item.description) : item.description}
                       placeholder="업무 상세 설명 (선택)"
                       rows={2}
                       className="text-xs"
                       onBlur={(e) => e.target.value !== (item.description || '') && updateMutation.mutate({ id: item.id, data: { description: e.target.value } })}
                     />
                   </div>
+                  {viewLang === 'CN' && <ChineseContentEditor record={item} saving={updateMutation.isPending}
+                    fields={[{ key: 'title', label: '任务标题' }, { key: 'description', label: '详细内容', multiline: true }]}
+                    onSave={(data) => updateMutation.mutate({ id: item.id, data: { ...data, __manualChinese: true } })} />}
                   <div className="grid grid-cols-4 gap-2">
                     <div>
                       <Label className="text-[10px]">상태</Label>

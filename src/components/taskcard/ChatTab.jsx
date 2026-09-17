@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Send, Paperclip, Loader2 } from 'lucide-react';
 import DropZone from '@/components/ui/drop-zone';
 import { translateFieldsToCN } from '@/lib/translate';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const ROLE_COLOR = {
   HQ: 'bg-primary text-primary-foreground',
@@ -19,6 +20,7 @@ function formatTime(iso) {
 }
 
 export default function ChatTab({ card, user, viewLang = 'KR' }) {
+  const { t } = useLanguage();
   const [text, setText] = useState('');
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef();
@@ -125,7 +127,7 @@ export default function ChatTab({ card, user, viewLang = 'KR' }) {
         <Input
           value={text} onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-          placeholder="메시지를 입력하세요... (Enter로 전송)"
+          placeholder={viewLang === 'CN' ? '输入消息…（按 Enter 发送）' : '메시지를 입력하세요... (Enter로 전송)'}
           className="flex-1 text-sm"
         />
         <Button size="icon" onClick={handleSend} disabled={!text.trim() || sendMutation.isPending} className="shrink-0">

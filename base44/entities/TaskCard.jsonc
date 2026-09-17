@@ -99,12 +99,10 @@
       "format": "date"
     },
     "quote_deadline": {
-      "type": "string",
-      "description": "\uacac\uc801 \ubc1c\uc1a1 \uae30\ud55c YYYY-MM-DD, \ube48 \uac12\uc740 \ubbf8\uc815"
+      "type": "string"
     },
     "advance_paid_date": {
-      "type": "string",
-      "description": "\uc120\uae08 \uc785\uae08 \uae30\uc900\uc77c YYYY-MM-DD"
+      "type": "string"
     },
     "delivery_business_days": {
       "type": "integer",
@@ -112,8 +110,7 @@
       "maximum": 3650
     },
     "delivery_date": {
-      "type": "string",
-      "description": "\uc608\uc815 \ub0a9\ud488\uc77c YYYY-MM-DD"
+      "type": "string"
     },
     "delivery_date_mode": {
       "type": "string",
@@ -122,6 +119,11 @@
         "MANUAL"
       ],
       "default": "AUTO"
+    },
+    "cn_manual": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uc911\uad6d\uc5b4 \uc218\ub3d9 \ud655\uc815 \u2014 \uc790\ub3d9 \ubc88\uc5ed \ub36e\uc5b4\uc4f0\uae30 \ubc29\uc9c0"
     }
   },
   "required": [

@@ -6,12 +6,14 @@ import { Trash2, Pencil, FileText, ChevronDown, ChevronRight, Sparkles } from 'l
 
 import MeetingRecorder from '@/components/taskcard/MeetingRecorder';
 import MeetingLiveNotes from '@/components/taskcard/MeetingLiveNotes';
+import { useLanguage } from '@/lib/LanguageContext';
 const TYPE_LABEL = { ONLINE: '화상', OFFLINE: '대면', CALL: '전화', WECHAT: '위챗' };
 
 export default function MeetingLogItem({ log, onDelete, onEdit, onAnalyze, userId, onBusy, disabled, recordDisabled }) {
   const [open, setOpen] = useState(false);
   const [writing, setWriting] = useState(false);
   const qc = useQueryClient();
+  const { content, lang } = useLanguage();
   return (
     <div className="border rounded-lg">
       <div className="flex items-center gap-2 p-3">
@@ -20,7 +22,7 @@ export default function MeetingLogItem({ log, onDelete, onEdit, onAnalyze, userI
         </Button>
         <span className="text-xs font-semibold tabular-nums text-primary">{log.meeting_date}</span>
         <Badge variant="outline" className="text-[10px]">{TYPE_LABEL[log.meeting_type] || log.meeting_type}</Badge>
-        <span className="text-sm font-medium flex-1 min-w-0 truncate">{log.title}</span>
+        <span className="text-sm font-medium flex-1 min-w-0 truncate">{content(log, 'title')}</span>
         <Button variant="ghost" size="sm" className="h-6 px-2 shrink-0 text-[11px] gap-1" disabled={disabled} onClick={() => onAnalyze(log)}>
           <Sparkles className="h-3.5 w-3.5 text-primary" /> AI 분석
         </Button>
@@ -36,10 +38,10 @@ export default function MeetingLogItem({ log, onDelete, onEdit, onAnalyze, userI
       </div>
       {open && (
         <div className="px-3 pb-3 space-y-1">
-          {log.attendees && <p className="text-xs text-muted-foreground">참석: {log.attendees}</p>}
-          {log.notes && <p className="text-xs whitespace-pre-wrap">{log.notes}</p>}
-          {log.decisions && <p className="text-xs whitespace-pre-wrap"><span className="font-semibold">결정: </span>{log.decisions}</p>}
-          {log.next_steps && <p className="text-xs whitespace-pre-wrap"><span className="font-semibold">다음 액션: </span>{log.next_steps}</p>}
+          {log.attendees && <p className="text-xs text-muted-foreground">{lang === 'zh' ? '参与者' : '참석'}: {content(log, 'attendees')}</p>}
+          {log.notes && <p className="text-xs whitespace-pre-wrap">{content(log, 'notes')}</p>}
+          {log.decisions && <p className="text-xs whitespace-pre-wrap"><span className="font-semibold">{lang === 'zh' ? '决定' : '결정'}: </span>{content(log, 'decisions')}</p>}
+          {log.next_steps && <p className="text-xs whitespace-pre-wrap"><span className="font-semibold">{lang === 'zh' ? '下一步' : '다음 액션'}: </span>{content(log, 'next_steps')}</p>}
         </div>
       )}
       {writing && <MeetingLiveNotes log={log} onSaved={() => qc.invalidateQueries({ queryKey: ['meeting-logs', log.card_id] })} />}

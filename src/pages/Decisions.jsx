@@ -7,9 +7,12 @@ import { Plus, BookMarked } from 'lucide-react';
 import DecisionCard from '@/components/decisions/DecisionCard';
 import DecisionForm from '@/components/decisions/DecisionForm';
 import { CATEGORY_LABELS, STATUS_META } from '@/components/decisions/decisionMeta';
+import { translateFieldsToCN } from '@/lib/translate';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export default function Decisions() {
   const qc = useQueryClient();
+  const { content } = useLanguage();
   const [user, setUser] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -28,13 +31,15 @@ export default function Decisions() {
     queryKey: ['taskcards-for-decisions'],
     queryFn: () => base44.entities.TaskCard.list('-updated_date', 500),
   });
-  const cardMap = Object.fromEntries(cards.map(c => [c.id, c.title]));
+  const cardMap = Object.fromEntries(cards.map(c => [c.id, content(c, 'title')]));
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['decisions'] });
   const saveMut = useMutation({
-    mutationFn: (data) => editing?.id
-      ? base44.entities.DecisionLog.update(editing.id, data)
-      : base44.entities.DecisionLog.create(data),
+    mutationFn: async (data) => {
+      const cn = await translateFieldsToCN({ topic: data.topic, decision: data.decision, rationale: data.rationale });
+      const translated = Object.fromEntries(Object.entries(cn).filter(([k]) => !k.startsWith('__')).map(([k, v]) => [`${k}_cn`, v]));
+      return editing?.id ? base44.entities.DecisionLog.update(editing.id, { ...data, ...translated }) : base44.entities.DecisionLog.create({ ...data, ...translated, tenant_id: user?.tenant_id });
+    },
     onSuccess: () => { invalidate(); setFormOpen(false); setEditing(null); },
   });
   const delMut = useMutation({
@@ -81,7 +86,7 @@ export default function Decisions() {
           <SelectTrigger className="w-[200px] h-8 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체 카드</SelectItem>
-            {cards.map(c => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
+            {cards.map(c => <SelectItem key={c.id} value={c.id}>{content(c, 'title')}</SelectItem>) }
           </SelectContent>
         </Select>
       </div>

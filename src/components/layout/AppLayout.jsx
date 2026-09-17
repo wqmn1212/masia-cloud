@@ -57,7 +57,7 @@ export default function AppLayout() {
   }
 
   return (
-    <LanguageProvider>
+    <LanguageProvider user={user}>
       <SearchProvider>
       <div className="min-h-screen bg-background">
         <Sidebar

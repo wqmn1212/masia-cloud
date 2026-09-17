@@ -3,20 +3,19 @@
   "type": "object",
   "properties": {
     "tenant_id": {
-      "type": "string",
-      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+      "type": "string"
     },
     "card_id": {
-      "type": "string",
-      "description": "\uc5f0\uacb0\ub41c TaskCard"
+      "type": "string"
     },
     "quotation_id": {
-      "type": "string",
-      "description": "\uad00\ub828 \uacac\uc801\uc11c (\uc120\ud0dd)"
+      "type": "string"
     },
     "topic": {
-      "type": "string",
-      "description": "\uacb0\uc815 \uc8fc\uc81c. \uc608: N30 \uc804\uadf9 \ud45c\uba74 \ub9c8\uac10"
+      "type": "string"
+    },
+    "topic_cn": {
+      "type": "string"
     },
     "category": {
       "type": "string",
@@ -30,30 +29,30 @@
         "DESIGN",
         "OTHER"
       ],
-      "default": "OTHER",
-      "description": "\uacb0\uc815 \ubd84\ub958"
+      "default": "OTHER"
     },
     "decision": {
-      "type": "string",
-      "description": "\ud655\uc815 \ub0b4\uc6a9"
+      "type": "string"
+    },
+    "decision_cn": {
+      "type": "string"
     },
     "rationale": {
-      "type": "string",
-      "description": "\uadf8\ub807\uac8c \uc815\ud55c \uadfc\uac70"
+      "type": "string"
+    },
+    "rationale_cn": {
+      "type": "string"
     },
     "alternatives": {
       "type": "array",
-      "description": "\uac80\ud1a0\ud588\uc73c\ub098 \uae30\uac01\ud55c \ub300\uc548. \uc774 \ubc30\uc5f4\uc774 \uc774 \uc5d4\ud2f0\ud2f0\uc758 \ud575\uc2ec\uc774\ub2e4",
       "items": {
         "type": "object",
         "properties": {
           "option": {
-            "type": "string",
-            "description": "\ub300\uc548 \ub0b4\uc6a9"
+            "type": "string"
           },
           "reject_reason": {
-            "type": "string",
-            "description": "\uae30\uac01 \uc0ac\uc720"
+            "type": "string"
           }
         }
       }
@@ -66,33 +65,30 @@
         "REVERSED",
         "SUPERSEDED"
       ],
-      "default": "CONFIRMED",
-      "description": "\uacb0\uc815 \uc0c1\ud0dc"
+      "default": "CONFIRMED"
     },
     "supersedes_id": {
-      "type": "string",
-      "description": "\uc774 \uacb0\uc815\uc774 \ub4a4\uc9d1\uc740 \uc774\uc804 \uacb0\uc815 ID"
+      "type": "string"
     },
     "reverse_reason": {
-      "type": "string",
-      "description": "\ubc88\ubcf5 \uc0ac\uc720"
+      "type": "string"
     },
     "decided_by": {
-      "type": "string",
-      "description": "\uacb0\uc815\uc790"
+      "type": "string"
     },
     "decided_at": {
       "type": "string",
-      "format": "date",
-      "description": "\uacb0\uc815\uc77c"
+      "format": "date"
     },
     "source_ref": {
-      "type": "string",
-      "description": "\uadfc\uac70 \ubb38\uc11c\u00b7\ud68c\uc758\ub85d\u00b7\ub300\ud654 \ucc38\uc870"
+      "type": "string"
     },
     "impact_note": {
-      "type": "string",
-      "description": "\uc6d0\uac00\u00b7\ub0a9\uae30\u00b7\uc778\uc99d\uc5d0 \ubbf8\uce58\ub294 \uc601\ud5a5"
+      "type": "string"
+    },
+    "cn_manual": {
+      "type": "boolean",
+      "default": false
     }
   },
   "required": [
