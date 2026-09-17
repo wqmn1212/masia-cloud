@@ -23,36 +23,39 @@ export default async function(req) {
       return Response.json({ ok: true, noInvite: true });
     }
 
-    // 가장 최근 초대 1건 적용
+    // 여러 팀의 초대가 있더라도 정렬된 목록의 최신 초대를 결정적으로 적용한다.
     const invite = invites[0];
-    if (new Set(invites.map(i => `${i.tenant_id}:${i.company_id || ''}:${i.account_tier}`)).size > 1) return Response.json({ error: '여러 팀의 초대가 연결되어 있습니다. 관리자에게 소속 확인을 요청하세요.' }, { status: 409 });
     const tenant = await base44.asServiceRole.entities.Tenant.get(invite.tenant_id);
     if (!tenant || tenant.is_active === false) return Response.json({ error: '초대받은 팀이 활성 상태가 아닙니다.' }, { status: 403 });
-    if (invite.account_tier === 'client') {
-      if (!invite.company_id || tenant.tenant_type !== 'client' || tenant.company_id !== invite.company_id) return Response.json({ error: '고객사 연결을 관리자에게 확인해주세요.' }, { status: 403 });
-      const company = await base44.asServiceRole.entities.Company.get(invite.company_id);
+
+    // 레거시 초대도 실제 팀 유형을 기준으로 보정하여 고객 포털 스코프를 잃지 않게 한다.
+    const isClientTenant = tenant.tenant_type === 'client';
+    const effectiveTier = isClientTenant ? 'client' : invite.account_tier;
+    const companyId = isClientTenant ? tenant.company_id : invite.company_id;
+    if (isClientTenant) {
+      if (!companyId) return Response.json({ error: '고객사 연결을 관리자에게 확인해주세요.' }, { status: 403 });
+      const company = await base44.asServiceRole.entities.Company.get(companyId);
       if (!company || company.company_type !== 'CLIENT' || company.tenant_id !== tenant.hq_tenant_id) return Response.json({ error: '고객사 연결이 올바르지 않습니다.' }, { status: 403 });
     }
     const updateData = {
-      account_tier: invite.account_tier,
+      account_tier: effectiveTier,
       tenant_id: invite.tenant_id,
-      team_role_id: invite.team_role_id || '',
-      team_role_name: invite.team_role_name || '',
-      allowed_tabs: invite.allowed_tabs || [],
+      team_role_id: isClientTenant ? '' : (invite.team_role_id || ''),
+      team_role_name: isClientTenant ? '' : (invite.team_role_name || ''),
+      allowed_tabs: isClientTenant ? ['/client/dashboard', '/client/board'] : (invite.allowed_tabs || []),
       is_active: true,
       account_label: invite.account_label || '',
     };
     if (invite.service_admin_id) updateData.service_admin_id = invite.service_admin_id;
-    // client 초대는 고객사 스코프 키(company_id)를 반드시 승계해야 포털 데이터가 조회된다
-    if (invite.company_id) updateData.company_id = invite.company_id;
+    if (companyId) updateData.company_id = companyId;
 
     await base44.asServiceRole.entities.User.update(user.id, updateData);
-    if (invite.account_tier === 'service') {
+    if (effectiveTier === 'service') {
       await base44.asServiceRole.entities.Tenant.update(invite.tenant_id, { master_user_id: user.id });
     }
     await base44.asServiceRole.entities.PendingInvitation.update(invite.id, { claimed: true });
 
-    return Response.json({ ok: true, claimed: true, tier: invite.account_tier });
+    return Response.json({ ok: true, claimed: true, tier: effectiveTier });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

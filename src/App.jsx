@@ -1,8 +1,10 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
+import { appParams } from '@/lib/app-params';
+import { getHomePath } from '@/lib/menuPermissions';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
@@ -38,13 +40,9 @@ import PortfolioAdmin from '@/pages/PortfolioAdmin';
 import PortfolioDetail from '@/pages/PortfolioDetail';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
   const location = useLocation();
-
-  // 공개 랜딩: 로그인 여부와 무관하게 렌더링 (auth_required 리다이렉트 제외)
-  if (location.pathname === '/') {
-    return <Landing />;
-  }
+  const isRoot = location.pathname === '/';
 
   // 공개 포트폴리오 상세 — 비로그인 접근 허용
   if (location.pathname.startsWith('/portfolio/')) {
@@ -70,6 +68,16 @@ const AuthenticatedApp = () => {
       navigateToLogin();
       return null;
     }
+  }
+
+  // 초대/로그인 토큰으로 돌아온 사용자는 랜딩을 건너뛰고 소속 홈으로 진입한다.
+  if (isRoot) {
+    if (isAuthenticated && user) return <Navigate to={getHomePath(user)} replace />;
+    if (appParams.token) {
+      navigateToLogin();
+      return null;
+    }
+    return <Landing />;
   }
 
   return (
