@@ -18,6 +18,7 @@ import QuotationHistoryButton from '@/components/quotation/QuotationHistoryButto
 import ManualExchangeRates from '@/components/quotation/ManualExchangeRates';
 import CurrencyPanel from '@/components/quotation/CurrencyPanel';
 import { quotePriceLabel } from '@/components/quotation/quoteCurrency';
+import saveBilingualQuotation from '@/lib/saveBilingualQuotation';
 
 const CATEGORY_LABELS = {
   DRIP_BAG: '드립백 포장기',
@@ -36,7 +37,7 @@ const STATUS_MAP = {
 };
 
 export default function Quotations() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [createOpen, setCreateOpen] = useState(false);
   const [detailQuote, setDetailQuote] = useState(null);
   const [riskAlerts, setRiskAlerts] = useState([]);
@@ -100,12 +101,12 @@ export default function Quotations() {
   }, [form.machine_category, qcLogs]);
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Quotation.create({ ...data, final_currency: 'USD', final_price_usd: data.final_client_price, exchange_rate_usd: Number(data.exchange_rate_usd), exchange_rate_usd_cny: Number(data.exchange_rate_usd_cny), tenant_id: me?.tenant_id }),
-    onSuccess: () => {
+    mutationFn: (data) => saveBilingualQuotation({ ...data, final_currency: 'USD', final_price_usd: data.final_client_price, exchange_rate_usd: Number(data.exchange_rate_usd), exchange_rate_usd_cny: Number(data.exchange_rate_usd_cny), tenant_id: me?.tenant_id }),
+    onSuccess: (saved) => {
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
       setCreateOpen(false);
       setForm(f => ({ ...f, exchange_rate_date: '', exchange_rate_usd: '', exchange_rate_usd_cny: '', exchange_rate_krw: '' }));
-      toast({ title: t('quotations.add') });
+      if (!saved.__translation_failed) toast({ title: t('quotations.add') });
     },
   });
 
@@ -282,7 +283,7 @@ export default function Quotations() {
                       <tbody>
                         {detailQuote.line_items.map((item, i) => (
                           <tr key={i} className="border-t">
-                            <td className="p-2">{item.item_name_ko || item.item_name_cn}</td>
+                            <td className="p-2">{lang === 'zh' ? (item.item_name_cn || item.item_name_ko) : (item.item_name_ko || item.item_name_cn)}</td>
                             <td className="p-2 text-right">{item.quantity}</td>
                             <td className="p-2 text-right">¥{(item.unit_price_cny || 0).toLocaleString()}</td>
                             <td className="p-2 text-right font-medium">¥{(item.total_cny || 0).toLocaleString()}</td>

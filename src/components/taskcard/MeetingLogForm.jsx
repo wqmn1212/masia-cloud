@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
+import BilingualField from '@/components/language/BilingualField';
+import { editBilingual } from '@/lib/saveBilingual';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,25 +18,30 @@ const EMPTY = {
 
 export default function MeetingLogForm({ onSubmit, onCancel, saving, initial, autoSave }) {
   const [form, setForm] = useState({
-    ...EMPTY,
+    ...EMPTY, __bilingualDirty: {},
     ...(initial ? {
       meeting_date: initial.meeting_date || EMPTY.meeting_date,
       meeting_type: initial.meeting_type || 'ONLINE',
       title: initial.title || '',
+      ...Object.fromEntries(['title', 'attendees', 'notes', 'decisions', 'next_steps'].map(key => [`${key}_cn`, initial[`${key}_cn`] || ''])),
       attendees: initial.attendees || '',
       notes: initial.notes || '',
       decisions: initial.decisions || '',
       next_steps: initial.next_steps || '',
     } : {}),
   });
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k, v) => setForm(f => editBilingual(f, k, v));
 
   const dirty = useRef(false);
   useEffect(() => {
-    if (!autoSave || !dirty.current || !form.title) return;
-    const t = setTimeout(() => onSubmit(form), 1000);
+    if (dirty.current || !initial) return;
+    setForm(previous => ({ ...previous, ...Object.fromEntries(['title', 'attendees', 'notes', 'decisions', 'next_steps'].flatMap(f => [f, `${f}_cn`]).map(key => [key, initial[key] || ''])) }));
+  }, [initial]);
+  useEffect(() => {
+    if (!autoSave || !dirty.current || !(form.title?.trim() || form.title_cn?.trim()) || saving) return;
+    const t = setTimeout(() => { dirty.current = false; onSubmit(form); }, 1000);
     return () => clearTimeout(t);
-  }, [form, autoSave]);
+  }, [form, autoSave, saving]);
 
   const handleChange = (k, v) => { dirty.current = true; set(k, v); };
 
@@ -46,12 +53,12 @@ export default function MeetingLogForm({ onSubmit, onCancel, saving, initial, au
           <SelectTrigger className="sm:w-28"><SelectValue /></SelectTrigger>
           <SelectContent>{TYPES.map(t => <SelectItem key={t.v} value={t.v}>{t.l}</SelectItem>)}</SelectContent>
         </Select>
-        <Input placeholder="미팅 제목" value={form.title} onChange={e => handleChange('title', e.target.value)} className="flex-1" />
+        <BilingualField record={form} field="title" placeholder="미팅 제목 / 会议标题" onChange={handleChange} disabled={saving && !autoSave} />
       </div>
-      <Input placeholder="참석자" value={form.attendees} onChange={e => handleChange('attendees', e.target.value)} />
-      <Textarea placeholder="논의 내용" rows={3} value={form.notes} onChange={e => handleChange('notes', e.target.value)} />
-      <Textarea placeholder="결정 사항" rows={2} value={form.decisions} onChange={e => handleChange('decisions', e.target.value)} />
-      <Textarea placeholder="다음 액션" rows={2} value={form.next_steps} onChange={e => handleChange('next_steps', e.target.value)} />
+      <BilingualField record={form} field="attendees" placeholder="참석자 / 参与者" onChange={handleChange} />
+      <BilingualField record={form} field="notes" multiline rows={3} placeholder="논의 내용 / 讨论内容" onChange={handleChange} />
+      <BilingualField record={form} field="decisions" multiline rows={2} placeholder="결정 사항 / 决定事项" onChange={handleChange} />
+      <BilingualField record={form} field="next_steps" multiline rows={2} placeholder="다음 액션 / 下一步" onChange={handleChange} />
       <div className="flex justify-end items-center gap-2">
         {autoSave && (
           <span className="text-[11px] text-muted-foreground mr-auto">
@@ -60,7 +67,7 @@ export default function MeetingLogForm({ onSubmit, onCancel, saving, initial, au
         )}
         <Button variant="ghost" size="sm" onClick={onCancel}>{autoSave ? '닫기' : '취소'}</Button>
         {!autoSave && (
-          <Button size="sm" disabled={!form.title || saving} onClick={() => onSubmit(form)}>저장</Button>
+          <Button size="sm" disabled={!(form.title?.trim() || form.title_cn?.trim()) || saving} onClick={() => onSubmit(form)}>저장</Button>
         )}
       </div>
     </div>

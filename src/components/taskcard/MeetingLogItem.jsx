@@ -38,10 +38,10 @@ export default function MeetingLogItem({ log, onDelete, onEdit, onAnalyze, userI
       </div>
       {open && (
         <div className="px-3 pb-3 space-y-1">
-          {log.attendees && <p className="text-xs text-muted-foreground">{lang === 'zh' ? '参与者' : '참석'}: {content(log, 'attendees')}</p>}
-          {log.notes && <p className="text-xs whitespace-pre-wrap">{content(log, 'notes')}</p>}
-          {log.decisions && <p className="text-xs whitespace-pre-wrap"><span className="font-semibold">{lang === 'zh' ? '决定' : '결정'}: </span>{content(log, 'decisions')}</p>}
-          {log.next_steps && <p className="text-xs whitespace-pre-wrap"><span className="font-semibold">{lang === 'zh' ? '下一步' : '다음 액션'}: </span>{content(log, 'next_steps')}</p>}
+          {(log.attendees || log.attendees_cn) && <p className="text-xs text-muted-foreground">{lang === 'zh' ? '参与者' : '참석'}: {content(log, 'attendees')}</p>}
+          {(log.notes || log.notes_cn) && <p className="text-xs whitespace-pre-wrap">{content(log, 'notes')}</p>}
+          {(log.decisions || log.decisions_cn) && <p className="text-xs whitespace-pre-wrap"><span className="font-semibold">{lang === 'zh' ? '决定' : '결정'}: </span>{content(log, 'decisions')}</p>}
+          {(log.next_steps || log.next_steps_cn) && <p className="text-xs whitespace-pre-wrap"><span className="font-semibold">{lang === 'zh' ? '下一步' : '다음 액션'}: </span>{content(log, 'next_steps')}</p>}
         </div>
       )}
       {writing && <MeetingLiveNotes log={log} onSaved={() => qc.invalidateQueries({ queryKey: ['meeting-logs', log.card_id] })} />}

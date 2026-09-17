@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Paperclip, Loader2 } from 'lucide-react';
 import DropZone from '@/components/ui/drop-zone';
-import { translateFieldsToCN } from '@/lib/translate';
+import { saveBilingual } from '@/lib/saveBilingual';
+import { cnOrKo } from '@/lib/contentLanguage';
+import BilingualField from '@/components/language/BilingualField';
+import { toast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/lib/LanguageContext';
 
 const ROLE_COLOR = {
@@ -21,7 +24,7 @@ function formatTime(iso) {
 
 export default function ChatTab({ card, user, viewLang = 'KR' }) {
   const { t } = useLanguage();
-  const [text, setText] = useState('');
+  const [draft, setDraft] = useState({ message_text: '', message_text_cn: '' });
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef();
   const bottomRef = useRef();
@@ -49,22 +52,21 @@ export default function ChatTab({ card, user, viewLang = 'KR' }) {
 
   const sendMutation = useMutation({
     mutationFn: async (msg) => {
-      const cn = await translateFieldsToCN({ message_text: msg.message_text });
-      return base44.entities.CardChat.create({ ...msg, message_text_cn: cn.message_text || '' });
+      return saveBilingual('CardChat', { ...msg, tenant_id: card.tenant_id });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['card-chat', card.id] }),
+    onError: error => toast({ title: '전송 실패 / 发送失败', description: error.message, variant: 'destructive' }),
   });
 
   const handleSend = () => {
-    if (!text.trim()) return;
+    if (sendMutation.isPending || !(draft.message_text.trim() || draft.message_text_cn.trim())) return;
     sendMutation.mutate({
       card_id: card.id,
       sender_name: user?.full_name || '사용자',
       sender_email: user?.email || '',
       sender_role: user?.role === 'admin' ? 'HQ' : 'AGENT',
-      message_text: text.trim(),
-    });
-    setText('');
+      message_text: draft.message_text.trim(), message_text_cn: draft.message_text_cn.trim(),
+    }, { onSuccess: () => setDraft({ message_text: '', message_text_cn: '' }) });
   };
 
   const handleFileAttach = async (file) => {
@@ -102,7 +104,7 @@ export default function ChatTab({ card, user, viewLang = 'KR' }) {
               <div className={`max-w-[72%] space-y-1 ${mine ? 'items-end' : 'items-start'} flex flex-col`}>
                 {!mine && <p className="text-[10px] text-muted-foreground px-1">{msg.sender_name} · {msg.sender_role}</p>}
                 <div className={`px-3 py-2 rounded-2xl text-sm leading-snug ${mine ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'}`}>
-                  {viewLang === 'CN' ? (msg.message_text_cn || msg.message_text) : msg.message_text}
+                  {cnOrKo(msg, 'message_text', viewLang === 'CN' ? 'zh' : 'ko')}
                   {msg.file_url && (
                     <a href={msg.file_url} target="_blank" rel="noopener noreferrer"
                        className={`block text-xs mt-1 underline ${mine ? 'text-primary-foreground/80' : 'text-primary'}`}>
@@ -124,14 +126,12 @@ export default function ChatTab({ card, user, viewLang = 'KR' }) {
           {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
         </button>
         <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileAttach(e.target.files[0])} />
-        <Input
-          value={text} onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-          placeholder={viewLang === 'CN' ? '输入消息…（按 Enter 发送）' : '메시지를 입력하세요... (Enter로 전송)'}
-          className="flex-1 text-sm"
-        />
-        <Button size="icon" onClick={handleSend} disabled={!text.trim() || sendMutation.isPending} className="shrink-0">
-          <Send className="w-4 h-4" />
+        <BilingualField record={draft} field="message_text" disabled={sendMutation.isPending}
+          onChange={(key, value) => setDraft(prev => ({ ...prev, [key]: value }))}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); handleSend(); } }}
+          placeholder={viewLang === 'CN' ? '输入消息…' : '메시지를 입력하세요…'} className="text-sm" />
+        <Button size="icon" onClick={handleSend} disabled={!(draft.message_text.trim() || draft.message_text_cn.trim()) || sendMutation.isPending} className="shrink-0">
+          {sendMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </Button>
       </div>
     </DropZone>

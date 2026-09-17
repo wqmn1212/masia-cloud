@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Upload, FileUp, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import QuoteLineEditor from '@/components/quotation/QuoteLineEditor';
+import saveBilingualQuotation from '@/lib/saveBilingualQuotation';
 
 const CATEGORY_LABELS = {
   DRIP_BAG: '드립백 포장기',
@@ -86,19 +87,19 @@ export default function AgentQuotes() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const total = (form.line_items || []).reduce((s, i) => s + (i.total_cny || 0), 0);
-      return base44.entities.Quotation.create({
-        ...form,
+      return saveBilingualQuotation({
+        ...form, tenant_id: me?.tenant_id,
         factory_total_cost: total,
         raw_file_url: uploadedUrl,
         ai_status: uploadedUrl ? 'SUCCESS' : 'PENDING',
         status: 'REVIEW',
       });
     },
-    onSuccess: () => {
+    onSuccess: (saved) => {
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
       setForm({ factory_id: '', factory_name: '', machine_category: '', line_items: [], incoterms: 'EXW' });
       setUploadedUrl('');
-      toast({ title: '견적 업로드 완료', description: '본사 검수 대기중' });
+      if (!saved.__translation_failed) toast({ title: '견적 업로드 완료', description: '본사 검수 대기중' });
     },
   });
 

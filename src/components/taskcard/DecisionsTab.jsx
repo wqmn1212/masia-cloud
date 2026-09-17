@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Plus, BookMarked } from 'lucide-react';
 import DecisionCard from '@/components/decisions/DecisionCard';
 import DecisionForm from '@/components/decisions/DecisionForm';
-import { translateFieldsToCN } from '@/lib/translate';
+import { saveBilingual } from '@/lib/saveBilingual';
+import { toast } from '@/components/ui/use-toast';
 
 export default function DecisionsTab({ card, user }) {
   const qc = useQueryClient();
@@ -22,13 +23,10 @@ export default function DecisionsTab({ card, user }) {
 
   const saveMut = useMutation({
     mutationFn: async (data) => {
-      const cn = await translateFieldsToCN({ topic: data.topic, decision: data.decision, rationale: data.rationale });
-      const translated = Object.fromEntries(Object.entries(cn).filter(([k]) => !k.startsWith('__')).map(([k, v]) => [`${k}_cn`, v]));
-      return editing?.id
-        ? base44.entities.DecisionLog.update(editing.id, { ...data, ...translated })
-        : base44.entities.DecisionLog.create({ ...data, ...translated, tenant_id: card.tenant_id, card_id: card.id });
+      return saveBilingual('DecisionLog', { ...data, tenant_id: card.tenant_id, card_id: card.id }, editing?.id);
     },
     onSuccess: () => { invalidate(); setFormOpen(false); setEditing(null); },
+    onError: error => toast({ title: '저장 실패 / 保存失败', description: error.message, variant: 'destructive' }),
   });
   const delMut = useMutation({
     mutationFn: (d) => base44.entities.DecisionLog.delete(d.id),
@@ -61,7 +59,7 @@ export default function DecisionsTab({ card, user }) {
       )}
 
       <DecisionForm open={formOpen} onClose={() => { setFormOpen(false); setEditing(null); }}
-        onSave={(data) => saveMut.mutate(data)} initial={editing} fixedCardId={card.id} />
+        onSave={(data) => saveMut.mutate(data)} saving={saveMut.isPending} initial={editing} fixedCardId={card.id} />
     </div>
   );
 }

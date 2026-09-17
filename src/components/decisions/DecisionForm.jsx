@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, X } from 'lucide-react';
+import BilingualField from '@/components/language/BilingualField';
+import { editBilingual } from '@/lib/saveBilingual';
 import { CATEGORY_LABELS, STATUS_META } from './decisionMeta';
 
 const EMPTY = {
@@ -14,18 +16,18 @@ const EMPTY = {
   decided_by: '', decided_at: '', source_ref: '', impact_note: '', card_id: '',
 };
 
-export default function DecisionForm({ open, onClose, onSave, initial, cards = [], fixedCardId }) {
+export default function DecisionForm({ open, onClose, onSave, initial, cards = [], fixedCardId, saving }) {
   const [form, setForm] = useState(EMPTY);
 
   useEffect(() => {
-    if (open) setForm({ ...EMPTY, ...(initial || {}), card_id: fixedCardId || initial?.card_id || '' });
+    if (open) setForm({ ...EMPTY, ...(initial || {}), __bilingualDirty: {}, card_id: fixedCardId || initial?.card_id || '' });
   }, [open, initial, fixedCardId]);
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k, v) => setForm(f => editBilingual(f, k, v));
   const setAlt = (i, k, v) => setForm(f => ({ ...f, alternatives: f.alternatives.map((a, idx) => idx === i ? { ...a, [k]: v } : a) }));
 
   const submit = () => {
-    if (!form.topic.trim() || !form.decision.trim()) return;
+    if (!(form.topic?.trim() || form.topic_cn?.trim()) || !(form.decision?.trim() || form.decision_cn?.trim())) return;
     const data = { ...form, alternatives: form.alternatives.filter(a => a.option?.trim()) };
     if (!data.card_id) delete data.card_id;
     onSave(data);
@@ -39,7 +41,7 @@ export default function DecisionForm({ open, onClose, onSave, initial, cards = [
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">결정 주제 *</Label>
-              <Input value={form.topic} onChange={e => set('topic', e.target.value)} placeholder="예: N30 전극 표면 마감" />
+              <BilingualField key={`topic-${initial?.id || 'new'}-${open}`} record={form} field="topic" onChange={set} disabled={saving} />
             </div>
             <div>
               <Label className="text-xs">분류</Label>
@@ -67,11 +69,11 @@ export default function DecisionForm({ open, onClose, onSave, initial, cards = [
 
           <div>
             <Label className="text-xs">확정 내용 *</Label>
-            <Textarea rows={2} value={form.decision} onChange={e => set('decision', e.target.value)} />
+            <BilingualField key={`decision-${initial?.id || 'new'}-${open}`} record={form} field="decision" multiline rows={2} onChange={set} disabled={saving} />
           </div>
           <div>
             <Label className="text-xs">근거</Label>
-            <Textarea rows={2} value={form.rationale} onChange={e => set('rationale', e.target.value)} />
+            <BilingualField key={`rationale-${initial?.id || 'new'}-${open}`} record={form} field="rationale" multiline rows={2} onChange={set} disabled={saving} />
           </div>
 
           <div>
@@ -136,7 +138,7 @@ export default function DecisionForm({ open, onClose, onSave, initial, cards = [
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={onClose}>취소</Button>
-            <Button onClick={submit} disabled={!form.topic.trim() || !form.decision.trim()}>저장</Button>
+            <Button onClick={submit} disabled={saving || !(form.topic?.trim() || form.topic_cn?.trim()) || !(form.decision?.trim() || form.decision_cn?.trim())}>{saving ? '저장 중 / 保存中…' : '저장 / 保存'}</Button>
           </div>
         </div>
       </DialogContent>

@@ -32,7 +32,7 @@ export default async function (req) {
       attachments: documents.map(documentMetadata),
       card: {
         id: card.id,
-        title: card.title,
+        title: card.title, title_cn: card.title_cn || '',
         status: card.status,
         priority: card.priority || 'MEDIUM',
         due_date: card.due_date || '',
@@ -41,7 +41,7 @@ export default async function (req) {
         delivery_business_days: card.delivery_business_days ?? null,
         delivery_date: card.delivery_date || '',
         delivery_date_mode: card.delivery_date_mode || 'AUTO',
-        hq_requirements: card.hq_requirements || '',
+        hq_requirements: card.hq_requirements || '', hq_requirements_cn: card.hq_requirements_cn || '',
         target_machine_category: card.target_machine_category || '',
       },
       chats: chats
@@ -50,7 +50,7 @@ export default async function (req) {
           id: c.id,
           sender_name: c.sender_name,
           sender_role: c.sender_role || 'HQ',
-          message_text: c.message_text,
+          message_text: c.message_text, message_text_cn: c.message_text_cn || '',
           file_url: c.file_url || '',
           file_name: c.file_name || '',
           created_date: c.created_date,

@@ -31,7 +31,7 @@ export default function DecisionCard({ decision, cardTitle, canEdit, onEdit, onD
       </div>
 
       <p className="text-sm mt-2 whitespace-pre-wrap">{content(decision, 'decision')}</p>
-      {decision.rationale && (
+      {(decision.rationale || decision.rationale_cn) && (
         <p className="text-xs text-muted-foreground mt-1.5 whitespace-pre-wrap">{lang === 'zh' ? '依据' : '근거'}: {content(decision, 'rationale')}</p>
       )}
 

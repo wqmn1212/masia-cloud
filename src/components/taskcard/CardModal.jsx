@@ -36,7 +36,8 @@ const CAT_LABEL = {
   DRIP_BAG: '드립백', SLEEVE: '슬리브', DESKTOP_LABELER: '탁상 라벨러', TUBE_SEALER: '튜브 실링기',
 };
 
-export default function CardModal({ card, open, onClose, initialTab = 'overview' }) {
+export default function CardModal({ card: initialCard, open, onClose, initialTab = 'overview' }) {
+  const { data: card = initialCard } = useQuery({ queryKey: ['task-cards', 'detail', initialCard?.id], queryFn: () => base44.entities.TaskCard.get(initialCard.id), enabled: !!initialCard?.id && open });
   const [user, setUser] = useState(null);
   const { lang, t, content } = useLanguage();
   const viewLang = lang === 'zh' ? 'CN' : 'KR';

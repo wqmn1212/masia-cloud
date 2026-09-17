@@ -14,7 +14,8 @@ import CardModal from '@/components/taskcard/CardModal';
 import CategorySelect from '@/components/taskcard/CategorySelect';
 import ClientSelect from '@/components/taskcard/ClientSelect';
 import FactoryMultiSelect from '@/components/taskcard/FactoryMultiSelect';
-import { translateFieldsToCN } from '@/lib/translate';
+import { saveBilingual } from '@/lib/saveBilingual';
+import BilingualField from '@/components/language/BilingualField';
 import { useSearch } from '@/lib/SearchContext';
 import { useLanguage } from '@/lib/LanguageContext';
 import ChineseBackfillButton from '@/components/language/ChineseBackfillButton';
@@ -92,15 +93,15 @@ export default function TaskBoard() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      const cn = await translateFieldsToCN({ title: data.title });
-      return base44.entities.TaskCard.create({ ...data, title_cn: cn.title || '' });
+      return saveBilingual('TaskCard', { ...data, tenant_id: user?.tenant_id });
     },
-    onSuccess: () => {
+    onError: error => toast({ title: '저장 실패 / 保存失败', description: error.message, variant: 'destructive' }),
+    onSuccess: (saved) => {
       queryClient.invalidateQueries({ queryKey: ['task-cards'] });
       setCreateOpen(false);
       setForm(emptyForm);
       setCandidateFactories([]);
-      toast({ title: '카드 생성 완료 · 중국어 번역 캡쳐됨' });
+      if (!saved.__translation_failed) toast({ title: lang === 'zh' ? '卡片已创建' : '카드 생성 완료' });
     },
   });
 
@@ -339,7 +340,7 @@ export default function TaskBoard() {
           }} className="space-y-4">
             <div>
               <Label className="text-xs">{t('taskboard.form.title')}</Label>
-              <Input value={form.title} onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))} placeholder={t('taskboard.form.title.placeholder')} required />
+              <BilingualField record={form} field="title" disabled={createMutation.isPending} onChange={(key, value) => setForm(p => ({ ...p, [key]: value }))} placeholder={t('taskboard.form.title.placeholder')} required={!form.title?.trim() && !form.title_cn?.trim()} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

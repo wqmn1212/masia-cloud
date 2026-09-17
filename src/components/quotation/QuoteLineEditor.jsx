@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2 } from 'lucide-react';
+import BilingualField from '@/components/language/BilingualField';
 
 const CURRENCY_SYMBOL = { CNY: '¥', USD: '$', KRW: '₩' };
 const CURRENCIES = ['CNY', 'USD', 'KRW'];
@@ -45,8 +46,7 @@ export default function QuoteLineEditor({ items, onChange }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-muted/50">
-              <th className="text-left p-2 font-medium text-xs">품목 (중문)</th>
-              <th className="text-left p-2 font-medium text-xs">품목 (한글)</th>
+              <th colSpan={2} className="text-left p-2 font-medium text-xs">품목 / 品名 (KR · CN)</th>
               <th className="text-left p-2 font-medium text-xs">사양</th>
               <th className="text-right p-2 font-medium text-xs w-20">수량</th>
               <th className="text-center p-2 font-medium text-xs w-20">통화</th>
@@ -60,11 +60,8 @@ export default function QuoteLineEditor({ items, onChange }) {
               const sym = CURRENCY_SYMBOL[item.currency || 'CNY'];
               return (
               <tr key={idx} className="border-t">
-                <td className="p-1.5">
-                  <Input className="h-8 text-xs" value={item.item_name_cn} onChange={(e) => updateRow(idx, 'item_name_cn', e.target.value)} placeholder="中文名" />
-                </td>
-                <td className="p-1.5">
-                  <Input className="h-8 text-xs" value={item.item_name_ko} onChange={(e) => updateRow(idx, 'item_name_ko', e.target.value)} placeholder="한글명" />
+                <td colSpan={2} className="p-1.5">
+                  <BilingualField record={item} field="item_name_ko" chineseField="item_name_cn" onChange={(key, value) => updateRow(idx, key, value)} className="h-8 text-xs" />
                 </td>
                 <td className="p-1.5">
                   <Input className="h-8 text-xs" value={item.specification} onChange={(e) => updateRow(idx, 'specification', e.target.value)} />

@@ -7,7 +7,8 @@ import MeetingLogForm from './MeetingLogForm';
 import MeetingLogItem from './MeetingLogItem';
 import MeetingAnalysisDialog from './MeetingAnalysisDialog';
 import MeetingRecordingLibrary from './MeetingRecordingLibrary';
-import { translateFieldsToCN } from '@/lib/translate';
+import { saveBilingual } from '@/lib/saveBilingual';
+import { toast } from '@/components/ui/use-toast';
 
 export default function MeetingLogPanel({ card, user, onRecordingBusy = () => {} }) {
   const [adding, setAdding] = useState(false);
@@ -24,19 +25,18 @@ export default function MeetingLogPanel({ card, user, onRecordingBusy = () => {}
 
   const createMut = useMutation({
     mutationFn: async (form) => {
-      const cn = await translateFieldsToCN({ title: form.title, attendees: form.attendees, notes: form.notes, decisions: form.decisions, next_steps: form.next_steps });
-      return base44.entities.MeetingLog.create({ ...form, ...Object.fromEntries(Object.entries(cn).filter(([k]) => !k.startsWith('__')).map(([k, v]) => [`${k}_cn`, v])), tenant_id: card.tenant_id, card_id: card.id, created_by_name: user?.full_name || user?.email || '' });
+      return saveBilingual('MeetingLog', { ...form, tenant_id: card.tenant_id, card_id: card.id, created_by_name: user?.full_name || user?.email || '' });
     },
     onSuccess: () => { setAdding(false); qc.invalidateQueries({ queryKey: ['meeting-logs', card.id] }); },
+    onError: error => toast({ title: '저장 실패 / 保存失败', description: error.message, variant: 'destructive' }),
   });
 
   const updateMut = useMutation({
     mutationFn: async ({ id, form }) => {
-      const cn = await translateFieldsToCN({ title: form.title, attendees: form.attendees, notes: form.notes, decisions: form.decisions, next_steps: form.next_steps });
-      const translated = Object.fromEntries(Object.entries(cn).filter(([k]) => !k.startsWith('__')).map(([k, v]) => [`${k}_cn`, v]));
-      return base44.entities.MeetingLog.update(id, { ...form, ...translated });
+      return saveBilingual('MeetingLog', form, id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['meeting-logs', card.id] }),
+    onError: error => toast({ title: '저장 실패 / 保存失败', description: error.message, variant: 'destructive' }),
   });
 
   const deleteMut = useMutation({

@@ -9,7 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Trash2, CheckCircle2, Circle, Clock, CalendarDays, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
-import { translateFieldsToCN } from '@/lib/translate';
+import { saveBilingual } from '@/lib/saveBilingual';
+import { cnOrKo } from '@/lib/contentLanguage';
+import BilingualField from '@/components/language/BilingualField';
+import BilingualInlineEditor from '@/components/language/BilingualInlineEditor';
 import ChineseContentEditor from '@/components/language/ChineseContentEditor';
 
 const STATUS_META = {
@@ -62,42 +65,22 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      const cn = await translateFieldsToCN({ title: data.title, description: data.description });
-      return base44.entities.TaskItem.create({
-        ...data,
-        card_id: card.id,
-        title_cn: cn.title || '',
-        description_cn: cn.description || '',
-      });
+      return saveBilingual('TaskItem', { ...data, card_id: card.id, tenant_id: card.tenant_id });
     },
+    onError: error => toast({ title: '저장 실패 / 保存失败', description: error.message, variant: 'destructive' }),
     onSuccess: (newItem) => {
       queryClient.invalidateQueries({ queryKey: ['task-items', card.id] });
       queryClient.invalidateQueries({ queryKey: ['task-items-all'] });
       setForm(emptyForm);
       setShowForm(false);
       if (newItem?.id) setExpandedId(newItem.id);
-      toast({ title: '업무 추가 완료' });
+      if (!newItem.__translation_failed) toast({ title: '업무 추가 완료 / 任务已添加' });
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      if (data.__manualChinese) {
-        const { __manualChinese, ...manualData } = data;
-        return base44.entities.TaskItem.update(id, manualData);
-      }
-      const current = items.find(item => item.id === id);
-      const extra = {};
-      if (current?.cn_manual) return base44.entities.TaskItem.update(id, data);
-      if (data.title !== undefined) {
-        const cn = await translateFieldsToCN({ title: data.title });
-        extra.title_cn = cn.title || '';
-      }
-      if (data.description !== undefined) {
-        const cn = await translateFieldsToCN({ description: data.description });
-        extra.description_cn = cn.description || '';
-      }
-      return base44.entities.TaskItem.update(id, { ...data, ...extra });
+      return saveBilingual('TaskItem', data, id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task-items', card.id] });
@@ -173,7 +156,7 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
 
                 {/* Title */}
                 <span className={`flex-1 text-sm font-medium ${item.status === 'DONE' ? 'line-through text-muted-foreground' : ''}`}>
-                  {viewLang === 'CN' ? (item.title_cn || item.title) : item.title}
+                  {cnOrKo(item, 'title', viewLang === 'CN' ? 'zh' : 'ko')}
                 </span>
 
                 {/* Meta badges */}
@@ -210,21 +193,11 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
                 <div className="border-t px-3 py-3 space-y-3 bg-muted/20">
                   <div>
                     <Label className="text-[10px]">업무 제목</Label>
-                    <Input
-                      defaultValue={item.title}
-                      className="h-7 text-xs"
-                      onBlur={(e) => e.target.value !== item.title && e.target.value.trim() && updateMutation.mutate({ id: item.id, data: { title: e.target.value } })}
-                    />
+                    <BilingualInlineEditor record={item} field="title" required saving={updateMutation.isPending} onSave={data => updateMutation.mutate({ id: item.id, data })} />
                   </div>
                   <div>
                     <Label className="text-[10px]">상세 내용</Label>
-                    <Textarea
-                      defaultValue={viewLang === 'CN' ? (item.description_cn || item.description) : item.description}
-                      placeholder="업무 상세 설명 (선택)"
-                      rows={2}
-                      className="text-xs"
-                      onBlur={(e) => e.target.value !== (item.description || '') && updateMutation.mutate({ id: item.id, data: { description: e.target.value } })}
-                    />
+                    <BilingualInlineEditor record={item} field="description" multiline rows={2} saving={updateMutation.isPending} onSave={data => updateMutation.mutate({ id: item.id, data })} />
                   </div>
                   {viewLang === 'CN' && <ChineseContentEditor record={item} saving={updateMutation.isPending}
                     fields={[{ key: 'title', label: '任务标题' }, { key: 'description', label: '详细内容', multiline: true }]}
@@ -271,22 +244,11 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
         <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
           <div>
             <Label className="text-xs">업무 제목 *</Label>
-            <Input
-              value={form.title}
-              onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
-              placeholder="예: 견적 요청, 부품 확인, 도색 변경 협의"
-              autoFocus
-            />
+            <BilingualField record={form} field="title" disabled={createMutation.isPending} onChange={(key, value) => setForm(p => ({ ...p, [key]: value }))} autoFocus />
           </div>
           <div>
             <Label className="text-xs">상세 내용</Label>
-            <Textarea
-              value={form.description}
-              onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))}
-              placeholder="업무 상세 설명 (선택)"
-              rows={2}
-              className="text-xs"
-            />
+            <BilingualField record={form} field="description" multiline rows={2} disabled={createMutation.isPending} onChange={(key, value) => setForm(p => ({ ...p, [key]: value }))} />
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
@@ -309,7 +271,7 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => { setShowForm(false); setForm(emptyForm); }}>취소</Button>
-            <Button size="sm" onClick={() => form.title && createMutation.mutate(form)} disabled={!form.title || createMutation.isPending}>
+            <Button size="sm" onClick={() => createMutation.mutate(form)} disabled={!(form.title?.trim() || form.title_cn?.trim()) || createMutation.isPending}>
               추가
             </Button>
           </div>

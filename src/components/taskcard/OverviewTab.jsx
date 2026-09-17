@@ -10,7 +10,8 @@ import { AlertCircle, Lightbulb, Plus, CheckCircle2, CalendarDays, Loader2 } fro
 import CategorySelect from './CategorySelect';
 import ClientSelect from './ClientSelect';
 import FactoryMultiSelect from './FactoryMultiSelect';
-import { translateFieldsToCN } from '@/lib/translate';
+import { saveBilingual, editBilingual } from '@/lib/saveBilingual';
+import BilingualField from '@/components/language/BilingualField';
 import ChineseContentEditor from '@/components/language/ChineseContentEditor';
 
 const CATEGORY_LABELS = {
@@ -22,7 +23,8 @@ const CATEGORY_LABELS = {
 
 export default function OverviewTab({ card, kbAlerts, viewLang = 'KR', user }) {
   const [form, setForm] = useState({
-    title: card.title || '',
+    __bilingualDirty: {}, title: card.title || '', title_cn: card.title_cn || '',
+    hq_requirements_cn: card.hq_requirements_cn || '', agent_meeting_notes_cn: card.agent_meeting_notes_cn || '',
     client_name: card.client_name || '',
     client_id: card.client_id || '',
     factory_name: card.factory_name || '',
@@ -47,27 +49,21 @@ export default function OverviewTab({ card, kbAlerts, viewLang = 'KR', user }) {
 
   const updateMutation = useMutation({
     mutationFn: async (data) => {
-      if (data.__manualChinese) {
-        const { __manualChinese, ...manualData } = data;
-        return base44.entities.TaskCard.update(card.id, manualData);
-      }
-      const saved = await base44.entities.TaskCard.update(card.id, data);
-      queryClient.invalidateQueries({ queryKey: ['task-cards'] });
-      if (card.cn_manual) return saved;
-      const cn = await translateFieldsToCN({
-        title: data.title,
-        hq_requirements: data.hq_requirements,
-        agent_meeting_notes: data.agent_meeting_notes,
-      });
-      await base44.entities.TaskCard.update(card.id, {
-        title_cn: cn.title || '',
-        hq_requirements_cn: cn.hq_requirements || '',
-        agent_meeting_notes_cn: cn.agent_meeting_notes || '',
-      });
-      return saved;
+      return saveBilingual('TaskCard', data, card.id);
     },
     onMutate: () => setAutoSaveStatus('saving'),
-    onSuccess: () => {
+    onSuccess: (saved, submitted) => {
+      setForm(current => {
+        if (Object.keys(submitted).some(key => key in current && JSON.stringify(current[key]) !== JSON.stringify(submitted[key]))) return current;
+        const next = { ...current };
+        for (const field of ['title', 'hq_requirements', 'agent_meeting_notes']) {
+          next[field] = saved[field] || '';
+          next[`${field}_cn`] = saved[`${field}_cn`] || '';
+        }
+        if (JSON.stringify(next) === JSON.stringify(current)) return current;
+        initialRender.current = true;
+        return next;
+      });
       setAutoSaveStatus('saved');
       queryClient.invalidateQueries({ queryKey: ['task-cards'] });
     },
@@ -93,35 +89,12 @@ export default function OverviewTab({ card, kbAlerts, viewLang = 'KR', user }) {
   const addKbAlert = (suggestion) => {
     setForm(p => ({
       ...p,
+      __bilingualDirty: { ...p.__bilingualDirty, hq_requirements: true },
       hq_requirements: p.hq_requirements
         ? `${p.hq_requirements}\n\n⚠️ [권장] ${suggestion}`
         : `⚠️ [권장] ${suggestion}`,
     }));
   };
-
-  if (viewLang === 'CN') {
-    const hasAny = card.title_cn || card.hq_requirements_cn || card.agent_meeting_notes_cn;
-    return (
-      <div className="space-y-4">
-        <div className="rounded-xl border bg-muted/30 p-4">
-          <Label className="text-[11px] text-muted-foreground">业务标题</Label>
-          <p className="text-base font-semibold mt-1">{card.title_cn || card.title || '-'}</p>
-        </div>
-        <div className="rounded-xl border bg-muted/30 p-4">
-          <Label className="text-[11px] text-muted-foreground">HQ 要求事项</Label>
-          <pre className="text-xs whitespace-pre-wrap font-sans mt-1 leading-relaxed">{card.hq_requirements_cn || card.hq_requirements || '-'}</pre>
-        </div>
-        <div className="rounded-xl border bg-muted/30 p-4">
-          <Label className="text-[11px] text-muted-foreground">代理会谈 / 工厂备注</Label>
-          <pre className="text-xs whitespace-pre-wrap font-sans mt-1 leading-relaxed">{card.agent_meeting_notes_cn || card.agent_meeting_notes || '-'}</pre>
-        </div>
-        {!hasAny && <p className="text-xs text-muted-foreground text-center py-2">中文翻译尚未缓存，保存韩文后将自动翻译。</p>}
-        {['master', 'service', 'sub'].includes(user?.account_tier) && <ChineseContentEditor record={card} saving={updateMutation.isPending}
-          fields={[{ key: 'title', label: '业务标题' }, { key: 'hq_requirements', label: 'HQ 要求事项', multiline: true }, { key: 'agent_meeting_notes', label: '代理会谈 / 工厂备注', multiline: true }]}
-          onSave={(data) => updateMutation.mutate({ ...data, __manualChinese: true })} />}
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-5">
@@ -146,7 +119,7 @@ export default function OverviewTab({ card, kbAlerts, viewLang = 'KR', user }) {
       <div className="grid grid-cols-2 gap-3">
       <div>
         <Label className="text-xs">업무 제목 *</Label>
-        <Input value={form.title} onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))} />
+        <BilingualField record={form} field="title" onChange={(key, value) => setForm(p => editBilingual(p, key, value))} />
       </div>
       <div>
         <Label className="text-xs">장비 카테고리</Label>
@@ -186,12 +159,12 @@ export default function OverviewTab({ card, kbAlerts, viewLang = 'KR', user }) {
 
       <div>
         <Label className="text-xs">HQ 요구사항</Label>
-        <Textarea value={form.hq_requirements} onChange={(e) => setForm(p => ({ ...p, hq_requirements: e.target.value }))} rows={5} placeholder="고객사 특수 요구사항을 상세히 입력하세요" className="font-mono text-xs" />
+        <BilingualField record={form} field="hq_requirements" multiline rows={5} onChange={(key, value) => setForm(p => editBilingual(p, key, value))} />
       </div>
 
       <div>
         <Label className="text-xs">에이전트 미팅 노트 / 공장 특이사항</Label>
-        <Textarea value={form.agent_meeting_notes} onChange={(e) => setForm(p => ({ ...p, agent_meeting_notes: e.target.value }))} rows={4} placeholder="공장 미팅 내용, 현장 확인 사항 등을 기록하세요" className="text-xs" />
+        <BilingualField record={form} field="agent_meeting_notes" multiline rows={4} onChange={(key, value) => setForm(p => editBilingual(p, key, value))} />
       </div>
 
       {/* 후보 공장 목록 */}
@@ -233,6 +206,9 @@ export default function OverviewTab({ card, kbAlerts, viewLang = 'KR', user }) {
         )}
       </div>
 
+      {viewLang === 'CN' && ['master', 'service', 'sub'].includes(user?.account_tier) && <ChineseContentEditor record={card} saving={updateMutation.isPending}
+        fields={[{ key: 'title', label: '业务标题' }, { key: 'hq_requirements', label: 'HQ 要求事项', multiline: true }, { key: 'agent_meeting_notes', label: '代理会谈 / 工厂备注', multiline: true }]}
+        onSave={data => updateMutation.mutate({ ...data, __manualChinese: true })} />}
       <div className="flex justify-end min-h-5" aria-live="polite">
         {autoSaveStatus === 'saving' && (
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><Loader2 className="w-3.5 h-3.5 animate-spin" />자동 저장 중...</span>
