@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import QuotationHistoryButton from '@/components/quotation/QuotationHistoryButto
 import ManualExchangeRates from '@/components/quotation/ManualExchangeRates';
 import CurrencyPanel from '@/components/quotation/CurrencyPanel';
 import { calculateQuote, fromUSD, isUsdQuote } from '@/components/quotation/quoteCurrency';
+import { findDailyQuotationRates, getKstDate } from '@/lib/quotationRates';
 
 const STATUS_META = {
   DRAFT:    { label: '초안',     color: 'bg-muted text-muted-foreground' },
@@ -83,6 +84,21 @@ export default function QuotationTab({ card, user }) {
     queryKey: ['quotations-by-card', card.id],
     queryFn: () => base44.entities.Quotation.filter({ card_id: card.id }, '-created_date'),
   });
+  const rateDate = getKstDate();
+  const tenantId = user?.tenant_id || card.tenant_id;
+  const { data: dailyQuotations = [] } = useQuery({
+    queryKey: ['daily-quotation-rates', tenantId, rateDate],
+    queryFn: () => base44.entities.Quotation.filter({ exchange_rate_date: rateDate }, '-updated_date', 20),
+    enabled: Boolean(tenantId),
+  });
+  const dailyRates = findDailyQuotationRates(dailyQuotations, rateDate);
+
+  useEffect(() => {
+    if (!showForm || editingId || !dailyRates) return;
+    setForm((current) => current.exchange_rate_usd_cny || current.exchange_rate_usd
+      ? current
+      : { ...current, ...dailyRates });
+  }, [showForm, editingId, dailyRates]);
 
   const resetForm = () => {
     setShowForm(false);
@@ -95,6 +111,7 @@ export default function QuotationTab({ card, user }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotations-by-card', card.id] });
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-quotation-rates', tenantId, rateDate] });
       resetForm();
       toast({ title: '견적 등록 완료 — 견적관리에서도 확인하세요' });
     },
@@ -106,6 +123,7 @@ export default function QuotationTab({ card, user }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotations-by-card', card.id] });
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-quotation-rates', tenantId, rateDate] });
       queryClient.invalidateQueries({ queryKey: ['card-quotations-publish', card.id] });
       resetForm();
       toast({ title: '견적 수정 완료' });

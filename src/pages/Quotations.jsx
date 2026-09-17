@@ -19,6 +19,7 @@ import ManualExchangeRates from '@/components/quotation/ManualExchangeRates';
 import CurrencyPanel from '@/components/quotation/CurrencyPanel';
 import { quotePriceLabel } from '@/components/quotation/quoteCurrency';
 import saveBilingualQuotation from '@/lib/saveBilingualQuotation';
+import { findDailyQuotationRates } from '@/lib/quotationRates';
 
 const CATEGORY_LABELS = {
   DRIP_BAG: '드립백 포장기',
@@ -75,6 +76,14 @@ export default function Quotations() {
   });
 
   const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
+  const dailyRates = findDailyQuotationRates(quotations);
+
+  useEffect(() => {
+    if (!createOpen || !dailyRates) return;
+    setForm((current) => current.exchange_rate_usd_cny || current.exchange_rate_usd
+      ? current
+      : { ...current, ...dailyRates });
+  }, [createOpen, dailyRates]);
 
   useEffect(() => {
     const usdToCny = Number(form.exchange_rate_usd_cny) || 0;
@@ -105,7 +114,7 @@ export default function Quotations() {
     onSuccess: (saved) => {
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
       setCreateOpen(false);
-      setForm(f => ({ ...f, exchange_rate_date: '', exchange_rate_usd: '', exchange_rate_usd_cny: '', exchange_rate_krw: '' }));
+      setForm(f => ({ ...f, exchange_rate_date: saved.exchange_rate_date || '', exchange_rate_usd: saved.exchange_rate_usd || '', exchange_rate_usd_cny: saved.exchange_rate_usd_cny || '', exchange_rate_krw: '' }));
       if (!saved.__translation_failed) toast({ title: t('quotations.add') });
     },
   });

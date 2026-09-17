@@ -743,9 +743,13 @@
       "type": "number",
       "description": "\ub2f9\uc77c \ud658\uc728: 1 USD = ? KRW"
     },
+    "exchange_rate_usd_cny": {
+      "type": "number",
+      "description": "\ub2f9\uc77c \uc9c1\uc811 \ud658\uc728: 1 USD = ? CNY"
+    },
     "exchange_rate_krw": {
       "type": "number",
-      "description": "\ub2f9\uc77c \ud658\uc728: 1 CNY = ? KRW"
+      "description": "(\ub808\uac70\uc2dc) 1 CNY = ? KRW"
     },
     "status": {
       "type": "string",
