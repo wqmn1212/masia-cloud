@@ -77,6 +77,7 @@ export default function MeetingLogPanel({ card, user, onRecordingBusy = () => {}
                 key={l.id}
                 initial={l}
                 autoSave
+                onAutoSaved={() => qc.invalidateQueries({ queryKey: ['meeting-logs', card.id] })}
                 saving={updateMut.isPending}
                 onSubmit={(form) => updateMut.mutate({ id: l.id, form })}
                 onCancel={() => setEditing(null)}

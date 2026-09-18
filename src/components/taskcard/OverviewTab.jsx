@@ -1,4 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
+import useDeferredBilingualSave from '@/components/language/useDeferredBilingualSave';
+import DeferredSaveStatus from '@/components/language/DeferredSaveStatus';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -44,47 +46,20 @@ export default function OverviewTab({ card, kbAlerts, viewLang = 'KR', user }) {
     }))
   );
   const queryClient = useQueryClient();
-  const initialRender = useRef(true);
-  const [autoSaveStatus, setAutoSaveStatus] = useState('idle');
-
+  const { status: autoSaveStatus } = useDeferredBilingualSave({
+    entity: 'TaskCard', id: card.id,
+    form: { ...form, candidate_factory_names: candidateFactories.map(f => f.name), candidate_factory_ids: candidateFactories.map(f => f.id) },
+    setForm,
+    onSaved: () => queryClient.invalidateQueries({ queryKey: ['task-cards'] }),
+  });
+  // Explicit manual corrections remain a single save, not a typing-triggered translation.
   const updateMutation = useMutation({
-    mutationFn: async (data) => {
-      return saveBilingual('TaskCard', data, card.id);
-    },
-    onMutate: () => setAutoSaveStatus('saving'),
-    onSuccess: (saved, submitted) => {
-      setForm(current => {
-        if (Object.keys(submitted).some(key => key in current && JSON.stringify(current[key]) !== JSON.stringify(submitted[key]))) return current;
-        const next = { ...current };
-        for (const field of ['title', 'hq_requirements', 'agent_meeting_notes']) {
-          next[field] = saved[field] || '';
-          next[`${field}_cn`] = saved[`${field}_cn`] || '';
-        }
-        if (JSON.stringify(next) === JSON.stringify(current)) return current;
-        initialRender.current = true;
-        return next;
-      });
-      setAutoSaveStatus('saved');
+    mutationFn: data => saveBilingual('TaskCard', data, card.id),
+    onSuccess: saved => {
+      setForm(current => ({ ...current, ...Object.fromEntries(['title', 'hq_requirements', 'agent_meeting_notes'].flatMap(f => [f, `${f}_cn`]).map(key => [key, saved[key] || ''])) }));
       queryClient.invalidateQueries({ queryKey: ['task-cards'] });
     },
-    onError: () => setAutoSaveStatus('error'),
   });
-
-  useEffect(() => {
-    if (initialRender.current) {
-      initialRender.current = false;
-      return;
-    }
-    setAutoSaveStatus('saving');
-    const timer = window.setTimeout(() => {
-      updateMutation.mutate({
-        ...form,
-        candidate_factory_names: candidateFactories.map(factory => factory.name),
-        candidate_factory_ids: candidateFactories.map(factory => factory.id),
-      });
-    }, 700);
-    return () => window.clearTimeout(timer);
-  }, [form, candidateFactories]);
 
   const addKbAlert = (suggestion) => {
     setForm(p => ({
@@ -209,17 +184,7 @@ export default function OverviewTab({ card, kbAlerts, viewLang = 'KR', user }) {
       {viewLang === 'CN' && ['master', 'service', 'sub'].includes(user?.account_tier) && <ChineseContentEditor record={card} saving={updateMutation.isPending}
         fields={[{ key: 'title', label: '业务标题' }, { key: 'hq_requirements', label: 'HQ 要求事项', multiline: true }, { key: 'agent_meeting_notes', label: '代理会谈 / 工厂备注', multiline: true }]}
         onSave={data => updateMutation.mutate({ ...data, __manualChinese: true })} />}
-      <div className="flex justify-end min-h-5" aria-live="polite">
-        {autoSaveStatus === 'saving' && (
-          <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><Loader2 className="w-3.5 h-3.5 animate-spin" />자동 저장 중...</span>
-        )}
-        {autoSaveStatus === 'saved' && (
-          <span className="flex items-center gap-1.5 text-xs text-accent"><CheckCircle2 className="w-3.5 h-3.5" />자동 저장됨</span>
-        )}
-        {autoSaveStatus === 'error' && (
-          <span className="flex items-center gap-1.5 text-xs text-destructive"><AlertCircle className="w-3.5 h-3.5" />자동 저장 실패</span>
-        )}
-      </div>
+      <DeferredSaveStatus status={autoSaveStatus} />
     </div>
   );
 }

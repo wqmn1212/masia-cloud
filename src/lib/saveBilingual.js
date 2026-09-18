@@ -22,6 +22,8 @@ export async function saveBilingual(entity, input, id) {
       if (!input.__bilingualDirty[field]) delete data[field];
       if (!input.__bilingualDirty[cn]) delete data[cn];
     }
+    // Status/date-only saves must never trigger translation of unrelated text.
+    if (id && data[field] === undefined && data[cn] === undefined) continue;
     if (!id && text(data[cn]) && data[field] === undefined) data[field] = '';
     // Do not erase translations from an older, still-open form.
     if (id && data[field] === '' && text(current[field]) && text(data[cn])) delete data[field];

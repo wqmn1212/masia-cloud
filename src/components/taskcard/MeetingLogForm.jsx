@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import BilingualField from '@/components/language/BilingualField';
 import { editBilingual } from '@/lib/saveBilingual';
+import useDeferredBilingualSave from '@/components/language/useDeferredBilingualSave';
+import DeferredSaveStatus from '@/components/language/DeferredSaveStatus';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,7 +18,7 @@ const EMPTY = {
   meeting_type: 'ONLINE', title: '', attendees: '', notes: '', decisions: '', next_steps: '',
 };
 
-export default function MeetingLogForm({ onSubmit, onCancel, saving, initial, autoSave }) {
+export default function MeetingLogForm({ onSubmit, onCancel, saving, initial, autoSave, onAutoSaved }) {
   const [form, setForm] = useState({
     ...EMPTY, __bilingualDirty: {},
     ...(initial ? {
@@ -32,18 +34,11 @@ export default function MeetingLogForm({ onSubmit, onCancel, saving, initial, au
   });
   const set = (k, v) => setForm(f => editBilingual(f, k, v));
 
-  const dirty = useRef(false);
-  useEffect(() => {
-    if (dirty.current || !initial) return;
-    setForm(previous => ({ ...previous, ...Object.fromEntries(['title', 'attendees', 'notes', 'decisions', 'next_steps'].flatMap(f => [f, `${f}_cn`]).map(key => [key, initial[key] || ''])) }));
-  }, [initial]);
-  useEffect(() => {
-    if (!autoSave || !dirty.current || !(form.title?.trim() || form.title_cn?.trim()) || saving) return;
-    const t = setTimeout(() => { dirty.current = false; onSubmit(form); }, 1000);
-    return () => clearTimeout(t);
-  }, [form, autoSave, saving]);
-
-  const handleChange = (k, v) => { dirty.current = true; set(k, v); };
+  const { status } = useDeferredBilingualSave({
+    entity: 'MeetingLog', id: initial?.id, form, setForm,
+    enabled: !!autoSave, onSaved: onAutoSaved,
+  });
+  const handleChange = set;
 
   return (
     <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
@@ -61,9 +56,7 @@ export default function MeetingLogForm({ onSubmit, onCancel, saving, initial, au
       <BilingualField record={form} field="next_steps" multiline rows={2} placeholder="다음 액션 / 下一步" onChange={handleChange} />
       <div className="flex justify-end items-center gap-2">
         {autoSave && (
-          <span className="text-[11px] text-muted-foreground mr-auto">
-            {saving ? '저장 중...' : '자동저장됩니다'}
-          </span>
+          <DeferredSaveStatus status={status} />
         )}
         <Button variant="ghost" size="sm" onClick={onCancel}>{autoSave ? '닫기' : '취소'}</Button>
         {!autoSave && (
