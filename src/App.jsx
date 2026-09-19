@@ -39,6 +39,7 @@ import ClientPortalDashboard from '@/pages/ClientPortalDashboard';
 import ClientBoard from '@/pages/ClientBoard';
 import PortfolioAdmin from '@/pages/PortfolioAdmin';
 import PortfolioDetail from '@/pages/PortfolioDetail';
+import JoinInvite from '@/pages/JoinInvite';
 
 const AuthenticatedApp = () => {
   const { user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, onboardingPath, completeOnboarding, retryInvitation } = useAuth();
@@ -79,6 +80,7 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
+      <Route path="/join" element={<JoinInvite />} />
       <Route element={<AppLayout />}>
         {/* 고객 포털 — 내부 관리 화면과 라우트 단위로 분리 */}
         <Route path="/client/dashboard" element={<ClientPortalDashboard />} />
