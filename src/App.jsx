@@ -7,6 +7,7 @@ import { appParams } from '@/lib/app-params';
 import { getHomePath } from '@/lib/menuPermissions';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import AuthRedirect from '@/components/auth/AuthRedirect';
 
 import AppLayout from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
@@ -40,7 +41,7 @@ import PortfolioAdmin from '@/pages/PortfolioAdmin';
 import PortfolioDetail from '@/pages/PortfolioDetail';
 
 const AuthenticatedApp = () => {
-  const { user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, onboardingPath, completeOnboarding, retryInvitation } = useAuth();
   const location = useLocation();
   const isRoot = location.pathname === '/';
 
@@ -62,21 +63,17 @@ const AuthenticatedApp = () => {
   }
 
   if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      navigateToLogin();
-      return null;
-    }
+    if (authError.type === 'auth_required') return <AuthRedirect />;
+    return <UserNotRegisteredError message={authError.message} onRetry={retryInvitation} />;
   }
 
-  // 초대/로그인 토큰으로 돌아온 사용자는 랜딩을 건너뛰고 소속 홈으로 진입한다.
+  // Do not mount protected pages before auth and invitation assignment finish.
+  if (!isAuthenticated && (appParams.invitationEntry || !isRoot)) return <AuthRedirect />;
+  if (onboardingPath) return <AuthRedirect to={onboardingPath} onComplete={completeOnboarding} />;
+  if (isAuthenticated && !user?.account_tier) return <UserNotRegisteredError />;
+
   if (isRoot) {
     if (isAuthenticated && user) return <Navigate to={getHomePath(user)} replace />;
-    if (appParams.token) {
-      navigateToLogin();
-      return null;
-    }
     return <Landing />;
   }
 

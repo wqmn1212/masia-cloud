@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
+import { getHomePath } from '@/lib/menuPermissions';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
@@ -12,6 +13,9 @@ export const AuthProvider = ({ children }) => {
   const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const claimAttempt = useRef(null);
+  const [onboardingPath, setOnboardingPath] = useState(null);
+  const completeOnboarding = useCallback(() => setOnboardingPath(null), []);
   const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
 
   useEffect(() => {
@@ -38,14 +42,8 @@ export const AuthProvider = ({ children }) => {
         const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
         setAppPublicSettings(publicSettings);
         
-        // If we got the app public settings successfully, check if user is authenticated
-        if (appParams.token) {
-          await checkUserAuth();
-        } else {
-          setIsLoadingAuth(false);
-          setIsAuthenticated(false);
-          setAuthChecked(true);
-        }
+        // Ask the auth service even when no URL/local-storage token is present.
+        await checkUserAuth();
         setIsLoadingPublicSettings(false);
       } catch (appError) {
         console.error('App state check failed:', appError);
@@ -59,17 +57,9 @@ export const AuthProvider = ({ children }) => {
               message: 'Authentication required'
             });
           } else if (reason === 'user_not_registered') {
-            if (appParams.token) {
-              const claim = await base44.functions.invoke('claimInvitation', {});
-              if (claim.data?.claimed) {
-                await checkAppState();
-                return;
-              }
-            }
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
+            // Authentication must precede invitation claiming; never recursively bootstrap.
+            const authenticated = await checkUserAuth();
+            if (!authenticated) setAuthError({ type: 'auth_required', message: '로그인이 필요합니다.' });
           } else {
             setAuthError({
               type: reason,
@@ -97,28 +87,52 @@ export const AuthProvider = ({ children }) => {
   };
 
   const checkUserAuth = async () => {
+    let currentUser = null;
+    setIsLoadingAuth(true);
+    setAuthError(null);
     try {
-      // Now check if the user is authenticated
-      setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
+      currentUser = await base44.auth.me();
+      if (!currentUser.account_tier) {
+        // One claim per authenticated identity, including concurrent auth checks.
+        if (claimAttempt.current?.id !== currentUser.id) {
+          claimAttempt.current = { id: currentUser.id, promise: base44.functions.invoke('claimInvitation', {}) };
+        }
+        const { data } = await claimAttempt.current.promise;
+        if (data?.error || !data?.ok) throw new Error(data?.error || '초대 정보를 적용하지 못했습니다.');
+        currentUser = await base44.auth.me();
+        if (currentUser.account_tier) setOnboardingPath(getHomePath(currentUser));
+        else setAuthError({ type: 'user_not_registered', message: '이 이메일에 적용할 초대가 없습니다. 초대받은 이메일로 로그인했는지 확인해주세요.' });
+      }
       setUser(currentUser);
       setIsAuthenticated(true);
-      setIsLoadingAuth(false);
-      setAuthChecked(true);
+      return true;
     } catch (error) {
-      console.error('User auth check failed:', error);
-      setIsLoadingAuth(false);
-      setIsAuthenticated(false);
-      setAuthChecked(true);
-      
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
+      if (currentUser) {
+        setUser(currentUser);
+        setIsAuthenticated(true);
+        setAuthError({ type: 'invitation_error', message: error.response?.data?.error || error.data?.error || error.message || '초대를 적용하지 못했습니다.' });
+        return true;
       }
+      setUser(null);
+      setIsAuthenticated(false);
+      const status = error.status || error.response?.status;
+      if (status === 401 || status === 403) {
+        if (appParams.token || appParams.invitationEntry || window.location.pathname !== '/') {
+          setAuthError({ type: 'auth_required', message: '로그인이 필요합니다.' });
+        }
+      } else {
+        setAuthError({ type: 'unknown', message: '로그인 정보를 확인하지 못했습니다. 다시 시도해주세요.' });
+      }
+      return false;
+    } finally {
+      setIsLoadingAuth(false);
+      setAuthChecked(true);
     }
+  };
+
+  const retryInvitation = () => {
+    claimAttempt.current = null;
+    return checkUserAuth();
   };
 
   const logout = (shouldRedirect = true) => {
@@ -148,6 +162,9 @@ export const AuthProvider = ({ children }) => {
       authError,
       appPublicSettings,
       authChecked,
+      onboardingPath,
+      completeOnboarding,
+      retryInvitation,
       logout,
       navigateToLogin,
       checkUserAuth,

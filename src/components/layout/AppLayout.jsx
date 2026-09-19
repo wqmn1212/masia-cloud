@@ -14,7 +14,6 @@ import { canAccessPath } from '@/lib/menuPermissions';
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [claimChecked, setClaimChecked] = useState(false);
   const location = useLocation();
 
   const { data: user, refetch, isLoading: isLoadingUser } = useQuery({
@@ -25,18 +24,6 @@ export default function AppLayout() {
     refetchInterval: 5000,
   });
 
-  // 가입 직후 PendingInvitation 자동 적용
-  useEffect(() => {
-    if (user && !user.account_tier && !claimChecked) {
-      setClaimChecked(true);
-      base44.functions
-        .invoke('claimInvitation', {})
-        .then((res) => {
-          if (res?.data?.claimed) refetch();
-        })
-        .catch(() => {});
-    }
-  }, [user, claimChecked, refetch]);
 
   // 관리자 권한 변경을 현재 로그인한 팀원 화면에 즉시 반영
   useEffect(() => {

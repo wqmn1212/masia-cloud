@@ -35,11 +35,17 @@ const getAppParamValue = (paramName, { defaultValue = undefined, removeFromUrl =
 }
 
 const getAppParams = () => {
-	if (getAppParamValue("clear_access_token") === 'true') {
+	// This flag belongs to this navigation only, not every future login.
+	const entryParams = new URLSearchParams(window.location.search);
+	if (entryParams.get('clear_access_token') === 'true') {
 		storage.removeItem('base44_access_token');
 		storage.removeItem('token');
 	}
+	storage.removeItem('base44_clear_access_token');
+	entryParams.delete('clear_access_token');
+	window.history.replaceState({}, document.title, `${window.location.pathname}${entryParams.size ? `?${entryParams}` : ''}${window.location.hash}`);
 	return {
+		invitationEntry: ['invitation_token', 'invite_token', 'invitation_id', 'invite_id', 'invitation', 'invite', 'invited', 'accept_invitation'].some(key => entryParams.has(key)),
 		appId: getAppParamValue("app_id", { defaultValue: import.meta.env.VITE_BASE44_APP_ID }),
 		token: getAppParamValue("access_token", { removeFromUrl: true }),
 		fromUrl: getAppParamValue("from_url", { defaultValue: window.location.href }),

@@ -3,7 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 
-const UserNotRegisteredError = () => {
+const UserNotRegisteredError = ({ message, onRetry }) => {
   const { logout } = useAuth();
 
   return (
@@ -14,7 +14,7 @@ const UserNotRegisteredError = () => {
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-3">이용 권한이 없습니다</h1>
         <p className="text-slate-600 mb-6 leading-relaxed">
-          담당자 승인 후 이용 가능합니다. 아직 계정 권한이 배정되지 않았습니다.
+          {message || '담당자 승인 후 이용 가능합니다. 아직 계정 권한이 배정되지 않았습니다.'}
         </p>
         <div className="p-4 bg-slate-50 rounded-md text-sm text-slate-600 text-left mb-6">
           <ul className="list-disc list-inside space-y-1">
@@ -23,6 +23,7 @@ const UserNotRegisteredError = () => {
             <li>문의는 담당자에게 연락해 주세요</li>
           </ul>
         </div>
+        {onRetry && <Button className="w-full mb-3" onClick={onRetry}>다시 시도</Button>}
         <Button variant="outline" className="w-full" onClick={() => logout(true)}>
           로그아웃
         </Button>

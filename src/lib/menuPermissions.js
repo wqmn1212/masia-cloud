@@ -37,8 +37,14 @@ export const CLIENT_MENU_OPTIONS = [
 ];
 
 // 로그인 후 진입할 기본 화면 — 고객사(client) 등급은 고객 포털로 보낸다
-export const getHomePath = (user) =>
-  user?.account_tier === 'client' ? CLIENT_MENU_OPTIONS[0].path : '/dashboard';
+export const getHomePath = (user) => {
+  if (user?.account_tier === 'client') return CLIENT_MENU_OPTIONS[0].path;
+  if (user?.account_tier === 'sub') {
+    return (user.allowed_tabs || []).map(normalize)
+      .find(path => TEAM_MENU_OPTIONS.some(item => item.path === path)) || '/dashboard';
+  }
+  return '/dashboard';
+};
 
 export const CLIENT_CARD_TABS = ['overview', 'quotation', 'chat', 'settlement'];
 
