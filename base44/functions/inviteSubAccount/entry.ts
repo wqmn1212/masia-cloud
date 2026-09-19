@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { findUserByEmail, requestPasswordSetup } from '../../shared/invitationUser.ts';
 
 // 팀 관리자 전용: 자신의 하위 계정 초대
 export default async function(req) {
@@ -9,7 +10,7 @@ export default async function(req) {
     if (!['service', 'master'].includes(user.account_tier)) return Response.json({ error: 'Forbidden' }, { status: 403 });
     if (user.is_active === false) return Response.json({ error: '비활성 계정입니다' }, { status: 403 });
 
-    const { email, account_label, team_role_id, tenant_id } = await req.json();
+    const { email, account_label, team_role_id, tenant_id, send_password_setup = true } = await req.json();
     const targetTenantId = user.account_tier === 'master' ? tenant_id : user.tenant_id;
     if (!email || !targetTenantId) return Response.json({ error: '이메일 또는 소속 팀 정보가 없습니다' }, { status: 400 });
 
@@ -44,10 +45,11 @@ export default async function(req) {
     };
     if (isClientTenant) accountData.company_id = tenant.company_id;
 
-    const found = await base44.asServiceRole.entities.User.filter({ email: normalizedEmail });
-    if (found.length > 0) {
-      await base44.asServiceRole.entities.User.update(found[0].id, accountData);
-      return Response.json({ ok: true, applied: true });
+    const found = await findUserByEmail(base44, normalizedEmail);
+    if (found) {
+      await base44.asServiceRole.entities.User.update(found.id, accountData);
+      const passwordSetup = await requestPasswordSetup(base44, normalizedEmail, send_password_setup);
+      return Response.json({ ok: true, applied: true, password_setup: passwordSetup });
     }
 
     await base44.users.inviteUser(normalizedEmail, 'user');
@@ -66,7 +68,8 @@ export default async function(req) {
     if (isClientTenant) invitationData.company_id = tenant.company_id;
     if (pending[0]) await base44.asServiceRole.entities.PendingInvitation.update(pending[0].id, invitationData);
     else await base44.asServiceRole.entities.PendingInvitation.create(invitationData);
-    return Response.json({ ok: true, pending: true });
+    const passwordSetup = await requestPasswordSetup(base44, normalizedEmail, send_password_setup);
+    return Response.json({ ok: true, pending: true, password_setup: passwordSetup });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

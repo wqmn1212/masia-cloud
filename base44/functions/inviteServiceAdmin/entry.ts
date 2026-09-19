@@ -1,7 +1,8 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { findUserByEmail, requestPasswordSetup } from '../../shared/invitationUser.ts';
 
 // 마스터 관리자 전용: 새 서비스 관리자 초대 (Base44 admin 권한으로 초대 + 가입 후 자동 tier 적용)
-Deno.serve(async (req) => {
+export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -16,7 +17,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { email, team_name } = await req.json();
+    const { email, team_name, send_password_setup = true } = await req.json();
     if (!email || !team_name) {
       return Response.json({ error: '팀 이름과 팀 마스터 이메일이 필요합니다' }, { status: 400 });
     }
@@ -38,13 +39,14 @@ Deno.serve(async (req) => {
       tenant = await base44.asServiceRole.entities.Tenant.update(tenant.id, { master_email: normalizedEmail, is_active: true });
     }
 
-    const found = await base44.asServiceRole.entities.User.filter({ email: normalizedEmail });
-    if (found.length > 0) {
-      await base44.asServiceRole.entities.User.update(found[0].id, {
+    const found = await findUserByEmail(base44, normalizedEmail);
+    if (found) {
+      await base44.asServiceRole.entities.User.update(found.id, {
         account_tier: 'service', tenant_id: tenant.id, is_active: true, account_label: team_name.trim(),
       });
-      await base44.asServiceRole.entities.Tenant.update(tenant.id, { master_user_id: found[0].id });
-      return Response.json({ ok: true, applied: true, tenant });
+      await base44.asServiceRole.entities.Tenant.update(tenant.id, { master_user_id: found.id });
+      const passwordSetup = await requestPasswordSetup(base44, normalizedEmail, send_password_setup);
+      return Response.json({ ok: true, applied: true, tenant, password_setup: passwordSetup });
     }
 
     await base44.users.inviteUser(normalizedEmail, 'user');
@@ -55,8 +57,9 @@ Deno.serve(async (req) => {
       account_label: team_name.trim(),
       claimed: false,
     });
-    return Response.json({ ok: true, pending: true, tenant });
+    const passwordSetup = await requestPasswordSetup(base44, normalizedEmail, send_password_setup);
+    return Response.json({ ok: true, pending: true, tenant, password_setup: passwordSetup });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
-});
+}

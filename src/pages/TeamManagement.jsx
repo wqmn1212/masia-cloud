@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, UserCog, Loader2, AlertTriangle, Mail, Users } from 'lucide-react';
@@ -18,6 +19,7 @@ export default function TeamManagement() {
   const [email, setEmail] = useState('');
   const [label, setLabel] = useState('');
   const [roleId, setRoleId] = useState('');
+  const [sendPasswordSetup, setSendPasswordSetup] = useState(true);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -47,12 +49,11 @@ export default function TeamManagement() {
       setEmail('');
       setLabel('');
       setRoleId('');
-      toast({
-        title: '초대 완료',
-        description: res.data?.pending
-          ? '초대장이 발송되었습니다. 사용자가 가입하면 자동으로 팀원으로 연결됩니다.'
-          : '팀원이 추가되었습니다.',
-      });
+      setSendPasswordSetup(true);
+      const mail = res.data?.password_setup;
+      const inviteResult = res.data?.pending ? '초대장이 발송되었습니다.' : '팀원이 추가되었습니다.';
+      const mailResult = !mail?.requested ? '비밀번호 설정 메일은 발송하지 않았습니다.' : mail.sent ? '비밀번호 설정 메일도 함께 발송했습니다.' : `비밀번호 설정 메일은 발송하지 못했습니다. ${mail.error || ''}`;
+      toast({ title: '초대 완료', description: `${inviteResult} ${mailResult}`, variant: mail?.requested && !mail.sent ? 'destructive' : 'default' });
     },
     onError: (err) =>
       toast({ title: '초대 실패', description: String(err.message || err), variant: 'destructive' }),
@@ -173,7 +174,7 @@ export default function TeamManagement() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              inviteMutation.mutate({ email, account_label: label, team_role_id: roleId });
+              inviteMutation.mutate({ email, account_label: label, team_role_id: roleId, send_password_setup: sendPasswordSetup });
             }}
             className="space-y-4 pt-2"
           >
@@ -202,6 +203,10 @@ export default function TeamManagement() {
                 <SelectContent>{roles.map((role) => <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>)}</SelectContent>
               </Select>
               {roles.length === 0 && <p className="mt-1 text-xs text-destructive">사용자 권한 메뉴에서 역할을 먼저 만들어 주세요.</p>}
+            </div>
+            <div className="flex items-start gap-3 rounded-md border p-3">
+              <Checkbox id="team-member-password-mail" checked={sendPasswordSetup} onCheckedChange={(checked) => setSendPasswordSetup(checked === true)} />
+              <div><Label htmlFor="team-member-password-mail" className="cursor-pointer">비밀번호 설정 메일도 함께 보내기</Label><p className="mt-1 text-xs text-muted-foreground">초대받은 사용자가 메일 링크에서 직접 비밀번호를 설정합니다.</p></div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setInviteOpen(false)}>취소</Button>
