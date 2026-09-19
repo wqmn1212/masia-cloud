@@ -69,7 +69,9 @@ const AuthenticatedApp = () => {
   }
 
   // Do not mount protected pages before auth and invitation assignment finish.
-  if (!isAuthenticated && (appParams.invitationEntry || !isRoot)) return <AuthRedirect />;
+  // 초대 참여 링크(?join=1)로 들어오면 랜딩 대신 로그인/가입 화면을 먼저 띄운다.
+  const joinEntry = new URLSearchParams(location.search).has('join');
+  if (!isAuthenticated && (appParams.invitationEntry || joinEntry || !isRoot)) return <AuthRedirect />;
   if (onboardingPath) return <AuthRedirect to={onboardingPath} onComplete={completeOnboarding} />;
   if (isAuthenticated && !user?.account_tier) return <UserNotRegisteredError />;
 
