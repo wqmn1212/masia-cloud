@@ -11,7 +11,8 @@ export default async function(req) {
     if (!['service', 'master'].includes(user.account_tier)) return Response.json({ error: 'Forbidden' }, { status: 403 });
     if (user.is_active === false) return Response.json({ error: '비활성 계정입니다' }, { status: 403 });
 
-    const { email, account_label, team_role_id, tenant_id, menu_paths = [], send_password_setup = true } = await req.json();
+    const body = await req.json();
+    const { email, account_label, team_role_id, tenant_id, send_password_setup = true } = body;
     const targetTenantId = user.account_tier === 'master' ? tenant_id : user.tenant_id;
     if (!email || !targetTenantId) return Response.json({ error: '이메일 또는 소속 팀 정보가 없습니다' }, { status: 400 });
 
@@ -27,14 +28,12 @@ export default async function(req) {
       role = roles[0];
       if (!role) return Response.json({ error: '같은 팀의 역할을 선택하세요' }, { status: 403 });
     }
-    if (!isClientTenant && user.account_tier === 'service' && !role) {
-      return Response.json({ error: '팀 역할을 선택하세요' }, { status: 400 });
-    }
-
     const accountTier = isClientTenant ? 'client' : 'sub';
+    const hasAdjustedTabs = Array.isArray(body.allowed_tabs) || Array.isArray(body.menu_paths);
+    const requestedTabs = body.allowed_tabs || body.menu_paths || [];
     const allowedTabs = isClientTenant
       ? ['/client/dashboard', '/client/board']
-      : role ? role.menu_paths || [] : normalizeMenuPaths(menu_paths);
+      : hasAdjustedTabs ? normalizeMenuPaths(requestedTabs) : normalizeMenuPaths(role?.menu_paths || []);
     if (!isClientTenant && allowedTabs.length === 0) return Response.json({ error: '접근 기능을 한 개 이상 선택하세요' }, { status: 400 });
     const managers = await base44.asServiceRole.entities.User.filter({ tenant_id: targetTenantId, account_tier: 'service' });
     const serviceAdminId = managers[0]?.id || user.id;
