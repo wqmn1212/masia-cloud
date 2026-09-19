@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { findUserByEmail, requestPasswordSetup } from '../../shared/invitationUser.ts';
+import { normalizeMenuPaths } from '../../shared/rbac.ts';
 
 // 팀 관리자 전용: 자신의 하위 계정 초대
 export default async function(req) {
@@ -10,7 +11,7 @@ export default async function(req) {
     if (!['service', 'master'].includes(user.account_tier)) return Response.json({ error: 'Forbidden' }, { status: 403 });
     if (user.is_active === false) return Response.json({ error: '비활성 계정입니다' }, { status: 403 });
 
-    const { email, account_label, team_role_id, tenant_id, send_password_setup = true } = await req.json();
+    const { email, account_label, team_role_id, tenant_id, menu_paths = [], send_password_setup = true } = await req.json();
     const targetTenantId = user.account_tier === 'master' ? tenant_id : user.tenant_id;
     if (!email || !targetTenantId) return Response.json({ error: '이메일 또는 소속 팀 정보가 없습니다' }, { status: 400 });
 
@@ -21,15 +22,20 @@ export default async function(req) {
     if (isClientTenant && !tenant.company_id) return Response.json({ error: '고객사 연결 정보가 없습니다' }, { status: 400 });
 
     let role = null;
-    if (!isClientTenant) {
-      if (!team_role_id) return Response.json({ error: '팀 역할을 선택하세요' }, { status: 400 });
+    if (!isClientTenant && team_role_id) {
       const roles = await base44.asServiceRole.entities.TeamRole.filter({ id: team_role_id, tenant_id: targetTenantId });
       role = roles[0];
       if (!role) return Response.json({ error: '같은 팀의 역할을 선택하세요' }, { status: 403 });
     }
+    if (!isClientTenant && user.account_tier === 'service' && !role) {
+      return Response.json({ error: '팀 역할을 선택하세요' }, { status: 400 });
+    }
 
     const accountTier = isClientTenant ? 'client' : 'sub';
-    const allowedTabs = isClientTenant ? ['/client/dashboard', '/client/board'] : (role.menu_paths || []);
+    const allowedTabs = isClientTenant
+      ? ['/client/dashboard', '/client/board']
+      : role ? role.menu_paths || [] : normalizeMenuPaths(menu_paths);
+    if (!isClientTenant && allowedTabs.length === 0) return Response.json({ error: '접근 기능을 한 개 이상 선택하세요' }, { status: 400 });
     const managers = await base44.asServiceRole.entities.User.filter({ tenant_id: targetTenantId, account_tier: 'service' });
     const serviceAdminId = managers[0]?.id || user.id;
     const normalizedEmail = email.trim().toLowerCase();
