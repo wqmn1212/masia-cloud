@@ -73,7 +73,7 @@ export default async function(req) {
     if (isClientTenant) invitationData.company_id = tenant.company_id;
     if (pending[0]) await base44.asServiceRole.entities.PendingInvitation.update(pending[0].id, invitationData);
     else await base44.asServiceRole.entities.PendingInvitation.create(invitationData);
-    const passwordSetup = await requestPasswordSetup(base44, normalizedEmail, send_password_setup);
+    const passwordSetup = await requestPasswordSetup(base44, normalizedEmail, send_password_setup, false);
     return Response.json({ ok: true, pending: true, password_setup: passwordSetup });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

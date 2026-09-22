@@ -23,8 +23,11 @@ export default function MasterTeamInviteDialog({ tenantId, isClientTeam = false 
       setOpen(false);
       setForm({ email: '', account_label: '', team_role_id: '', allowed_tabs: ['/dashboard'], send_password_setup: true });
       const mail = res.data?.password_setup;
-      const description = !mail?.requested ? '비밀번호 설정 메일은 발송하지 않았습니다.' : mail.sent ? '비밀번호 설정 메일도 함께 발송했습니다.' : `초대는 완료됐지만 비밀번호 설정 메일은 발송하지 못했습니다. ${mail.error || ''}`;
-      toast({ title: res.data?.pending ? '초대장을 발송했습니다.' : '팀원을 추가했습니다.', description, variant: mail?.requested && !mail.sent ? 'destructive' : 'default' });
+      const description = !mail?.requested ? '비밀번호 설정 메일은 발송하지 않았습니다.'
+        : mail.sent ? '비밀번호 설정 메일도 함께 발송했습니다.'
+        : mail.pending_signup ? '초대 메일의 링크에서 이메일·비밀번호로 가입하면 계정이 생성됩니다. 가입 후에는 목록에서 비밀번호 재설정 메일을 보낼 수 있습니다.'
+        : `초대는 완료됐지만 비밀번호 설정 메일은 발송하지 못했습니다. ${mail.error || ''}`;
+      toast({ title: res.data?.pending ? '초대장을 발송했습니다.' : '팀원을 추가했습니다.', description, variant: mail?.requested && !mail.sent && !mail.pending_signup ? 'destructive' : 'default' });
     },
     onError: (error) => toast({ title: '초대 실패', description: error.message, variant: 'destructive' }),
   });

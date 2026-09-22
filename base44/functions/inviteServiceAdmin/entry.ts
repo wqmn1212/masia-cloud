@@ -57,7 +57,7 @@ export default async function(req) {
       account_label: team_name.trim(),
       claimed: false,
     });
-    const passwordSetup = await requestPasswordSetup(base44, normalizedEmail, send_password_setup);
+    const passwordSetup = await requestPasswordSetup(base44, normalizedEmail, send_password_setup, false);
     return Response.json({ ok: true, pending: true, tenant, password_setup: passwordSetup });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
