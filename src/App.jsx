@@ -40,6 +40,7 @@ import ClientBoard from '@/pages/ClientBoard';
 import PortfolioAdmin from '@/pages/PortfolioAdmin';
 import PortfolioDetail from '@/pages/PortfolioDetail';
 import JoinInvite from '@/pages/JoinInvite';
+import JoinSetPassword from '@/pages/JoinSetPassword';
 
 const AuthenticatedApp = () => {
   const { user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, onboardingPath, completeOnboarding, retryInvitation } = useAuth();
@@ -62,6 +63,9 @@ const AuthenticatedApp = () => {
       </div>
     );
   }
+
+  // 초대 참여 링크 — 로그인 전이면 비밀번호 설정 화면을 바로 띄운다.
+  if (location.pathname === '/join' && !isAuthenticated) return <JoinSetPassword />;
 
   if (authError) {
     if (authError.type === 'auth_required') return <AuthRedirect />;
