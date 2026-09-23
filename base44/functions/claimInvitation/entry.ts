@@ -50,7 +50,7 @@ export default async function(req) {
     if (companyId) updateData.company_id = companyId;
 
     await base44.asServiceRole.entities.User.update(user.id, updateData);
-    if (effectiveTier === 'service') {
+    if (effectiveTier === 'service' && !tenant.master_user_id) {
       await base44.asServiceRole.entities.Tenant.update(invite.tenant_id, { master_user_id: user.id });
     }
     await base44.asServiceRole.entities.PendingInvitation.update(invite.id, { claimed: true });

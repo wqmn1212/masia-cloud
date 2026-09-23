@@ -7,10 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Shield, Loader2, AlertTriangle, Mail, Users } from 'lucide-react';
+import { Plus, Shield, Loader2, AlertTriangle, Mail, Users, UserPlus } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import UserAccountRow from '@/components/admin/UserAccountRow';
 import TeamAccessCard from '@/components/admin/TeamAccessCard';
+import TeamAdminInviteDialog from '@/components/admin/TeamAdminInviteDialog';
+import PendingInviteRow from '@/components/admin/PendingInviteRow';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function MasterAdminDashboard() {
   const [setupStatus, setSetupStatus] = useState(null);
@@ -18,6 +21,8 @@ export default function MasterAdminDashboard() {
   const [email, setEmail] = useState('');
   const [label, setLabel] = useState('');
   const [sendPasswordSetup, setSendPasswordSetup] = useState(true);
+  const [adminInviteOpen, setAdminInviteOpen] = useState(false);
+  const { user: me } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -99,10 +104,23 @@ export default function MasterAdminDashboard() {
             <p className="text-sm text-muted-foreground">새 팀을 만들고 각 팀의 마스터 계정을 지정합니다</p>
           </div>
         </div>
-        <Button onClick={() => setInviteOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />새 팀 만들기
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => setAdminInviteOpen(true)}>
+            <UserPlus className="w-4 h-4 mr-2" />팀 관리자 초대
+          </Button>
+          <Button onClick={() => setInviteOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />새 팀 만들기
+          </Button>
+        </div>
       </div>
+
+      <TeamAdminInviteDialog
+        open={adminInviteOpen}
+        onOpenChange={setAdminInviteOpen}
+        tenants={data?.tenants || []}
+        defaultTenantId={(data?.tenants || []).find((t) => t.is_hq)?.id || me?.tenant_id}
+        onDone={() => queryClient.invalidateQueries({ queryKey: ['service-admins'] })}
+      />
 
       {setupStatus === 'became_master' && (
         <Card className="bg-green-50 border-green-200">
@@ -170,16 +188,7 @@ export default function MasterAdminDashboard() {
           </CardHeader>
           <CardContent className="p-0 divide-y">
             {pending.map((p) => (
-              <div key={p.id} className="flex items-center gap-3 p-3">
-                <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{p.email}</p>
-                  {p.account_label && (
-                    <p className="text-xs text-muted-foreground truncate">{p.account_label}</p>
-                  )}
-                </div>
-                <span className="text-xs text-amber-600 font-medium">가입 대기 중</span>
-              </div>
+              <PendingInviteRow key={p.id} invite={{ ...p, team_role_name: `팀 관리자 · ${(data?.tenants || []).find((t) => t.id === p.tenant_id)?.name || p.account_label || ''}` }} />
             ))}
           </CardContent>
         </Card>

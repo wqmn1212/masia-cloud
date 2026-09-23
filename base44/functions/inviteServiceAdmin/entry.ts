@@ -17,7 +17,30 @@ export default async function(req) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { email, team_name, send_password_setup = true } = await req.json();
+    const { email, team_name, tenant_id, account_label = '', send_password_setup = true } = await req.json();
+
+    // 기존 팀에 팀 관리자(service) 추가 — 팀 마스터 지정은 바꾸지 않는다
+    if (tenant_id) {
+      if (!email) return Response.json({ error: '초대할 이메일이 필요합니다' }, { status: 400 });
+      const normalized = email.trim().toLowerCase();
+      const team = (await base44.asServiceRole.entities.Tenant.filter({ id: tenant_id }))[0];
+      if (!team) return Response.json({ error: '팀을 찾을 수 없습니다' }, { status: 404 });
+      if (team.tenant_type === 'client') return Response.json({ error: '고객사 팀에는 팀 관리자를 추가할 수 없습니다' }, { status: 400 });
+      const label = account_label.trim() || team.name;
+      const existing = await findUserByEmail(base44, normalized);
+      if (existing) {
+        if (existing.account_tier === 'master') return Response.json({ error: '마스터 계정은 팀 관리자로 바꿀 수 없습니다' }, { status: 409 });
+        await base44.asServiceRole.entities.User.update(existing.id, { account_tier: 'service', tenant_id: team.id, is_active: true, account_label: label });
+        return Response.json({ ok: true, applied: true, tenant: team });
+      }
+      await base44.users.inviteUser(normalized, 'user');
+      const invites = await base44.asServiceRole.entities.PendingInvitation.filter({ email: normalized, tenant_id: team.id, claimed: false });
+      const inviteData = { email: normalized, account_tier: 'service', tenant_id: team.id, account_label: label, claimed: false };
+      if (invites[0]) await base44.asServiceRole.entities.PendingInvitation.update(invites[0].id, inviteData);
+      else await base44.asServiceRole.entities.PendingInvitation.create(inviteData);
+      return Response.json({ ok: true, pending: true, tenant: team });
+    }
+
     if (!email || !team_name) {
       return Response.json({ error: '팀 이름과 팀 마스터 이메일이 필요합니다' }, { status: 400 });
     }
