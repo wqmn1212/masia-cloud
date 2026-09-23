@@ -8,7 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, FileText, Trash2, ExternalLink, Pencil, Download, X } from 'lucide-react';
+import { Plus, FileText, Trash2, ExternalLink, Pencil, Download, X, Copy } from 'lucide-react';
+import saveQuotationWithHistory from '@/lib/saveQuotationWithHistory';
+import duplicateQuotation from '@/lib/duplicateQuotation';
 import DropZone from '@/components/ui/drop-zone';
 import { generateQuotationPDF } from '@/lib/generateQuotationPDF';
 import QuoteOptionsEditor, { optionToUSD } from '@/components/quotation/QuoteOptionsEditor';
@@ -76,6 +78,7 @@ export default function QuotationTab({ card, user }) {
   const [parsing, setParsing] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [editingQuote, setEditingQuote] = useState(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const canEditIssuer = ['master', 'service', 'sub'].includes(user?.account_tier);
@@ -103,6 +106,7 @@ export default function QuotationTab({ card, user }) {
   const resetForm = () => {
     setShowForm(false);
     setEditingId(null);
+    setEditingQuote(null);
     setForm({ ...emptyForm, factory_name: card.factory_name || '', client_name: card.client_name || '' });
   };
 
@@ -119,7 +123,7 @@ export default function QuotationTab({ card, user }) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Quotation.update(id, data),
+    mutationFn: ({ quote, data }) => saveQuotationWithHistory(quote, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotations-by-card', card.id] });
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
@@ -135,8 +139,23 @@ export default function QuotationTab({ card, user }) {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }) => base44.entities.Quotation.update(id, { status }),
+    mutationFn: ({ quote, status }) => saveQuotationWithHistory(quote, { status }, '상태 변경'),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['quotations-by-card', card.id] }),
+    onError: (err) => {
+      queryClient.invalidateQueries({ queryKey: ['quotations-by-card', card.id] });
+      toast({ title: '상태 변경 실패', description: err?.response?.data?.error || err?.message, variant: 'destructive' });
+    },
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: (q) => duplicateQuotation(q),
+    onSuccess: (saved) => {
+      queryClient.invalidateQueries({ queryKey: ['quotations-by-card', card.id] });
+      queryClient.invalidateQueries({ queryKey: ['quotations'] });
+      toast({ title: '견적서 복사 완료', description: '복사본이 열렸습니다. 이름이나 가격을 수정해 저장하세요.' });
+      handleEdit(saved);
+    },
+    onError: (err) => toast({ title: '견적서 복사 실패', description: err?.message || '다시 시도해주세요', variant: 'destructive' }),
   });
 
   const deleteMutation = useMutation({
@@ -287,7 +306,7 @@ export default function QuotationTab({ card, user }) {
       logistics_estimate_lines: form.logistics_estimate_lines || [],
     };
     if (editingId) {
-      updateMutation.mutate({ id: editingId, data: payload });
+      updateMutation.mutate({ quote: editingQuote, data: payload });
     } else {
       createMutation.mutate(payload);
     }
@@ -301,6 +320,7 @@ export default function QuotationTab({ card, user }) {
     const fDisp = q.factory_total_cost != null ? (fCur === 'CNY' || !cnyR ? q.factory_total_cost : fromUSD(q.factory_total_cost / cnyR, fCur, usdR, cnyR)) : '';
     const lDisp = q.logistics_cost != null ? (lCur === 'CNY' || !cnyR ? q.logistics_cost : fromUSD(q.logistics_cost / cnyR, lCur, usdR, cnyR)) : '';
     setEditingId(q.id);
+    setEditingQuote(q);
     updateMutation.reset();
     setForm({
       factory_name: q.factory_name || '',
@@ -604,7 +624,7 @@ export default function QuotationTab({ card, user }) {
                     {q.incoterms && <Badge variant="outline" className="text-[9px] h-4 px-1">{q.incoterms.replace('_', ' ')}</Badge>}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Select value={q.status} onValueChange={v => updateStatusMutation.mutate({ id: q.id, status: v })}>
+                    <Select value={q.status} onValueChange={v => updateStatusMutation.mutate({ quote: q, status: v })}>
                       <SelectTrigger className={`h-6 text-[10px] border-0 px-2 ${st.color} w-auto min-w-[80px]`}>
                         <SelectValue />
                       </SelectTrigger>
@@ -622,6 +642,9 @@ export default function QuotationTab({ card, user }) {
                       <Download className="w-3.5 h-3.5" />
                     </button>
                     {canEditIssuer && <QuotationHistoryButton quotation={q} />}
+                    <button onClick={() => duplicateMutation.mutate(q)} disabled={duplicateMutation.isPending} className="text-muted-foreground hover:text-primary p-1 disabled:opacity-40" title="견적서 복사">
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
                     <button onClick={() => handleEdit(q)} className="text-muted-foreground hover:text-primary p-1" title="수정">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>

@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, FileText, Eye } from 'lucide-react';
+import { Plus, FileText, Eye, Copy } from 'lucide-react';
+import duplicateQuotation from '@/lib/duplicateQuotation';
 import { useToast } from '@/components/ui/use-toast';
 import QuoteLineEditor from '@/components/quotation/QuoteLineEditor';
 import MarginCalculator from '@/components/quotation/MarginCalculator';
@@ -117,6 +118,16 @@ export default function Quotations() {
       setForm(f => ({ ...f, exchange_rate_date: saved.exchange_rate_date || '', exchange_rate_usd: saved.exchange_rate_usd || '', exchange_rate_usd_cny: saved.exchange_rate_usd_cny || '', exchange_rate_krw: '' }));
       if (!saved.__translation_failed) toast({ title: t('quotations.add') });
     },
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: (q) => duplicateQuotation(q),
+    onSuccess: (saved) => {
+      queryClient.invalidateQueries({ queryKey: ['quotations'] });
+      setDetailQuote(saved);
+      toast({ title: '견적서 복사 완료', description: '업무 카드의 견적 탭에서 이름·가격을 수정할 수 있습니다.' });
+    },
+    onError: (err) => toast({ title: '견적서 복사 실패', description: err?.message, variant: 'destructive' }),
   });
 
   return (
@@ -257,7 +268,10 @@ export default function Quotations() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>{t('quotations.detail')}</DialogTitle>
-              {['master', 'service', 'sub'].includes(me?.account_tier) && <div><QuotationHistoryButton quotation={detailQuote} /></div>}
+              {['master', 'service', 'sub'].includes(me?.account_tier) && <div className="flex items-center gap-2">
+                <QuotationHistoryButton quotation={detailQuote} />
+                <Button type="button" variant="outline" size="sm" className="h-7 text-xs" disabled={duplicateMutation.isPending} onClick={() => duplicateMutation.mutate(detailQuote)}><Copy className="w-3.5 h-3.5" />견적서 복사</Button>
+              </div>}
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
