@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import InquiryTypePicker from './InquiryTypePicker';
 import { CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { form, formTags, tx } from '@/lib/landingContent';
@@ -23,6 +24,14 @@ export default function InquiryForm({ lang }) {
   const [files, setFiles] = useState([]);
   const [status, setStatus] = useState('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const [inquiryType, setInquiryType] = useState('sourcing');
+
+  // 전담팀 섹션 CTA 클릭 시 '월 계약 상담'으로 미리 선택
+  useEffect(() => {
+    const onPick = (e) => setInquiryType(e.detail);
+    window.addEventListener('aegis:inquiry-type', onPick);
+    return () => window.removeEventListener('aegis:inquiry-type', onPick);
+  }, []);
 
   const set = (k) => (e) => setValues((v) => ({ ...v, [k]: e.target.value }));
   const toggleTag = (val) => setTags((t) => (t.includes(val) ? t.filter((x) => x !== val) : [...t, val]));
@@ -37,6 +46,7 @@ export default function InquiryForm({ lang }) {
       );
       await base44.functions.invoke('submitInquiry', {
         ...values,
+        inquiry_type: inquiryType,
         categories: tags,
         attachments,
         lang,
@@ -50,7 +60,7 @@ export default function InquiryForm({ lang }) {
     }
   };
 
-  const reset = () => { setValues(EMPTY); setTags([]); setFiles([]); setStatus('idle'); setErrorMsg(''); };
+  const reset = () => { setValues(EMPTY); setTags([]); setInquiryType('sourcing'); setFiles([]); setStatus('idle'); setErrorMsg(''); };
 
   if (status === 'done') {
     return (
@@ -69,6 +79,7 @@ export default function InquiryForm({ lang }) {
 
   return (
     <form onSubmit={handleSubmit} className="w-full lg:w-[520px] lg:flex-none bg-white border border-landing-line rounded-2xl p-[30px] shadow-[0_10px_32px_rgba(23,23,25,.08)]">
+      <InquiryTypePicker value={inquiryType} onChange={setInquiryType} lang={lang} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <InquiryField label={tx(form.company, lang)} placeholder={tx(form.companyPh, lang)} value={values.company} onChange={set('company')} required />
         <InquiryField label={tx(form.name, lang)} placeholder={tx(form.namePh, lang)} value={values.contact_name} onChange={set('contact_name')} required />

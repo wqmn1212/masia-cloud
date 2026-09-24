@@ -41,6 +41,8 @@ export default async function (req) {
       ? body.categories.filter((c) => CATEGORIES.includes(c))
       : [];
     const lang = ['ko', 'en', 'zh'].includes(body.lang) ? body.lang : 'ko';
+    const inquiryType = body.inquiry_type === 'monthly' ? 'monthly' : 'sourcing';
+    const typeLabel = inquiryType === 'monthly' ? '월 계약 상담' : '단발 소싱';
 
     const lead = await svc.entities.ManufacturingLead.create({
       tenant_id: tenant.id,
@@ -48,6 +50,7 @@ export default async function (req) {
       contact_name: clean(body.contact_name, 100),
       phone: clean(body.phone, 50),
       email,
+      inquiry_type: inquiryType,
       categories,
       quantity: clean(body.quantity, 200),
       target_price: clean(body.target_price, 200),
@@ -64,7 +67,7 @@ export default async function (req) {
     // 문의 접수 즉시 본사 팀 TaskCard 자동 생성 (고객 공개는 팀 발급 후 수동 토글)
     const card = await svc.entities.TaskCard.create({
       tenant_id: tenant.id,
-      title: `[문의] ${lead.company} · ${categories[0] || '미분류'}`,
+      title: `[${inquiryType === 'monthly' ? '월 계약 상담' : '문의'}] ${lead.company} · ${categories[0] || '미분류'}`,
       status: 'TODO',
       priority: 'MEDIUM',
       source: 'landing_lead',
@@ -72,6 +75,7 @@ export default async function (req) {
       client_name: lead.company,
       client_visible: false,
       hq_requirements: [
+        `문의 유형: ${typeLabel}`,
         `담당자: ${lead.contact_name} · ${lead.phone} · ${lead.email}`,
         `카테고리: ${categories.join(', ') || '-'}`,
         `수량: ${lead.quantity || '-'} / 희망 단가: ${lead.target_price || '-'}`,
@@ -94,10 +98,11 @@ export default async function (req) {
         await svc.integrations.Core.SendEmail({
           to: tenant.master_email,
           from_name: 'AEGIS',
-          subject: `[문의 접수] ${lead.company} · ${lead.contact_name}`,
+          subject: `[문의 접수 · ${typeLabel}] ${lead.company} · ${lead.contact_name}`,
           body: [
             `새 제조 문의가 접수되었습니다.`,
             ``,
+            `문의 유형: ${typeLabel}`,
             `회사명: ${lead.company}`,
             `담당자: ${lead.contact_name}`,
             `연락처: ${lead.phone}`,

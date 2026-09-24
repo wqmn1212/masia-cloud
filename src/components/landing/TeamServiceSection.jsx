@@ -15,7 +15,7 @@ export default function TeamServiceSection({ lang }) {
         <TeamRolesScope lang={lang} />
         <TeamDeliverables lang={lang} />
         <TeamPricing lang={lang} />
-        <a href="#contact" className="inline-block mt-8 bg-landing-ink hover:bg-landing-brand-hover text-white text-[15px] font-bold px-6 py-3.5 rounded-[10px] transition-colors">
+        <a href="#contact" onClick={() => window.dispatchEvent(new CustomEvent('aegis:inquiry-type', { detail: 'monthly' }))} className="inline-block mt-8 bg-landing-ink hover:bg-landing-brand-hover text-white text-[15px] font-bold px-6 py-3.5 rounded-[10px] transition-colors">
           {tx(team.cta, lang)}
         </a>
       </div>

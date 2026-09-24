@@ -22,6 +22,15 @@
       "type": "string",
       "description": "\uc774\uba54\uc77c. AEGIS Cloud \uacc4\uc815 \ubc1c\uae09 \ud0a4"
     },
+    "inquiry_type": {
+      "type": "string",
+      "enum": [
+        "sourcing",
+        "monthly"
+      ],
+      "default": "sourcing",
+      "description": "\ubb38\uc758 \uc720\ud615: sourcing=\ub2e8\ubc1c \uc18c\uc2f1, monthly=\uc6d4 \uacc4\uc57d \uc0c1\ub2f4"
+    },
     "categories": {
       "type": "array",
       "items": {
