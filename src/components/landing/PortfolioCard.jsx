@@ -1,5 +1,6 @@
 import React from 'react';
 import { tx } from '@/lib/landingContent';
+import { Package } from 'lucide-react';
 
 export default function PortfolioCard({ item, lang }) {
   const Wrapper = item.slug ? 'a' : 'article';
@@ -11,9 +12,7 @@ export default function PortfolioCard({ item, lang }) {
       {item.image ? (
         <img src={item.image} alt={tx(item.t, lang)} className="h-[150px] w-full object-cover" />
       ) : (
-        <div className="h-[150px] flex items-center justify-center bg-[repeating-linear-gradient(135deg,#F1F4FA_0_8px,#E2E9F5_8px_16px)]">
-          <span className="font-mono font-semibold text-[11px] text-[#8E9CB3] tracking-[.4px]">PRODUCT SHOT</span>
-        </div>
+        <div className="lm-product-icon"><Package size={25} strokeWidth={1.5} aria-hidden="true" /></div>
       )}
       <div className="p-[18px]">
         <div className="text-[11px] font-bold text-landing-brand font-mono">{tx(item.tag, lang)}</div>

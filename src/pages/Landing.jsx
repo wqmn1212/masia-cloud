@@ -13,6 +13,7 @@ import FitSection from '@/components/landing/FitSection';
 import TrustSection from '@/components/landing/TrustSection';
 import ContactSection from '@/components/landing/ContactSection';
 import LandingFooter from '@/components/landing/LandingFooter';
+import '@/components/landing/landingMinimal.css';
 
 export default function Landing() {
   const [lang, setLang] = useLandingLang();
@@ -23,7 +24,7 @@ export default function Landing() {
   return (
     <div
       lang={lang}
-      className="font-landing bg-landing-page text-landing-ink min-w-[320px] antialiased min-h-screen"
+      className="landing-minimal font-landing text-landing-ink antialiased min-h-screen"
       style={{ wordBreak: lang === 'zh' ? 'normal' : 'keep-all', overflowWrap: 'break-word' }}
     >
       <LandingHeader
@@ -33,6 +34,7 @@ export default function Landing() {
         homePath={getHomePath(user)}
         onLogin={navigateToLogin}
       />
+      <main>
       <HeroSection lang={lang} />
       <AboutSection lang={lang} />
       <ProcessSection lang={lang} />
@@ -41,6 +43,7 @@ export default function Landing() {
       <CategorySection lang={lang} cat={cat} setCat={setCat} source={portfolioItems} />
       <TrustSection lang={lang} />
       <ContactSection lang={lang} />
+      </main>
       <LandingFooter lang={lang} />
     </div>
   );

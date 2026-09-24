@@ -9,7 +9,7 @@ export default function ProcessSection({ lang }) {
       <div className="max-w-[1200px] mx-auto">
         <SectionHeading eyebrow={process.eyebrow} title={tx(process.h2, lang)} maxWidth="max-w-[620px]" />
         <p className="mt-3.5 text-base text-landing-ink3 max-w-[560px] leading-[1.6]">{tx(process.sub, lang)}</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-11">
+        <div className="lm-steps">
           {process.steps.map((s, i) => (
             <div
               key={i}

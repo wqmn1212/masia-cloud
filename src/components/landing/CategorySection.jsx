@@ -34,7 +34,7 @@ export default function CategorySection({ lang, cat, setCat, source }) {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[18px] mt-7">
+        <div className="lm-cases">
           {items.map((p, i) => <PortfolioCard key={`${p.cat}-${i}`} item={p} lang={lang} />)}
         </div>
         <p className="mt-[22px] text-[13.5px] text-landing-muted2">{tx(categories.footnote, lang)}</p>

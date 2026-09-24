@@ -12,7 +12,7 @@ export default function TeamPricing({ lang }) {
           <div
             key={i}
             className={cn(
-              'rounded-[13px] p-[22px] transition-transform duration-300 hover:-translate-y-0.5',
+              'rounded-[13px] p-[22px]',
               t.highlight ? 'bg-landing-tint-soft border-[1.5px] border-landing-brand' : 'bg-white border border-landing-line'
             )}
           >

@@ -98,6 +98,20 @@
   }
 }
 
+/* Fixed public landing palette, independent from the application theme. */
+:root, .dark {
+  --landing-paper: #ffffff;
+  --landing-soft: #f7f7f8;
+  --landing-ink: #171719;
+  --landing-blue: #0066ff;
+  --landing-line: #e3e3e5;
+  --landing-body: #55565a;
+  --landing-muted: #65666a;
+  --landing-tint: #f2f6ff;
+  --landing-dark-panel: #202023;
+  --landing-font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

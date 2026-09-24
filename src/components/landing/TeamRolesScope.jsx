@@ -5,8 +5,8 @@ import { tx } from '@/lib/landingContent';
 
 export default function TeamRolesScope({ lang }) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-4 mt-11">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+    <div className="lm-team-grid">
+      <div className="lm-roles">
         {team.roles.map((r, i) => (
           <div key={i} className="bg-white border border-landing-line rounded-[13px] p-[22px]">
             <div className="text-[11px] font-extrabold font-mono text-landing-brand">{tx(r.count, lang)}</div>

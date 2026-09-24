@@ -5,7 +5,7 @@ const inputCls =
 
 export default function InquiryField({ label, textarea = false, ...props }) {
   return (
-    <label className="flex flex-col gap-1.5">
+    <label className="lm-field flex flex-col gap-1.5">
       <span className="text-[13px] font-bold text-landing-ink2">{label}</span>
       {textarea ? (
         <textarea rows={4} className={`${inputCls} resize-y leading-[1.6]`} {...props} />

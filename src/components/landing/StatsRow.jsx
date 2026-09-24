@@ -3,7 +3,7 @@ import { stats, tx } from '@/lib/landingContent';
 
 export default function StatsRow({ lang }) {
   return (
-    <div className="mt-16 grid grid-cols-2 lg:grid-cols-4 gap-px bg-landing-line border border-landing-line rounded-[14px] overflow-hidden">
+    <div className="lm-stats">
       {stats.map((s, i) => (
         <div key={i} className="bg-white px-[22px] py-6">
           <div className="text-[32px] font-extrabold tracking-[-1.2px] text-landing-brand leading-tight">

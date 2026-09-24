@@ -18,6 +18,7 @@ export default function InquiryTypePicker({ value, onChange, lang }) {
             key={t.value}
             type="button"
             onClick={() => onChange(t.value)}
+            aria-pressed={value === t.value}
             className={cn(
               'text-[13.5px] font-bold py-2 rounded-lg transition-colors',
               value === t.value ? 'bg-white text-landing-brand shadow-sm' : 'text-landing-muted'
