@@ -8,6 +8,8 @@ import HeroSection from '@/components/landing/HeroSection';
 import AboutSection from '@/components/landing/AboutSection';
 import ProcessSection from '@/components/landing/ProcessSection';
 import CategorySection from '@/components/landing/CategorySection';
+import TeamServiceSection from '@/components/landing/TeamServiceSection';
+import FitSection from '@/components/landing/FitSection';
 import TrustSection from '@/components/landing/TrustSection';
 import ContactSection from '@/components/landing/ContactSection';
 import LandingFooter from '@/components/landing/LandingFooter';
@@ -34,6 +36,8 @@ export default function Landing() {
       <HeroSection lang={lang} />
       <AboutSection lang={lang} />
       <ProcessSection lang={lang} />
+      <TeamServiceSection lang={lang} />
+      <FitSection lang={lang} />
       <CategorySection lang={lang} cat={cat} setCat={setCat} source={portfolioItems} />
       <TrustSection lang={lang} />
       <ContactSection lang={lang} />

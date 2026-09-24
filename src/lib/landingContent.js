@@ -6,6 +6,7 @@ export const tx = (v, lang) => (Array.isArray(v) ? v[LANG_INDEX[lang] ?? 0] : v)
 export const nav = [
   { href: '#about', label: ['우리가 하는 일', 'What we do', '业务介绍'] },
   { href: '#process', label: ['진행 프로세스', 'Process', '流程'] },
+  { href: '#team', label: ['월정액 전담팀', 'Dedicated team', '专属团队'] },
   { href: '#category', label: ['취급 품목', 'Categories', '产品品类'] },
   { href: '#trust', label: ['보안 · 계약', 'Security', '保密与合同'] },
 ];
@@ -83,7 +84,7 @@ export const process = {
 };
 
 export const categories = {
-  eyebrow: '03 — CATEGORIES',
+  eyebrow: '05 — CATEGORIES',
   h2: ['우리가 다루는 품목', 'What we make', '我们承接的品类'],
   sub: ['기계설비부터 굿즈까지. 카테고리를 선택하면 대표 사례를 볼 수 있습니다.', 'Machinery to goods — pick a category to see representative work.', '从机械设备到周边商品，选择品类查看代表案例。'],
   footnote: ['목록에 없는 품목도 문의해 주세요. 대부분 선전에서 제작 가능합니다.', 'Not on the list? Send the drawing anyway — most items we have not listed are still made in Shenzhen.', '未列出的品类也可咨询。深圳大多可以生产。'],
@@ -135,7 +136,7 @@ export const portfolio = [
 ];
 
 export const trust = {
-  eyebrow: '04 — SECURITY & CONTRACT',
+  eyebrow: '06 — SECURITY & CONTRACT',
   h2: ['도면은 유출되지 않습니다', 'Your drawings do not leave the room', '您的图纸不会外流'],
   cards: [
     { t: ['NNN 계약 선행', 'NNN agreement, always first', 'NNN 协议，始终优先'], d: ['비공개 · 비사용 · 우회금지. 도면이나 샘플을 공유하기 전, 협력하는 모든 공장과 체결합니다.', 'Non-disclosure, non-use, non-circumvention — signed with every partner factory before drawings or samples are shared.', '不披露、不使用、不规避 —— 在共享图纸或样品之前，与每一家合作工厂签署。'] },
@@ -145,7 +146,7 @@ export const trust = {
 };
 
 export const contact = {
-  eyebrow: '05 — GET STARTED',
+  eyebrow: '07 — GET STARTED',
   h2: ['만들고 싶은 것을 알려주세요', 'Send us what you want made', '告诉我们您想生产什么'],
   body: ['도면, 사진, 혹은 문장 하나로도 시작할 수 있습니다. 영업일 기준 1일 이내 회신드리며, 견적 · QC 리포트 · 물류 현황을 한곳에서 보는 AEGIS Cloud 계정을 발급해 드립니다.', 'A drawing, a photo or a sentence is enough to start. We reply within one business day, and open a AEGIS Cloud account where your quote, QC reports and shipping status live in one place.', '一张图纸、一张照片或一句话即可开始。我们将在一个工作日内回复，并开通 AEGIS Cloud 账号，报价、QC 报告与物流状态集中可见。'],
   hqLabel: ['한국 본사', 'KOREA HQ', '韩国总部'],
