@@ -51,6 +51,12 @@ export default function Settlement() {
     queryFn: () => base44.entities.FinancialLedger.list('-project_date', 100),
   });
 
+  const { data: cards = [] } = useQuery({
+    queryKey: ['settlement-cards'],
+    queryFn: () => base44.entities.TaskCard.list('-updated_date', 500),
+  });
+  const cardTitles = React.useMemo(() => Object.fromEntries(cards.map(c => [c.id, c.title])), [cards]);
+
   const { data: factories = [] } = useQuery({
     queryKey: ['factories'],
     queryFn: () => base44.entities.Company.filter({ company_type: 'FACTORY' }),
@@ -195,6 +201,11 @@ export default function Settlement() {
                         <td className="p-3">
                           <p className="font-medium text-xs truncate max-w-[160px]">{l.factory_name}</p>
                           <p className="text-[10px] text-muted-foreground truncate max-w-[160px]">{l.client_name}</p>
+                          {l.card_id && (
+                            <Badge variant="outline" className="mt-1 max-w-[160px] truncate text-[10px] font-normal" title={l.note_2 || ''}>
+                              카드 연동 · {cardTitles[l.card_id] || '카드'}
+                            </Badge>
+                          )}
                         </td>
                         <td className="p-3 text-right font-mono text-xs">
                           ${(Number(l.client_to_factory_usd) || 0).toLocaleString()}

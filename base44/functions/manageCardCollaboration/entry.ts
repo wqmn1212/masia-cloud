@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { schedulePatch, scheduleDiff, deliveryDate, validDate } from '../../shared/cardSchedule.ts';
 import { sendCollaborationEmail } from '../../shared/collaborationEmail.ts';
+import { syncCardLedger } from '../../shared/cardLedger.ts';
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req), user = await base44.auth.me();
@@ -51,7 +52,8 @@ export default async function(req) {
       title = `[AEGIS] ${card.title} ${label} ${input.confirmed ? '입금 확인' : '확인 취소'}`; kind = 'PAYMENT';
     }
     if (Object.keys(patch).length) await svc.entities.TaskCard.update(card.id, patch);
+    const ledger = kind === 'PAYMENT' ? await syncCardLedger(svc, { ...card, ...patch }) : null;
     const change = await svc.entities.CollaborationChange.create({ tenant_id: card.tenant_id, card_id: card.id, company_id: card.client_id || '', kind, title, body: `${card.title}\n${lines.join('\n')}`, reason: input.reason.trim(), actor_id: user.id, actor_name: user.full_name || user.email, email_status: card.client_visible === true && card.client_id ? 'PENDING' : 'SKIPPED', sent_user_ids: [], email_error: card.client_visible === true && card.client_id ? '' : '비공개 카드 또는 고객사 미연결' });
-    return Response.json({ saved: true, change_id: change.id, email_status: change.email_status });
+    return Response.json({ saved: true, change_id: change.id, email_status: change.email_status, ledger_id: ledger?.id || null, ledger_status: ledger?.status || null });
   } catch (error) { return Response.json({ error: error.message }, { status: 500 }); }
 }

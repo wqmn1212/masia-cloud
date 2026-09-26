@@ -20,9 +20,11 @@ export default function PaymentGatePanel({ card, user }) {
     client.invalidateQueries({ queryKey: ['collaboration-history', card.id] });
     client.invalidateQueries({ queryKey: ['client-card-detail', card.id] });
     client.invalidateQueries({ queryKey: ['task-cards'] });
+    client.invalidateQueries({ queryKey: ['ledgers'] });
+    client.invalidateQueries({ queryKey: ['ledger-by-card', card.id] });
   };
   const initialize = useMutation({ mutationFn: () => base44.functions.invoke('manageCardCollaboration', { action: 'initialize', card_id: card.id }), onSuccess: refresh });
-  const approve = useMutation({ mutationFn: ({ stage, reason, paid_date }) => base44.functions.invoke('manageCardCollaboration', { action: 'payment', card_id: card.id, stage_id: stage.id, expected_updated_date: stage.updated_date, confirmed: stage.approval_status !== 'APPROVED', reason, paid_date }), onSuccess: () => { refresh(); setSelected(null); toast({ title: '입금 상태 저장 완료', description: '수금률에 반영되었습니다. 고객 알림은 변경 이력에서 확인하세요.' }); }, onError: refresh });
+  const approve = useMutation({ mutationFn: ({ stage, reason, paid_date }) => base44.functions.invoke('manageCardCollaboration', { action: 'payment', card_id: card.id, stage_id: stage.id, expected_updated_date: stage.updated_date, confirmed: stage.approval_status !== 'APPROVED', reason, paid_date }), onSuccess: () => { refresh(); setSelected(null); toast({ title: '입금 상태 저장 완료', description: '수금률과 정산 대시보드에 반영되었습니다. 고객 알림은 변경 이력에서 확인하세요.' }); }, onError: refresh });
   const stages = query.data || [];
   const canApprove = ['master', 'service', 'sub'].includes(user?.account_tier);
   return <section className="mb-5 space-y-3 rounded-xl border p-3"><div><h3 className="text-sm font-semibold">선금·잔금 입금 확인</h3><p className="text-xs text-muted-foreground">직원만 확인·취소·재확정할 수 있습니다. 변경 시각과 처리자는 이력에 남습니다.</p></div>
