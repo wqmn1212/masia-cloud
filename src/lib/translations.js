@@ -8,6 +8,7 @@ export const translations = {
     'nav.timeline': '생산 타임라인', 'nav.asrequests': 'AS 접수',
     'nav.leads': '문의 접수', 'nav.portfolio': '포트폴리오 관리', 'nav.contracts': '계약서 관리', 'nav.decisions': '결정 기록',
     'nav.bom': 'STEP 도면 분석', 'nav.financial': '재무 리포트', 'nav.assistant': 'AI 업무 비서', 'nav.files': '파일 센터',
+    'nav.serviceGuide': '서비스 사용 가이드',
     'brand.name': '마시아 클라우드',
     // TopBar
     'topbar.search': '견적, 공장, 고객사 검색...', 'topbar.admin': '관리자', 'topbar.hq': '본사',
@@ -158,6 +159,7 @@ export const translations = {
     'nav.timeline': '生产时间轴', 'nav.asrequests': '售后申请',
     'nav.leads': '咨询受理', 'nav.portfolio': '案例管理', 'nav.contracts': '合同管理', 'nav.decisions': '决策记录',
     'nav.bom': 'STEP图纸分析', 'nav.financial': '财务报告', 'nav.assistant': 'AI工作助手', 'nav.files': '文件中心',
+    'nav.serviceGuide': '服务使用指南',
     'brand.name': 'Masia 云平台',
     // TopBar
     'topbar.search': '搜索报价、工厂、客户...', 'topbar.admin': '管理员', 'topbar.hq': '总部',

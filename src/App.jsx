@@ -41,6 +41,7 @@ import PortfolioAdmin from '@/pages/PortfolioAdmin';
 import PortfolioDetail from '@/pages/PortfolioDetail';
 import JoinInvite from '@/pages/JoinInvite';
 import JoinSetPassword from '@/pages/JoinSetPassword';
+import ServiceGuide from '@/pages/ServiceGuide';
 
 const AuthenticatedApp = () => {
   const { user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, onboardingPath, completeOnboarding, retryInvitation } = useAuth();
@@ -92,6 +93,7 @@ const AuthenticatedApp = () => {
         <Route path="/client/dashboard" element={<ClientPortalDashboard />} />
         <Route path="/client/board" element={<ClientBoard />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/service-guide" element={<ServiceGuide />} />
         <Route path="/leads" element={<Leads />} />
         <Route path="/portfolio-admin" element={<PortfolioAdmin />} />
         <Route path="/factories" element={<Factories />} />
