@@ -1,6 +1,46 @@
 // 랜딩 콘텐츠 — 모든 문구는 [ko, en, zh] 3개 언어 배열
 const LANG_INDEX = { ko: 0, en: 1, zh: 2 };
 export const LANDING_LANGS = ['ko', 'en', 'zh'];
+
+export const regionCities = [
+  '광둥성 전역 대응 · 선전시 · 동관시 · 광저우시 · 포산시 · 중산시 등',
+  'Across Guangdong · Shenzhen · Dongguan · Guangzhou · Foshan · Zhongshan and beyond',
+  '覆盖广东省全域 · 深圳市 · 东莞市 · 广州市 · 佛山市 · 中山市等',
+];
+
+export const guangdong = {
+  title: ['우리의 현장은 광둥성 전역입니다.', 'Our operations span Guangdong.', '我们的业务覆盖广东全省。'],
+  body: [
+    '광저우를 비롯해 선전, 동관, 포산, 중산까지. AEGIS는 중국 광둥성을 주 업무 지역으로 삼아 전역의 공장을 직접 만나고, 소싱부터 가격 협상·공장 검증·QC·출하까지 현장에서 연결합니다.',
+    'From Guangzhou to Shenzhen, Dongguan, Foshan and Zhongshan, Guangdong is our primary region of operations. AEGIS works directly with factories across the province, coordinating sourcing, negotiation, factory checks, QC and dispatch on the ground.',
+    '从广州到深圳、东莞、佛山、中山，广东省是 AEGIS 的主要业务区域。我们直接对接全省工厂，在现场衔接采购、议价、验厂、QC 与出货。',
+  ],
+  alt: ['광저우 스카이라인과 광둥성 제조·항만 물류를 표현한 이미지', 'Conceptual view of Guangzhou and Guangdong manufacturing and port logistics', '展现广州天际线与广东制造及港口物流的概念图'],
+  caption: ['광둥성의 도시·제조·물류를 표현한 AI 생성 컨셉 이미지입니다.', 'AI-generated concept image representing Guangdong’s cities, manufacturing and logistics.', 'AI 生成概念图，展现广东的城市、制造与物流。'],
+};
+
+export const fastShipping = {
+  title: ['광둥성에서 모아, 한국까지 빠르게.', 'Consolidated in Guangdong. Connected to Korea.', '广东集货，快速运抵韩国。'],
+  body: [
+    '광둥성 전역에서 출발한 물류를 선전으로 모으고, 중국 위해(웨이하이)로 연결합니다. 웨이하이에서 인천까지 해운 약 하루의 항로를 활용해, 집하부터 한국 도착까지 이어지는 빠른 배송을 관리합니다.',
+    'We consolidate freight from across Guangdong in Shenzhen, then move it to Weihai, China. The sea leg from Weihai to Incheon takes approximately one day, connecting collection in China with arrival in Korea.',
+    '我们将广东各地的货物汇集至深圳，再转运至中国威海。利用威海至仁川约一天的海运航程，衔接中国集货与韩国到港，统筹快速运输。',
+  ],
+  seaLabel: ['빠른 배송의 핵심 · 해상 운송 구간', 'THE FAST SEA CONNECTION', '快速运输的关键 · 海运段'],
+  seaRoute: ['위해(웨이하이) → 인천', 'Weihai → Incheon', '威海 → 仁川'],
+  duration: ['해운 약 1일', '≈ 1 day by sea', '海运约 1 天'],
+  steps: [
+    { title: ['광둥성 전역', 'Across Guangdong', '广东全省'], body: ['선전·동관·광저우·포산·중산 등 각 지역의 출하 물류를 연결합니다.', 'Coordinate outgoing freight from Shenzhen, Dongguan, Guangzhou, Foshan, Zhongshan and beyond.', '对接深圳、东莞、广州、佛山、中山等各地的出货物流。'] },
+    { title: ['선전 집결', 'Shenzhen consolidation', '深圳集货'], body: ['광둥성 각 지역에서 출발한 화물을 선전으로 모아 다음 운송 구간을 준비합니다.', 'Consolidate shipments from across Guangdong in Shenzhen for onward transport.', '将广东各地货物汇集至深圳，安排后续运输。'] },
+    { title: ['위해(웨이하이) 이동', 'Transfer to Weihai', '转运至威海'], body: ['집결된 물류를 중국 위해(웨이하이)로 운송하고 한국행 해운과 연계합니다.', 'Move consolidated freight to Weihai and connect it with Korea-bound sea transport.', '将集货转运至威海，衔接开往韩国的海运航线。'] },
+    { title: ['인천 해상 도착', 'Arrival at Incheon', '海运抵达仁川'], body: ['웨이하이 출항 후 해상 운송 약 하루로 인천에 도착하며, 이후 통관·국내 배송을 진행합니다.', 'Arrive at Incheon after approximately one day at sea from Weihai, followed by customs clearance and local delivery.', '从威海出港后，海上运输约一天抵达仁川，随后进行清关与韩国境内配送。'] },
+  ],
+  note: [
+    '※ 약 1일은 웨이하이 출항 후 인천 도착까지의 해상 운송 구간 기준이며, 광둥성에서 고객사까지의 전체 배송 기간이 아닙니다. 중국 내 집하·육상 운송, 선적 대기, 통관 및 국내 배송 기간은 별도이며, 선박 일정·기상·항만 상황에 따라 달라질 수 있습니다.',
+    'Approximately one day refers only to the sea leg from departure at Weihai to arrival at Incheon, not total door-to-door delivery. Collection, inland transport, loading waits, customs clearance and local delivery take additional time. Actual timing depends on sailing schedules, weather and port conditions.',
+    '※ 约一天仅指威海出港至仁川到港的海上运输时间，并非从广东至客户所在地的全程交付时间。集货、中国境内运输、候船、清关及韩国境内配送时间另计，实际时效受船期、天气及港口情况影响。',
+  ],
+};
 export const tx = (v, lang) => (Array.isArray(v) ? v[LANG_INDEX[lang] ?? 0] : v);
 
 export const nav = [
@@ -18,13 +58,13 @@ export const header = {
 };
 
 export const hero = {
-  badge: ['중국 선전 지사 운영 · 한국 본사 업무 진행', 'Shenzhen branch · Korean HQ operations', '深圳分公司 · 韩国总部运营'],
+  badge: ['중국 광둥성 지사 운영 · 한국 본사 업무 진행', 'Guangdong branch · Korean HQ operations', '广东省分公司 · 韩国总部运营'],
   h1a: ['중국 공장과 직거래,', 'Direct from the Chinese factory floor,', '直连中国工厂，'],
   h1b: ['한국 문 앞까지 한 번에.', 'delivered to your door in Korea.', '直送韩国客户手中。'],
   body: [
-    'AEGIS는 한국에 본사를, 중국 선전에 지사와 직원을 두고 공장과 직접 만나 가격을 협상합니다. 온라인에서 공장처럼 활동하는 유통사보다 낮은 단가로 직거래가 가능하며, 공장 검증과 QC, 배송과 통관까지 한 번에 진행합니다.',
-    'AEGIS has its own branch and staff on the ground in Shenzhen. We negotiate with factories face to face, so you buy below the price online trading companies posing as factories can offer. Verification, QC, shipping and customs are handled in one line.',
-    'AEGIS 在深圳设有分公司和常驻员工，直接与工厂面对面谈判价格，因此价格低于线上冒充工厂的贸易商。验厂、QC、运输与清关一站式完成。',
+    'AEGIS는 한국에 본사를, 중국 광둥성에 지사와 직원을 두고 공장과 직접 만나 가격을 협상합니다. 온라인에서 공장처럼 활동하는 유통사보다 낮은 단가로 직거래가 가능하며, 공장 검증과 QC, 배송과 통관까지 한 번에 진행합니다.',
+    'AEGIS has its own branch and staff on the ground in Guangdong. We negotiate with factories face to face, so you buy below the price online trading companies posing as factories can offer. Verification, QC, shipping and customs are handled in one line.',
+    'AEGIS 在广东省设有分公司和常驻员工，直接与工厂面对面谈判价格，因此价格低于线上冒充工厂的贸易商。验厂、QC、运输与清关一站式完成。',
   ],
   cta1: ['제조 문의하기', 'Request a quote', '索取报价'],
   cta2: ['진행 방식 보기', 'See how it works', '查看进行流程'],
@@ -39,11 +79,11 @@ export const supply = {
   title: ['SUPPLY STRUCTURE', 'SUPPLY STRUCTURE', '供应结构'],
   koreaLabel: ['KOREA', 'KOREA', '韩国'],
   korea: ['고객사', 'Your company', '贵公司'],
-  aegisLabel: ['KOREA HQ + SHENZHEN BRANCH', 'KOREA HQ + SHENZHEN BRANCH', '韩国总部 + 深圳分公司'],
+  aegisLabel: ['KOREA HQ + GUANGDONG BRANCH', 'KOREA HQ + GUANGDONG BRANCH', '韩国总部 + 广东省分公司'],
   aegisDesc: ['현지 가격 협상 · 공장 검증 · QC · 배송 · 통관', 'On-site negotiation · factory audit · QC · shipping · customs', '现场议价 · 验厂 · QC · 运输 · 清关'],
   removed: ['공장을 표방하는 온라인 유통사', 'Trading companies posing as factories', '冒充工厂的贸易商'],
   removedTag: ['제거', 'REMOVED', '已去除'],
-  chinaLabel: ['CHINA · SHENZHEN', 'CHINA · SHENZHEN', '中国 · 深圳'],
+  chinaLabel: ['CHINA · GUANGDONG', 'CHINA · GUANGDONG', '中国 · 广东省'],
   china: ['검증 완료 공장', 'Verified factory', '已验证工厂'],
 };
 
@@ -58,7 +98,7 @@ export const about = {
   eyebrow: '01 — WHAT WE DO',
   h2: ['중국의 공장과 한국의 기업을 연결하고, 도착할 때까지 사이에 남습니다.', 'We connect Korean companies with Chinese factories — and stay in the middle until it lands.', '我们连接韩国企业与中国工厂，并全程负责到货为止。'],
   cards: [
-    { t: ['선전 현지 지사와 직원', 'A branch and staff in Shenzhen', '深圳设有分公司与常驻员工'], d: ['우리의 주 활동지는 중국 선전시입니다. 우리 직원이 공장을 직접 찾아가 만나기 때문에, 중간에 말을 옮기는 대신 가격을 직접 협상합니다.', 'Our main base of operations is Shenzhen, China. Because our own staff meet factories in person, we negotiate price directly instead of relaying messages through a middleman.', '我们的主要活动地是中国深圳。自有员工亲赴工厂洽谈，直接议价，而非经由中间人转达。'] },
+    { t: ['광둥성 현지 지사와 직원', 'A branch and staff in Guangdong', '广东省设有分公司与常驻员工'], d: ['우리의 주 활동지는 중국 광둥성입니다. 우리 직원이 공장을 직접 찾아가 만나기 때문에, 중간에 말을 옮기는 대신 가격을 직접 협상합니다.', 'Our main base of operations is Guangdong, China. Because our own staff meet factories in person, we negotiate price directly instead of relaying messages through a middleman.', '我们的主要活动地是中国广东省。自有员工亲赴工厂洽谈，直接议价，而非经由中间人转达。'] },
     { t: ['유통사보다 낮은 단가', "Lower than a trading company's price", '低于贸易商的价格'], d: ['온라인에서 공장처럼 활동하는 판매자 상당수는 마진을 얹은 유통사입니다. 직접 협상은 그 층을 걷어냅니다.', 'Many sellers online present themselves as factories but are resellers with a margin layered on top. Direct negotiation removes that layer.', '线上许多卖家自称工厂，实为加价转售的中间商。直接谈判去除了这一层。'] },
     { t: ['모든 공장은 방문 가능', 'Every factory can be visited', '所有工厂均可实地走访'], d: ['고객사가 직접 방문해 검증할 수 있습니다. 방문이 어려울 경우 우리가 직접 가서 검증하고, 제품 QC를 함께 진행합니다.', 'You may visit and verify any factory yourself. If a visit is difficult, we go on your behalf, verify the site and run product QC together with you.', '您可亲自走访并验证任何一家工厂。若不便前往，我们代为实地验证，并与您一同进行产品 QC。'] },
     { t: ['배송 · 통관 원스톱', 'Shipping and customs in one line', '运输与清关一次搞定'], d: ['제품을 만드는 것 외에도 한국까지 배송, 통관 처리, 고객사 배송까지 모든 과정을 한 번에 처리합니다.', 'Beyond making the product, we ship it to Korea, clear customs and deliver to your door — the whole chain handled at once.', '除生产之外，运抵韩国、清关直至送达贵公司，全流程一次性完成。'] },
@@ -73,7 +113,7 @@ export const process = {
   sub: ['각 단계는 AEGIS Cloud 계정에 기록되어, 지금 어디까지 왔는지 항상 확인할 수 있습니다.', 'Each step is logged in your AEGIS Cloud account, so you always know where the order stands.', '每个环节都记录在您的 AEGIS Cloud 账号中，随时掌握订单进度。'],
   steps: [
     { t: ['제조 문의 · 요구사항 정리', 'Inquiry & requirements', '询价与需求整理'], d: ['도면, 샘플, 또는 설명만으로도 가능합니다. 사양 · 수량 · 목표 단가를 함께 정리합니다.', 'Send drawings, samples or just a description. We define specs, quantity and target price with you.', '提交图纸、样品或简单描述均可。我们与您共同确定规格、数量与目标价格。'] },
-    { t: ['공장 매칭 · NNN 체결', 'Factory matching & NNN', '工厂匹配与 NNN 签署'], d: ['현지 직원이 NNN 계약이 체결된 중국의 공장을 선별.', 'Our Shenzhen staff shortlist factories that actually make your item, and sign NNN before any file is shared.', '深圳团队筛选真正能生产该品项的工厂，并在共享任何文件前签署 NNN。'] },
+    { t: ['공장 매칭 · NNN 체결', 'Factory matching & NNN', '工厂匹配与 NNN 签署'], d: ['현지 직원이 NNN 계약이 체결된 중국의 공장을 선별.', 'Our Guangdong staff shortlist factories that actually make your item, and sign NNN before any file is shared.', '广东省团队筛选真正能生产该品项的工厂，并在共享任何文件前签署 NNN。'] },
     { t: ['현지 가격 협상', 'On-site price negotiation', '现场价格谈判'], d: ['공장에서 직접 협상하고, 원가 구성이 보이는 견적으로 회신합니다.', 'We negotiate at the factory in person and return a quote with the cost breakdown visible.', '我们亲赴工厂谈判，并提供含成本明细的报价。'] },
     { t: ['공장 검증 · 샘플', 'Factory audit & sampling', '验厂与打样'], d: ['함께 방문하거나 우리가 대신 갑니다. 설비 · 생산능력 · 인증을 확인하고 결정 전 샘플을 받습니다.', 'Visit with us, or we go for you: equipment, capacity, certifications and a sample before you commit.', '您可同行，或由我们代为前往：确认设备、产能、认证，并在决定前提供样品。'] },
     { t: ['계약서 작성 후 양산', 'Contract, then mass production', '签订合同后再量产'], d: ['모든 양산 제품은 계약서 작성 후 진행합니다. 사양 · 단가 · 납기 · 불량 처리 기준을 명시합니다.', 'No mass production starts without a signed contract covering spec, price, schedule and defect handling.', '所有量产均在签署合同后进行，合同涵盖规格、价格、交期与不良处理。'] },
@@ -87,7 +127,7 @@ export const categories = {
   eyebrow: '05 — CATEGORIES',
   h2: ['우리가 다루는 품목', 'What we make', '我们承接的品类'],
   sub: ['기계설비부터 굿즈까지. 카테고리를 선택하면 대표 사례를 볼 수 있습니다.', 'Machinery to goods — pick a category to see representative work.', '从机械设备到周边商品，选择品类查看代表案例。'],
-  footnote: ['목록에 없는 품목도 문의해 주세요. 대부분 선전에서 제작 가능합니다.', 'Not on the list? Send the drawing anyway — most items we have not listed are still made in Shenzhen.', '未列出的品类也可咨询。深圳大多可以生产。'],
+  footnote: ['목록에 없는 품목도 문의해 주세요. 대부분 광둥성에서 제작 가능합니다.', 'Not on the list? Send the drawing anyway — most items we have not listed are still made in Guangdong.', '未列出的品类也可咨询。广东省大多可以生产。'],
   tabs: [
     { id: 'all', label: ['전체', 'All', '全部'] },
     { id: 'machine', label: ['기계설비', 'Machinery', '机械设备'] },
@@ -121,7 +161,7 @@ export const portfolio = [
   { cat: 'precision', tag: TAG.precision, t: ['사출', 'Injection moulding', '注塑成型'], d: ['금형 제작, T0 샘플, 양산 사출', 'Mould fabrication, T0 sampling and mass moulding.', '模具制作、T0 试模与批量注塑。'], image: '' },
   { cat: 'precision', tag: TAG.precision, t: ['CNC', 'CNC machining', 'CNC 加工'], d: ['STEP 도면 기반 금속 · 플라스틱 절삭', 'Metal and plastic machining from STEP files.', '依据 STEP 文件进行金属与塑料加工。'], image: '' },
   { cat: 'precision', tag: TAG.precision, t: ['판금 · 용접 · 프레스', 'Sheet metal · welding · press', '钣金 · 焊接 · 冲压'], d: ['외함 · 프레임 · 프레스 부품, 지그 제작 포함', 'Enclosures, frames and stamped parts with jig setup.', '外壳、框架与冲压件，含治具制作。'], image: '' },
-  { cat: 'electronics', tag: TAG.electronics, t: ['소형전자기기 · 전자제품', 'Small electronics', '小型电子产品'], d: ['PCBA, 펌웨어 인계, 선전 현지 조립', 'PCBA, firmware handover and assembly in Shenzhen.', 'PCBA、固件交接与深圳本地组装。'], image: '' },
+  { cat: 'electronics', tag: TAG.electronics, t: ['소형전자기기 · 전자제품', 'Small electronics', '小型电子产品'], d: ['PCBA, 펌웨어 인계, 광둥성 현지 조립', 'PCBA, firmware handover and assembly in Guangdong.', 'PCBA、固件交接与广东省本地组装。'], image: '' },
   { cat: 'electronics', tag: TAG.electronics, t: ['소형가전 · 가전', 'Small home appliances', '小家电'], d: ['KC 인증 지원 및 220V 사양 전환', 'KC certification support and 220V spec conversion.', '支持 KC 认证及 220V 规格转换。'], image: '' },
   { cat: 'electronics', tag: TAG.electronics, t: ['전자부품 · 배터리 · 자석', 'Components · batteries · magnets', '电子元件 · 电池 · 磁铁'], d: ['대량 소싱, MSDS 및 운송 서류 처리', 'Bulk sourcing with MSDS and transport documentation.', '批量采购，含 MSDS 与运输单证。'], image: '' },
   { cat: 'health', tag: TAG.health, t: ['뷰티디바이스', 'Beauty devices', '美容仪器'], d: ['LED · EMS · RF 기기, 금형 및 브랜딩 포함', 'LED, EMS and RF devices with tooling and branding.', 'LED、EMS、RF 设备，含模具与品牌定制。'], image: '' },
@@ -151,7 +191,7 @@ export const contact = {
   body: ['도면, 사진, 혹은 문장 하나로도 시작할 수 있습니다. 영업일 기준 1일 이내 회신드리며, 견적 · QC 리포트 · 물류 현황을 한곳에서 보는 AEGIS Cloud 계정을 발급해 드립니다.', 'A drawing, a photo or a sentence is enough to start. We reply within one business day, and open a AEGIS Cloud account where your quote, QC reports and shipping status live in one place.', '一张图纸、一张照片或一句话即可开始。我们将在一个工作日内回复，并开通 AEGIS Cloud 账号，报价、QC 报告与物流状态集中可见。'],
   hqLabel: ['한국 본사', 'KOREA HQ', '韩国总部'],
   hq: ['계약 · 정산 · 지원 업무', 'All contracts, settlement and support', '合同、结算与支持'],
-  szLabel: ['중국 선전 지사', 'SHENZHEN BRANCH', '深圳分公司'],
+  szLabel: ['중국 광둥성 지사', 'GUANGDONG BRANCH', '广东省分公司'],
   sz: ['가격 협상 · 공장 검증 · QC · 출하', 'Negotiation, factory audit, QC, shipping', '议价、验厂、QC、运输'],
 };
 
@@ -195,6 +235,6 @@ export const formTags = [
 ];
 
 export const footer = {
-  tagline: ['한국 본사 · 중국 선전 지사 · 공장 소싱, QC, 배송 및 통관', 'Korean HQ · Shenzhen branch · Factory sourcing, QC, shipping and customs', '韩国总部 · 深圳分公司 · 工厂采购、QC、运输与清关'],
+  tagline: ['한국 본사 · 중국 광둥성 지사 · 공장 소싱, QC, 배송 및 통관', 'Korean HQ · Guangdong branch · Factory sourcing, QC, shipping and customs', '韩国总部 · 广东省分公司 · 工厂采购、QC、运输与清关'],
   copyright: '© 2026 AEGIS',
 };

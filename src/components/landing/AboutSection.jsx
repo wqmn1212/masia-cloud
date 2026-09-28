@@ -1,5 +1,5 @@
 import React from 'react';
-import { about, tx } from '@/lib/landingContent';
+import { about, regionCities, tx } from '@/lib/landingContent';
 import SectionHeading from './SectionHeading';
 
 export default function AboutSection({ lang }) {
@@ -16,6 +16,7 @@ export default function AboutSection({ lang }) {
             </div>
           ))}
         </div>
+        <p className="mt-5 text-sm text-landing-muted">{tx(regionCities, lang)}</p>
       </div>
     </section>
   );

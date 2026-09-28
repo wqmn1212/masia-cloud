@@ -1,5 +1,5 @@
 import React from 'react';
-import { hero, tx } from '@/lib/landingContent';
+import { hero, regionCities, tx } from '@/lib/landingContent';
 import SupplyStructureCard from './SupplyStructureCard';
 import StatsRow from './StatsRow';
 
@@ -25,6 +25,7 @@ export default function HeroSection({ lang }) {
         </div>
         <SupplyStructureCard lang={lang} />
       </div>
+      <p className="mt-6 text-sm text-landing-muted leading-relaxed">{tx(regionCities, lang)}</p>
       <StatsRow lang={lang} />
     </section>
   );
