@@ -12,7 +12,7 @@ export default function GuangdongSection({ lang }) {
           <p className="text-base leading-relaxed text-landing-ink3">{tx(guangdong.body, lang)}</p>
         </div>
         <figure className="mt-8">
-          <img src="https://media.base44.com/images/public/6a0c1b56a385588fbd4454f5/7c5faed1e_generated_image.png" alt={tx(guangdong.alt, lang)} loading="lazy" width="1536" height="864" className="w-full aspect-video lg:aspect-[21/9] object-cover rounded-xl border border-landing-line" />
+          <img src="https://media.base44.com/images/public/6a0c1b56a385588fbd4454f5/dcbf5fea0_hf_20260928_054004_5f64e64a-0a70-44c9-80fd-7738b851f2a4.png" alt={tx(guangdong.alt, lang)} loading="lazy" width="1536" height="864" className="w-full aspect-video lg:aspect-[21/9] object-cover rounded-xl border border-landing-line" />
           
         </figure>
         <div className="mt-5 flex items-start gap-3 border-t border-landing-line pt-5">
