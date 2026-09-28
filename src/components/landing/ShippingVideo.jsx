@@ -1,18 +1,23 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { fastShipping, tx } from '@/lib/landingContent';
 
-// 업로드할 인포그래픽 영상의 공개 URL을 여기에 넣으면 됩니다.
-const SHIPPING_VIDEO_URL = '';
+const SHIPPING_VIDEOS = [
+  'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/a02bc5f16_aegis_01.mp4',
+  'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/6fc968ace_aegis_02.mp4',
+  'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/dec852104_aegis_03.mp4',
+  'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/ce7bcb9d3_aegis_04.mp4',
+];
 
 export default function ShippingVideo({ lang }) {
   const videoRef = useRef(null);
+  const visibleRef = useRef(false);
+  const [index, setIndex] = useState(0);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !SHIPPING_VIDEO_URL) return;
     const observer = new IntersectionObserver(([entry]) => {
+      visibleRef.current = entry.isIntersecting;
       if (entry.isIntersecting) {
-        video.currentTime = 0;
         video.play().catch(() => {});
       } else {
         video.pause();
@@ -24,11 +29,17 @@ export default function ShippingVideo({ lang }) {
 
   return (
     <figure className="mt-7">
-      {SHIPPING_VIDEO_URL ? (
-        <video ref={videoRef} src={SHIPPING_VIDEO_URL} muted playsInline loop preload="metadata" aria-label={tx(fastShipping.videoCaption, lang)} className="w-full aspect-video object-cover rounded-xl border border-landing-line" />
-      ) : (
-        <div className="w-full aspect-video flex items-center justify-center rounded-xl border border-landing-line bg-landing-page text-landing-muted text-sm" role="img" aria-label={tx(fastShipping.videoPlaceholder, lang)}>{tx(fastShipping.videoPlaceholder, lang)}</div>
-      )}
+      <video
+        ref={videoRef}
+        src={SHIPPING_VIDEOS[index]}
+        muted
+        playsInline
+        preload="metadata"
+        onCanPlay={() => { if (visibleRef.current) videoRef.current?.play().catch(() => {}); }}
+        onEnded={() => setIndex(i => (i + 1) % SHIPPING_VIDEOS.length)}
+        aria-label={tx(fastShipping.videoCaption, lang)}
+        className="w-full aspect-video object-cover rounded-xl border border-landing-line"
+      />
       <figcaption className="mt-2 text-xs text-landing-muted">{tx(fastShipping.videoCaption, lang)}</figcaption>
     </figure>
   );
