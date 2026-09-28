@@ -17,6 +17,11 @@ export default async function (req) {
     );
 
     const documents = await clientCardDocuments(svc, cards);
+    const categoryKeys = [...new Set(cards.map(c => c.target_machine_category).filter(Boolean))];
+    const categories = categoryKeys.length
+      ? await svc.entities.MachineCategory.filter({ key: { $in: categoryKeys } }, undefined, 200)
+      : [];
+    const categoryLabels = new Map(categories.map(c => [c.key, c.label_kr]));
     return Response.json({
       attachments: documents.map(documentMetadata),
       cards: cards.map((c) => ({
@@ -27,6 +32,7 @@ export default async function (req) {
         due_date: c.due_date || '',
         hq_requirements: c.hq_requirements || '',
         target_machine_category: c.target_machine_category || '',
+        category_label: categoryLabels.get(c.target_machine_category) || '',
         updated_date: c.updated_date,
       })),
     });

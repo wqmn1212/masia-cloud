@@ -17,7 +17,7 @@ export default function ClientCardTile({ card, onClick }) {
         )}
         {card.target_machine_category && (
           <Badge variant="outline" className="text-[9px] h-4 px-1">
-            {CAT_LABEL[card.target_machine_category] || card.target_machine_category}
+            {card.category_label || CAT_LABEL[card.target_machine_category] || '카테고리 미확인'}
           </Badge>
         )}
       </div>
