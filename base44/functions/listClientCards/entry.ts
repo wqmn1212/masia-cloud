@@ -18,7 +18,7 @@ export default async function (req) {
 
     const documents = await clientCardDocuments(svc, cards);
     // 관리자 보드와 동일한 카테고리 목록을 사용해 저장된 키를 표시명으로 변환한다.
-    const categories = await svc.entities.MachineCategory.list('label_kr', 100);
+    const categories = await svc.entities.MachineCategory.list('label_kr', 500);
     const categoryLabels = new Map(categories.filter(c => c.key).map(c => [c.key, c.label_kr]));
     return Response.json({
       attachments: documents.map(documentMetadata),
