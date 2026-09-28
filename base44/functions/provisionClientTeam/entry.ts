@@ -33,6 +33,21 @@ export default async function (req) {
       const [c] = await svc.entities.Company.filter({ id: company_id, company_type: 'CLIENT' });
       if (!c) return Response.json({ error: '고객사를 찾을 수 없습니다' }, { status: 404 });
       const [t] = await svc.entities.Tenant.filter({ company_id: c.id, tenant_type: 'client' });
+      if (!c.tenant_id) {
+        const headquarters = await svc.entities.Tenant.filter({ is_hq: true }, undefined, 2);
+        if (headquarters.length !== 1 || headquarters[0].is_active === false || headquarters[0].tenant_type === 'client') {
+          return Response.json({ error: '고객사를 연결할 활성 본사 팀을 하나로 확인할 수 없습니다.' }, { status: 400 });
+        }
+        const hq = headquarters[0];
+        if (user.account_tier !== 'master' && user.tenant_id !== hq.id) {
+          return Response.json({ error: 'Forbidden' }, { status: 403 });
+        }
+        if (t && t.hq_tenant_id !== hq.id) {
+          return Response.json({ error: '고객사 팀의 본사 연결을 확인하세요.' }, { status: 409 });
+        }
+        await svc.entities.Company.update(c.id, { tenant_id: hq.id });
+        c.tenant_id = hq.id;
+      }
       lead = { id: null, tenant_id: c.tenant_id, company: c.company_name, contact_name: c.contact_person, phone: c.phone, email: c.email, client_id: c.id, client_tenant_id: t?.id };
     }
     if (!lead) return Response.json({ error: '문의를 찾을 수 없습니다' }, { status: 404 });
