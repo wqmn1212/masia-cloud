@@ -6,6 +6,10 @@
       "type": "string",
       "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
     },
+    "service_agreement_id": {
+      "type": "string",
+      "description": "\uadc0\uc18d\ub41c \uc6d4 \uacc4\uc57d ServiceAgreement ID. \uac12\uc774 \uc5c6\uc73c\uba74 \ub9ac\ud14c\uc774\ub108 \uacc4\uc57d \uc678 \ub2e8\ubc1c \uc18c\uc2f1 \uac74"
+    },
     "title": {
       "type": "string",
       "description": "\uc18c\uc2f1 \uc5c5\ubb34 \uc81c\ubaa9"

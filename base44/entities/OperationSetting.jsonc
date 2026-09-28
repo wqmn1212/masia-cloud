@@ -1,0 +1,94 @@
+{
+  "name": "OperationSetting",
+  "type": "object",
+  "description": "팀 운영 기준값. 테넌트당 1건. 원가·수용 한도·가동률 가중치·잉여 배분 비율을 담는다.",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "소속 팀 ID (데이터 격리 키). 테넌트당 1건"
+    },
+    "team_monthly_cost": {
+      "type": "number",
+      "default": 6000000,
+      "description": "팀 월 원가 (한국 1명 400만 + 중국 2명 각 100만 기준). 인력 변동 시 조정"
+    },
+    "capacity_limit": {
+      "type": "number",
+      "default": 10,
+      "description": "팀 수용 한도. 배정 카드의 단계별 가중치 합계 상한"
+    },
+    "status_weights": {
+      "type": "array",
+      "description": "카드 상태별 업무 부하 가중치. 운영하며 조정한다",
+      "items": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "TODO",
+              "IN_PROGRESS",
+              "REVIEW",
+              "PRODUCTION",
+              "DONE",
+              "CANCELLED"
+            ]
+          },
+          "weight": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "owner_share_percent": {
+      "type": "number",
+      "default": 50,
+      "description": "월 잉여 중 대표 몫 비율 (%). 나머지는 팀원 배분"
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "최종 수정자"
+    }
+  },
+  "required": [
+    "tenant_id"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        { "data.tenant_id": "{{user.data.tenant_id}}" },
+        {
+          "$or": [
+            { "user_condition": { "data.account_tier": "master" } },
+            { "user_condition": { "data.account_tier": "service" } }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        { "user_condition": { "data.account_tier": "master" } },
+        {
+          "$and": [
+            { "data.tenant_id": "{{user.data.tenant_id}}" },
+            { "user_condition": { "data.account_tier": "service" } }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "data.account_tier": "master" } },
+        {
+          "$and": [
+            { "data.tenant_id": "{{user.data.tenant_id}}" },
+            { "user_condition": { "data.account_tier": "service" } }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": { "data.account_tier": "master" }
+    }
+  }
+}

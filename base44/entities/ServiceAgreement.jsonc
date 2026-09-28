@@ -1,0 +1,185 @@
+{
+  "name": "ServiceAgreement",
+  "type": "object",
+  "description": "인력 아웃소싱 월 계약(리테이너). 한국 1명 + 중국 2명 팀이 현지 QC·PM을 수행한다. 견적서 기반 계약서 문서인 Contract 와는 별개 개념이며, 한 고객사에 여러 건이 붙을 수 있다.",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "소속 팀 ID (데이터 격리 키)"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "고객사 Company ID. 한 회사에 다수 계약 가능 (1:N)"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "고객사명 (표시용)"
+    },
+    "agreement_no": {
+      "type": "string",
+      "description": "계약 번호"
+    },
+    "title": {
+      "type": "string",
+      "description": "계약명 / 프로젝트명"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "계약 시작일"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "계약 종료일"
+    },
+    "term_months": {
+      "type": "number",
+      "description": "계약 기간 (개월, 3~12)"
+    },
+    "monthly_fee": {
+      "type": "number",
+      "default": 3000000,
+      "description": "월 계약료. 민감 정보 — 고객 계정에 노출 금지",
+      "rls": {
+        "read": {
+          "$or": [
+            { "user_condition": { "data.account_tier": "master" } },
+            {
+              "$and": [
+                { "data.tenant_id": "{{user.data.tenant_id}}" },
+                { "user_condition": { "data.account_tier": "service" } }
+              ]
+            }
+          ]
+        },
+        "write": {
+          "$or": [
+            { "user_condition": { "data.account_tier": "master" } },
+            {
+              "$and": [
+                { "data.tenant_id": "{{user.data.tenant_id}}" },
+                { "user_condition": { "data.account_tier": "service" } }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "currency": {
+      "type": "string",
+      "enum": [
+        "KRW",
+        "USD",
+        "CNY"
+      ],
+      "default": "KRW",
+      "description": "계약료 통화"
+    },
+    "factory_rebate_percent": {
+      "type": "number",
+      "default": 10,
+      "description": "공장 페이백 비율 (계약 고객 10, 미계약 20). 내부 전용 — 고객 계정에 노출 금지",
+      "rls": {
+        "read": {
+          "$or": [
+            { "user_condition": { "data.account_tier": "master" } },
+            {
+              "$and": [
+                { "data.tenant_id": "{{user.data.tenant_id}}" },
+                { "user_condition": { "data.account_tier": "service" } }
+              ]
+            }
+          ]
+        },
+        "write": {
+          "$or": [
+            { "user_condition": { "data.account_tier": "master" } },
+            {
+              "$and": [
+                { "data.tenant_id": "{{user.data.tenant_id}}" },
+                { "user_condition": { "data.account_tier": "service" } }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "ACTIVE",
+        "SUSPENDED",
+        "ENDED",
+        "RENEWED"
+      ],
+      "default": "DRAFT",
+      "description": "계약 상태"
+    },
+    "assigned_user_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "배정된 팀원 User ID 목록 (한국 1 + 중국 2 구성)"
+    },
+    "renewal_of": {
+      "type": "string",
+      "description": "갱신 계약일 경우 직전 ServiceAgreement ID"
+    },
+    "note": {
+      "type": "string",
+      "description": "비고"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "company_id",
+    "start_date",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        { "data.tenant_id": "{{user.data.tenant_id}}" },
+        {
+          "$or": [
+            { "user_condition": { "data.account_tier": "master" } },
+            { "user_condition": { "data.account_tier": "service" } }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        { "user_condition": { "data.account_tier": "master" } },
+        {
+          "$and": [
+            { "data.tenant_id": "{{user.data.tenant_id}}" },
+            {
+              "$or": [
+                { "user_condition": { "data.account_tier": "service" } },
+                { "user_condition": { "data.account_tier": "sub" } }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "data.account_tier": "master" } },
+        {
+          "$and": [
+            { "data.tenant_id": "{{user.data.tenant_id}}" },
+            { "user_condition": { "data.account_tier": "service" } }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": { "data.account_tier": "master" }
+    }
+  }
+}
