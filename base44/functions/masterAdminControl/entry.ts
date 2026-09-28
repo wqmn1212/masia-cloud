@@ -29,7 +29,8 @@ export default async function(req) {
       if ((confirm || '').trim().toLowerCase() !== String(target.email).toLowerCase()) {
         return Response.json({ error: '확인용 이메일이 일치하지 않습니다' }, { status: 400 });
       }
-      await svc.PendingInvitation.deleteMany({ email: target.email, claimed: false });
+      const invites = await svc.PendingInvitation.filter({ email: target.email, claimed: false });
+      for (const inv of invites) await svc.PendingInvitation.delete(inv.id);
       await svc.User.delete(target.id);
       return Response.json({ ok: true });
     }
@@ -59,8 +60,12 @@ export default async function(req) {
         return Response.json({ error: '확인용 팀 이름이 일치하지 않습니다' }, { status: 400 });
       }
       const members = await svc.User.filter({ tenant_id: tenant.id }, '-created_date', 1000);
-      if (members.length) await svc.User.bulkUpdate(members.filter((m) => m.account_tier !== 'master').map((m) => ({ id: m.id, is_active: false })));
-      await svc.PendingInvitation.deleteMany({ tenant_id: tenant.id, claimed: false });
+      // 내장 User 엔티티는 일괄 수정이 지원되지 않아 개별 수정한다
+      for (const m of members.filter((m) => m.account_tier !== 'master' && m.is_active !== false)) {
+        await svc.User.update(m.id, { is_active: false });
+      }
+      const invites = await svc.PendingInvitation.filter({ tenant_id: tenant.id, claimed: false });
+      for (const inv of invites) await svc.PendingInvitation.delete(inv.id);
       await svc.Tenant.delete(tenant.id);
       return Response.json({ ok: true });
     }
