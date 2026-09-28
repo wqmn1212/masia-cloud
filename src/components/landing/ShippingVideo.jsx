@@ -5,7 +5,7 @@ const SHIPPING_VIDEOS = [
   'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/a02bc5f16_aegis_01.mp4',
   'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/6fc968ace_aegis_02.mp4',
   'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/dec852104_aegis_03.mp4',
-  'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/ce7bcb9d3_aegis_04.mp4',
+  'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/4036c018a_aegis_04online-video-cuttercom.mp4',
 ];
 
 export default function ShippingVideo({ lang }) {
