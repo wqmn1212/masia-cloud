@@ -14,6 +14,8 @@ import TeamAccessCard from '@/components/admin/TeamAccessCard';
 import TeamAdminInviteDialog from '@/components/admin/TeamAdminInviteDialog';
 import PendingInviteRow from '@/components/admin/PendingInviteRow';
 import { useAuth } from '@/lib/AuthContext';
+import TeamDeleteDialog from '@/components/admin/TeamDeleteDialog';
+import MasterAccountsPanel from '@/components/admin/MasterAccountsPanel';
 
 export default function MasterAdminDashboard() {
   const [setupStatus, setSetupStatus] = useState(null);
@@ -22,6 +24,7 @@ export default function MasterAdminDashboard() {
   const [label, setLabel] = useState('');
   const [sendPasswordSetup, setSendPasswordSetup] = useState(true);
   const [adminInviteOpen, setAdminInviteOpen] = useState(false);
+  const [deleteTenant, setDeleteTenant] = useState(null);
   const { user: me } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -64,6 +67,24 @@ export default function MasterAdminDashboard() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['service-admins'] }),
     onError: (err) =>
       toast({ title: '상태 변경 실패', description: String(err.message || err), variant: 'destructive' }),
+  });
+
+  const refreshAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['service-admins'] });
+    queryClient.invalidateQueries({ queryKey: ['master-all-accounts'] });
+  };
+  const errText = (err) => err?.response?.data?.error || String(err.message || err);
+
+  const tenantToggle = useMutation({
+    mutationFn: (body) => base44.functions.invoke('masterAdminControl', { action: 'set_tenant_active', ...body }),
+    onSuccess: (_, v) => { refreshAll(); toast({ title: v.is_active ? '팀을 활성화했습니다' : '팀을 중지했습니다' }); },
+    onError: (err) => toast({ title: '팀 상태 변경 실패', description: errText(err), variant: 'destructive' }),
+  });
+
+  const tenantDelete = useMutation({
+    mutationFn: (confirm) => base44.functions.invoke('masterAdminControl', { action: 'delete_tenant', tenant_id: deleteTenant.id, confirm }),
+    onSuccess: () => { toast({ title: '팀을 삭제했습니다', description: deleteTenant?.name }); setDeleteTenant(null); refreshAll(); },
+    onError: (err) => toast({ title: '팀 삭제 실패', description: errText(err), variant: 'destructive' }),
   });
 
   if (setupStatus === null) {
@@ -148,10 +169,23 @@ export default function MasterAdminDashboard() {
               key={tenant.id}
               tenant={tenant}
               admin={serviceAdmins.find((user) => user.tenant_id === tenant.id)}
+              isOwnTeam={tenant.id === me?.tenant_id}
+              disabled={tenantToggle.isPending}
+              onToggle={(is_active) => tenantToggle.mutate({ tenant_id: tenant.id, is_active })}
+              onDelete={() => setDeleteTenant(tenant)}
             />
           ))}
         </CardContent>
       </Card>
+
+      <TeamDeleteDialog
+        tenant={deleteTenant}
+        onOpenChange={(o) => !o && setDeleteTenant(null)}
+        pending={tenantDelete.isPending}
+        onConfirm={(confirm) => tenantDelete.mutate(confirm)}
+      />
+
+      <MasterAccountsPanel />
 
       <Card>
         <CardHeader>

@@ -34,6 +34,14 @@ export default function AppLayout() {
     return unsubscribe;
   }, [user?.id, refetch]);
 
+  const checkTenant = !!user?.tenant_id && user.account_tier !== 'master';
+  const { data: myTenant } = useQuery({
+    queryKey: ['my-tenant-status', user?.tenant_id],
+    queryFn: async () => (await base44.entities.Tenant.filter({ id: user.tenant_id }))[0] || null,
+    enabled: checkTenant,
+    refetchInterval: 15000,
+  });
+
   if (isLoadingUser) {
     return <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">계정 권한을 확인하는 중...</div>;
   }
@@ -41,6 +49,9 @@ export default function AppLayout() {
   // 비활성 계정 차단
   if (user && user.account_tier && user.is_active === false) {
     return <AccountInactive />;
+  }
+  if (checkTenant && myTenant?.is_active === false) {
+    return <AccountInactive teamSuspended />;
   }
 
   return (

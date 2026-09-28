@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Building2, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ export default function MasterTeamDashboard() {
   });
   if (isLoading) return <Loader2 className="mx-auto mt-20 h-6 w-6 animate-spin text-muted-foreground" />;
   const tenant = data?.tenants?.find((item) => item.id === tenantId);
-  if (!tenant) return <p className="py-20 text-center text-sm text-muted-foreground">팀을 찾을 수 없습니다.</p>;
+  if (!tenant) return <Navigate to="/master-admin" replace />;
   const admin = data?.serviceAdmins?.find((item) => item.tenant_id === tenant.id);
   return (
     <div className="space-y-6">

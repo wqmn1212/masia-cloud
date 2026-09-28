@@ -14,7 +14,7 @@ export default async function(req) {
     const target = targets[0];
     if (!target) return Response.json({ error: '대상 계정을 찾을 수 없습니다' }, { status: 404 });
 
-    const masterCanManage = user.account_tier === 'master' && ['service', 'sub'].includes(target.account_tier);
+    const masterCanManage = user.account_tier === 'master' && ['service', 'sub', 'client'].includes(target.account_tier);
     const serviceCanManage = user.account_tier === 'service' && target.account_tier === 'sub' && target.tenant_id === user.tenant_id;
     if (!masterCanManage && !serviceCanManage) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
