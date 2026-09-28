@@ -1,17 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { fastShipping, tx } from '@/lib/landingContent';
 
-const SHIPPING_VIDEOS = [
-  'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/a02bc5f16_aegis_01.mp4',
-  'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/6fc968ace_aegis_02.mp4',
-  'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/dec852104_aegis_03.mp4',
-  'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/4036c018a_aegis_04online-video-cuttercom.mp4',
-];
+const SHIPPING_VIDEO_URL = 'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/107f733d7_aegis_04online-video-cuttercom.mp4';
 
 export default function ShippingVideo({ lang }) {
   const videoRef = useRef(null);
   const visibleRef = useRef(false);
-  const [index, setIndex] = useState(0);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -31,12 +25,12 @@ export default function ShippingVideo({ lang }) {
     <figure className="mt-7">
       <video
         ref={videoRef}
-        src={SHIPPING_VIDEOS[index]}
+        src={SHIPPING_VIDEO_URL}
         muted
         playsInline
+        loop
         preload="metadata"
         onCanPlay={() => { if (visibleRef.current) videoRef.current?.play().catch(() => {}); }}
-        onEnded={() => setIndex(i => (i + 1) % SHIPPING_VIDEOS.length)}
         aria-label={tx(fastShipping.videoCaption, lang)}
         className="w-full aspect-video object-cover rounded-xl border border-landing-line"
       />
