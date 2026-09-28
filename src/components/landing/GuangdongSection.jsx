@@ -13,7 +13,7 @@ export default function GuangdongSection({ lang }) {
         </div>
         <figure className="mt-8">
           <img src="https://media.base44.com/images/public/6a0c1b56a385588fbd4454f5/7c5faed1e_generated_image.png" alt={tx(guangdong.alt, lang)} loading="lazy" width="1536" height="864" className="w-full aspect-video lg:aspect-[21/9] object-cover rounded-xl border border-landing-line" />
-          <figcaption className="mt-2 text-xs text-landing-muted hidden">{tx(guangdong.caption, lang)}</figcaption>
+          
         </figure>
         <div className="mt-5 flex items-start gap-3 border-t border-landing-line pt-5">
           <MapPin className="h-5 w-5 shrink-0 text-landing-brand mt-0.5" aria-hidden="true" />
