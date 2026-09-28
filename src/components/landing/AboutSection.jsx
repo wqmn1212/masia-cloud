@@ -8,16 +8,16 @@ export default function AboutSection({ lang }) {
       <div className="max-w-[1200px] mx-auto">
         <SectionHeading eyebrow={about.eyebrow} title={tx(about.h2, lang)} />
         <div className="lm-about-list">
-          {about.cards.map((c, i) => (
-            <div key={i} className="border border-landing-line rounded-[14px] p-[26px] bg-landing-page">
+          {about.cards.map((c, i) =>
+          <div key={i} className="border border-landing-line rounded-[14px] p-[26px] bg-landing-page">
               <span className="lm-list-dot" aria-hidden="true" />
               <h3 className="mt-[18px] text-lg font-bold tracking-[-0.5px] text-landing-ink">{tx(c.t, lang)}</h3>
               <p className="mt-2.5 text-[14.5px] leading-[1.66] text-landing-ink3">{tx(c.d, lang)}</p>
             </div>
-          ))}
+          )}
         </div>
-        <p className="mt-5 text-sm text-landing-muted">{tx(regionCities, lang)}</p>
+        <p className="mt-5 text-sm text-landing-muted hidden">{tx(regionCities, lang)}</p>
       </div>
-    </section>
-  );
+    </section>);
+
 }
