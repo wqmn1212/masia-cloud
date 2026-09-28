@@ -1,7 +1,7 @@
 import React from 'react';
 import { CalendarDays } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { CLIENT_PRIORITY, CAT_LABEL } from './clientBoardMeta';
+import { CLIENT_PRIORITY } from './clientBoardMeta';
 
 export default function ClientCardTile({ card, onClick }) {
   const p = CLIENT_PRIORITY[card.priority] || CLIENT_PRIORITY.MEDIUM;
@@ -14,11 +14,6 @@ export default function ClientCardTile({ card, onClick }) {
       <div className="flex items-center gap-1.5 flex-wrap">
         {card.priority && card.priority !== 'MEDIUM' && (
           <Badge className={`${p.className} border-0 text-[9px] h-4 px-1`}>{p.label}</Badge>
-        )}
-        {card.target_machine_category && (
-          <Badge variant="outline" className="text-[9px] h-4 px-1">
-            {card.category_label || CAT_LABEL[card.target_machine_category] || '카테고리 미확인'}
-          </Badge>
         )}
       </div>
       <p className="text-sm font-medium leading-snug line-clamp-2">{card.title}</p>
