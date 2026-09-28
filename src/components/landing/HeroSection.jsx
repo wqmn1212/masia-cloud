@@ -25,8 +25,8 @@ export default function HeroSection({ lang }) {
         </div>
         <SupplyStructureCard lang={lang} />
       </div>
-      <p className="mt-6 text-sm text-landing-muted leading-relaxed">{tx(regionCities, lang)}</p>
+      <p className="mt-6 text-sm text-landing-muted leading-relaxed hidden">{tx(regionCities, lang)}</p>
       <StatsRow lang={lang} />
-    </section>
-  );
+    </section>);
+
 }
