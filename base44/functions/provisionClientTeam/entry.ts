@@ -21,11 +21,20 @@ export default async function (req) {
     }
     if (user.is_active === false) return Response.json({ error: '비활성 계정입니다' }, { status: 403 });
 
-    const { lead_id, emails } = await req.json();
-    if (!lead_id) return Response.json({ error: 'lead_id 가 필요합니다' }, { status: 400 });
+    const { lead_id, company_id, emails } = await req.json();
+    if (!lead_id && !company_id) return Response.json({ error: 'lead_id 또는 company_id 가 필요합니다' }, { status: 400 });
 
     const svc = base44.asServiceRole;
-    const lead = await svc.entities.ManufacturingLead.get(lead_id);
+    let lead;
+    if (lead_id) {
+      lead = await svc.entities.ManufacturingLead.get(lead_id);
+    } else {
+      // 고객사 카드 기반: Company 를 리드와 같은 형태로 맞춰 동일 흐름을 재사용한다
+      const [c] = await svc.entities.Company.filter({ id: company_id, company_type: 'CLIENT' });
+      if (!c) return Response.json({ error: '고객사를 찾을 수 없습니다' }, { status: 404 });
+      const [t] = await svc.entities.Tenant.filter({ company_id: c.id, tenant_type: 'client' });
+      lead = { id: null, tenant_id: c.tenant_id, company: c.company_name, contact_name: c.contact_person, phone: c.phone, email: c.email, client_id: c.id, client_tenant_id: t?.id };
+    }
     if (!lead) return Response.json({ error: '문의를 찾을 수 없습니다' }, { status: 404 });
     if (user.account_tier !== 'master' && lead.tenant_id !== user.tenant_id) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -85,7 +94,7 @@ export default async function (req) {
 
     if (company.tenant_id !== hqTenantId || tenant.company_id !== company.id || tenant.hq_tenant_id !== hqTenantId || tenant.tenant_type !== 'client') return Response.json({ error: '고객사 팀 연결을 확인하세요.' }, { status: 409 });
     // 초대 발송 실패 후에도 동일 팀으로 재시도할 수 있도록 연결부터 보관한다.
-    await svc.entities.ManufacturingLead.update(lead.id, { client_id: company.id, client_tenant_id: tenant.id });
+    if (lead.id) await svc.entities.ManufacturingLead.update(lead.id, { client_id: company.id, client_tenant_id: tenant.id });
 
     // 2. 좌석 상한 검사 (유료화 대비)
     const seatLimit = Number(tenant.seat_limit) || 2;
@@ -139,7 +148,7 @@ export default async function (req) {
     }
 
     // 4. 리드 · 카드 연결
-    await svc.entities.ManufacturingLead.update(lead.id, {
+    if (lead.id) await svc.entities.ManufacturingLead.update(lead.id, {
       status: 'converted',
       client_id: company.id,
       client_tenant_id: tenant.id,

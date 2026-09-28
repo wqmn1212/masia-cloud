@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Plus, Users, Mail, Phone, MapPin, FileText, Upload, Loader2, ExternalLink, Pencil, LayoutDashboard } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
+import CreateClientTeamButton from '@/components/client/CreateClientTeamButton';
 
 const emptyClient = {
   company_type: 'CLIENT',
@@ -35,6 +36,11 @@ export default function Clients() {
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ['clients'],
     queryFn: () => base44.entities.Company.filter({ company_type: 'CLIENT' }, 'company_name'),
+  });
+
+  const { data: clientTenants = [] } = useQuery({
+    queryKey: ['client-tenants'],
+    queryFn: () => base44.entities.Tenant.filter({ tenant_type: 'client' }),
   });
 
   const createMutation = useMutation({
@@ -234,6 +240,7 @@ export default function Clients() {
                     고객사 프로필 열기
                   </Link>
                 </Button>
+                <CreateClientTeamButton company={c} hasTeam={clientTenants.some((t) => t.company_id === c.id)} />
               </CardContent>
             </Card>
           ))}
