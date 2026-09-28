@@ -1,6 +1,7 @@
 import React from 'react';
 import { Factory, Warehouse, Truck, Ship, ArrowRight } from 'lucide-react';
 import SectionHeading from '@/components/landing/SectionHeading';
+import ShippingVideo from '@/components/landing/ShippingVideo';
 import { fastShipping, tx } from '@/lib/landingContent';
 
 const icons = [Factory, Warehouse, Truck, Ship];
@@ -10,6 +11,7 @@ export default function FastShippingSection({ lang }) {
       <div>
         <div id="shipping-label"><SectionHeading eyebrow="LOGISTICS · CHINA TO KOREA" title={tx(fastShipping.title, lang)} /></div>
         <p className="mt-4">{tx(fastShipping.body, lang)}</p>
+        <ShippingVideo lang={lang} />
         <div className="mt-7 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-landing-tint-border bg-landing-tint-soft p-6 md:p-8">
           <div>
             <p className="text-sm font-semibold text-landing-brand">{tx(fastShipping.seaLabel, lang)}</p>

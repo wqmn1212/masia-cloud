@@ -22,23 +22,25 @@ export const guangdong = {
 export const fastShipping = {
   title: ['광둥성에서 모아, 한국까지 빠르게.', 'Consolidated in Guangdong. Connected to Korea.', '广东集货，快速运抵韩国。'],
   body: [
-    '광둥성 전역에서 출발한 물류를 선전으로 모으고, 중국 위해(웨이하이)로 연결합니다. 웨이하이에서 인천까지 해운 약 하루의 항로를 활용해, 집하부터 한국 도착까지 이어지는 빠른 배송을 관리합니다.',
-    'We consolidate freight from across Guangdong in Shenzhen, then move it to Weihai, China. The sea leg from Weihai to Incheon takes approximately one day, connecting collection in China with arrival in Korea.',
-    '我们将广东各地的货物汇集至深圳，再转运至中国威海。利用威海至仁川约一天的海运航程，衔接中国集货与韩国到港，统筹快速运输。',
+    '광둥성 전역에서 출발한 물류를 선전으로 모으고, 중국 위해(웨이하이)로 연결합니다. 웨이하이에서 인천까지 해운 약 2일의 항로를 활용해, 집하부터 한국 도착까지 이어지는 빠른 배송을 관리합니다.',
+    'We consolidate freight from across Guangdong in Shenzhen, then move it to Weihai, China. The sea leg from Weihai to Incheon takes approximately two days, connecting collection in China with arrival in Korea.',
+    '我们将广东各地的货物汇集至深圳，再转运至中国威海。利用威海至仁川约两天的海运航程，衔接中国集货与韩国到港，统筹快速运输。',
   ],
   seaLabel: ['빠른 배송의 핵심 · 해상 운송 구간', 'THE FAST SEA CONNECTION', '快速运输的关键 · 海运段'],
   seaRoute: ['위해(웨이하이) → 인천', 'Weihai → Incheon', '威海 → 仁川'],
-  duration: ['해운 약 1일', '≈ 1 day by sea', '海运约 1 天'],
+  duration: ['해운 약 2일', '≈ 2 days by sea', '海运约 2 天'],
+  videoPlaceholder: ['물류 인포그래픽 영상 준비 중', 'Logistics infographic video coming soon', '物流信息图视频即将上线'],
+  videoCaption: ['광둥성에서 인천까지의 물류 경로', 'Shipping route from Guangdong to Incheon', '从广东省至仁川的物流路线'],
   steps: [
     { title: ['광둥성 전역', 'Across Guangdong', '广东全省'], body: ['선전·동관·광저우·포산·중산 등 각 지역의 출하 물류를 연결합니다.', 'Coordinate outgoing freight from Shenzhen, Dongguan, Guangzhou, Foshan, Zhongshan and beyond.', '对接深圳、东莞、广州、佛山、中山等各地的出货物流。'] },
     { title: ['선전 집결', 'Shenzhen consolidation', '深圳集货'], body: ['광둥성 각 지역에서 출발한 화물을 선전으로 모아 다음 운송 구간을 준비합니다.', 'Consolidate shipments from across Guangdong in Shenzhen for onward transport.', '将广东各地货物汇集至深圳，安排后续运输。'] },
     { title: ['위해(웨이하이) 이동', 'Transfer to Weihai', '转运至威海'], body: ['집결된 물류를 중국 위해(웨이하이)로 운송하고 한국행 해운과 연계합니다.', 'Move consolidated freight to Weihai and connect it with Korea-bound sea transport.', '将集货转运至威海，衔接开往韩国的海运航线。'] },
-    { title: ['인천 해상 도착', 'Arrival at Incheon', '海运抵达仁川'], body: ['웨이하이 출항 후 해상 운송 약 하루로 인천에 도착하며, 이후 통관·국내 배송을 진행합니다.', 'Arrive at Incheon after approximately one day at sea from Weihai, followed by customs clearance and local delivery.', '从威海出港后，海上运输约一天抵达仁川，随后进行清关与韩国境内配送。'] },
+    { title: ['인천 해상 도착', 'Arrival at Incheon', '海运抵达仁川'], body: ['웨이하이 출항 후 해상 운송 약 2일로 인천에 도착하며, 이후 통관·국내 배송을 진행합니다.', 'Arrive at Incheon after approximately two days at sea from Weihai, followed by customs clearance and local delivery.', '从威海出港后，海上运输约两天抵达仁川，随后进行清关与韩国境内配送。'] },
   ],
   note: [
-    '※ 약 1일은 웨이하이 출항 후 인천 도착까지의 해상 운송 구간 기준이며, 광둥성에서 고객사까지의 전체 배송 기간이 아닙니다. 중국 내 집하·육상 운송, 선적 대기, 통관 및 국내 배송 기간은 별도이며, 선박 일정·기상·항만 상황에 따라 달라질 수 있습니다.',
-    'Approximately one day refers only to the sea leg from departure at Weihai to arrival at Incheon, not total door-to-door delivery. Collection, inland transport, loading waits, customs clearance and local delivery take additional time. Actual timing depends on sailing schedules, weather and port conditions.',
-    '※ 约一天仅指威海出港至仁川到港的海上运输时间，并非从广东至客户所在地的全程交付时间。集货、中国境内运输、候船、清关及韩国境内配送时间另计，实际时效受船期、天气及港口情况影响。',
+    '※ 약 2일은 웨이하이 출항 후 인천 도착까지의 해상 운송 구간 기준이며, 광둥성에서 고객사까지의 전체 배송 기간이 아닙니다. 중국 내 집하·육상 운송, 선적 대기, 통관 및 국내 배송 기간은 별도이며, 선박 일정·기상·항만 상황에 따라 달라질 수 있습니다.',
+    'Approximately two days refers only to the sea leg from departure at Weihai to arrival at Incheon, not total door-to-door delivery. Collection, inland transport, loading waits, customs clearance and local delivery take additional time. Actual timing depends on sailing schedules, weather and port conditions.',
+    '※ 约两天仅指威海出港至仁川到港的海上运输时间，并非从广东至客户所在地的全程交付时间。集货、中国境内运输、候船、清关及韩国境内配送时间另计，实际时效受船期、天气及港口情况影响。',
   ],
 };
 export const tx = (v, lang) => (Array.isArray(v) ? v[LANG_INDEX[lang] ?? 0] : v);
