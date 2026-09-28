@@ -62,7 +62,7 @@ export default function MarginCalculator({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-xs font-semibold">마시아 수수료 방식</Label>
+          <Label className="text-xs font-semibold">이지스 수수료 방식</Label>
           <RadioGroup value={feeType} onValueChange={onFeeTypeChange} className="flex gap-4">
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="PERCENT" id="pct" />

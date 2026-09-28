@@ -256,7 +256,7 @@ export default function MasterAdminDashboard() {
                 required
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
-                placeholder="예: MASIA"
+                placeholder="예: AEGIS"
               />
             </div>
             <div className="flex items-start gap-3 rounded-md border p-3">

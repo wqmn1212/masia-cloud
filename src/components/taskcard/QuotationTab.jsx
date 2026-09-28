@@ -525,7 +525,7 @@ export default function QuotationTab({ card, user }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">마시아 수수료 유형</Label>
+              <Label className="text-xs">이지스 수수료 유형</Label>
               <Select value={form.masir_fee_type} onValueChange={v => setForm(f => ({ ...f, masir_fee_type: v }))}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
