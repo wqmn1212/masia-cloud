@@ -16,7 +16,7 @@ export default function AboutSection({ lang }) {
             </div>
           )}
         </div>
-        <p className="mt-5 text-sm text-landing-muted hidden">{tx(regionCities, lang)}</p>
+        
       </div>
     </section>);
 
