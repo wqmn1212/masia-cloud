@@ -17,11 +17,9 @@ export default async function (req) {
     );
 
     const documents = await clientCardDocuments(svc, cards);
-    const categoryKeys = [...new Set(cards.map(c => c.target_machine_category).filter(Boolean))];
-    const categories = categoryKeys.length
-      ? await svc.entities.MachineCategory.filter({ key: { $in: categoryKeys } }, undefined, 200)
-      : [];
-    const categoryLabels = new Map(categories.map(c => [c.key, c.label_kr]));
+    // 관리자 보드와 동일한 카테고리 목록을 사용해 저장된 키를 표시명으로 변환한다.
+    const categories = await svc.entities.MachineCategory.list('label_kr', 100);
+    const categoryLabels = new Map(categories.filter(c => c.key).map(c => [c.key, c.label_kr]));
     return Response.json({
       attachments: documents.map(documentMetadata),
       cards: cards.map((c) => ({
