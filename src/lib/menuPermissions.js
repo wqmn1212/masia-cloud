@@ -34,6 +34,7 @@ const SERVICE_ADMIN_PATHS = ['/team', '/user-permissions'];
 export const CLIENT_MENU_OPTIONS = [
   { path: '/client/dashboard', label: '고객 대시보드', labelKey: 'nav.clientDashboard' },
   { path: '/client/board', label: '소싱 보드', labelKey: 'nav.clientBoard' },
+  { path: '/client/guide', label: '이용 가이드', labelKey: 'nav.clientGuide' },
 ];
 
 // 로그인 후 진입할 기본 화면 — 고객사(client) 등급은 고객 포털로 보낸다

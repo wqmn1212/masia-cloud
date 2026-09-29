@@ -21,7 +21,7 @@ export const translations = {
     'common.candidates': '후보', 'common.register': '등록', 'common.registering': '등록 중...',
     'common.all': '전체', 'common.uploading': '업로드 중...', 'common.contact': '담당', 'common.count': '건',
     'nav.management': '관리', 'nav.masterAdmin': '마스터 관리자', 'nav.team': '팀 관리', 'nav.permissions': '사용자 권한',
-    'nav.clientPortal': '고객 포털', 'nav.clientDashboard': '고객 대시보드', 'nav.clientBoard': '소싱 보드',
+    'nav.clientPortal': '고객 포털', 'nav.clientDashboard': '고객 대시보드', 'nav.clientBoard': '소싱 보드', 'nav.clientGuide': '이용 가이드',
     // Status / Priority / Category
     'status.TODO': '대기', 'status.IN_PROGRESS': '진행 중', 'status.REVIEW': '검토',
     'status.PRODUCTION': '생산', 'status.DONE': '완료',
@@ -172,7 +172,7 @@ export const translations = {
     'common.candidates': '候选', 'common.register': '注册', 'common.registering': '注册中...',
     'common.all': '全部', 'common.uploading': '上传中...', 'common.contact': '负责人', 'common.count': '条',
     'nav.management': '管理', 'nav.masterAdmin': '超级管理员', 'nav.team': '团队管理', 'nav.permissions': '用户权限',
-    'nav.clientPortal': '客户门户', 'nav.clientDashboard': '客户仪表盘', 'nav.clientBoard': '采购看板',
+    'nav.clientPortal': '客户门户', 'nav.clientDashboard': '客户仪表盘', 'nav.clientBoard': '采购看板', 'nav.clientGuide': '使用指南',
     // Status / Priority / Category
     'status.TODO': '待办', 'status.IN_PROGRESS': '进行中', 'status.REVIEW': '审核中',
     'status.PRODUCTION': '生产中', 'status.DONE': '完成',

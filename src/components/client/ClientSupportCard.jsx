@@ -15,7 +15,7 @@ export default function ClientSupportCard() {
         프로젝트별 문의는 각 카드의 채팅 탭을 이용하시면 가장 빠릅니다.
       </p>
       <div className="mt-3 text-xs space-y-1">
-        <p><span className="text-muted-foreground">이메일 </span><a href="mailto:contact@aegis-trade.com" className="text-primary hover:underline">contact@aegis-trade.com</a></p>
+        <p><span className="text-muted-foreground">이메일 </span><a href="mailto:lee@aegistrade.biz" className="text-primary hover:underline">lee@aegistrade.biz</a></p>
         <p><span className="text-muted-foreground">본사 </span>서울 · 선전 (Shenzhen) 지사</p>
       </div>
     </Card>

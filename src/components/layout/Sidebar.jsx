@@ -4,12 +4,12 @@ import { useLanguage } from '@/lib/LanguageContext';
 import {
   LayoutDashboard, Factory, FileText, Shield, Users,
   Clock, Wrench, Package, ChevronLeft, ChevronRight, Cloud, Calculator, ListChecks, Kanban,
-  ShieldCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, Inbox, Images
+  ShieldCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, Inbox, Images, BookOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { canAccessPath, CLIENT_MENU_OPTIONS } from '@/lib/menuPermissions';
 
-const CLIENT_ICONS = { '/client/dashboard': LayoutDashboard, '/client/board': Kanban };
+const CLIENT_ICONS = { '/client/dashboard': LayoutDashboard, '/client/board': Kanban, '/client/guide': BookOpen };
 
 const navSectionDefs = [
   {
