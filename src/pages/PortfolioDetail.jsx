@@ -20,6 +20,10 @@ export default function PortfolioDetail() {
     return () => { alive = false; };
   }, [slug]);
 
+  useEffect(() => {
+    if (state.item) base44.analytics.track({ eventName: 'portfolio_page_viewed', properties: { slug } });
+  }, [state.item, slug]);
+
   return (
     <div className="min-h-screen bg-white font-landing">
       <header className="border-b border-landing-line px-5 lg:px-8 h-[60px] flex items-center">

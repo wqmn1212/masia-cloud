@@ -59,6 +59,7 @@ export default function InquiryForm({ lang }) {
         lang,
         referrer: document.referrer || '',
       });
+      base44.analytics.track({ eventName: 'inquiry_submitted' });
       setStatus('done');
     } catch (err) {
       const code = err?.response?.status || err?.status;
