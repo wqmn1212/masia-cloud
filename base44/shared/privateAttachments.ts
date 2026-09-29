@@ -25,15 +25,17 @@ export async function uploadPrivateAttachments(svc, input) {
   return attachments;
 }
 
-export async function linkCardAttachments(svc, { tenantId, cardId, attachments, uploaderName }) {
+export async function linkCardAttachments(svc, { tenantId, cardId, attachments, uploaderName, clientVisible = false, uploaderRole = 'HQ' }) {
   const records = attachments.map((item) => ({
+    client_visible: clientVisible,
+    document_type: 'GENERAL',
     tenant_id: tenantId,
     card_id: cardId,
     file_name: item.name,
     file_type: (item.name.split('.').pop() || '').toLowerCase(),
     file_url: item.url,
     uploader_name: uploaderName,
-    uploader_role: 'HQ',
+    ...(uploaderRole ? { uploader_role: uploaderRole } : {}),
   }));
   if (records.length) await svc.entities.CardAttachment.bulkCreate(records);
 }

@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,11 @@ export default function FilesTab({ card, tradeOnly = false }) {
     queryKey: filesKey,
     queryFn: () => base44.entities.CardAttachment.filter({ card_id: card.id }, '-created_date'),
   });
+
+  // 고객 업로드 등 외부 변경을 실시간 반영
+  useEffect(() => base44.entities.CardAttachment.subscribe((ev) => {
+    if (ev.data?.card_id === card.id || ev.type === 'delete') qc.invalidateQueries({ queryKey: ['card_attachments', card.id] });
+  }), [card.id, qc]);
 
   const currentFolders = useMemo(
     () => folders.filter(f => (f.parent_folder_id || null) === currentFolderId),

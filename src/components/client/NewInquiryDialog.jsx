@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
+import FileDropArea from '@/components/files/FileDropArea';
 
 const CATEGORIES = ['기계설비', '정밀가공', '전자 · 전기', '뷰티 · 의료', '리빙 · 공구', '굿즈 · 조형', '기타'];
 const MAX_FILES = 5;
@@ -145,6 +146,7 @@ export default function NewInquiryDialog({ open, onClose }) {
 
           <div className="space-y-1.5">
             <Label>첨부 파일 (최대 {MAX_FILES}건 · 10MB)</Label>
+            <FileDropArea onFiles={addFiles} disabled={submit.isPending}>
             <label className="flex items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer hover:border-primary/50 transition-colors">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Upload className="w-4 h-4" />
@@ -157,6 +159,7 @@ export default function NewInquiryDialog({ open, onClose }) {
                 onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }}
               />
             </label>
+            </FileDropArea>
             {files.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {files.map((f, i) => (

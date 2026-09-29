@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { requireClient, cardVisibleToClient } from '../../shared/clientAccess.ts';
 import { notifyUsers, internalUsersOfTenant } from '../../shared/notify.ts';
 import { fillMissingTranslation } from '../../shared/bilingualTranslation.ts';
+import { uploadPrivateAttachments, linkCardAttachments } from '../../shared/privateAttachments.ts';
 
 // 고객이 수행 가능한 유일한 쓰기 동작: 채팅 작성 · 요구사항(hq_requirements) 수정.
 // 그 외 필드는 서버에서 아예 받지 않으므로 프런트 우회로 변경할 수 없다.
@@ -11,7 +12,7 @@ export default async function (req) {
     const auth = await requireClient(base44);
     if (auth.error) return auth.error;
 
-    const { card_id, action, message, message_cn, hq_requirements, hq_requirements_cn } = await req.json();
+    const { card_id, action, message, message_cn, hq_requirements, hq_requirements_cn, attachments } = await req.json();
     if (!card_id || !action) return Response.json({ error: 'card_id, action 이 필요합니다' }, { status: 400 });
 
     const svc = base44.asServiceRole;
@@ -20,9 +21,31 @@ export default async function (req) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
     const senderName = auth.user.full_name || auth.user.account_label || auth.user.email;
+    // 고객 업로드 파일: 비공개 저장 후 카드 파일 탭에 고객 공개 상태로 연동
+    const saveFiles = async () => {
+      const files = await uploadPrivateAttachments(svc, attachments);
+      await linkCardAttachments(svc, { tenantId: card.tenant_id, cardId: card.id, attachments: files, uploaderName: senderName, clientVisible: true, uploaderRole: null });
+      return files;
+    };
+
+    if (action === 'upload_files') {
+      const files = await saveFiles();
+      if (!files.length) return Response.json({ error: '업로드할 파일이 없습니다' }, { status: 400 });
+      const staff = await internalUsersOfTenant(svc, card.tenant_id);
+      await notifyUsers(svc, staff, {
+        type: 'card_shared',
+        title: `[고객 파일] ${card.title}`,
+        body: `${senderName}: ${files.map((f) => f.name).join(', ')}`,
+        link: `/task-board?card=${card.id}`,
+        task_card_id: card.id,
+      });
+      return Response.json({ ok: true, count: files.length });
+    }
 
     if (action === 'chat') {
-      const text = String(message || '').trim().slice(0, 3000);
+      const files = await saveFiles();
+      const fileNote = files.length ? `\n📎 ${files.map((f) => f.name).join(', ')}` : '';
+      const text = (String(message || '').trim().slice(0, 3000) + (String(message || '').trim() || !String(message_cn || '').trim() ? fileNote : '')).trim();
       const chinese = String(message_cn || '').trim().slice(0, 3000);
       if (!text && !chinese) return Response.json({ error: '메시지를 입력하세요' }, { status: 400 });
       const saved = await svc.entities.CardChat.create({
@@ -33,6 +56,7 @@ export default async function (req) {
         sender_role: 'CLIENT',
         is_client_visible: true,
         message_text: text, message_text_cn: chinese,
+        ...(files[0] ? { file_url: files[0].url, file_name: files[0].name } : {}),
       });
       let translationFailed = false;
       try { await fillMissingTranslation(svc, 'CardChat', saved, ['message_text'], text ? 'zh' : 'ko'); }

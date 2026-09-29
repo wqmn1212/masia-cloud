@@ -72,6 +72,8 @@ export default async function (req) {
       cardId: card.id,
       attachments,
       uploaderName: clientName,
+      clientVisible: true,
+      uploaderRole: null,
     });
 
     // 본사 담당자에게 알림

@@ -5,6 +5,8 @@ import { base44 } from '@/api/base44Client';
 import { form, formTags, tx } from '@/lib/landingContent';
 import InquiryField from './InquiryField';
 import { cn } from '@/lib/utils';
+import FileDropArea from '@/components/files/FileDropArea';
+import { mergeFiles } from '@/lib/clientFileUpload';
 
 const EMPTY = { company: '', contact_name: '', phone: '', email: '', quantity: '', target_price: '', detail: '' };
 const ACCEPT = '.step,.stp,.dwg,.pdf,.jpg,.jpeg,.png';
@@ -33,6 +35,11 @@ export default function InquiryForm({ lang }) {
     return () => window.removeEventListener('aegis:inquiry-type', onPick);
   }, []);
 
+  // 드롭/선택 파일 병합 — 허용 확장자·10MB·최대 5건
+  const addFiles = (list) => {
+    const ok = Array.from(list || []).filter((f) => ACCEPT.split(',').includes('.' + (f.name.split('.').pop() || '').toLowerCase()));
+    setFiles((prev) => mergeFiles(prev, ok).files);
+  };
   const set = (k) => (e) => setValues((v) => ({ ...v, [k]: e.target.value }));
   const toggleTag = (val) => setTags((t) => (t.includes(val) ? t.filter((x) => x !== val) : [...t, val]));
 
@@ -118,8 +125,9 @@ export default function InquiryForm({ lang }) {
         <InquiryField label={tx(form.detail, lang)} placeholder={tx(form.detailPh, lang)} value={values.detail} onChange={set('detail')} textarea />
       </div>
 
-      <label className="mt-3.5 border border-dashed border-landing-tint-border bg-[#F8FAFF] rounded-[10px] p-4 flex items-center gap-3 cursor-pointer">
-        <input type="file" multiple accept={ACCEPT} className="hidden" onChange={(e) => setFiles(Array.from(e.target.files || []).slice(0, MAX_FILES))} />
+      <FileDropArea className="mt-3.5" onFiles={addFiles} disabled={status === 'sending'}>
+      <label className="border border-dashed border-landing-tint-border bg-[#F8FAFF] rounded-[10px] p-4 flex items-center gap-3 cursor-pointer">
+        <input type="file" multiple accept={ACCEPT} className="hidden" onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
         <div className="w-[34px] h-[34px] rounded-lg bg-[#DCE9FE] flex items-center justify-center font-mono font-bold text-xs text-landing-brand flex-none">＋</div>
         <div className="min-w-0">
           <div className="text-sm font-bold text-landing-ink">{tx(form.attach, lang)}</div>
@@ -128,6 +136,7 @@ export default function InquiryForm({ lang }) {
           </div>
         </div>
       </label>
+      </FileDropArea>
 
       <button
         type="submit"
