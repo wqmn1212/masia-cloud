@@ -5,7 +5,7 @@ import { requireClient, cardVisibleToClient } from '../../shared/clientAccess.ts
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
-    const auth = await requireClient(base44);
+    const auth = await requireClient(base44, req);
     if (auth.error) return auth.error;
 
     const { card_id } = await req.json().catch(() => ({}));

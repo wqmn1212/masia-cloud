@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { withClientView } from '@/lib/clientView';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ClientOverviewPanel from './ClientOverviewPanel';
@@ -16,7 +17,7 @@ export default function ClientCardModal({ cardId, open, onClose }) {
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['client-card-detail', cardId],
     queryFn: async () => {
-      const res = await base44.functions.invoke('getClientCardDetail', { card_id: cardId });
+      const res = await base44.functions.invoke('getClientCardDetail', withClientView({ card_id: cardId }));
       return res.data;
     },
     enabled: !!cardId && open,

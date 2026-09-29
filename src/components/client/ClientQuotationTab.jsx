@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FileText, Download, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
+import { withClientView } from '@/lib/clientView';
 import { Button } from '@/components/ui/button';
 import { generateQuotationPDF } from '@/lib/generateQuotationPDF';
 
@@ -14,7 +15,7 @@ export default function ClientQuotationTab({ cardId }) {
   const { data: quotations = [], isLoading } = useQuery({
     queryKey: ['client-quotations', cardId],
     queryFn: async () => {
-      const res = await base44.functions.invoke('listClientQuotations', { card_id: cardId });
+      const res = await base44.functions.invoke('listClientQuotations', withClientView({ card_id: cardId }));
       return res.data?.quotations || [];
     },
   });

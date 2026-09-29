@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { withClientView } from '@/lib/clientView';
 import { Button } from '@/components/ui/button';
 import ClientFilesPanel from '@/components/client/ClientFilesPanel';
 
 export default function ClientSharedFiles({ cardId }) {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['client-shared-files', cardId],
-    queryFn: async () => (await base44.functions.invoke('getClientCardDetail', { card_id: cardId })).data,
+    queryFn: async () => (await base44.functions.invoke('getClientCardDetail', withClientView({ card_id: cardId }))).data,
     staleTime: 0, gcTime: 0, retry: false,
   });
   if (isLoading) return <div className="py-8 flex justify-center"><Loader2 className="h-5 w-5 animate-spin" /></div>;

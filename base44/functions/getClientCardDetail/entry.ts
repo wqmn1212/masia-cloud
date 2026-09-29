@@ -7,7 +7,7 @@ import { clientCardDocuments, documentMetadata, documentUrl } from '../../shared
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
-    const auth = await requireClient(base44);
+    const auth = await requireClient(base44, req);
     if (auth.error) return auth.error;
 
     const { card_id, include_file_urls = false } = await req.json();

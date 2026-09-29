@@ -6,9 +6,15 @@ export const CLIENT_MENU = ['/client/dashboard', '/client/board', '/client/guide
 export const CLIENT_CARD_TABS = ['overview', 'quotation', 'chat', 'settlement', 'files'];
 
 // 고객 요청의 유효성 검사 — 통과 시 { user, companyId } 반환, 실패 시 Response 반환
-export async function requireClient(base44) {
+// req 를 넘기면 마스터 관리자가 view_company_id 로 해당 고객사 포털을 조회(읽기 전용)할 수 있다.
+export async function requireClient(base44, req?: Request) {
   const user = await base44.auth.me();
   if (!user) return { error: Response.json({ error: 'Unauthorized' }, { status: 401 }) };
+  if (req && user.account_tier === 'master') {
+    const body = await req.clone().json().catch(() => ({}));
+    if (!body.view_company_id) return { error: Response.json({ error: '조회할 고객사를 선택하세요' }, { status: 400 }) };
+    return { user, companyId: body.view_company_id };
+  }
   if (user.account_tier !== 'client') {
     return { error: Response.json({ error: 'Forbidden' }, { status: 403 }) };
   }
