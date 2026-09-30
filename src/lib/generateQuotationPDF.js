@@ -1,155 +1,14 @@
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { base44 } from '@/api/base44Client';
 import { INCOTERMS_LABEL } from '@/lib/incoterms';
+import { loadPdfFonts, imageToJpeg } from '@/lib/pdfFonts';
 
-// html2canvas는 line-height가 없으면 텍스트를 셀 아래쪽으로 밀어 그리므로 명시적으로 지정
-const CELL_V = 'line-height:1.35;vertical-align:middle;';
-const td = `padding:7px 8px;border:1px solid #e5e7eb;${CELL_V}`;
-
-const CURRENCY_SYMBOL = { USD: '$', CNY: '¥', KRW: '₩' };
-const CURRENCY_LABEL = { USD: 'USD · US Dollar', CNY: 'CNY · 人民币', KRW: 'KRW · 대한민국 원' };
-const fmt = (v, cur) => {
-  if (v == null) return '-';
-  const sym = CURRENCY_SYMBOL[cur] || '$';
-  return sym + Number(v).toLocaleString(undefined, { maximumFractionDigits: cur === 'KRW' ? 0 : 2 });
-};
-
-function buildRows(p) {
-  return (p.line_items || []).map((r, i) => `
-      <tr>
-        <td style="${td}text-align:center;">${i + 1}</td>
-        <td style="${td}">${r.option_name || ''}</td>
-        <td style="${td}">${r.specification || ''}</td>
-        <td style="${td}text-align:right;">${r.quantity ?? '-'}</td>
-        <td style="${td}text-align:right;">${fmt(r.unit_price_display, p.final_currency)}</td>
-        <td style="${td}text-align:right;">${fmt(r.total_display, p.final_currency)}</td>
-      </tr>`).join('');
-}
-
-// 서버(getQuotationPresentation)에서 계산된 고객 표시가만 사용한다 — 원가·수수료·마진 필드는 조회하지 않는다.
-function buildHTML(p) {
-  const today = new Date().toLocaleDateString('ko-KR');
-  const quoteId = (p.id || '').slice(-8).toUpperCase() || '00000000';
-  const cur = p.final_currency || 'USD';
-  const adv = p.advance_payment_percent || 30;
-  const bal = p.balance_payment_percent || (100 - adv);
-  const shipDays = p.shipping_days || 0;
-  const issuer = p.issuer_name || 'DONGGUAN AEGIS TRADE CO., LTD';
-  const referenceCny = cur === 'USD' && p.exchange_rate_usd_cny > 0 ? p.total_display * p.exchange_rate_usd_cny : null;
-  const referenceKrw = cur === 'USD' && p.exchange_rate_usd > 0 ? p.total_display * p.exchange_rate_usd : null;
-
-  const rateParts = [];
-  if (p.exchange_rate_usd_cny > 0) rateParts.push(`$1 = ¥${Number(p.exchange_rate_usd_cny).toLocaleString()}`);
-  if (p.exchange_rate_usd > 0) rateParts.push(`$1 = ₩${Number(p.exchange_rate_usd).toLocaleString()}`);
-
-  return `
-    <div style="font-family: 'Noto Sans KR', 'Malgun Gothic', -apple-system, sans-serif; color: #0f172a; padding: 40px; background: #fff; width: 794px; box-sizing: border-box; line-height:1.4;">
-      <div style="display:flex; align-items:flex-start; justify-content:space-between; border-bottom: 3px solid #2563eb; padding-bottom: 16px; margin-bottom: 24px;">
-        <div>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <div style="width:40px;height:40px;background:linear-gradient(135deg,#2563eb,#14b8a6); border-radius:10px; display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;">${issuer.slice(0, 1)}</div>
-            <div>
-              <div style="font-size:19px; font-weight:800; letter-spacing:-0.3px; line-height:1.2;">${issuer}</div>
-              <div style="font-size:10px; color:#64748b; margin-top:3px;">Industrial Machinery Sourcing &amp; Trade</div>
-            </div>
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:28px; font-weight:800; color:#2563eb; line-height:1;">QUOTATION</div>
-          <div style="font-size:11px; color:#64748b; margin-top:6px;">견적서 · 报价单</div>
-        </div>
-      </div>
-
-      ${p.quote_title ? `<div style="font-size:16px; font-weight:700; margin-bottom:16px; text-align:center; padding:12px 10px 10px; background:#f1f5f9; border-radius:8px; line-height:1.4; ${CELL_V}">${p.quote_title}</div>` : ''}
-
-      ${p.product_image_url ? `
-      <div style="text-align:center; margin-bottom:20px;">
-        <img src="${p.product_image_url}" crossorigin="anonymous" style="max-height:200px; max-width:70%; border:1px solid #e5e7eb; border-radius:8px; object-fit:contain;" />
-        ${p.product_name ? `<div style="font-size:10px; color:#64748b; margin-top:6px;">${p.product_name}${p.model_name ? ` · ${p.model_name}` : ''}</div>` : ''}
-      </div>` : ''}
-
-      <div style="display:flex; gap:16px; margin-bottom:20px; align-items:stretch;">
-        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; border:1px solid #e5e7eb; border-radius:8px; padding:13px 12px 11px; background:#f8fafc;">
-          <div style="font-size:10px; color:#64748b; font-weight:600; letter-spacing:0.5px; margin-bottom:4px; line-height:1.5; ${CELL_V}">TO · 수신처 (고객사)</div>
-          <div style="font-size:15px; font-weight:700; line-height:1.4; ${CELL_V}">${p.client_name || '-'}</div>
-        </div>
-        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; border:1px solid #e5e7eb; border-radius:8px; padding:13px 12px 11px; background:#f8fafc;">
-          <div style="font-size:10px; color:#64748b; font-weight:600; letter-spacing:0.5px; margin-bottom:4px; line-height:1.5; ${CELL_V}">FROM · 발행처</div>
-          <div style="font-size:13px; font-weight:700; line-height:1.4; ${CELL_V}">${issuer}</div>
-        </div>
-      </div>
-
-      <table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:20px;">
-        <tr>
-          <td style="${td}background:#f1f5f9; font-weight:600; width:18%;">견적서 번호</td>
-          <td style="${td}width:32%;">Q-${quoteId}</td>
-          <td style="${td}background:#f1f5f9; font-weight:600; width:18%;">발행일</td>
-          <td style="${td}width:32%;">${today}</td>
-        </tr>
-        <tr>
-          <td style="${td}background:#f1f5f9; font-weight:600;">제품명</td>
-          <td style="${td}">${p.product_name || '-'}</td>
-          <td style="${td}background:#f1f5f9; font-weight:600;">모델명</td>
-          <td style="${td}">${p.model_name || '-'}</td>
-        </tr>
-        <tr>
-          <td style="${td}background:#f1f5f9; font-weight:600;">인코텀즈</td>
-          <td style="${td}">${INCOTERMS_LABEL[p.incoterms] || '-'}</td>
-          <td style="${td}background:#f1f5f9; font-weight:600;">통화 (Currency)</td>
-          <td style="${td}">${CURRENCY_LABEL[cur] || cur}</td>
-        </tr>
-      </table>
-
-      <table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:16px;">
-        <thead>
-          <tr style="background:#1e293b; color:#fff;">
-            <th style="padding:9px 8px; border:1px solid #1e293b; ${CELL_V} text-align:center; width:40px;">No.</th>
-            <th style="padding:9px 8px; border:1px solid #1e293b; ${CELL_V} text-align:left;">항목 (Item / Option)</th>
-            <th style="padding:9px 8px; border:1px solid #1e293b; ${CELL_V} text-align:left;">사양 (Specification)</th>
-            <th style="padding:9px 8px; border:1px solid #1e293b; ${CELL_V} text-align:right; width:55px;">수량</th>
-            <th style="padding:9px 8px; border:1px solid #1e293b; ${CELL_V} text-align:right; width:100px;">단가 (Unit)</th>
-            <th style="padding:9px 8px; border:1px solid #1e293b; ${CELL_V} text-align:right; width:110px;">금액 (Amount)</th>
-          </tr>
-        </thead>
-        <tbody>${buildRows(p)}</tbody>
-      </table>
-
-      <div style="display:flex; justify-content:flex-end; margin-bottom:24px;">
-        <div style="width:340px; font-size:12px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#2563eb; color:#fff; border-radius:8px; line-height:1.2;">
-            <span style="font-weight:700; letter-spacing:0.3px; line-height:1.2;">TOTAL · 합계</span>
-            <strong style="font-size:18px; line-height:1.2;">${fmt(p.total_display, cur)}</strong>
-            </div>
-            ${referenceCny != null || referenceKrw != null ? `<div style="margin-top:7px;text-align:right;font-size:10.5px;color:#475569;">참고 환산: ${referenceCny != null ? fmt(referenceCny, 'CNY') : ''}${referenceCny != null && referenceKrw != null ? ' · ' : ''}${referenceKrw != null ? fmt(referenceKrw, 'KRW') : ''}</div>` : ''}
-            ${rateParts.length ? `
-          <div style="margin-top:8px; font-size:10.5px; color:#64748b; text-align:right; line-height:1.6;">
-            당일 적용 환율: ${rateParts.join(' · ')}${p.exchange_rate_date ? ` (기준일: ${p.exchange_rate_date})` : ''}
-          </div>` : ''}
-        </div>
-      </div>
-
-      <div style="display:flex; flex-direction:column; justify-content:center; border:1px solid #e5e7eb; border-radius:8px; padding:15px 14px 13px; background:#fafafa; font-size:10.5px; color:#475569; line-height:1.7; margin-bottom:28px; ${CELL_V.replace('line-height:1.35;', '')}">
-        <div style="color:#0f172a; font-size:11px; font-weight:700; margin-bottom:6px; line-height:1.5;">계약 조건 · Terms &amp; Conditions</div>
-        <div>1. 인코텀즈 / Incoterms: ${INCOTERMS_LABEL[p.incoterms] || '별도 협의'}</div>
-        <div>2. 견적 유효기간 / Validity: 발행일로부터 30일 (30 days from issue date)</div>
-        <div>3. 결제 조건 / Payment: 계약 시 선금 ${adv}%, 출하 전 잔금 ${bal}% (T/T)</div>
-        <div>4. 납기 / Delivery: ${shipDays > 0 ? `발주 및 선금 입금 확인 후 ${shipDays}일 이내 출하 (${shipDays} days after order confirmation)` : '발주 및 선금 입금 확인 후 협의된 일정에 따름'}</div>
-        <div>5. 실제 결제는 ${cur} 기준으로 진행됩니다.</div>
-      </div>
-
-      ${p.remarks ? `
-      <div style="display:flex; flex-direction:column; justify-content:center; border:1px solid #fde68a; border-radius:8px; padding:15px 14px 13px; background:#fffbeb; font-size:10.5px; color:#475569; line-height:1.7; margin-bottom:28px; vertical-align:middle;">
-        <div style="color:#0f172a; font-size:11px; font-weight:700; margin-bottom:6px; line-height:1.5;">비고 · Remarks</div>
-        <div style="white-space:pre-wrap; line-height:1.7; vertical-align:middle;">${p.remarks}</div>
-      </div>` : ''}
-
-      <div style="display:flex; align-items:center; justify-content:center; padding-top:16px; padding-bottom:2px; border-top:2px solid #2563eb; text-align:center; font-size:9.5px; color:#64748b; line-height:1.6; ${CELL_V}">
-        <span style="line-height:1.6;"><strong style="color:#2563eb;">${issuer}</strong> · Generated automatically on ${today}</span>
-      </div>
-    </div>
-  `;
-}
+// 텍스트 기반 PDF — 글자·표는 실제 텍스트로, 제품 사진만 압축 이미지로 넣는다.
+const SYM = { USD: '$', CNY: '¥', KRW: '₩' };
+const LABEL = { USD: 'USD · US Dollar', CNY: 'CNY · Chinese Yuan', KRW: 'KRW · 대한민국 원' };
+const fmt = (v, cur) => v == null ? '-' : (SYM[cur] || '$') + Number(v).toLocaleString(undefined, { maximumFractionDigits: cur === 'KRW' ? 0 : 2 });
+const BLUE = [37, 99, 235], INK = [15, 23, 42], MUTED = [100, 116, 139], LINE = [229, 231, 235], SOFT = [241, 245, 249];
+const W = 210, H = 297, M = 15, CW = W - M * 2;
 
 export async function generateQuotationPDF(quotation) {
   const quotationId = typeof quotation === 'string' ? quotation : quotation?.id;
@@ -157,66 +16,141 @@ export async function generateQuotationPDF(quotation) {
   const p = res.data;
   if (!p || p.error) throw new Error(p?.error || '견적서 표시 정보를 불러올 수 없습니다');
 
-  const container = document.createElement('div');
-  container.style.position = 'fixed';
-  container.style.left = '-10000px';
-  container.style.top = '0';
-  container.style.background = '#fff';
-  container.innerHTML = buildHTML(p);
-  document.body.appendChild(container);
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+  await loadPdfFonts(pdf);
+  let y = M;
+  const color = (c) => pdf.setTextColor(...c);
+  const font = (size, bold) => { pdf.setFont('Nanum', bold ? 'bold' : 'normal'); pdf.setFontSize(size); };
+  const ensure = (h) => { if (y + h > H - M) { pdf.addPage(); y = M; } };
 
-  try {
-    await Promise.all(Array.from(container.querySelectorAll('img')).map(img =>
-      img.complete ? Promise.resolve() : new Promise((r) => { img.onload = r; img.onerror = r; })
-    ));
-    await new Promise((r) => setTimeout(r, 80));
-    const root = container.firstElementChild;
-    const blocks = Array.from(root.children);
+  const cur = p.final_currency || 'USD';
+  const issuer = p.issuer_name || 'DONGGUAN AEGIS TRADE CO., LTD';
+  const today = new Date().toLocaleDateString('ko-KR');
+  const quoteId = (p.id || '').slice(-8).toUpperCase() || '00000000';
+  const adv = p.advance_payment_percent || 30;
+  const bal = p.balance_payment_percent || (100 - adv);
+  const shipDays = p.shipping_days || 0;
 
-    // A4 비율의 페이지 컨테이너 (794px = 210mm 기준)
-    const PAGE_W = 794;
-    const PAGE_H = Math.round((PAGE_W * 297) / 210); // ≈ 1123px
-    const PAD = 40;
-    const USABLE = PAGE_H - PAD * 2;
+  // 헤더
+  pdf.setFillColor(...BLUE); pdf.roundedRect(M, y, 11, 11, 2, 2, 'F');
+  font(12, true); pdf.setTextColor(255, 255, 255); pdf.text(issuer.slice(0, 1), M + 5.5, y + 7.5, { align: 'center' });
+  font(13, true); color(INK); pdf.text(issuer, M + 14, y + 5);
+  font(7.5); color(MUTED); pdf.text('Industrial Machinery Sourcing & Trade', M + 14, y + 9.5);
+  font(20, true); color(BLUE); pdf.text('QUOTATION', W - M, y + 7, { align: 'right' });
+  font(8); color(MUTED); pdf.text('견적서', W - M, y + 11.5, { align: 'right' });
+  y += 15; pdf.setDrawColor(...BLUE); pdf.setLineWidth(0.8); pdf.line(M, y, W - M, y); y += 7;
 
-    const pagesBlocks = [[]];
-    let used = 0;
-    for (const block of blocks) {
-      const style = window.getComputedStyle(block);
-      const h = block.offsetHeight + (parseFloat(style.marginTop) || 0) + (parseFloat(style.marginBottom) || 0);
-      if (used + h > USABLE && pagesBlocks[pagesBlocks.length - 1].length > 0) {
-        pagesBlocks.push([]);
-        used = 0;
-      }
-      pagesBlocks[pagesBlocks.length - 1].push(block);
-      used += h;
-    }
-
-    const pageDivs = pagesBlocks.map((list) => {
-      const page = document.createElement('div');
-      page.style.cssText = `width:${PAGE_W}px;height:${PAGE_H}px;padding:${PAD}px;box-sizing:border-box;background:#fff;overflow:hidden;font-family:'Noto Sans KR','Malgun Gothic',-apple-system,sans-serif;color:#0f172a;line-height:1.4;`;
-      list.forEach((b) => page.appendChild(b));
-      container.appendChild(page);
-      return page;
-    });
-    root.remove();
-
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    for (let i = 0; i < pageDivs.length; i++) {
-      const canvas = await html2canvas(pageDivs[i], {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        logging: false,
-      });
-      if (i > 0) pdf.addPage();
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297);
-    }
-
-    const safe = (s) => String(s || '').replace(/[^\w\u3131-\uD79D一-龥]+/g, '_').slice(0, 40);
-    const dateStr = new Date().toISOString().slice(0, 10);
-    pdf.save(`Quotation_${safe(p.quote_title || p.product_name || p.client_name) || 'document'}_${dateStr}.pdf`);
-  } finally {
-    document.body.removeChild(container);
+  if (p.quote_title) {
+    pdf.setFillColor(...SOFT); pdf.roundedRect(M, y, CW, 10, 2, 2, 'F');
+    font(12, true); color(INK); pdf.text(p.quote_title, W / 2, y + 6.5, { align: 'center', maxWidth: CW - 6 });
+    y += 14;
   }
+
+  if (p.product_image_url) {
+    const img = await imageToJpeg(p.product_image_url).catch(() => null);
+    if (img) {
+      const ih = Math.min(55, (img.h / img.w) * CW * 0.7), iw = ih * (img.w / img.h);
+      pdf.addImage(img.data, 'JPEG', (W - iw) / 2, y, iw, ih);
+      y += ih + 2;
+      if (p.product_name) { font(7.5); color(MUTED); pdf.text(`${p.product_name}${p.model_name ? ` · ${p.model_name}` : ''}`, W / 2, y + 3, { align: 'center' }); y += 5; }
+      y += 4;
+    }
+  }
+
+  // 수신/발행처
+  const half = (CW - 5) / 2;
+  [['TO · 수신처 (고객사)', p.client_name || '-'], ['FROM · 발행처', issuer]].forEach(([lab, val], i) => {
+    const x = M + i * (half + 5);
+    pdf.setFillColor(248, 250, 252); pdf.setDrawColor(...LINE); pdf.setLineWidth(0.2); pdf.roundedRect(x, y, half, 15, 2, 2, 'FD');
+    font(7, true); color(MUTED); pdf.text(lab, x + 4, y + 5.5);
+    font(10.5, true); color(INK); pdf.text(val, x + 4, y + 11, { maxWidth: half - 8 });
+  });
+  y += 20;
+
+  // 정보 표
+  const info = [['견적서 번호', `Q-${quoteId}`, '발행일', today], ['제품명', p.product_name || '-', '모델명', p.model_name || '-'], ['인코텀즈', INCOTERMS_LABEL[p.incoterms] || '-', '통화 (Currency)', LABEL[cur] || cur]];
+  const iw = [30, 60, 30, 60];
+  font(8);
+  info.forEach((row) => {
+    let x = M;
+    row.forEach((v, i) => {
+      if (i % 2 === 0) { pdf.setFillColor(...SOFT); pdf.rect(x, y, iw[i], 8, 'F'); }
+      pdf.setDrawColor(...LINE); pdf.rect(x, y, iw[i], 8);
+      font(8, i % 2 === 0); color(INK); pdf.text(String(v), x + 2, y + 5.3, { maxWidth: iw[i] - 4 });
+      x += iw[i];
+    });
+    y += 8;
+  });
+  y += 6;
+
+  // 항목 표
+  const cols = [{ w: 10, a: 'center', t: 'No.' }, { w: 50, t: '항목 (Item / Option)' }, { w: 52, t: '사양 (Specification)' }, { w: 16, a: 'right', t: '수량' }, { w: 25, a: 'right', t: '단가 (Unit)' }, { w: 27, a: 'right', t: '금액 (Amount)' }];
+  const drawRow = (cells, head) => {
+    font(8, head);
+    const lines = cells.map((c, i) => pdf.splitTextToSize(String(c ?? ''), cols[i].w - 4));
+    const h = Math.max(...lines.map((l) => l.length)) * 3.8 + 4;
+    ensure(h);
+    let x = M;
+    cols.forEach((c, i) => {
+      if (head) { pdf.setFillColor(30, 41, 59); pdf.rect(x, y, c.w, h, 'F'); pdf.setTextColor(255, 255, 255); } else color(INK);
+      pdf.setDrawColor(...(head ? [30, 41, 59] : LINE)); pdf.rect(x, y, c.w, h);
+      const tx = c.a === 'right' ? x + c.w - 2 : c.a === 'center' ? x + c.w / 2 : x + 2;
+      pdf.text(lines[i], tx, y + 5, { align: c.a || 'left' });
+      x += c.w;
+    });
+    y += h;
+  };
+  drawRow(cols.map((c) => c.t), true);
+  (p.line_items || []).forEach((r, i) => drawRow([i + 1, r.option_name, r.specification, r.quantity ?? '-', fmt(r.unit_price_display, cur), fmt(r.total_display, cur)]));
+  y += 6;
+
+  // 합계 + 참고 환산
+  ensure(26);
+  const tx = W - M - 90;
+  pdf.setFillColor(...BLUE); pdf.roundedRect(tx, y, 90, 11, 2, 2, 'F');
+  font(9, true); pdf.setTextColor(255, 255, 255); pdf.text('TOTAL · 합계', tx + 4, y + 7);
+  font(13, true); pdf.text(fmt(p.total_display, cur), W - M - 4, y + 7.5, { align: 'right' });
+  y += 15;
+  const usd = p.total_usd != null ? p.total_usd : null;
+  const refs = [];
+  if (usd != null) {
+    if (cur !== 'USD') refs.push(fmt(usd, 'USD'));
+    if (cur !== 'CNY' && p.exchange_rate_usd_cny > 0) refs.push(fmt(usd * p.exchange_rate_usd_cny, 'CNY'));
+    if (cur !== 'KRW' && p.exchange_rate_usd > 0) refs.push(fmt(usd * p.exchange_rate_usd, 'KRW'));
+  }
+  const rates = [];
+  if (p.exchange_rate_usd_cny > 0) rates.push(`$1 = ¥${Number(p.exchange_rate_usd_cny).toLocaleString()}`);
+  if (p.exchange_rate_usd > 0) rates.push(`$1 = ₩${Number(p.exchange_rate_usd).toLocaleString()}`);
+  font(7.5); color(MUTED);
+  if (refs.length) { pdf.text(`참고 환산: ${refs.join(' · ')}`, W - M, y, { align: 'right' }); y += 4.5; }
+  if (rates.length) { pdf.text(`적용 환율: ${rates.join(' · ')}${p.exchange_rate_date ? ` (기준일: ${p.exchange_rate_date})` : ''}`, W - M, y, { align: 'right' }); y += 4.5; }
+  y += 6;
+
+  // 박스 섹션 (계약 조건 / 비고)
+  const box = (title, text, fill, border) => {
+    font(8);
+    const lines = pdf.splitTextToSize(text, CW - 8);
+    const h = lines.length * 4.2 + 12;
+    ensure(h);
+    pdf.setFillColor(...fill); pdf.setDrawColor(...border); pdf.roundedRect(M, y, CW, h, 2, 2, 'FD');
+    font(8.5, true); color(INK); pdf.text(title, M + 4, y + 6);
+    font(8); color([71, 85, 105]); pdf.text(lines, M + 4, y + 11.5, { lineHeightFactor: 1.5 });
+    y += h + 6;
+  };
+  box('계약 조건 · Terms & Conditions', [
+    `1. 인코텀즈 / Incoterms: ${INCOTERMS_LABEL[p.incoterms] || '별도 협의'}`,
+    '2. 견적 유효기간 / Validity: 발행일로부터 30일 (30 days from issue date)',
+    `3. 결제 조건 / Payment: 계약 시 선금 ${adv}%, 출하 전 잔금 ${bal}% (T/T)`,
+    `4. 납기 / Delivery: ${shipDays > 0 ? `발주 및 선금 입금 확인 후 ${shipDays}일 이내 출하 (${shipDays} days after order confirmation)` : '발주 및 선금 입금 확인 후 협의된 일정에 따름'}`,
+    `5. 실제 결제는 ${cur} 기준으로 진행됩니다.`,
+  ].join('\n'), [250, 250, 250], LINE);
+  if (p.remarks) box('비고 · Remarks', p.remarks, [255, 251, 235], [253, 230, 138]);
+
+  // 푸터
+  ensure(10);
+  pdf.setDrawColor(...BLUE); pdf.setLineWidth(0.5); pdf.line(M, y, W - M, y);
+  font(7.5); color(MUTED); pdf.text(`${issuer} · Generated automatically on ${today}`, W / 2, y + 5, { align: 'center' });
+
+  const safe = (s) => String(s || '').replace(/[^\w\u3131-\uD79D一-龥]+/g, '_').slice(0, 40);
+  pdf.save(`Quotation_${safe(p.quote_title || p.product_name || p.client_name) || 'document'}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }

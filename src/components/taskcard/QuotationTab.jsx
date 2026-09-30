@@ -284,7 +284,7 @@ export default function QuotationTab({ card, user }) {
       masir_fee_value: Number(form.masir_fee_value) || 0,
       masir_fee_amount_cny: feeUSD * cnyR,
       final_client_price: totalUSD,
-      final_currency: 'USD',
+      final_currency: form.final_currency || 'USD',
       exchange_rate_date: form.exchange_rate_date,
       exchange_rate_usd: usdR,
       exchange_rate_usd_cny: cnyR,
@@ -335,7 +335,7 @@ export default function QuotationTab({ card, user }) {
           ? { ...o, unit_price: o.unit_price_usd, currency: 'USD' }
           : o
       )),
-      final_currency: q.exchange_rate_usd_cny ? 'USD' : (q.final_currency || 'CNY'),
+      final_currency: q.final_currency || 'USD',
       factory_total_cost: fDisp === 0 ? '' : fDisp,
       factory_cost_currency: fCur,
       logistics_cost: lDisp === 0 ? '' : lDisp,
@@ -423,7 +423,17 @@ export default function QuotationTab({ card, user }) {
             <div className="mt-3"><ManualExchangeRates compact values={form} onChange={(field, value) => setForm(f => ({ ...f, [field]: value }))} /></div>
           </div>
 
-          <div className="rounded-lg border bg-primary/5 px-3 py-2"><p className="text-xs font-semibold text-primary">거래 및 PDF 기준 통화: USD</p><p className="text-[10px] text-muted-foreground">CNY 공장 원가는 직접 USD/CNY 환율로 환산되며 KRW는 참고가로만 표시됩니다.</p></div>
+          <div className="rounded-lg border bg-primary/5 px-3 py-2 flex items-center justify-between gap-3">
+            <div><p className="text-xs font-semibold text-primary">최종 견적 통화 (PDF 표기)</p><p className="text-[10px] text-muted-foreground">작성 통화와 다르면 입력한 환율로 환산해 표기합니다.</p></div>
+            <Select value={form.final_currency || 'USD'} onValueChange={v => setForm(f => ({ ...f, final_currency: v }))}>
+              <SelectTrigger className="h-8 w-[110px] text-xs bg-background"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="USD" className="text-xs">$ USD</SelectItem>
+                <SelectItem value="CNY" className="text-xs">¥ CNY</SelectItem>
+                <SelectItem value="KRW" className="text-xs">₩ KRW</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -591,7 +601,7 @@ export default function QuotationTab({ card, user }) {
                 <div className="text-center"><p className="text-muted-foreground text-[10px]">수수료</p><p className="font-semibold text-accent">${feeUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p></div>
                 <div className="text-center"><p className="text-muted-foreground text-[10px]">최종 거래가</p><p className="font-bold text-primary">${totalUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p></div>
               </div>
-              <CurrencyPanel usd={totalUSD} usdToCny={Number(form.exchange_rate_usd_cny)} usdToKrw={Number(form.exchange_rate_usd)} />
+              <CurrencyPanel usd={totalUSD} usdToCny={Number(form.exchange_rate_usd_cny)} usdToKrw={Number(form.exchange_rate_usd)} selected={form.final_currency} />
             </div>
           )}
 
@@ -664,7 +674,7 @@ export default function QuotationTab({ card, user }) {
                     {q.masir_fee_amount_cny > 0 && <span>수수료: <strong className="text-accent">¥{q.masir_fee_amount_cny?.toLocaleString()} {q.masir_fee_type === 'PERCENT' ? `(${q.masir_fee_value}%)` : '(고정)'}</strong></span>}
                   </div>
                   {q.final_client_price > 0 && (isUsdQuote(q)
-                    ? <CurrencyPanel usd={q.final_client_price} usdToCny={q.exchange_rate_usd_cny} usdToKrw={q.exchange_rate_usd} />
+                    ? <CurrencyPanel usd={q.final_client_price} usdToCny={q.exchange_rate_usd_cny} usdToKrw={q.exchange_rate_usd} selected={q.final_currency} />
                     : <CurrencyPanel legacyCny={q.final_client_price} usdToKrw={q.exchange_rate_usd} legacyCnyToKrw={q.exchange_rate_krw} />
                   )}
                 </div>

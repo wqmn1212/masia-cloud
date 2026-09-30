@@ -87,6 +87,16 @@ export default async function (req) {
       totalDisplay = Number(q.final_client_price) || factoryCost + logistics + fee;
     }
 
+    // 선택한 최종 표기 통화로 환산 (USD 기준 견적만)
+    let totalUsd = currency === 'USD' ? totalDisplay : null;
+    const target = ['CNY', 'KRW'].includes(q.final_currency) ? q.final_currency : 'USD';
+    const rate = target === 'CNY' ? usdToCny : target === 'KRW' ? usdToKrw : 1;
+    if (currency === 'USD' && target !== 'USD' && rate > 0) {
+      lineItems = lineItems.map((l) => ({ ...l, unit_price_display: l.unit_price_display * rate, total_display: l.total_display * rate }));
+      totalDisplay = totalDisplay * rate;
+      currency = target;
+    }
+
     const issuer = q.quote_issuer === 'FACTORY' ? 'FACTORY' : 'AEGIS';
 
     return Response.json({
@@ -110,6 +120,7 @@ export default async function (req) {
       product_image_url: q.product_image_url || '',
       line_items: lineItems,
       total_display: totalDisplay,
+      total_usd: totalUsd,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
