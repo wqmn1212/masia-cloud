@@ -8,6 +8,7 @@ const SYM = { USD: '$', CNY: '¥', KRW: '₩' };
 const LABEL = { USD: 'USD · US Dollar', CNY: 'CNY · Chinese Yuan', KRW: 'KRW · 대한민국 원' };
 const fmt = (v, cur) => v == null ? '-' : (SYM[cur] || '$') + Number(v).toLocaleString(undefined, { maximumFractionDigits: cur === 'KRW' ? 0 : 2 });
 const BLUE = [37, 99, 235], INK = [15, 23, 42], MUTED = [100, 116, 139], LINE = [229, 231, 235], SOFT = [241, 245, 249];
+const LOGO_URL = 'https://media.base44.com/images/public/6a0c1b56a385588fbd4454f5/b5bab8215_2x.png';
 const W = 210, H = 297, M = 15, CW = W - M * 2;
 
 export async function generateQuotationPDF(quotation) {
@@ -32,10 +33,13 @@ export async function generateQuotationPDF(quotation) {
   const shipDays = p.shipping_days || 0;
 
   // 헤더
-  pdf.setFillColor(...BLUE); pdf.roundedRect(M, y, 11, 11, 2, 2, 'F');
-  font(12, true); pdf.setTextColor(255, 255, 255); pdf.text(issuer.slice(0, 1), M + 5.5, y + 7.5, { align: 'center' });
-  font(13, true); color(INK); pdf.text(issuer, M + 14, y + 5);
-  font(7.5); color(MUTED); pdf.text('Industrial Machinery Sourcing & Trade', M + 14, y + 9.5);
+  const logo = await imageToJpeg(LOGO_URL, 700, { x: 0.29, y: 0.3, w: 0.42, h: 0.4 }).catch(() => null);
+  if (logo) {
+    const lh = 12, lw = lh * (logo.w / logo.h);
+    pdf.addImage(logo.data, 'JPEG', M, y - 1, lw, lh);
+  } else {
+    font(13, true); color(INK); pdf.text(issuer, M, y + 5);
+  }
   font(20, true); color(BLUE); pdf.text('QUOTATION', W - M, y + 7, { align: 'right' });
   font(8); color(MUTED); pdf.text('견적서', W - M, y + 11.5, { align: 'right' });
   y += 15; pdf.setDrawColor(...BLUE); pdf.setLineWidth(0.8); pdf.line(M, y, W - M, y); y += 7;
