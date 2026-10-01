@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { fastShipping, tx } from '@/lib/landingContent';
 
-const SHIPPING_VIDEO_URL = 'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/a1a7089da_Minimal-elegant-2D-flat-motion-graphicsonline-video-cuttercom.mp4';
+const SHIPPING_VIDEO_URL = 'https://media.base44.com/videos/public/6a0c1b56a385588fbd4454f5/fa0740eea__1online-video-cuttercom.mp4';
 
 export default function ShippingVideo({ lang }) {
   const videoRef = useRef(null);
