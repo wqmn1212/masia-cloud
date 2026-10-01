@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Menu, LogOut } from 'lucide-react';
+import { Search, Menu, LogOut, Home } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,10 @@ export default function TopBar({ onMenuClick, user }) {
         </div>
       </div>
       <div className="flex items-center gap-1 md:gap-3 shrink-0">
+        <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => { window.location.href = '/main'; }}>
+          <Home className="w-4 h-4" />
+          <span className="hidden md:inline">{lang === 'zh' ? '主页' : '메인페이지'}</span>
+        </Button>
         <NotificationBell user={user} />
         {translationPaused && <span className="hidden lg:inline text-[10px] text-chart-3 font-medium">{lang === 'zh' ? '自动翻译暂停' : '자동 번역 일시 중지'}</span>}
         <div className="flex h-8 rounded-md border bg-muted/40 p-0.5" aria-label="Language">

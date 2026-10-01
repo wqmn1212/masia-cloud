@@ -81,6 +81,9 @@ const AuthenticatedApp = () => {
   if (onboardingPath) return <AuthRedirect to={onboardingPath} onComplete={completeOnboarding} />;
   if (isAuthenticated && !user?.account_tier) return <UserNotRegisteredError />;
 
+  // 로그인 상태에서도 메인(랜딩) 페이지 열람
+  if (location.pathname === '/main') return <Landing />;
+
   if (isRoot) {
     if (isAuthenticated && user) return <Navigate to={getHomePath(user)} replace />;
     return <Landing />;
