@@ -10,7 +10,7 @@ export default function PortfolioCard({ item, lang }) {
       className="block border border-landing-line rounded-[13px] overflow-hidden bg-white transition-colors hover:border-landing-brand"
     >
       {item.image ? (
-        <img src={item.image} alt={tx(item.t, lang)} className="h-[150px] w-full object-cover" />
+        <img src={item.image} alt={tx(item.t, lang)} className="aspect-[5/4] w-full object-cover" />
       ) : (
         <div className="lm-product-icon"><Package size={25} strokeWidth={1.5} aria-hidden="true" /></div>
       )}
