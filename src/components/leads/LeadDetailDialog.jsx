@@ -57,6 +57,13 @@ export default function LeadDetailDialog({ lead, open, onClose, onSave, saving }
           <Field label="언어 / 유입">{lead.lang?.toUpperCase()} · {lead.source}</Field>
           <Field label="발주 예정 수량">{lead.quantity}</Field>
           <Field label="희망 단가">{lead.target_price}</Field>
+          <Field label="관심 플랜">
+            {lead.interest === 'ENTERPRISE'
+              ? <Badge className="bg-slate-900 text-white hover:bg-slate-900">엔터프라이즈</Badge>
+              : (lead.interest || '-')}
+          </Field>
+          {lead.interest === 'ENTERPRISE' && <Field label="예상 월 발주 규모">{lead.expected_volume || '-'}</Field>}
+          {lead.interest === 'ENTERPRISE' && <Field label="관리할 제품 수">{lead.product_lines ?? '-'}</Field>}
         </div>
 
         <Field label="품목 카테고리">

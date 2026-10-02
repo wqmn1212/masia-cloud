@@ -1,9 +1,9 @@
 import React from 'react';
 import { tx } from '@/lib/landingContent';
 
-export default function PricingBlock({ title, notes, lang, children }) {
+export default function PricingBlock({ title, notes, lang, children, className }) {
   return (
-    <section className="mt-14">
+    <section className={className || 'mt-14'}>
       <h2 className="text-[22px] md:text-[26px] font-extrabold tracking-[-.5px] text-landing-ink">{tx(title, lang)}</h2>
       <div className="mt-5">{children}</div>
       {notes && (

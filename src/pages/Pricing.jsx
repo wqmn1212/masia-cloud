@@ -7,7 +7,7 @@ import LandingHeader from '@/components/landing/LandingHeader';
 import LandingFooter from '@/components/landing/LandingFooter';
 import PricingTable from '@/components/pricing/PricingTable';
 import PricingBlock from '@/components/pricing/PricingBlock';
-import { page, plans, compareRows, compareNotes, included, includedNotes, singles, singleNotes, terms, termsNote } from '@/lib/pricingContent';
+import { page, plans, compareRows, compareNotes, included, includedNotes, singles, singleNotes, terms, termsNote, enterprise } from '@/lib/pricingContent';
 import '@/components/landing/landingMinimal.css';
 
 export default function Pricing() {
@@ -28,6 +28,11 @@ export default function Pricing() {
 
         <PricingBlock title={page.compareTitle} notes={compareNotes} lang={lang}>
           <PricingTable head={[page.item, ...plans]} rows={compareRows} highlightCol={2} lang={lang} />
+        </PricingBlock>
+        <PricingBlock className="mt-14 rounded-[13px] bg-landing-tint p-6 md:p-8" title={enterprise.blockTitle} notes={[enterprise.blockNote]} lang={lang}>
+          <p className="-mt-1 mb-5 max-w-[820px] text-[15px] leading-[1.8] text-landing-ink3">{tx(enterprise.blockLead, lang)}</p>
+          <PricingTable head={[page.item, enterprise.name]} rows={enterprise.rows} lang={lang} />
+          <a href="/?interest=enterprise#contact" className="mt-5 w-full sm:w-auto inline-flex items-center justify-center bg-landing-ink hover:bg-landing-brand-hover text-white text-sm font-bold px-5 py-3 rounded-[9px]">{tx(enterprise.cta, lang)}</a>
         </PricingBlock>
         <PricingBlock title={page.includedTitle} notes={includedNotes} lang={lang}>
           <PricingTable head={page.incHead} rows={included} lang={lang} />

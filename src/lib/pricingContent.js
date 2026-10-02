@@ -23,9 +23,31 @@ export const page = {
   detailBtn: T('상세 요금 비교하기 →', 'Compare plans in detail →', '查看详细价格对比 →'),
 };
 
-export const plans = [T('라이트', 'Lite', '轻量版'), T('스탠다드 (추천)', 'Standard (recommended)', '标准版（推荐）'), T('프로', 'Pro', '专业版')];
+const ENT_NAME = T('엔터프라이즈', 'Enterprise', '企业版');
+export const plans = [T('라이트', 'Lite', '轻量版'), T('스탠다드 (추천)', 'Standard (recommended)', '标准版（推荐）'), T('프로', 'Pro', '专业版'), ENT_NAME];
 
-export const compareRows = [
+const NEG = T('협의', 'By agreement', '协商');
+// 비교표 엔터프라이즈 열 (그룹 행 제외, 순서대로)
+const ENT_COL = [
+  T('별도 협의', 'Custom pricing', '单独洽谈'),
+  T('대량 발주, 여러 제품 라인, 장기 반복 생산', 'Volume orders, multiple product lines, long-term repeat production', '大批量订单、多条产品线、长期重复生产'),
+  T('이 고객만 맡는 전담 팀 1개 이상, 현지 인력 추가 배정', 'One or more teams dedicated to you, with extra local staff', '一支以上专属团队，可增派现场人员'),
+  T('협의 (제품·공장 수 제한 없음)', 'By agreement (no limit on products or factories)', '协商（产品与工厂数量不限）'),
+  T('협의 + 대체 공장 확보', 'By agreement + backup factory', '协商 + 确保备选工厂'),
+  QUOTE_COST,
+  NEG,
+  T('주 단위 또는 공장 상주', 'Weekly or on-site at the factory', '按周走访或驻厂'),
+  T('프로 + 불량 원인 분석과 재발 방지 보고서, 정기 공장 감사', 'Pro + defect root-cause & prevention report, regular audits', '专业版 + 不良原因分析与防再发报告、定期验厂'),
+  T('생산·재고 계획 관리', 'Production & inventory planning', '生产与库存计划管理'),
+  NEG,
+  T('분할 납품 + 생산·재고 계획 조율', 'Split deliveries + production/inventory planning', '分批交付 + 生产库存计划协调'),
+  T('주 1회 + 분기 경영 리뷰, 계약 지표(납기 준수율·불량률)', 'Weekly + quarterly business review, contract KPIs (on-time, defect rate)', '每周 + 季度经营复盘、合同指标（准时率、不良率）'),
+  INC,
+  INC,
+  T('12개월', '12 months', '12 个月'),
+];
+
+const BASE_ROWS = [
   [T('월 구독료 (VAT 별도)', 'Monthly fee (excl. VAT)', '月订阅费（不含增值税）'), T('150만원', 'KRW 1.5M', '150 万韩元'), T('300만원', 'KRW 3M', '300 万韩元'), T('500만원 이상', 'KRW 5M+', '500 万韩元起')],
   [T('이런 프로젝트에', 'Best for', '适用项目'), T('부품 소싱, 단일 사출품, 같은 품목 반복 발주', 'Part sourcing, single moulded parts, repeat orders', '零件采购、单一注塑件、同品项复购'), T('사출 + 후가공 + 조립, 여러 부품을 모아 하나의 제품으로', 'Moulding + finishing + assembly, multiple parts into one product', '注塑 + 后加工 + 组装，多零件组成一个产品'), T('완제품 개발, 시제품부터 양산까지, 인증 필요', 'Full product development, prototype to mass production, certification', '整机开发，从样品到量产，需认证')],
   [T('담당 팀', 'Assigned team', '负责团队'), TEAM, TEAM, TEAM],
@@ -47,12 +69,44 @@ export const compareRows = [
   [T('월간 리포트', 'Monthly report', '月度报告'), T('—', '—', '—'), INC, INC],
   [T('최소 계약', 'Minimum term', '最短合同期'), T('3개월', '3 months', '3 个月'), T('3개월', '3 months', '3 个月'), T('6개월', '6 months', '6 个月')],
 ];
+let entIdx = 0;
+export const compareRows = BASE_ROWS.map((r) => (r.group ? r : [...r, ENT_COL[entIdx++]]));
+
+export const enterprise = {
+  name: ENT_NAME,
+  price: T('별도 협의', 'Custom pricing', '单独洽谈'),
+  priceSub: T('전담 팀 1개부터', 'From one dedicated team', '一支专属团队起'),
+  ex: T('대량 발주, 여러 제품 라인, 장기 반복 생산', 'Volume orders, multiple product lines, long-term repeat production', '大批量订单、多条产品线、长期重复生产'),
+  lines: [
+    [T('팀', 'Team', '团队'), T('이 고객만 맡는 전담 팀, 인력 추가 배정', 'A team dedicated to you, with extra staff as needed', '只服务贵司的专属团队，可增派人员')],
+    [T('현장 방문', 'Site visits', '现场走访'), T('주 단위 또는 공장 상주', 'Weekly or on-site at the factory', '按周走访或驻厂')],
+    [T('품질', 'Quality', '质量'), T('불량 원인 분석, 정기 공장 감사', 'Defect root-cause analysis, regular factory audits', '不良原因分析、定期验厂')],
+    [T('최소 계약', 'Minimum term', '最短合同期'), T('12개월', '12 months', '12 个月')],
+  ],
+  cta: T('엔터프라이즈 상담 신청', 'Talk to us about Enterprise', '咨询企业版'),
+  blockTitle: T('대규모 생산이라면, 엔터프라이즈', 'For large-scale production: Enterprise', '大规模生产，选择企业版'),
+  blockLead: T('대량 발주와 지속적인 관리에는 더 많은 사람이 필요합니다. 엔터프라이즈는 귀사만 맡는 전담 팀을 두고, 필요한 만큼 현지 인력을 늘려 운영합니다. 범위와 금액은 상담 후 협의합니다.', 'Volume orders and ongoing management need more people. Enterprise gives you a team dedicated only to your company, scaled up with local staff as needed. Scope and price are agreed after consultation.', '大批量订单与持续管理需要更多人力。企业版为贵司配备专属团队，并按需增派现场人员。范围与价格在咨询后协商确定。'),
+  blockNote: T('전담 인력을 배정한 뒤 시작하며, 보통 2~4주가 걸립니다.', 'Work starts once dedicated staff are assigned, usually within 2–4 weeks.', '专属人员到位后开始，一般需要 2~4 周。'),
+  rows: [
+    [T('팀', 'Team', '团队'), T('이 고객만 맡는 전담 팀 1개 이상. 현지 인력 추가 배정 가능', 'One or more teams dedicated only to you. Extra local staff available', '一支以上只服务贵司的专属团队，可增派现场人员')],
+    [T('관리 범위', 'Scope', '管理范围'), T('협의 (제품·공장 수 제한 없음)', 'By agreement (no limit on products or factories)', '协商（产品与工厂数量不限）')],
+    [T('현장 방문', 'Site visits', '现场走访'), T('주 단위 또는 공장 상주, 협의', 'Weekly or on-site at the factory, by agreement', '按周走访或驻厂，协商确定')],
+    [T('품질', 'Quality', '质量'), T('출고 검수 + 양산 중간 검수 + 불량 원인 분석과 재발 방지 보고서, 정기 공장 감사, 품질 지표 관리', 'Shipment + in-line inspection + defect root-cause & prevention reports, regular audits, quality KPIs', '出货与量产中期检验 + 不良原因分析与防再发报告、定期验厂、质量指标管理')],
+    [T('공급망', 'Supply chain', '供应链'), T('분할 납품 조율 + 생산·재고 계획, 대체 공장 확보', 'Split deliveries + production/inventory planning, backup factories', '分批交付协调 + 生产库存计划、确保备选工厂')],
+    [T('보고', 'Reporting', '报告'), T('주 1회 + 월 1회 화상 리뷰 + 분기 경영 리뷰, 계약 지표(납기 준수율, 불량률)', 'Weekly + monthly video + quarterly business review, contract KPIs (on-time rate, defect rate)', '每周 + 每月视频 + 季度经营复盘，合同指标（准时率、不良率）')],
+    [T('최소 계약', 'Minimum term', '最短合同期'), T('12개월', '12 months', '12 个月')],
+  ],
+};
+
+export const startEnterpriseInquiry = () =>
+  window.dispatchEvent(new CustomEvent('aegis:inquiry-type', { detail: { type: 'monthly', interest: 'ENTERPRISE' } }));
 
 export const compareNotes = [
   T('담당 팀은 여러 고객사를 함께 맡는 "담당 팀 배정" 방식입니다.', 'The assigned team serves several clients; it is an assigned, not dedicated, team.', '负责团队同时服务多家客户，采用"分配负责团队"方式。'),
   T('현장 방문은 중국 현지 직원이 공장에서 공정·재고·품질을 확인하고 사진과 함께 AEGIS Cloud에 올리는 것을 말합니다. 출고 전 검수는 방문 횟수에 포함되지 않습니다.', 'A site visit means our China staff check process, stock and quality at the factory and post photos to AEGIS Cloud. Pre-shipment inspections are not counted as visits.', '现场走访指中国员工到厂确认工序、库存与质量，并附照片上传至 AEGIS Cloud。出货前检验不计入走访次数。'),
   T('관리 범위를 넘으면 플랜을 올리거나 계약을 하나 더 맺습니다.', 'If scope is exceeded, upgrade the plan or add another contract.', '超出管理范围时，可升级方案或追加一份合同。'),
   T('프로는 제품 범위와 인증 여부에 따라 상담 후 금액을 정합니다.', 'Pro is priced after consultation, based on product scope and certification needs.', '专业版根据产品范围与认证需求，咨询后确定价格。'),
+  T('더 큰 규모는 엔터프라이즈로 상담합니다.', 'Larger scope? See Enterprise below.', '更大规模请咨询企业版。'),
 ];
 
 export const included = [
@@ -95,12 +149,13 @@ export const terms = [
   [T('플랜 올리기', 'Upgrade', '升级方案'), T('언제든, 다음 달부터 적용', 'Anytime, from next month', '随时，次月生效')],
   [T('플랜 내리기', 'Downgrade', '降级方案'), T('최소 기간 이후, 다음 달부터 적용', 'After minimum term, from next month', '最短期限后，次月生效')],
   [T('결제', 'Billing', '付款'), T('매월 초 선불, 세금계산서 발행', 'Prepaid at the start of each month, tax invoice issued', '每月初预付，开具税务发票')],
+  [ENT_NAME, T('최소 12개월, 범위와 금액은 협의', 'Minimum 12 months, scope and price agreed', '最短 12 个月，范围与价格协商确定')],
 ];
 export const termsNote = T('할인은 중복 적용되지 않습니다. 모든 금액은 VAT 별도입니다. 프로는 상담 후 결정합니다.', 'Discounts do not stack. All prices exclude VAT. Pro is priced after consultation.', '折扣不可叠加。所有价格均不含增值税。专业版咨询后确定价格。');
 
 // 메인 플랜 카드: 가격 + 핵심 4줄(관리 범위, 현장 방문, 보고 주기, 최소 계약)
 const KEY_ROWS = [3, 9, 16, 19];
-export const planCards = plans.map((name, i) => ({
+export const planCards = plans.slice(0, 3).map((name, i) => ({
   name,
   price: compareRows[0][i + 1],
   ex: compareRows[1][i + 1],

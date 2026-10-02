@@ -6,7 +6,7 @@ import { tx } from '@/lib/landingContent';
 export default function PricingTable({ head, rows, highlightCol, lang }) {
   return (
     <div className="overflow-x-auto rounded-[13px] border border-landing-line bg-white">
-      <table className="w-full min-w-[720px] text-[14px] border-collapse">
+      <table className="w-full min-w-[880px] text-[14px] border-collapse">
         <thead>
           <tr className="bg-landing-page">
             {head.map((h, i) => (

@@ -4,6 +4,7 @@ import { uploadPrivateAttachments, linkCardAttachments } from '../../shared/priv
 // 랜딩 페이지 공개 문의 접수 — 비로그인 호출. 사용자 토큰을 신뢰하지 않고 서버가 tenant_id 를 결정한다.
 const REQUIRED = ['company', 'contact_name', 'phone', 'email'];
 const CATEGORIES = ['기계설비', '정밀가공', '전자 · 전기', '뷰티 · 의료', '리빙 · 공구', '굿즈 · 조형', '기타'];
+const INTERESTS = ['AUDIT', 'INSPECTION', 'QUOTE_REVIEW', 'LITE', 'STANDARD', 'PRO', 'ENTERPRISE', 'UNDECIDED'];
 const RATE_LIMIT_MS = 10 * 60 * 1000;
 
 const clean = (v, max = 500) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -43,6 +44,12 @@ export default async function (req) {
     const lang = ['ko', 'en', 'zh'].includes(body.lang) ? body.lang : 'ko';
     const inquiryType = body.inquiry_type === 'monthly' ? 'monthly' : 'sourcing';
     const typeLabel = inquiryType === 'monthly' ? '월 계약 상담' : '단발 소싱';
+    const interest = INTERESTS.includes(body.interest) ? body.interest : 'UNDECIDED';
+    const isEnt = interest === 'ENTERPRISE';
+    const expectedVolume = isEnt ? clean(body.expected_volume, 200) : '';
+    const linesNum = Number(body.product_lines);
+    const productLines = isEnt && Number.isFinite(linesNum) && linesNum > 0 ? Math.min(Math.floor(linesNum), 10000) : null;
+    const entHeader = isEnt ? [`관심: 엔터프라이즈 / 월 발주 규모: ${expectedVolume || '-'} / 제품 수: ${productLines ?? '-'}`, ``] : [];
 
     const lead = await svc.entities.ManufacturingLead.create({
       tenant_id: tenant.id,
@@ -51,6 +58,8 @@ export default async function (req) {
       phone: clean(body.phone, 50),
       email,
       inquiry_type: inquiryType,
+      interest,
+      ...(isEnt ? { expected_volume: expectedVolume, ...(productLines ? { product_lines: productLines } : {}) } : {}),
       categories,
       quantity: clean(body.quantity, 200),
       target_price: clean(body.target_price, 200),
@@ -67,14 +76,15 @@ export default async function (req) {
     // 문의 접수 즉시 본사 팀 TaskCard 자동 생성 (고객 공개는 팀 발급 후 수동 토글)
     const card = await svc.entities.TaskCard.create({
       tenant_id: tenant.id,
-      title: `[${inquiryType === 'monthly' ? '월 계약 상담' : '문의'}] ${lead.company} · ${categories[0] || '미분류'}`,
+      title: `[${isEnt ? '엔터프라이즈' : inquiryType === 'monthly' ? '월 계약 상담' : '문의'}] ${lead.company} · ${categories[0] || '미분류'}`,
       status: 'TODO',
-      priority: 'MEDIUM',
+      priority: isEnt ? 'HIGH' : 'MEDIUM',
       source: 'landing_lead',
       lead_id: lead.id,
       client_name: lead.company,
       client_visible: false,
       hq_requirements: [
+        ...entHeader,
         `문의 유형: ${typeLabel}`,
         `담당자: ${lead.contact_name} · ${lead.phone} · ${lead.email}`,
         `카테고리: ${categories.join(', ') || '-'}`,
@@ -98,10 +108,11 @@ export default async function (req) {
         await svc.integrations.Core.SendEmail({
           to: tenant.master_email,
           from_name: 'AEGIS',
-          subject: `[문의 접수 · ${typeLabel}] ${lead.company} · ${lead.contact_name}`,
+          subject: `[${isEnt ? '엔터프라이즈 ' : ''}문의 접수 · ${typeLabel}] ${lead.company} · ${lead.contact_name}`,
           body: [
             `새 제조 문의가 접수되었습니다.`,
             ``,
+            ...entHeader,
             `문의 유형: ${typeLabel}`,
             `회사명: ${lead.company}`,
             `담당자: ${lead.contact_name}`,

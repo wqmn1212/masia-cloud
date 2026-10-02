@@ -3,12 +3,13 @@ import { team } from '@/lib/landingTeamContent';
 import { tx } from '@/lib/landingContent';
 import { planCards, terms, termsNote, page } from '@/lib/pricingContent';
 import { cn } from '@/lib/utils';
+import EnterpriseCard from '@/components/landing/EnterpriseCard';
 
 export default function TeamPricing({ lang }) {
   return (
     <div className="mt-12">
       <h3 className="text-lg font-bold tracking-[-0.5px] text-landing-ink">{tx(team.priceTitle, lang)}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
         {planCards.map((p, i) => (
           <div key={i} className={cn('rounded-[13px] p-[22px]', p.highlight ? 'bg-landing-tint-soft border-[1.5px] border-landing-brand' : 'bg-white border border-landing-line')}>
             <div className={cn('text-[12px] font-extrabold', p.highlight ? 'text-landing-brand' : 'text-landing-muted3')}>{tx(p.name, lang)}</div>
@@ -26,6 +27,7 @@ export default function TeamPricing({ lang }) {
             </dl>
           </div>
         ))}
+        <EnterpriseCard lang={lang} />
       </div>
       <dl className="mt-4 bg-white border border-landing-line rounded-[13px] divide-y divide-landing-line">
         {terms.map(([k, v], i) => (
