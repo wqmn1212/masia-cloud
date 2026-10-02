@@ -27,9 +27,13 @@ export default function PortfolioRow({ item, onEdit, onDelete, canPublish, onSet
         <Button variant="ghost" size="icon" title="추천 전환" onClick={() => onToggleFeature(item, !item.is_featured)}>
           <Star className={item.is_featured ? 'text-amber-500' : ''} />
         </Button>
-        <Button variant="ghost" size="icon" title="공개 페이지" asChild>
-          <a href={`/portfolio/${item.slug}`} target="_blank" rel="noreferrer"><ExternalLink /></a>
-        </Button>
+        {item.slug ? (
+          <Button variant="ghost" size="icon" title="공개 페이지" asChild>
+            <a href={`/portfolio/${item.slug}`} target="_blank" rel="noreferrer"><ExternalLink /></a>
+          </Button>
+        ) : (
+          <Button variant="ghost" size="icon" title="주소가 없습니다" disabled><ExternalLink /></Button>
+        )}
         <Button variant="outline" size="icon" onClick={() => onEdit(item)}><Pencil /></Button>
         <Button variant="ghost" size="icon" onClick={() => onDelete(item)}><Trash2 className="text-destructive" /></Button>
       </div>

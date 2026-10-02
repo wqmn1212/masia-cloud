@@ -26,7 +26,7 @@ export const page = {
 export const plans = [T('라이트', 'Lite', '轻量版'), T('스탠다드 (추천)', 'Standard (recommended)', '标准版（推荐）'), T('프로', 'Pro', '专业版')];
 
 export const compareRows = [
-  [T('월 구독료 (VAT 별도)', 'Monthly fee (excl. VAT)', '月订阅费（不含增值税）'), T('150만원', 'KRW 1.5M', '150 万韩元'), T('300만원', 'KRW 3M', '300 万韩元'), T('500만원', 'KRW 5M', '500 万韩元')],
+  [T('월 구독료 (VAT 별도)', 'Monthly fee (excl. VAT)', '月订阅费（不含增值税）'), T('150만원', 'KRW 1.5M', '150 万韩元'), T('300만원', 'KRW 3M', '300 万韩元'), T('500만원 이상', 'KRW 5M+', '500 万韩元起')],
   [T('이런 프로젝트에', 'Best for', '适用项目'), T('부품 소싱, 단일 사출품, 같은 품목 반복 발주', 'Part sourcing, single moulded parts, repeat orders', '零件采购、单一注塑件、同品项复购'), T('사출 + 후가공 + 조립, 여러 부품을 모아 하나의 제품으로', 'Moulding + finishing + assembly, multiple parts into one product', '注塑 + 后加工 + 组装，多零件组成一个产品'), T('완제품 개발, 시제품부터 양산까지, 인증 필요', 'Full product development, prototype to mass production, certification', '整机开发，从样品到量产，需认证')],
   [T('담당 팀', 'Assigned team', '负责团队'), TEAM, TEAM, TEAM],
   [T('관리 범위', 'Scope', '管理范围'), T('품목 1개, 공장 1곳', '1 item, 1 factory', '1 个品项，1 家工厂'), T('품목 3개까지, 공장 3곳까지', 'Up to 3 items, 3 factories', '最多 3 个品项，3 家工厂'), T('제품 1개의 모든 부품, 공장 6곳까지', 'All parts of 1 product, up to 6 factories', '1 个产品的全部零件，最多 6 家工厂')],
@@ -52,6 +52,7 @@ export const compareNotes = [
   T('담당 팀은 여러 고객사를 함께 맡는 "담당 팀 배정" 방식입니다.', 'The assigned team serves several clients; it is an assigned, not dedicated, team.', '负责团队同时服务多家客户，采用"分配负责团队"方式。'),
   T('현장 방문은 중국 현지 직원이 공장에서 공정·재고·품질을 확인하고 사진과 함께 AEGIS Cloud에 올리는 것을 말합니다. 출고 전 검수는 방문 횟수에 포함되지 않습니다.', 'A site visit means our China staff check process, stock and quality at the factory and post photos to AEGIS Cloud. Pre-shipment inspections are not counted as visits.', '现场走访指中国员工到厂确认工序、库存与质量，并附照片上传至 AEGIS Cloud。出货前检验不计入走访次数。'),
   T('관리 범위를 넘으면 플랜을 올리거나 계약을 하나 더 맺습니다.', 'If scope is exceeded, upgrade the plan or add another contract.', '超出管理范围时，可升级方案或追加一份合同。'),
+  T('프로는 제품 범위와 인증 여부에 따라 상담 후 금액을 정합니다.', 'Pro is priced after consultation, based on product scope and certification needs.', '专业版根据产品范围与认证需求，咨询后确定价格。'),
 ];
 
 export const included = [
@@ -95,7 +96,7 @@ export const terms = [
   [T('플랜 내리기', 'Downgrade', '降级方案'), T('최소 기간 이후, 다음 달부터 적용', 'After minimum term, from next month', '最短期限后，次月生效')],
   [T('결제', 'Billing', '付款'), T('매월 초 선불, 세금계산서 발행', 'Prepaid at the start of each month, tax invoice issued', '每月初预付，开具税务发票')],
 ];
-export const termsNote = T('할인은 중복 적용되지 않습니다. 모든 금액은 VAT 별도입니다.', 'Discounts do not stack. All prices exclude VAT.', '折扣不可叠加。所有价格均不含增值税。');
+export const termsNote = T('할인은 중복 적용되지 않습니다. 모든 금액은 VAT 별도입니다. 프로는 상담 후 결정합니다.', 'Discounts do not stack. All prices exclude VAT. Pro is priced after consultation.', '折扣不可叠加。所有价格均不含增值税。专业版咨询后确定价格。');
 
 // 메인 플랜 카드: 가격 + 핵심 4줄(관리 범위, 현장 방문, 보고 주기, 최소 계약)
 const KEY_ROWS = [3, 9, 16, 19];

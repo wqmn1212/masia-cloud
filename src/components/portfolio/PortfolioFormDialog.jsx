@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Loader2, Upload } from 'lucide-react';
-import { PORTFOLIO_CATEGORIES, emptyPortfolioItem, slugify } from '@/lib/portfolioMeta';
+import { PORTFOLIO_CATEGORIES, emptyPortfolioItem, slugify, fallbackSlug } from '@/lib/portfolioMeta';
 import PortfolioMediaEditor from './PortfolioMediaEditor';
 import PortfolioProjectFields from './PortfolioProjectFields';
 
@@ -35,6 +35,15 @@ export default function PortfolioFormDialog({ open, onOpenChange, item, tenantId
     setUploadingThumb(false);
   };
 
+  // 같은 테넌트에 같은 slug 가 있으면 -2, -3 … 을 붙인다
+  const uniqueSlug = async (base) => {
+    const others = await base44.entities.PortfolioItem.filter({ tenant_id: tenantId });
+    const taken = new Set(others.filter((o) => o.id !== form.id).map((o) => o.slug));
+    let slug = base;
+    for (let n = 2; taken.has(slug); n++) slug = `${base}-${n}`;
+    return slug;
+  };
+
   const save = async () => {
     setError('');
     if (!form.title_ko?.trim()) return setError('한국어 제목을 입력하세요.');
@@ -43,7 +52,7 @@ export default function PortfolioFormDialog({ open, onOpenChange, item, tenantId
       const payload = {
         ...form,
         tenant_id: tenantId,
-        slug: slugify(form.slug || form.title_en || form.title_ko),
+        slug: form.published_at && form.slug ? form.slug : await uniqueSlug(slugify(form.slug || form.title_en || form.title_ko) || fallbackSlug(form)),
         sort_order: Number(form.sort_order) || 0,
         featured_order: Number(form.featured_order) || 0,
         project_year: form.project_year ? Number(form.project_year) : null,
@@ -96,7 +105,7 @@ export default function PortfolioFormDialog({ open, onOpenChange, item, tenantId
               </div>
               <div>
                 <Label>URL 식별자 (비우면 자동)</Label>
-                <Input value={form.slug} onChange={set('slug')} placeholder="cnc-machining" />
+                <Input value={form.slug} onChange={set('slug')} placeholder="cnc-machining" readOnly={!!form.published_at} title={form.published_at ? '공개된 항목의 주소는 바꿀 수 없습니다' : undefined} />
               </div>
               <div>
                 <Label>제목 (한국어)</Label>
