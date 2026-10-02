@@ -26,9 +26,8 @@ export const brand = {
   ],
   rolesTitle: ['이름과 역할', 'The name and the role', '名字与角色'],
   roles: [
-    { myth: ['헤파이스토스', 'Hephaestus', '赫菲斯托斯'], real: ['광둥 공장', 'Guangdong factory', '广东工厂'], d: ['만든다', 'Builds', '制造'] },
+    { myth: ['헤파이스토스', 'Hephaestus', '赫菲斯托斯'], real: ['공장', 'Factory', '工厂'], d: ['만든다', 'Makes', '制造'] },
     { myth: ['이지스', 'Aegis', '埃吉斯'], real: ['AEGIS', 'AEGIS', 'AEGIS'], d: ['지킨다', 'Protects', '守护'], highlight: true },
-    { myth: ['영웅', 'Hero', '英雄'], real: ['고객', 'Client', '客户'], d: ['지켜진다', 'Is protected', '受到守护'] },
   ],
   guardsTitle: ['AEGIS가 지키는 네 가지', 'Four things AEGIS protects', 'AEGIS 守护的四件事'],
   guards: [
