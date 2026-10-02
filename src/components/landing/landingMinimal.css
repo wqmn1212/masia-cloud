@@ -30,6 +30,16 @@
 .landing-minimal .lm-desktop-nav { display: none; gap: 18px; }
 .landing-minimal .lm-desktop-nav a { white-space: nowrap; font-size: 14px; font-weight: 650; color: var(--landing-body); }
 .landing-minimal .lm-desktop-nav a:hover { color: var(--landing-blue); }
+/* 하위 페이지(/portfolio 등)의 절대경로 메뉴·로고 링크는 버튼 스타일에서 제외 — 메인 헤더와 동일하게 */
+.landing-minimal header .lm-desktop-nav a[href], .landing-minimal header .lm-mobile-menu a[href], .landing-minimal header > div > a[href]:first-child {
+  display: revert; min-height: 0; padding: 0; border-radius: 0; background: transparent; box-shadow: none; line-height: inherit;
+}
+.landing-minimal header .lm-desktop-nav a[href] { font-size: 14px; font-weight: 650; color: var(--landing-body); }
+.landing-minimal header .lm-desktop-nav a[href]:hover { background: transparent; color: var(--landing-blue); }
+.landing-minimal header .lm-mobile-menu a[href] { display: block; padding: 12px; font-size: 14px; color: var(--landing-body); }
+.landing-minimal header .lm-mobile-menu a[href]:hover { background: var(--landing-soft); color: var(--landing-blue); }
+.landing-minimal header > div > a[href]:first-child { display: flex; align-items: center; }
+.landing-minimal header > div > a[href]:first-child:hover { background: transparent; }
 .landing-minimal .lm-languages { gap: 3px; padding: 3px; border-radius: 8px; background: #f3f3f4; }
 .landing-minimal .lm-languages button { min-height: 38px; padding: 6px 8px; border: 0; border-radius: 6px; font-size: 12px; font-weight: 750; color: var(--landing-muted); background: transparent; }
 .landing-minimal .lm-languages button[aria-pressed='true'] { background: var(--landing-paper); color: var(--landing-ink); box-shadow: 0 1px 3px #0002; }
