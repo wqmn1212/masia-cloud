@@ -9,9 +9,9 @@ export const brand = {
   ],
   story: [
     [
-      '광둥성에는 뛰어난 공장이 많습니다. 하지만 공장은 만드는 일에 집중하고, 품질 기준이나 일정, 서류를 고객 입장에서 챙겨 주지는 않습니다.',
-      'Guangdong has many excellent factories. But factories focus on making, not on guarding quality standards, schedules and paperwork on the buyer’s behalf.',
-      '广东有许多优秀的工厂。但工厂专注于生产，不会站在客户立场把关质量标准、交期与文件。',
+      '중국에는 뛰어난 공장이 많습니다. 하지만 공장은 만드는 일에 집중하고, 품질 기준이나 일정, 서류를 고객 입장에서 챙겨 주지는 않습니다.',
+      'China has many excellent factories. But factories focus on making, not on guarding quality standards, schedules and paperwork on the buyer’s behalf.',
+      '中国有很多优秀的工厂。但工厂专注于生产，不会站在客户立场把关质量标准、交期与文件。',
     ],
     [
       'AEGIS는 그 사이에 서는 방패입니다. 현지 직원이 공장을 직접 찾아가 공정을 확인하고, 견적을 검증하고, 출고 전에 실물을 검수합니다.',
