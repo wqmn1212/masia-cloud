@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Loader2, Upload } from 'lucide-react';
 import { PORTFOLIO_CATEGORIES, emptyPortfolioItem, slugify } from '@/lib/portfolioMeta';
 import PortfolioMediaEditor from './PortfolioMediaEditor';
+import PortfolioProjectFields from './PortfolioProjectFields';
 
 export default function PortfolioFormDialog({ open, onOpenChange, item, tenantId, onSaved }) {
   const [form, setForm] = useState(emptyPortfolioItem());
@@ -45,7 +46,15 @@ export default function PortfolioFormDialog({ open, onOpenChange, item, tenantId
         slug: slugify(form.slug || form.title_en || form.title_ko),
         sort_order: Number(form.sort_order) || 0,
         featured_order: Number(form.featured_order) || 0,
+        project_year: form.project_year ? Number(form.project_year) : null,
       };
+      // 발행 상태는 목록의 발행 흐름 버튼에서만 변경
+      delete payload.is_published;
+      delete payload.publish_status;
+      delete payload.reviewed_by;
+      delete payload.published_at;
+      if (!payload.region) delete payload.region;
+      if (!payload.project_type) delete payload.project_type;
       delete payload.id;
       delete payload.created_date;
       delete payload.updated_date;
@@ -119,6 +128,8 @@ export default function PortfolioFormDialog({ open, onOpenChange, item, tenantId
               </div>
             </div>
 
+            <PortfolioProjectFields form={form} setForm={setForm} />
+
             <div>
               <Label>대표 이미지</Label>
               <div className="flex items-center gap-3 mt-2">
@@ -131,10 +142,6 @@ export default function PortfolioFormDialog({ open, onOpenChange, item, tenantId
             </div>
 
             <div className="flex flex-wrap gap-6">
-              <label className="flex items-center gap-2 text-sm">
-                랜딩 공개
-                <Switch checked={!!form.is_published} onCheckedChange={(v) => setForm((f) => ({ ...f, is_published: v }))} />
-              </label>
               <label className="flex items-center gap-2 text-sm">
                 추천 노출
                 <Switch checked={!!form.is_featured} onCheckedChange={(v) => setForm((f) => ({ ...f, is_featured: v }))} />

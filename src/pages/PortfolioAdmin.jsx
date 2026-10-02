@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Loader2 } from 'lucide-react';
 import PortfolioRow from '@/components/portfolio/PortfolioRow';
 import PortfolioFormDialog from '@/components/portfolio/PortfolioFormDialog';
+import { canPublish } from '@/lib/portfolioMeta';
 
 export default function PortfolioAdmin() {
   const { user } = useAuth();
@@ -29,6 +30,14 @@ export default function PortfolioAdmin() {
   const patch = async (item, data) => {
     await base44.entities.PortfolioItem.update(item.id, data);
     refetch();
+  };
+
+  // 발행 흐름: 초안 → 검토 요청 → 발행 (발행/회수는 master·service 만)
+  const setStatus = (item, status) => {
+    if (!canPublish(user)) return patch(item, { publish_status: status });
+    return patch(item, status === 'published'
+      ? { publish_status: status, is_published: true, reviewed_by: user.email, published_at: new Date().toISOString() }
+      : { publish_status: status, is_published: false });
   };
 
   const remove = async (item) => {
@@ -61,7 +70,8 @@ export default function PortfolioAdmin() {
               item={item}
               onEdit={openEdit}
               onDelete={remove}
-              onTogglePublish={(it, v) => patch(it, { is_published: v })}
+              canPublish={canPublish(user)}
+              onSetStatus={setStatus}
               onToggleFeature={(it, v) => patch(it, { is_featured: v })}
             />
           ))}
@@ -73,6 +83,7 @@ export default function PortfolioAdmin() {
         onOpenChange={setDialogOpen}
         item={editing}
         tenantId={user?.tenant_id}
+        canPublish={canPublish(user)}
         onSaved={refetch}
       />
     </div>
