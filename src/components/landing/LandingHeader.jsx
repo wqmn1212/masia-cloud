@@ -11,7 +11,7 @@ export default function LandingHeader({ lang, setLang, isAuthenticated, homePath
     <header className="sticky top-0 z-50 bg-landing-page/90 backdrop-blur-[14px] border-b border-landing-line">
       <div className="max-w-[1200px] mx-auto px-5 lg:px-8 h-[66px] flex items-center gap-9">
         <a href="#top" className="flex items-center flex-none">
-          <span className="text-[23px] font-extrabold tracking-[-0.6px] text-landing-ink leading-none">AEGIS</span>
+          <img src="https://media.base44.com/images/public/6a0c1b56a385588fbd4454f5/2cd63c7e3___2x__2__3-removebg-preview.png" alt="AEGIS" className="h-7 w-auto" />
         </a>
         <nav className="lm-desktop-nav hidden lg:flex items-center gap-7 text-sm font-semibold">
           {nav.map((n) => (
