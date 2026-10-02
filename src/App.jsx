@@ -39,6 +39,7 @@ import ClientPortalDashboard from '@/pages/ClientPortalDashboard';
 import ClientBoard from '@/pages/ClientBoard';
 import PortfolioAdmin from '@/pages/PortfolioAdmin';
 import PortfolioDetail from '@/pages/PortfolioDetail';
+import PortfolioList from '@/pages/PortfolioList';
 import JoinInvite from '@/pages/JoinInvite';
 import JoinSetPassword from '@/pages/JoinSetPassword';
 import ServiceGuide from '@/pages/ServiceGuide';
@@ -50,9 +51,10 @@ const AuthenticatedApp = () => {
   const isRoot = location.pathname === '/';
 
   // 공개 포트폴리오 상세 — 비로그인 접근 허용
-  if (location.pathname.startsWith('/portfolio/')) {
+  if (location.pathname === '/portfolio' || location.pathname.startsWith('/portfolio/')) {
     return (
       <Routes>
+        <Route path="/portfolio" element={<PortfolioList />} />
         <Route path="/portfolio/:slug" element={<PortfolioDetail />} />
       </Routes>
     );

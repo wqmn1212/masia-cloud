@@ -38,6 +38,7 @@ export default function CategorySection({ lang, cat, setCat, source }) {
           {items.map((p, i) => <PortfolioCard key={`${p.cat}-${i}`} item={p} lang={lang} />)}
         </div>
         <p className="mt-[22px] text-[13.5px] text-landing-muted2">{tx(categories.footnote, lang)}</p>
+        <a href="/portfolio" className="mt-3 inline-block text-[14px] font-bold text-landing-brand hover:underline">{tx(['포트폴리오 전체 보기 →', 'View full portfolio →', '查看全部案例 →'], lang)}</a>
       </div>
     </section>
   );

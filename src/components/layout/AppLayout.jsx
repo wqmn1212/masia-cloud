@@ -16,6 +16,8 @@ export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
+  useEffect(() => { document.title = 'AEGIS Cloud'; }, [location.pathname]);
+
   const { data: user, refetch, isLoading: isLoadingUser } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => base44.auth.me(),

@@ -7,15 +7,19 @@ import LandingMobileMenu from '@/components/landing/LandingMobileMenu';
 const LANG_LABEL = { ko: 'KO', en: 'EN', zh: '中' };
 
 export default function LandingHeader({ lang, setLang, isAuthenticated, homePath, onLogin }) {
+  // 하위 페이지에서는 앵커를 메인 기준 절대 경로로 연결
+  const onHome = ['/', '/main'].includes(window.location.pathname);
+  const home = isAuthenticated ? '/main' : '/';
+  const link = (h) => (onHome ? h : `${home}${h}`);
   return (
     <header className="sticky top-0 z-50 bg-landing-page/90 backdrop-blur-[14px] border-b border-landing-line">
       <div className="max-w-[1200px] mx-auto px-5 lg:px-8 h-[66px] flex items-center gap-9">
-        <a href="#top" className="flex items-center flex-none">
+        <a href={link('#top')} className="flex items-center flex-none">
           <img src="https://media.base44.com/images/public/6a0c1b56a385588fbd4454f5/2cd63c7e3___2x__2__3-removebg-preview.png" alt="AEGIS" className="h-7 w-auto" />
         </a>
         <nav className="lm-desktop-nav hidden lg:flex items-center gap-7 text-sm font-semibold">
           {nav.map((n) => (
-            <a key={n.href} href={n.href} className="text-landing-ink2 hover:text-landing-brand transition-colors">
+            <a key={n.href} href={link(n.href)} className="text-landing-ink2 hover:text-landing-brand transition-colors">
               {tx(n.label, lang)}
             </a>
           ))}
@@ -50,7 +54,7 @@ export default function LandingHeader({ lang, setLang, isAuthenticated, homePath
             >
               {tx(header.login, lang)}
             </button>
-            <a href="#contact" className="bg-landing-ink hover:bg-landing-brand-hover text-white text-sm font-bold px-[18px] py-2.5 rounded-[9px] transition-colors">
+            <a href={link('#contact')} className="bg-landing-ink hover:bg-landing-brand-hover text-white text-sm font-bold px-[18px] py-2.5 rounded-[9px] transition-colors">
               {tx(header.cta, lang)}
             </a>
           </div>
