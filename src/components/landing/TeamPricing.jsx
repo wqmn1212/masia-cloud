@@ -33,6 +33,9 @@ export default function TeamPricing({ lang }) {
         ))}
       </dl>
       <p className="mt-3 text-[12.5px] text-landing-muted2">{tx(team.priceNote, lang)}</p>
+      <a href="/pricing" className="mt-5 inline-flex items-center justify-center border-[1.5px] border-landing-brand text-landing-brand hover:bg-landing-brand hover:text-white text-sm font-bold px-5 py-3 rounded-[9px] transition-colors">
+        {tx(['상세 요금 비교하기 →', 'Compare plans in detail →', '查看详细价格对比 →'], lang)}
+      </a>
     </div>
   );
 }

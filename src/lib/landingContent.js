@@ -48,7 +48,7 @@ export const tx = (v, lang) => (Array.isArray(v) ? v[LANG_INDEX[lang] ?? 0] : v)
 export const nav = [
   { href: '/about', label: ['회사소개', 'About', '公司介绍'] },
   { href: '/portfolio', label: ['포트폴리오', 'Portfolio', '案例'] },
-  { href: '#team', label: ['비용', 'Pricing', '费用'] },
+  { href: '/pricing', label: ['비용', 'Pricing', '费用'] },
   { href: '/cloud-guide', label: ['AEGIS Cloud 사용 가이드', 'AEGIS Cloud guide', 'AEGIS Cloud 指南'] },
 ];
 
