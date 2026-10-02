@@ -6,7 +6,7 @@ import { loadPdfFonts, imageToJpeg } from '@/lib/pdfFonts';
 // 텍스트 기반 PDF — 글자·표는 실제 텍스트로, 제품 사진만 압축 이미지로 넣는다.
 const SYM = { USD: '$', CNY: '¥', KRW: '₩' };
 const LABEL = { USD: 'USD · US Dollar', CNY: 'CNY · Chinese Yuan', KRW: 'KRW · 대한민국 원' };
-const fmt = (v, cur) => v == null ? '-' : (SYM[cur] || '$') + Number(v).toLocaleString(undefined, { maximumFractionDigits: cur === 'KRW' ? 0 : 2 });
+const fmt = (v, cur, digits = 2) => v == null ? '-' : (SYM[cur] || '$') + Number(v).toLocaleString(undefined, { maximumFractionDigits: cur === 'KRW' ? 0 : digits });
 const BLUE = [37, 99, 235], INK = [15, 23, 42], MUTED = [100, 116, 139], LINE = [229, 231, 235], SOFT = [241, 245, 249];
 const LOGO_URL = 'https://media.base44.com/images/public/6a0c1b56a385588fbd4454f5/b5bab8215_2x.png';
 const W = 210, H = 297, M = 15, CW = W - M * 2;
@@ -105,7 +105,7 @@ export async function generateQuotationPDF(quotation) {
     y += h;
   };
   drawRow(cols.map((c) => c.t), true);
-  (p.line_items || []).forEach((r, i) => drawRow([i + 1, r.option_name, r.specification, r.quantity ?? '-', fmt(r.unit_price_display, cur), fmt(r.total_display, cur)]));
+  (p.line_items || []).forEach((r, i) => drawRow([i + 1, r.option_name, r.specification, r.quantity ?? '-', fmt(r.unit_price_display, cur, 5), fmt(r.total_display, cur)]));
   y += 6;
 
   // 합계 + 참고 환산

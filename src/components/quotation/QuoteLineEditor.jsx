@@ -80,7 +80,7 @@ export default function QuoteLineEditor({ items, onChange }) {
                   </Select>
                 </td>
                 <td className="p-1.5">
-                  <Input className="h-8 text-xs text-right" type="number" step="0.01" value={item.unit_price_cny} onChange={(e) => updateRow(idx, 'unit_price_cny', Number(e.target.value))} />
+                  <Input className="h-8 text-xs text-right" type="number" step="0.00001" value={item.unit_price_cny} onChange={(e) => updateRow(idx, 'unit_price_cny', Number(e.target.value))} />
                 </td>
                 <td className="p-1.5 text-right text-xs font-medium">
                   {sym}{(item.total_cny || 0).toLocaleString()}

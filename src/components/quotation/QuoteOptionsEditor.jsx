@@ -57,7 +57,7 @@ export default function QuoteOptionsEditor({ options = [], onChange, usdToKrw = 
               <Input value={o.option_name || ''} onChange={(e) => update(i, 'option_name', e.target.value)} placeholder="옵션명" className="h-7 text-xs" />
               <Input value={o.specification || ''} onChange={(e) => update(i, 'specification', e.target.value)} placeholder="사양" className="h-7 text-xs" />
               <Input type="number" min="0" value={o.quantity} onChange={(e) => update(i, 'quantity', e.target.value)} placeholder="수량" className="h-7 text-xs" />
-              <Input type="number" min="0" step="0.001" value={o.unit_price} onChange={(e) => update(i, 'unit_price', e.target.value)}
+              <Input type="number" min="0" step="0.00001" value={o.unit_price} onChange={(e) => update(i, 'unit_price', e.target.value)}
                 placeholder={o.currency === 'KRW' ? '₩' : o.currency === 'CNY' ? '¥' : '$'} className="h-7 text-xs" />
               <Select value={o.currency || 'CNY'} onValueChange={(v) => update(i, 'currency', v)}>
                 <SelectTrigger className="h-7 text-xs px-2"><SelectValue /></SelectTrigger>
