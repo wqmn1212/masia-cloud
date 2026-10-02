@@ -46,12 +46,10 @@ export const fastShipping = {
 export const tx = (v, lang) => (Array.isArray(v) ? v[LANG_INDEX[lang] ?? 0] : v);
 
 export const nav = [
-  { href: '#about', label: ['우리가 하는 일', 'What we do', '业务介绍'] },
-  { href: '#process', label: ['진행 프로세스', 'Process', '流程'] },
-  { href: '#team', label: ['월정액 전담팀', 'Dedicated team', '专属团队'] },
-  { href: '#category', label: ['취급 품목', 'Categories', '产品品类'] },
-  { href: '#trust', label: ['보안 · 계약', 'Security', '保密与合同'] },
   { href: '/about', label: ['회사소개', 'About', '公司介绍'] },
+  { href: '/portfolio', label: ['포트폴리오', 'Portfolio', '案例'] },
+  { href: '#team', label: ['비용', 'Pricing', '费用'] },
+  { href: '/cloud-guide', label: ['AEGIS Cloud 사용 가이드', 'AEGIS Cloud guide', 'AEGIS Cloud 指南'] },
 ];
 
 export const header = {
@@ -105,8 +103,7 @@ export const about = {
     { t: ['유통사보다 낮은 단가', "Lower than a trading company's price", '低于贸易商的价格'], d: ['온라인에서 공장처럼 활동하는 판매자 상당수는 마진을 얹은 유통사입니다. 직접 협상은 그 층을 걷어냅니다.', 'Many sellers online present themselves as factories but are resellers with a margin layered on top. Direct negotiation removes that layer.', '线上许多卖家自称工厂，实为加价转售的中间商。直接谈判去除了这一层。'] },
     { t: ['모든 공장은 방문 가능', 'Every factory can be visited', '所有工厂均可实地走访'], d: ['고객사가 직접 방문해 검증할 수 있습니다. 방문이 어려울 경우 우리가 직접 가서 검증하고, 제품 QC를 함께 진행합니다.', 'You may visit and verify any factory yourself. If a visit is difficult, we go on your behalf, verify the site and run product QC together with you.', '您可亲自走访并验证任何一家工厂。若不便前往，我们代为实地验证，并与您一同进行产品 QC。'] },
     { t: ['배송 · 통관 원스톱', 'Shipping and customs in one line', '运输与清关一次搞定'], d: ['제품을 만드는 것 외에도 한국까지 배송, 통관 처리, 고객사 배송까지 모든 과정을 한 번에 처리합니다.', 'Beyond making the product, we ship it to Korea, clear customs and deliver to your door — the whole chain handled at once.', '除生产之外，运抵韩国、清关直至送达贵公司，全流程一次性完成。'] },
-    { t: ['모든 업무는 한국 본사 진행', 'All business runs from the Korean HQ', '全部业务由韩国总部进行'], d: ['계약, 대금, 커뮤니케이션 모두 한국 본사를 통합니다. 한국어로, 국내 조건으로, 한 명의 담당자와 일합니다.', 'Contracts, payment and communication all go through the Korean head office. You work in Korean, under Korean terms, with one counterpart.', '合同、付款与沟通均通过韩国总部。以韩语、韩国条款与单一对接人协作。'] },
-    { t: ['모든 공장과 NNN 계약', 'NNN agreements with every factory', '与所有工厂签署 NNN 协议'], d: ['협력하는 모든 공장과 NNN 계약을 맺어 도면 · 설계 · 사양 정보가 유출되지 않도록 철저히 진행합니다.', 'Every partner factory signs an NNN agreement so your design, drawings and specifications cannot leak or be copied.', '所有合作工厂均签署 NNN 协议，确保设计、图纸与规格不外泄、不被复制。'] },
+    { t: ['보안 · 계약은 한 곳에서', 'Security and contracts', '保密与合同'], d: ['NNN 계약, 계약 후 양산, 한국 본사 단일 창구 원칙은 아래 보안 · 계약 섹션에 정리했습니다.', 'Our NNN, contract-first and single Korean counterpart principles are summarised in the Security section below.', 'NNN、先签合同后量产、韩国总部单一窗口等原则，详见下方保密与合同部分。'] },
   ],
 };
 
@@ -119,7 +116,7 @@ export const process = {
     { t: ['공장 매칭 · NNN 체결', 'Factory matching & NNN', '工厂匹配与 NNN 签署'], d: ['현지 직원이 NNN 계약이 체결된 중국의 공장을 선별.', 'Our Guangdong staff shortlist factories that actually make your item, and sign NNN before any file is shared.', '广东省团队筛选真正能生产该品项的工厂，并在共享任何文件前签署 NNN。'] },
     { t: ['현지 가격 협상', 'On-site price negotiation', '现场价格谈判'], d: ['공장에서 직접 협상하고, 원가 구성이 보이는 견적으로 회신합니다.', 'We negotiate at the factory in person and return a quote with the cost breakdown visible.', '我们亲赴工厂谈判，并提供含成本明细的报价。'] },
     { t: ['공장 검증 · 샘플', 'Factory audit & sampling', '验厂与打样'], d: ['함께 방문하거나 우리가 대신 갑니다. 설비 · 생산능력 · 인증을 확인하고 결정 전 샘플을 받습니다.', 'Visit with us, or we go for you: equipment, capacity, certifications and a sample before you commit.', '您可同行，或由我们代为前往：确认设备、产能、认证，并在决定前提供样品。'] },
-    { t: ['계약서 작성 후 양산', 'Contract, then mass production', '签订合同后再量产'], d: ['모든 양산 제품은 계약서 작성 후 진행합니다. 사양 · 단가 · 납기 · 불량 처리 기준을 명시합니다.', 'No mass production starts without a signed contract covering spec, price, schedule and defect handling.', '所有量产均在签署合同后进行，合同涵盖规格、价格、交期与不良处理。'] },
+    { t: ['계약서 작성 후 양산', 'Contract, then mass production', '签订合同后再量产'], d: ['계약서 확정 후 양산을 시작합니다. 기준은 보안 · 계약 섹션을 참고하세요.', 'Production starts once the contract is signed — see the Security section for terms.', '合同确定后开始量产，详见保密与合同部分。'] },
     { t: ['생산 중 · 출하 전 QC', 'In-line & pre-shipment QC', '生产中与出货前 QC'], d: ['현지 직원이 공장에서 검사하고, 포장 전 사진 · 영상 리포트를 공유합니다.', 'Our staff inspect at the plant and share photo and video reports before anything is boxed.', '我方员工在厂内检验，装箱前提供照片与视频报告。'] },
     { t: ['배송 · 통관', 'Shipping & customs clearance', '运输与通关'], d: ['해상 · 항공 운송, 수출 서류, 한국 수입 통관과 관세까지 하나의 업무로 처리합니다.', 'Sea or air, export paperwork, Korean import clearance and duties — arranged by us as one job.', '海运或空运、出口单证、韩国进口清关与关税，均由我们统一处理。'] },
     { t: ['고객사 납품', 'Delivered to your site', '送达贵司现场'], d: ['국내 공장 · 창고까지 배송하고, A/S 요청도 같은 계정에서 처리합니다.', 'Domestic delivery to your factory or warehouse, with after-sales requests handled through the same account.', '国内配送至贵司工厂或仓库，售后同样通过该账号处理。'], highlight: true },
