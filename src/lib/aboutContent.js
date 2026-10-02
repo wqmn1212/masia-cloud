@@ -13,7 +13,7 @@ export const about = {
   ],
   infoTitle: ['회사 정보', 'Company info', '公司信息'],
   info: [
-    { k: ['브랜드', 'Brand', '品牌'], v: ['AEGIS (이지스)', 'AEGIS', 'AEGIS'] },
+    { k: ['한국 법인', 'Korea ebtity', '韓国法人'], v: ['(주)이지스', 'AEGIS CO., LTD.', 'AEGISCO., LTD.'] },
     { k: ['중국 법인', 'China entity', '中国法人'], v: ['DONGGUAN AEGIS TRADE CO., LTD.', 'DONGGUAN AEGIS TRADE CO., LTD.', 'DONGGUAN AEGIS TRADE CO., LTD.'] },
     { k: ['활동 지역', 'Region', '活动地区'], v: ['광둥성 (선전 · 동관 · 광저우 · 포산 · 중산)', 'Guangdong (Shenzhen, Dongguan, Guangzhou, Foshan, Zhongshan)', '广东省（深圳、东莞、广州、佛山、中山）'] },
     { k: ['서비스', 'Services', '服务'], v: ['중국 OEM 제작 · 제조 소싱 · 공장 실사 · 출고 검수 · 제조팀 구독', 'China OEM, sourcing, factory audits, pre-shipment inspection, manufacturing team subscription', '中国 OEM 制造、采购、验厂、出货检验、制造团队订阅'] },
