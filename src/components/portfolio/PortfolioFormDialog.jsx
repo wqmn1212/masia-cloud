@@ -62,6 +62,8 @@ export default function PortfolioFormDialog({ open, onOpenChange, item, tenantId
       delete payload.publish_status;
       delete payload.reviewed_by;
       delete payload.published_at;
+      delete payload.consent_confirmed;
+      delete payload.consent_note;
       if (!payload.region) delete payload.region;
       if (!payload.project_type) delete payload.project_type;
       delete payload.id;

@@ -14,7 +14,7 @@ export default function PortfolioStatusActions({ item, canPublish, onSetStatus }
       )}
       {status === 'review' && canPublish && (
         <>
-          <Button size="sm" onClick={() => onSetStatus(item, 'published')}>발행</Button>
+          <Button size="sm" disabled={!item.consent_confirmed} title={item.consent_confirmed ? undefined : '고객 동의 확인 후 발행할 수 있습니다'} onClick={() => onSetStatus(item, 'published')}>발행</Button>
           <Button size="sm" variant="ghost" onClick={() => onSetStatus(item, 'draft')}>반려</Button>
         </>
       )}

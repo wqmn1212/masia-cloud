@@ -8,6 +8,7 @@ import { Plus, Loader2 } from 'lucide-react';
 import PortfolioRow from '@/components/portfolio/PortfolioRow';
 import PortfolioFormDialog from '@/components/portfolio/PortfolioFormDialog';
 import { canPublish } from '@/lib/portfolioMeta';
+import { toast } from '@/components/ui/use-toast';
 
 export default function PortfolioAdmin() {
   const { user } = useAuth();
@@ -38,6 +39,14 @@ export default function PortfolioAdmin() {
     return patch(item, status === 'published'
       ? { publish_status: status, is_published: true, reviewed_by: user.email, published_at: new Date().toISOString() }
       : { publish_status: status, is_published: false });
+  };
+
+  // sub: 발행된 항목은 직접 수정 대신 담당자에게 수정 요청
+  const requestEdit = async (item) => {
+    const message = window.prompt(`"${item.title_ko}" 수정 요청 내용을 적어 주세요.`);
+    if (message === null) return;
+    await base44.functions.invoke('requestPortfolioEdit', { id: item.id, message });
+    toast({ title: '수정 요청을 보냈습니다.' });
   };
 
   const remove = async (item) => {
@@ -73,6 +82,8 @@ export default function PortfolioAdmin() {
               canPublish={canPublish(user)}
               onSetStatus={setStatus}
               onToggleFeature={(it, v) => patch(it, { is_featured: v })}
+              onPatch={patch}
+              onRequestEdit={requestEdit}
             />
           ))}
         </div>
