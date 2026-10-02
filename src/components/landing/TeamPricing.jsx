@@ -36,9 +36,18 @@ export default function TeamPricing({ lang }) {
         ))}
       </dl>
       <p className="mt-3 text-[12.5px] text-landing-muted2">{tx(termsNote, lang)}</p>
-      <a href="/pricing" className="mt-5 inline-flex items-center justify-center border-[1.5px] border-landing-brand text-landing-brand hover:bg-landing-brand hover:text-white text-sm font-bold px-5 py-3 rounded-[9px] transition-colors">
-        {tx(page.detailBtn, lang)}
-      </a>
+      <div className="mt-5 flex flex-wrap gap-2">
+        <a
+          href="#contact"
+          onClick={() => window.dispatchEvent(new CustomEvent('aegis:inquiry-type', { detail: 'monthly' }))}
+          className="inline-flex items-center justify-center bg-landing-ink hover:bg-landing-brand-hover text-white text-sm font-bold px-5 py-3 rounded-[9px] transition-colors"
+        >
+          {tx(team.cta, lang)}
+        </a>
+        <a href="/pricing" className="inline-flex items-center justify-center border-[1.5px] border-landing-brand text-landing-brand hover:bg-landing-brand hover:text-white text-sm font-bold px-5 py-3 rounded-[9px] transition-colors">
+          {tx(page.detailBtn, lang)}
+        </a>
+      </div>
     </div>
   );
 }

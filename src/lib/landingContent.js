@@ -197,7 +197,7 @@ export const contact = {
 
 export const form = {
   company: ['회사명', 'Company', '公司名称'],
-  companyPh: ['예) 주식회사 아이지스', 'e.g. AEGIS Co., Ltd.', '例：AEGIS 有限公司'],
+  companyPh: ['예) 주식회사 이지스', 'e.g. AEGIS Co., Ltd.', '例：AEGIS 有限公司'],
   name: ['담당자명', 'Contact name', '联系人'],
   namePh: ['이름', 'Full name', '姓名'],
   phone: ['연락처', 'Phone', '联系电话'],

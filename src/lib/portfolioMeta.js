@@ -10,7 +10,7 @@ export const PORTFOLIO_CATEGORIES = [
 
 export const PORTFOLIO_REGIONS = [
   { value: 'shenzhen', label: '선전' },
-  { value: 'dongguan', label: '둥관' },
+  { value: 'dongguan', label: '동관' },
   { value: 'guangzhou', label: '광저우' },
   { value: 'foshan', label: '포산' },
   { value: 'zhongshan', label: '중산' },

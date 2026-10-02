@@ -3,8 +3,8 @@ import { cn } from '@/lib/utils';
 import { tx } from '@/lib/landingContent';
 
 export const INQUIRY_TYPES = [
-  { value: 'sourcing', label: ['단발 소싱', 'One-off sourcing', '单次采购'] },
-  { value: 'monthly', label: ['월 계약 상담', 'Monthly contract', '月度合同咨询'] },
+  { value: 'sourcing', label: ['단건 상품', 'Single service', '单项服务'] },
+  { value: 'monthly', label: ['구독 플랜 상담', 'Subscription plan', '订阅方案咨询'] },
 ];
 const TITLE = ['문의 유형', 'Inquiry type', '咨询类型'];
 

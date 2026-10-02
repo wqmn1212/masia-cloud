@@ -6,6 +6,7 @@ import usePublicPortfolio from '@/lib/usePublicPortfolio';
 import LandingHeader from '@/components/landing/LandingHeader';
 import HeroSection from '@/components/landing/HeroSection';
 import AboutSection from '@/components/landing/AboutSection';
+import BrandSection from '@/components/landing/BrandSection';
 import ProcessSection from '@/components/landing/ProcessSection';
 import GuangdongSection from '@/components/landing/GuangdongSection';
 import FastShippingSection from '@/components/landing/FastShippingSection';
@@ -38,6 +39,7 @@ export default function Landing() {
       />
       <main>
       <HeroSection lang={lang} />
+      <BrandSection lang={lang} />
       <AboutSection lang={lang} />
       <ProcessSection lang={lang} />
       <GuangdongSection lang={lang} />
