@@ -166,9 +166,77 @@
       },
       "description": "\ub300\uc751 \uac00\ub2a5 \uc778\uc99d"
     },
+    "region": {
+      "type": "string",
+      "enum": [
+        "shenzhen",
+        "dongguan",
+        "guangzhou",
+        "foshan",
+        "zhongshan",
+        "other"
+      ],
+      "description": "\uc0dd\uc0b0 \uacf5\uc7a5 \uc9c0\uc5ed"
+    },
+    "project_year": {
+      "type": "number",
+      "description": "\uc9c4\ud589 \uc5f0\ub3c4"
+    },
+    "project_type": {
+      "type": "string",
+      "enum": [
+        "oem",
+        "odm",
+        "sourcing",
+        "custom_machine"
+      ],
+      "description": "\ud504\ub85c\uc81d\ud2b8 \uc720\ud615"
+    },
+    "publish_status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "review",
+        "published"
+      ],
+      "default": "draft",
+      "description": "\ubc1c\ud589 \ud750\ub984: \ucd08\uc548 \u2192 \uac80\ud1a0 \uc694\uccad \u2192 \ubc1c\ud589"
+    },
+    "reviewed_by": {
+      "type": "string",
+      "description": "\ubc1c\ud589 \uc2b9\uc778\uc790 \uc774\uba54\uc77c"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "is_published": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "description": "\uacf5\uac1c \uc5ec\ubd80. master/service \ub9cc \ubcc0\uacbd \uac00\ub2a5",
+      "rls": {
+        "write": {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "$and": [
+                {
+                  "data.tenant_id": "{{user.data.tenant_id}}"
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
     },
     "is_featured": {
       "type": "boolean",
@@ -209,6 +277,11 @@
             {
               "user_condition": {
                 "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
               }
             }
           ]
@@ -258,9 +331,18 @@
               "data.tenant_id": "{{user.data.tenant_id}}"
             },
             {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
             }
           ]
         }
