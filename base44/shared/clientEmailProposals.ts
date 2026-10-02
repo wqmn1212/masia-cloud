@@ -64,6 +64,11 @@ export async function processMessageIds(base44, messageIds) {
       continue;
     }
     const message = await res.json();
+    // 방금 도착한 메일만 처리 — 임의의 과거 메시지 ID 재처리 차단
+    if (Date.now() - Number(message.internalDate || 0) > 60 * 60 * 1000) {
+      results.push({ messageId, skipped: 'not recent' });
+      continue;
+    }
 
     const from = header(message, 'From');
     const to = header(message, 'To');

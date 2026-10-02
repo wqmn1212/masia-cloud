@@ -12,6 +12,8 @@ export default async function(req) {
     const svc = base44.asServiceRole;
     const card = await svc.entities.TaskCard.get(card_id);
     if (!card) return Response.json({ error: 'Card not found' }, { status: 404 });
+    if (user.is_active === false || !['master', 'service', 'sub'].includes(user.account_tier)) return Response.json({ error: 'Forbidden' }, { status: 403 });
+    if (user.account_tier !== 'master' && (!card.tenant_id || card.tenant_id !== user.tenant_id)) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
     const [meetings, items, proposals, quotations, qcReports, payments] = await Promise.all([
       svc.entities.MeetingLog.filter({ card_id }, 'meeting_date'),

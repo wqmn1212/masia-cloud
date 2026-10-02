@@ -33,6 +33,10 @@ async function getTaskListId(token) {
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me().catch(() => null);
+    if (!user || user.is_active === false || !['master', 'service'].includes(user.account_tier)) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('googletasks');
     const listId = await getTaskListId(accessToken);
     const svc = base44.asServiceRole.entities;

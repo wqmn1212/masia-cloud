@@ -128,10 +128,10 @@ export default async function (req) {
         from_name: 'AEGIS',
         subject: lang === 'en' ? 'We received your request — AEGIS' : lang === 'zh' ? '已收到您的询价 — AEGIS' : '문의가 접수되었습니다 — AEGIS',
         body: lang === 'en'
-          ? `Hello ${lead.contact_name},\n\nWe received your manufacturing request for ${lead.company}. We will reply within one business day with next steps and your AEGIS Cloud account details.\n\nAEGIS`
+          ? `Hello,\n\nWe received your manufacturing request. We will reply within one business day with next steps and your AEGIS Cloud account details.\n\nAEGIS`
           : lang === 'zh'
-            ? `${lead.contact_name} 您好，\n\n我们已收到 ${lead.company} 的制造询价。我们将在一个工作日内回复后续步骤及 AEGIS Cloud 账号信息。\n\nAEGIS`
-            : `${lead.contact_name} 님, 안녕하세요.\n\n${lead.company} 의 제조 문의가 접수되었습니다. 영업일 기준 1일 이내에 담당자가 회신드리며, AEGIS Cloud 계정 발급 안내도 함께 보내드립니다.\n\nAEGIS`,
+            ? `您好，\n\n我们已收到您的制造询价。我们将在一个工作日内回复后续步骤及 AEGIS Cloud 账号信息。\n\nAEGIS`
+            : `안녕하세요.\n\n제조 문의가 접수되었습니다. 영업일 기준 1일 이내에 담당자가 회신드리며, AEGIS Cloud 계정 발급 안내도 함께 보내드립니다.\n\nAEGIS`,
       });
     } catch (_e) { /* 미등록 주소 발송 실패 허용 */ }
 
