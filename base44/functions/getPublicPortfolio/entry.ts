@@ -31,6 +31,9 @@ const toCard = (p) => ({
   moq: p.moq || '',
   lead_time: p.lead_time || '',
   certifications: Array.isArray(p.certifications) ? p.certifications : [],
+  region: p.region || '',
+  project_year: p.project_year || null,
+  project_type: p.project_type || '',
   has_spec: Array.isArray(p.spec_files) && p.spec_files.length > 0,
 });
 
