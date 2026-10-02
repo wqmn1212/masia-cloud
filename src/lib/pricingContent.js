@@ -1,4 +1,4 @@
-// 상세 요금 비교 (/pricing) — 대표 확정 전 제안가, VAT 별도
+// 상세 요금 비교 (/pricing) — 대표 확정 금액, VAT 별도. 랜딩 요금 카드(landingTeamContent.js team.tiers)와 같은 값을 유지한다.
 export const plans = ['라이트', '스탠다드 (추천)', '프로'];
 
 export const compareRows = [
@@ -71,4 +71,4 @@ export const terms = [
   ['플랜 내리기', '최소 기간 이후, 다음 달부터 적용'],
   ['결제', '매월 초 선불, 세금계산서 발행'],
 ];
-export const termsNote = '할인은 중복 적용되지 않습니다. 모든 금액은 VAT 별도이며 확정 전 제안가입니다.';
+export const termsNote = '할인은 중복 적용되지 않습니다. 모든 금액은 VAT 별도입니다. 프로는 범위에 따라 상담 후 정합니다.';

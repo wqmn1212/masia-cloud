@@ -21,6 +21,16 @@ export default function TeamPricing({ lang }) {
               {tx(t.price, lang)} <span className="text-sm font-semibold text-landing-muted">{tx(team.perMonth, lang)}</span>
             </div>
             <p className="mt-2 text-sm leading-[1.62] text-landing-muted">{tx(t.ex, lang)}</p>
+            {t.points && (
+              <ul className="mt-4 pt-4 border-t border-landing-line space-y-2">
+                {t.points.map((p, j) => (
+                  <li key={j} className="flex gap-2 text-[13.5px] leading-[1.55] text-landing-ink2">
+                    <span className={cn('mt-[7px] h-1.5 w-1.5 flex-none rounded-full', t.highlight ? 'bg-landing-brand' : 'bg-landing-muted3')} aria-hidden="true" />
+                    {tx(p, lang)}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         ))}
       </div>
