@@ -10,7 +10,7 @@ export default function LandingHeader({ lang, setLang, isAuthenticated, homePath
   // 하위 페이지에서는 앵커를 메인 기준 절대 경로로 연결
   const onHome = ['/', '/main'].includes(window.location.pathname);
   const home = isAuthenticated ? '/main' : '/';
-  const link = (h) => (onHome ? h : `${home}${h}`);
+  const link = (h) => (h.startsWith('/') || onHome ? h : `${home}${h}`);
   return (
     <header className="sticky top-0 z-50 bg-landing-page/90 backdrop-blur-[14px] border-b border-landing-line">
       <div className="max-w-[1200px] mx-auto px-5 lg:px-8 h-[66px] flex items-center gap-9">

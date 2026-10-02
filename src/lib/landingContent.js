@@ -51,6 +51,7 @@ export const nav = [
   { href: '#team', label: ['월정액 전담팀', 'Dedicated team', '专属团队'] },
   { href: '#category', label: ['취급 품목', 'Categories', '产品品类'] },
   { href: '#trust', label: ['보안 · 계약', 'Security', '保密与合同'] },
+  { href: '/about', label: ['회사소개', 'About', '公司介绍'] },
 ];
 
 export const header = {
