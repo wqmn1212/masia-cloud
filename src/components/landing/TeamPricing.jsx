@@ -1,7 +1,8 @@
 import React from 'react';
 import { team } from '@/lib/landingTeamContent';
 import { tx } from '@/lib/landingContent';
-import { planCards, terms, termsNote, page } from '@/lib/pricingContent';
+import { planCards, recommendedLabel, terms, termsNote, page } from '@/lib/pricingContent';
+import { PLAN_THEME } from '@/lib/planTheme';
 import { cn } from '@/lib/utils';
 import EnterpriseCard from '@/components/landing/EnterpriseCard';
 
@@ -10,10 +11,14 @@ export default function TeamPricing({ lang }) {
     <div className="mt-12">
       <h3 className="text-lg font-bold tracking-[-0.5px] text-landing-ink">{tx(team.priceTitle, lang)}</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-        {planCards.map((p, i) => (
-          <div key={i} className={cn('rounded-[13px] p-[22px]', p.highlight ? 'bg-landing-tint-soft border-[1.5px] border-landing-brand' : 'bg-white border border-landing-line')}>
-            <div className={cn('text-[12px] font-extrabold', p.highlight ? 'text-landing-brand' : 'text-landing-muted3')}>{tx(p.name, lang)}</div>
-            <div className={cn('mt-3 text-[26px] font-extrabold tracking-[-1px]', p.highlight ? 'text-landing-brand-deep' : 'text-landing-ink')}>
+        {planCards.map((p, i) => { const t = PLAN_THEME[p.theme]; return (
+          <div key={i} className={cn('relative overflow-hidden rounded-[13px] p-[22px] bg-white border', t.line)}>
+            <div className={cn('absolute inset-x-0 top-0 h-1', t.bar)} aria-hidden="true" />
+            <div className={cn('flex flex-wrap items-center gap-2 text-[12px] font-extrabold', t.text)}>
+              {tx(p.name, lang)}
+              {p.recommended && <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-extrabold text-white', t.bar)}>{tx(recommendedLabel, lang)}</span>}
+            </div>
+            <div className={cn('mt-3 text-[26px] font-extrabold tracking-[-1px]', t.text)}>
               {tx(p.price, lang)} <span className="text-sm font-semibold text-landing-muted">{tx(team.perMonth, lang)}</span>
             </div>
             <p className="mt-2 text-sm leading-[1.62] text-landing-muted">{tx(p.ex, lang)}</p>
@@ -26,7 +31,7 @@ export default function TeamPricing({ lang }) {
               ))}
             </dl>
           </div>
-        ))}
+        ); })}
         <EnterpriseCard lang={lang} />
       </div>
       <dl className="mt-4 bg-white border border-landing-line rounded-[13px] divide-y divide-landing-line">

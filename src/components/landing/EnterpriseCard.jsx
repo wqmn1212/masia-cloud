@@ -4,10 +4,11 @@ import { enterprise, startEnterpriseInquiry } from '@/lib/pricingContent';
 
 export default function EnterpriseCard({ lang }) {
   return (
-    <div className="rounded-[13px] p-[22px] bg-landing-ink text-white flex flex-col">
-      <div className="text-[12px] font-extrabold text-landing-dark-accent">{tx(enterprise.name, lang)}</div>
+    <div className="relative overflow-hidden rounded-[13px] p-[22px] bg-landing-ink text-white flex flex-col">
+      <div className="absolute inset-x-0 top-0 h-1 bg-landing-ent-accent" aria-hidden="true" />
+      <div className="text-[12px] font-extrabold text-landing-ent-accent">{tx(enterprise.name, lang)}</div>
       <div className="mt-3 text-[26px] font-extrabold tracking-[-1px]">{tx(enterprise.price, lang)}</div>
-      <div className="mt-0.5 text-[13px] font-semibold text-landing-dark-accent">{tx(enterprise.priceSub, lang)}</div>
+      <div className="mt-0.5 text-[13px] font-semibold text-landing-ent-accent">{tx(enterprise.priceSub, lang)}</div>
       <p className="mt-2 text-sm leading-[1.62] text-landing-dark-body">{tx(enterprise.ex, lang)}</p>
       <dl className="mt-4 pt-3 border-t border-landing-dark-line space-y-1.5">
         {enterprise.lines.map(([k, v], j) => (

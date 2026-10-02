@@ -6,8 +6,9 @@ import { tx } from '@/lib/landingContent';
 import LandingHeader from '@/components/landing/LandingHeader';
 import LandingFooter from '@/components/landing/LandingFooter';
 import PricingTable from '@/components/pricing/PricingTable';
+import { PLAN_KEYS } from '@/lib/planTheme';
 import PricingBlock from '@/components/pricing/PricingBlock';
-import { page, plans, compareRows, compareNotes, included, includedNotes, singles, singleNotes, terms, termsNote, enterprise } from '@/lib/pricingContent';
+import { page, plans, compareRows, compareNotes, included, includedNotes, singles, singleNotes, terms, termsNote, enterprise, recommendedLabel } from '@/lib/pricingContent';
 import '@/components/landing/landingMinimal.css';
 
 export default function Pricing() {
@@ -27,11 +28,11 @@ export default function Pricing() {
         <p className="mt-5 max-w-[820px] text-[16px] leading-[1.85] text-landing-muted">{tx(page.lead, lang)}</p>
 
         <PricingBlock title={page.compareTitle} notes={compareNotes} lang={lang}>
-          <PricingTable head={[page.item, ...plans]} rows={compareRows} highlightCol={2} lang={lang} />
+          <PricingTable head={[page.item, ...plans]} rows={compareRows} lang={lang} colThemes={[null, ...PLAN_KEYS]} badgeCol={2} badgeLabel={recommendedLabel} priceRow={0} />
         </PricingBlock>
         <PricingBlock className="mt-14 rounded-[13px] bg-landing-tint p-6 md:p-8" title={enterprise.blockTitle} notes={[enterprise.blockNote]} lang={lang}>
           <p className="-mt-1 mb-5 max-w-[820px] text-[15px] leading-[1.8] text-landing-ink3">{tx(enterprise.blockLead, lang)}</p>
-          <PricingTable head={[page.item, enterprise.name]} rows={enterprise.rows} lang={lang} />
+          <PricingTable head={[page.item, enterprise.name]} rows={enterprise.rows} lang={lang} colThemes={[null, 'ent']} />
           <a href="/?interest=enterprise#contact" className="mt-5 w-full sm:w-auto inline-flex items-center justify-center bg-landing-ink hover:bg-landing-brand-hover text-white text-sm font-bold px-5 py-3 rounded-[9px]">{tx(enterprise.cta, lang)}</a>
         </PricingBlock>
         <PricingBlock title={page.includedTitle} notes={includedNotes} lang={lang}>

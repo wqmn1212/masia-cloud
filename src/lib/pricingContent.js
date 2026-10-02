@@ -1,4 +1,5 @@
 // 상세 요금 비교 (/pricing) — 모든 문구 [ko, en, zh], VAT 별도
+import { PLAN_KEYS } from '@/lib/planTheme';
 const T = (ko, en, zh) => [ko, en, zh];
 const TEAM = T('한국 PM 1 + 중국 현지 QC·PM 2', 'Korea PM 1 + China QC·PM 2', '韩国 PM 1 + 中国现场 QC·PM 2');
 const INC = T('포함', 'Included', '包含');
@@ -24,7 +25,7 @@ export const page = {
 };
 
 const ENT_NAME = T('엔터프라이즈', 'Enterprise', '企业版');
-export const plans = [T('라이트', 'Lite', '轻量版'), T('스탠다드 (추천)', 'Standard (recommended)', '标准版（推荐）'), T('프로', 'Pro', '专业版'), ENT_NAME];
+export const plans = [T('라이트', 'Lite', '轻量版'), T('스탠다드', 'Standard', '标准版'), T('프로', 'Pro', '专业版'), ENT_NAME];
 
 const NEG = T('협의', 'By agreement', '协商');
 // 비교표 엔터프라이즈 열 (그룹 행 제외, 순서대로)
@@ -160,5 +161,7 @@ export const planCards = plans.slice(0, 3).map((name, i) => ({
   price: compareRows[0][i + 1],
   ex: compareRows[1][i + 1],
   lines: KEY_ROWS.map((r) => [compareRows[r][0], compareRows[r][i + 1]]),
-  highlight: i === 1,
+  theme: PLAN_KEYS[i],
+  recommended: i === 1,
 }));
+export const recommendedLabel = T('추천', 'Recommended', '推荐');
