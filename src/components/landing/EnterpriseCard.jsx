@@ -4,7 +4,7 @@ import { enterprise, startEnterpriseInquiry } from '@/lib/pricingContent';
 
 export default function EnterpriseCard({ lang }) {
   return (
-    <div className="relative overflow-hidden rounded-[13px] p-[22px] bg-landing-ink text-white flex flex-col">
+    <div className="lm-plan-card relative overflow-hidden rounded-[13px] p-[22px] bg-landing-ink text-white border border-landing-ink flex flex-col">
       <div className="absolute inset-x-0 top-0 h-1 bg-landing-ent-accent" aria-hidden="true" />
       <div className="text-[12px] font-extrabold text-landing-ent-accent">{tx(enterprise.name, lang)}</div>
       <div className="mt-3 text-[26px] font-extrabold tracking-[-1px]">{tx(enterprise.price, lang)}</div>
@@ -18,7 +18,6 @@ export default function EnterpriseCard({ lang }) {
           </div>
         ))}
       </dl>
-      <div className="flex-1" />
       <a
         href="#contact"
         onClick={startEnterpriseInquiry}
