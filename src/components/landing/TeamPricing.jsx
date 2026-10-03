@@ -12,7 +12,7 @@ export default function TeamPricing({ lang }) {
       <h3 className="text-lg font-bold tracking-[-0.5px] text-landing-ink">{tx(team.priceTitle, lang)}</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
         {planCards.map((p, i) => { const t = PLAN_THEME[p.theme]; return (
-          <div key={i} className={cn('relative overflow-hidden rounded-[13px] p-[22px] bg-white border', t.line)}>
+          <div key={i} className={cn('relative overflow-hidden rounded-[13px] p-[22px] bg-white border flex flex-col', t.line)}>
             <div className={cn('absolute inset-x-0 top-0 h-1', t.bar)} aria-hidden="true" />
             <div className={cn('flex flex-wrap items-center gap-2 text-[12px] font-extrabold', t.text)}>
               {tx(p.name, lang)}
@@ -21,7 +21,7 @@ export default function TeamPricing({ lang }) {
             <div className={cn('mt-3 text-[26px] font-extrabold tracking-[-1px]', t.text)}>
               {tx(p.price, lang)} <span className="text-sm font-semibold text-landing-muted">{tx(team.perMonth, lang)}</span>
             </div>
-            <p className="mt-2 text-sm leading-[1.62] text-landing-muted">{tx(p.ex, lang)}</p>
+            <p className="mt-2 flex-1 text-sm leading-[1.62] text-landing-muted">{tx(p.ex, lang)}</p>
             <dl className="mt-4 pt-3 border-t border-landing-line space-y-1.5">
               {p.lines.map(([k, v], j) => (
                 <div key={j} className="flex gap-3 text-[13px]">
