@@ -11,7 +11,7 @@ export const translations = {
     'nav.serviceGuide': '서비스 사용 가이드',
     'brand.name': '이지스 클라우드',
     // TopBar
-    'topbar.search': '견적, 공장, 고객사 검색...', 'topbar.admin': '관리자', 'topbar.hq': '본사',
+    'topbar.search': '견적, 공장, 고객사 검색...', 'topbar.tier.master': 'SaaS 마스터', 'topbar.tier.service': '팀 관리자', 'topbar.tier.sub': '팀원', 'topbar.tier.client': '고객사',
     // Common
     'common.save': '저장', 'common.cancel': '취소', 'common.create': '생성', 'common.edit': '수정',
     'common.delete': '삭제', 'common.confirm': '확인', 'common.loading': '로딩 중...', 'common.nodata': '데이터 없음',
@@ -162,7 +162,7 @@ export const translations = {
     'nav.serviceGuide': '服务使用指南',
     'brand.name': 'AEGIS 云平台',
     // TopBar
-    'topbar.search': '搜索报价、工厂、客户...', 'topbar.admin': '管理员', 'topbar.hq': '总部',
+    'topbar.search': '搜索报价、工厂、客户...', 'topbar.tier.master': 'SaaS 主管理员', 'topbar.tier.service': '团队管理员', 'topbar.tier.sub': '团队成员', 'topbar.tier.client': '客户',
     // Common
     'common.save': '保存', 'common.cancel': '取消', 'common.create': '创建', 'common.edit': '编辑',
     'common.delete': '删除', 'common.confirm': '确认', 'common.loading': '加载中...', 'common.nodata': '暂无数据',

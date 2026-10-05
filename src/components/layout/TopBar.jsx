@@ -11,6 +11,13 @@ export default function TopBar({ onMenuClick, user }) {
   const { lang, setLang, t } = useLanguage();
   const { query, setQuery } = useSearch();
   const [translationPaused, setTranslationPaused] = React.useState(false);
+  const tier = user?.account_tier;
+  const isClient = tier === 'client';
+  const displayName = user?.full_name || user?.email || '';
+  const initial = (displayName[0] || '?').toUpperCase();
+  const tierLabel = tier === 'sub' && user?.team_role_name && lang !== 'zh'
+    ? user.team_role_name
+    : tier ? t(`topbar.tier.${tier}`) : '';
   React.useEffect(() => {
     const markPaused = () => setTranslationPaused(true);
     window.addEventListener('translation-unavailable', markPaused);
@@ -22,15 +29,17 @@ export default function TopBar({ onMenuClick, user }) {
         <Button variant="ghost" size="icon" className="md:hidden shrink-0" onClick={onMenuClick}>
           <Menu className="w-5 h-5" />
         </Button>
-        <div className="relative w-full max-w-xs md:w-80 md:max-w-none">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('topbar.search')}
-            className="pl-10 bg-secondary/50 border-0 focus-visible:ring-1"
-          />
-        </div>
+        {isClient ? <div className="flex-1" /> : (
+          <div className="relative w-full max-w-xs md:w-80 md:max-w-none">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t('topbar.search')}
+              className="pl-10 bg-secondary/50 border-0 focus-visible:ring-1"
+            />
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-1 md:gap-3 shrink-0">
         <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => { window.location.href = '/main'; }}>
@@ -45,11 +54,11 @@ export default function TopBar({ onMenuClick, user }) {
         </div>
         <div className="flex items-center gap-2.5 pl-2 md:pl-3 md:border-l md:border-border">
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
-            M
+            {initial}
           </div>
-          <div className="hidden md:block">
-            <p className="text-sm font-semibold leading-none">{t('topbar.admin')}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{t('topbar.hq')}</p>
+          <div className="hidden md:block min-w-0">
+            <p className="text-sm font-semibold leading-none truncate max-w-[160px]">{displayName}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[160px]">{tierLabel}</p>
           </div>
           <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => base44.auth.logout('/')}>
             <LogOut className="w-4 h-4" />
