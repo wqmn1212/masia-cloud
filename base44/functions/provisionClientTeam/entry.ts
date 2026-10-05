@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { CLIENT_MENU } from '../../shared/clientAccess.ts';
+import { sendJoinEmail, requestPasswordSetup } from '../../shared/invitationUser.ts';
 
 
 // 리드 → 고객사 팀 생성 및 담당자 초대. 초대는 어드민만 가능하다 (고객의 자체 초대 없음).
@@ -149,7 +150,8 @@ export default async function (req) {
           account_label: lead.company,
           is_active: true,
         });
-        invited.push({ email, applied: true, existing_account: true });
+        const password_setup = await requestPasswordSetup(base44, email, true);
+        invited.push({ email, applied: true, existing_account: true, password_setup });
         continue;
       }
       const pending = await svc.entities.PendingInvitation.filter({ email, tenant_id: tenant.id, claimed: false });
@@ -159,7 +161,8 @@ export default async function (req) {
         await svc.entities.PendingInvitation.create(inviteData);
       }
       await base44.users.inviteUser(email, 'user');
-      invited.push({ email, pending: true });
+      await sendJoinEmail(base44, email, lead.company);
+      invited.push({ email, pending: true, join_email_sent: true });
     }
 
     // 4. 리드 · 카드 연결

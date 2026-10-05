@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
-import { findUserByEmail, requestPasswordSetup } from '../../shared/invitationUser.ts';
+import { findUserByEmail, requestPasswordSetup, sendJoinEmail } from '../../shared/invitationUser.ts';
 import { normalizeMenuPaths } from '../../shared/rbac.ts';
 
 // 팀 관리자 전용: 자신의 하위 계정 초대
@@ -76,6 +76,11 @@ export default async function(req) {
     if (pending[0]) await base44.asServiceRole.entities.PendingInvitation.update(pending[0].id, invitationData);
     else await base44.asServiceRole.entities.PendingInvitation.create(invitationData);
     const passwordSetup = await requestPasswordSetup(base44, normalizedEmail, send_password_setup, false);
+    if (send_password_setup) {
+      await sendJoinEmail(base44, normalizedEmail, tenant.name);
+      passwordSetup.sent = true;
+      passwordSetup.join_email = true;
+    }
     return Response.json({ ok: true, pending: true, password_setup: passwordSetup });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
