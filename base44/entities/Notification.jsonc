@@ -22,7 +22,11 @@
         "chat_message",
         "quote_published",
         "settlement_due",
-        "portfolio_edit_request"
+        "portfolio_edit_request",
+        "payment_confirmed",
+        "schedule_changed",
+        "file_shared",
+        "requirements_updated"
       ],
       "description": "\uc54c\ub9bc \uc720\ud615"
     },

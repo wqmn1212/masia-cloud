@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { schedulePatch, scheduleDiff, deliveryDate, validDate } from '../../shared/cardSchedule.ts';
 import { sendCollaborationEmail } from '../../shared/collaborationEmail.ts';
 import { syncCardLedger } from '../../shared/cardLedger.ts';
+import { notifyUsers, clientUsersOfCompany } from '../../shared/notify.ts';
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req), user = await base44.auth.me();
@@ -54,6 +55,13 @@ export default async function(req) {
     if (Object.keys(patch).length) await svc.entities.TaskCard.update(card.id, patch);
     const ledger = kind === 'PAYMENT' ? await syncCardLedger(svc, { ...card, ...patch }) : null;
     const change = await svc.entities.CollaborationChange.create({ tenant_id: card.tenant_id, card_id: card.id, company_id: card.client_id || '', kind, title, body: `${card.title}\n${lines.join('\n')}`, reason: input.reason.trim(), actor_id: user.id, actor_name: user.full_name || user.email, email_status: card.client_visible === true && card.client_id ? 'PENDING' : 'SKIPPED', sent_user_ids: [], email_error: card.client_visible === true && card.client_id ? '' : '비공개 카드 또는 고객사 미연결' });
+    // 앱 알림만 생성 (이메일은 CollaborationChange 워크플로가 발송)
+    if (card.client_visible === true && card.client_id) {
+      try {
+        const clients = await clientUsersOfCompany(svc, card.client_id);
+        await notifyUsers(svc, clients, { type: kind === 'PAYMENT' ? 'payment_confirmed' : 'schedule_changed', title, body: lines.join('\n').slice(0, 500), link: `/client/board?card=${card.id}`, task_card_id: card.id, card_title: card.title }, { email: false });
+      } catch (_e) { /* 알림 실패가 저장을 막지 않는다 */ }
+    }
     return Response.json({ saved: true, change_id: change.id, email_status: change.email_status, ledger_id: ledger?.id || null, ledger_status: ledger?.status || null });
   } catch (error) { return Response.json({ error: error.message }, { status: 500 }); }
 }

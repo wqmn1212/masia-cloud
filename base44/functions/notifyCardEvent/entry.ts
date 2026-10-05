@@ -40,6 +40,7 @@ export default async function (req) {
         body: `${user.account_label || user.full_name || user.email}: ${String(message || '').slice(0, 300)}`,
         link: `/task-board?card=${card.id}`,
         task_card_id: card.id,
+        card_title: card.title,
       });
       return Response.json({ ok: true, sent });
     }
@@ -51,7 +52,7 @@ export default async function (req) {
     if (user.account_tier !== 'master' && card.tenant_id !== user.tenant_id) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
-    if (!['card_moved', 'card_shared', 'chat_message', 'quote_published'].includes(type)) {
+    if (!['card_moved', 'card_shared', 'chat_message', 'quote_published', 'file_shared'].includes(type)) {
       return Response.json({ error: '지원하지 않는 알림 유형입니다' }, { status: 400 });
     }
     // 공개되지 않은 카드는 고객에게 알리지 않는다
@@ -65,7 +66,9 @@ export default async function (req) {
           ? `[신규 프로젝트] ${card.title}`
           : type === 'quote_published'
             ? `[견적서 발행] ${card.title}`
-            : `[메시지] ${card.title}`;
+            : type === 'file_shared'
+              ? `[파일 공유] ${card.title}`
+              : `[답변] ${card.title}`;
     const body =
       type === 'card_moved'
         ? `프로젝트 단계가 "${STATUS_LABEL[card.status] || card.status}" 로 변경되었습니다.`
@@ -73,7 +76,9 @@ export default async function (req) {
           ? '담당자가 프로젝트를 공개했습니다. 고객 포털에서 진행 상황을 확인하실 수 있습니다.'
           : type === 'quote_published'
             ? '견적서가 발행되었습니다. 고객 포털에서 PDF 로 다운로드하실 수 있습니다.'
-            : String(message || '').slice(0, 300);
+            : type === 'file_shared'
+              ? `담당자가 파일을 공유했습니다: ${String(message || '').slice(0, 200)}`
+              : String(message || '').slice(0, 300);
 
     const sent = await notifyUsers(svc, clients, {
       type,
@@ -81,6 +86,7 @@ export default async function (req) {
       body,
       link: `/client/board?card=${card.id}`,
       task_card_id: card.id,
+      card_title: card.title,
     });
     return Response.json({ ok: true, sent });
   } catch (error) {

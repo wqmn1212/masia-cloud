@@ -68,6 +68,7 @@ export default async function (req) {
         body: `${senderName}: ${(text || chinese).slice(0, 300)}`,
         link: `/task-board?card=${card.id}`,
         task_card_id: card.id,
+        card_title: card.title,
       });
       return Response.json({ ok: true, translation_failed: translationFailed });
     }
@@ -84,6 +85,17 @@ export default async function (req) {
         if (!saved.hq_requirements?.trim()) await fillMissingTranslation(svc, 'TaskCard', saved, ['hq_requirements'], 'ko');
         else if (!saved.cn_manual) await fillMissingTranslation(svc, 'TaskCard', saved, ['hq_requirements'], 'zh');
       } catch { translationFailed = true; }
+      try {
+        const staff = await internalUsersOfTenant(svc, card.tenant_id);
+        await notifyUsers(svc, staff, {
+          type: 'requirements_updated',
+          title: `[요구사항 변경] ${card.title}`,
+          body: String(saved.hq_requirements || saved.hq_requirements_cn || '').slice(0, 300),
+          link: `/task-board?card=${card.id}`,
+          task_card_id: card.id,
+          card_title: card.title,
+        });
+      } catch (_e) { /* 알림 실패가 저장을 막지 않는다 */ }
       return Response.json({ ok: true, translation_failed: translationFailed });
     }
 

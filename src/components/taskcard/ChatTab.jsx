@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { Send, Paperclip, Loader2 } from 'lucide-react';
 import DropZone from '@/components/ui/drop-zone';
 import { saveBilingual } from '@/lib/saveBilingual';
@@ -26,6 +26,8 @@ export default function ChatTab({ card, user, viewLang = 'KR' }) {
   const { t } = useLanguage();
   const [draft, setDraft] = useState({ message_text: '', message_text_cn: '' });
   const [uploading, setUploading] = useState(false);
+  const [toClient, setToClient] = useState(false);
+  const canSendToClient = card.client_visible === true && !!card.client_id;
   const fileInputRef = useRef();
   const bottomRef = useRef();
   const queryClient = useQueryClient();
@@ -54,7 +56,10 @@ export default function ChatTab({ card, user, viewLang = 'KR' }) {
     mutationFn: async (msg) => {
       return saveBilingual('CardChat', { ...msg, tenant_id: card.tenant_id });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['card-chat', card.id] }),
+    onSuccess: (_saved, msg) => {
+      queryClient.invalidateQueries({ queryKey: ['card-chat', card.id] });
+      if (msg.is_client_visible) base44.functions.invoke('notifyCardEvent', { card_id: card.id, type: 'chat_message', message: msg.message_text || msg.message_text_cn }).catch(() => {});
+    },
     onError: error => toast({ title: '전송 실패 / 发送失败', description: error.message, variant: 'destructive' }),
   });
 
@@ -66,7 +71,8 @@ export default function ChatTab({ card, user, viewLang = 'KR' }) {
       sender_email: user?.email || '',
       sender_role: user?.role === 'admin' ? 'HQ' : 'AGENT',
       message_text: draft.message_text.trim(), message_text_cn: draft.message_text_cn.trim(),
-    }, { onSuccess: () => setDraft({ message_text: '', message_text_cn: '' }) });
+      is_client_visible: toClient,
+    }, { onSuccess: () => { setDraft({ message_text: '', message_text_cn: '' }); setToClient(false); } });
   };
 
   const handleFileAttach = async (file) => {
@@ -112,7 +118,10 @@ export default function ChatTab({ card, user, viewLang = 'KR' }) {
                     </a>
                   )}
                 </div>
-                <p className="text-[10px] text-muted-foreground px-1">{formatTime(msg.created_date)}</p>
+                <p className="text-[10px] text-muted-foreground px-1">
+                  {msg.is_client_visible && msg.sender_role !== 'CLIENT' && <span className="mr-1 rounded bg-accent/15 px-1 text-accent font-semibold">고객 공개</span>}
+                  {formatTime(msg.created_date)}
+                </p>
               </div>
             </div>
           );
@@ -121,7 +130,13 @@ export default function ChatTab({ card, user, viewLang = 'KR' }) {
       </div>
 
       {/* Input */}
-      <div className="border-t pt-3 flex items-center gap-2">
+      {canSendToClient && (
+        <label className="border-t pt-2 flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+          <Switch checked={toClient} onCheckedChange={setToClient} />
+          고객에게 보내기 {toClient && <span className="text-accent font-semibold">(고객 문의 탭에 표시되고 메일이 발송됩니다)</span>}
+        </label>
+      )}
+      <div className={`${canSendToClient ? 'pt-2' : 'border-t pt-3'} flex items-center gap-2`}>
         <button onClick={() => fileInputRef.current?.click()} className="text-muted-foreground hover:text-foreground transition-colors" disabled={uploading}>
           {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
         </button>

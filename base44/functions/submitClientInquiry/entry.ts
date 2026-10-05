@@ -83,8 +83,9 @@ export default async function (req) {
         type: 'card_moved',
         title: `[신규 고객 문의] ${title}`,
         body: `${clientName} 에서 새 문의를 접수했습니다.\n${detail.slice(0, 120)}`,
-        link: `/task-board`,
+        link: `/task-board?card=${card.id}`,
         task_card_id: card.id,
+        card_title: title,
       });
     } catch (_e) { /* 알림 실패는 문의 접수를 막지 않음 */ }
 
