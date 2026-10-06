@@ -9,8 +9,10 @@ const isExists = (e) => /exist|already|registered/i.test(errText(e)) || e?.statu
 
 // 초대 참여 링크: 이메일이 채워진 비밀번호 설정 화면 → 인증 코드 → 자동 로그인
 export default function JoinSetPassword() {
-  const [email, setEmail] = useState(new URLSearchParams(window.location.search).get('email') || '');
-  const [mode, setMode] = useState('signup'); // signup | otp | login
+  const params = new URLSearchParams(window.location.search);
+  const lockedEmail = params.get('email') || '';
+  const [email, setEmail] = useState(lockedEmail);
+  const [mode, setMode] = useState(params.get('mode') === 'login' ? 'login' : 'signup'); // signup | otp | login
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -38,7 +40,7 @@ export default function JoinSetPassword() {
           {info && <p className="rounded-md bg-primary/10 px-3 py-2 text-xs text-primary">{info}</p>}
           {mode === 'otp'
             ? <JoinOtpStep email={email} busy={busy} onSubmit={verify} onResend={resend} />
-            : <JoinPasswordStep key={mode} email={email} setEmail={setEmail} mode={mode} busy={busy} onSubmit={mode === 'login' ? login : signup} />}
+            : <JoinPasswordStep key={mode} email={email} setEmail={setEmail} emailLocked={!!lockedEmail} mode={mode} busy={busy} onSubmit={mode === 'login' ? login : signup} />}
           <div className="flex justify-between text-xs text-muted-foreground">
             {mode === 'login' ? <button type="button" onClick={() => setMode('signup')} className="hover:text-foreground">처음이신가요? 비밀번호 설정</button> : <button type="button" onClick={() => setMode('login')} className="hover:text-foreground">이미 비밀번호가 있어요</button>}
             {mode === 'login' && <button type="button" onClick={forgot} disabled={busy || !email} className="hover:text-foreground">비밀번호 재설정</button>}

@@ -7,29 +7,33 @@ export async function findUserByEmail(base44, email) {
   return users.find((item) => String(item.email || '').trim().toLowerCase() === normalizedEmail) || null;
 }
 
-// 초대 참여 메일: Join AEGIS Trade 버튼 → /join?email=<초대 이메일> 비밀번호 설정 화면
-export async function sendJoinEmail(base44, email, label = '') {
+const button = (url, label) => `<p style="margin:24px 0"><a href="${url}" style="background:#0066ff;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;display:inline-block">${label}</a></p>`;
+const wrap = (inner, url) => `<div style="font-family:Arial,sans-serif;color:#171719;max-width:560px;line-height:1.6">${inner}<p style="color:#70737c;font-size:12px">버튼이 열리지 않으면 아래 주소를 브라우저에 붙여 넣으세요.<br>${url}</p></div>`;
+
+// 기존 계정에 팀 권한이 추가되었을 때 한국어 안내 메일 (로그인 화면으로 연결)
+// 신규 계정 초대 메일은 플랫폼 초대 메일(base44/emails/UserInvite.html, 한국어)이 담당한다.
+export async function sendJoinEmail(base44, email, teamName = '') {
   const base = (Deno.env.get('APP_BASE_URL') || 'https://aegistrade.biz').replace(/\/$/, '');
-  const url = `${base}/join?email=${encodeURIComponent(email)}`;
+  const url = `${base}/join?email=${encodeURIComponent(email)}&mode=login`;
+  const team = teamName || 'AEGIS 팀';
   await base44.asServiceRole.integrations.Core.SendEmail({
     to: email,
-    from_name: 'AEGIS Trade',
-    subject: 'AEGIS Trade 초대 · 비밀번호를 설정해 주세요',
-    body: `<div style="font-family:Arial,sans-serif;color:#171719;max-width:560px">
-<h2 style="margin:0 0 12px">AEGIS Trade 에 초대되었습니다</h2>
-<p style="color:#70737c;line-height:1.6">${label ? `${label} 팀에서 ` : ''}${email} 계정으로 초대했습니다. 아래 버튼을 눌러 비밀번호를 설정하면 바로 시작할 수 있습니다.</p>
-<p style="margin:24px 0"><a href="${url}" style="background:#0066ff;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;display:inline-block">Join AEGIS Trade</a></p>
-<p style="color:#70737c;font-size:12px">버튼이 열리지 않으면 이 주소를 브라우저에 붙여넣으세요: ${url}</p></div>`,
+    from_name: 'AEGIS',
+    subject: `AEGIS Cloud · ${team}에 추가되었습니다`,
+    body: wrap(`<h2 style="margin:0 0 12px">${team}에 추가되었습니다</h2>
+<p style="color:#70737c">${email} 계정에 ${team}의 권한이 적용되었습니다. 기존 비밀번호로 로그인하세요.</p>
+${button(url, '로그인하기')}
+<p style="color:#70737c;font-size:13px">비밀번호가 기억나지 않으면 로그인 화면의 ‘비밀번호 재설정’을 눌러 주세요.</p>`, url),
   });
   return url;
 }
 
-// 아직 가입하지 않은 이메일은 비밀번호 재설정 대상이 아니다 (계정이 없어 설정 화면이 열리지 않는다).
-export async function requestPasswordSetup(base44, email, requested, registered = true) {
+// 기존 계정: 한국어 안내 메일 발송. 신규 계정: 플랫폼 초대 메일이 이미 발송되므로 추가 메일 없음.
+export async function requestPasswordSetup(base44, email, requested, registered = true, teamName = '') {
   if (!requested) return { requested: false, sent: false };
-  if (!registered) return { requested: true, sent: false, pending_signup: true };
+  if (!registered) return { requested: true, sent: true, via: 'invite' };
   try {
-    await base44.auth.resetPasswordRequest(email);
+    await sendJoinEmail(base44, email, teamName);
     return { requested: true, sent: true };
   } catch (error) {
     return { requested: true, sent: false, error: error.message };
