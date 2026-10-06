@@ -115,7 +115,7 @@ export default function Quotations() {
     onSuccess: (saved) => {
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
       setCreateOpen(false);
-      setForm(f => ({ ...f, exchange_rate_date: saved.exchange_rate_date || '', exchange_rate_usd: saved.exchange_rate_usd || '', exchange_rate_usd_cny: saved.exchange_rate_usd_cny || '', exchange_rate_krw: '' }));
+      setForm(f => ({ ...f, exchange_rate_date: '', exchange_rate_usd: '', exchange_rate_usd_cny: '', exchange_rate_krw: '' }));
       if (!saved.__translation_failed) toast({ title: t('quotations.add') });
     },
   });
