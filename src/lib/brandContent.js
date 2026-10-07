@@ -26,7 +26,7 @@ export const brand = {
   ],
   rolesTitle: ['이름과 역할', 'The name and the role', '名字与角色'],
   roles: [
-    { myth: ['헤파이스토스', 'Hephaestus', '赫菲斯托斯'], real: ['광둥 공장', 'Guangdong factory', '广东工厂']},
+    { myth: ['헤파이스토스', 'Hephaestus', '赫菲斯托斯'], real: ['공장', 'Factory', '工厂']},
     { myth: ['이지스', 'Aegis', '埃吉斯'], real: ['AEGIS', 'AEGIS', 'AEGIS'], highlight: true },
     { myth: ['영웅', 'Hero', '英雄'], real: ['고객', 'Client', '客户']},
   ],
