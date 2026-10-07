@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { tx } from '@/lib/landingContent';
 import { brand } from '@/lib/brandContent';
 
-// 이름과 역할 카드: 헤파이스토스 → 이지스 → 영웅 / 광둥 공장 → AEGIS → 고객
+// 이름과 역할 카드: 헤파이스토스 → 이지스 → 영웅 / 공장 → AEGIS → 고객
 export default function BrandRoles({ lang }) {
   return (
     <div className="border border-landing-line rounded-[13px] bg-white p-6">
