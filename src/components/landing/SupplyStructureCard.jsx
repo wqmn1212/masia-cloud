@@ -10,7 +10,7 @@ export default function SupplyStructureCard({ lang }) {
         <div className="lm-connector"><small>{tx(supply.aegisLabel, lang)}</small><strong>AEGIS</strong><p>{tx(supply.aegisDesc, lang)}</p></div>
         <div className="lm-node"><small>{tx(supply.chinaLabel, lang)}</small><strong>{tx(supply.china, lang)}</strong></div>
       </div>
-      <div className="lm-removed hidden"><s className="hidden">{tx(supply.removed, lang)}</s><span className="hidden">{tx(supply.removedTag, lang)}</span></div>
+      
     </div>);
 
 }
