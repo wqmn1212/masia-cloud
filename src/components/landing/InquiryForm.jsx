@@ -8,8 +8,11 @@ import InquiryInterest from './InquiryInterest';
 import { cn } from '@/lib/utils';
 import FileDropArea from '@/components/files/FileDropArea';
 import { mergeFiles } from '@/lib/clientFileUpload';
+import { getFirstTouch } from '@/lib/utmTracking';
 
-const EMPTY = { company: '', contact_name: '', phone: '', email: '', quantity: '', target_price: '', detail: '', expected_volume: '', product_lines: '' };
+const EMPTY = { company: '', contact_name: '', phone: '', email: '', quantity: '', target_price: '', detail: '', expected_volume: '', product_lines: '', how_found: '' };
+const HOW_FOUND = { ko: 'AEGIS를 알게 된 경로 (선택)', en: 'How did you hear about us? (optional)', zh: '您是如何了解我们的？（选填）' };
+const HOW_FOUND_PH = { ko: '예: 인스타그램, 유튜브, 지인 추천', en: 'e.g. Instagram, YouTube, referral', zh: '例如：Instagram、YouTube、朋友推荐' };
 const ACCEPT = '.step,.stp,.dwg,.pdf,.jpg,.jpeg,.png';
 const MAX_FILES = 5;
 
@@ -69,6 +72,7 @@ export default function InquiryForm({ lang }) {
         attachments,
         lang,
         referrer: document.referrer || '',
+        ...getFirstTouch(),
       });
       base44.analytics.track({ eventName: 'inquiry_submitted', properties: { interest: interest || 'UNDECIDED' } });
       setStatus('done');
@@ -136,6 +140,7 @@ export default function InquiryForm({ lang }) {
 
       <div className="mt-4">
         <InquiryField label={tx(form.detail, lang)} placeholder={tx(form.detailPh, lang)} value={values.detail} onChange={set('detail')} textarea />
+        <InquiryField label={HOW_FOUND[lang] || HOW_FOUND.ko} placeholder={HOW_FOUND_PH[lang] || HOW_FOUND_PH.ko} value={values.how_found} onChange={set('how_found')} />
       </div>
 
       <FileDropArea className="mt-3.5" onFiles={addFiles} disabled={status === 'sending'}>

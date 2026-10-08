@@ -1,0 +1,122 @@
+{
+  "name": "MarketingMetric",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string"
+    },
+    "post_id": {
+      "type": "string"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "instagram",
+        "youtube"
+      ]
+    },
+    "metric_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "views": {
+      "type": "number",
+      "default": 0
+    },
+    "likes": {
+      "type": "number",
+      "default": 0
+    },
+    "comments": {
+      "type": "number",
+      "default": 0
+    },
+    "shares": {
+      "type": "number",
+      "default": 0
+    },
+    "saves": {
+      "type": "number",
+      "default": 0
+    },
+    "clicks": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "post_id",
+    "platform",
+    "metric_date"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

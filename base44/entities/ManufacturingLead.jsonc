@@ -117,6 +117,27 @@
     "referrer": {
       "type": "string"
     },
+    "utm_source": {
+      "type": "string",
+      "description": "\ucd5c\ucd08 \uc720\uc785 utm_source"
+    },
+    "utm_medium": {
+      "type": "string"
+    },
+    "utm_campaign": {
+      "type": "string"
+    },
+    "utm_content": {
+      "type": "string"
+    },
+    "landing_path": {
+      "type": "string",
+      "description": "\ucd5c\ucd08 \ub79c\ub529 \uacbd\ub85c"
+    },
+    "how_found": {
+      "type": "string",
+      "description": "\uc54c\uac8c \ub41c \uacbd\ub85c (\uc790\uac00 \uc751\ub2f5)"
+    },
     "submitted_at": {
       "type": "string",
       "format": "date-time"

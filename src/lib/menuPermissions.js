@@ -28,7 +28,7 @@ const matchesPath = (allowedPath, pathname) => {
   return pathname === allowed || pathname.startsWith(`${allowed}/`);
 };
 
-const SERVICE_ADMIN_PATHS = ['/team', '/user-permissions'];
+const SERVICE_ADMIN_PATHS = ['/team', '/user-permissions', '/marketing'];
 
 // 고객사(client) 등급 전용 메뉴 — 대시보드 · 소싱 칸반보드 읽기 전용
 export const CLIENT_MENU_OPTIONS = [
