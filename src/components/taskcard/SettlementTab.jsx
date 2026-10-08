@@ -90,17 +90,19 @@ export default function SettlementTab({ card, user }) {
   const setF = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
   // 선택한 견적서 금액을 그대로 정산 기준으로 채운다
-  const pickQuote = (q) => {
-    if (!q) return;
+  const pickQuote = (ids, quotes) => {
+    const sum = (k) => quotes.reduce((s, q) => s + (Number(q[k]) || 0), 0);
+    const q = quotes[0];
     setForm(f => ({
       ...f,
-      quotation_id: q.id,
-      quote_amount_usd: Number(q.final_price_usd) || 0,
-      client_to_factory_usd: Number(q.final_price_usd) || 0,
-      factory_base_cost_usd: Number(q.options_total_usd) || 0,
-      exchange_rate: q.exchange_rate_usd_cny || f.exchange_rate,
-      incoterms: ['EXW', 'FOB_SHANGHAI', 'FOB_GUANGZHOU', 'CIF'].includes(q.incoterms) ? q.incoterms : f.incoterms,
-      machine_description: f.machine_description || q.product_name || '',
+      quotation_ids: ids,
+      quotation_id: ids[0] || '',
+      quote_amount_usd: sum('final_price_usd'),
+      client_to_factory_usd: sum('final_price_usd'),
+      factory_base_cost_usd: sum('options_total_usd'),
+      exchange_rate: q?.exchange_rate_usd_cny || f.exchange_rate,
+      incoterms: ['EXW', 'FOB_SHANGHAI', 'FOB_GUANGZHOU', 'CIF'].includes(q?.incoterms) ? q.incoterms : f.incoterms,
+      machine_description: f.machine_description || quotes.map(x => x.product_name).filter(Boolean).join(' + '),
     }));
   };
 
@@ -198,7 +200,7 @@ export default function SettlementTab({ card, user }) {
         </div>
       )}
 
-      <SettlementQuotePicker cardId={card.id} value={form.quotation_id} onPick={pickQuote} />
+      <SettlementQuotePicker cardId={card.id} value={form.quotation_ids || (form.quotation_id ? [form.quotation_id] : [])} onPick={pickQuote} />
 
       {/* STEP 1 */}
       <div className="space-y-2">

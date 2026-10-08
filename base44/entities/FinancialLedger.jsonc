@@ -51,11 +51,18 @@
     },
     "quotation_id": {
       "type": "string",
-      "description": "\uc815\uc0b0 \uae30\uc900 \uacac\uc801\uc11c (\uac19\uc740 \uce74\ub4dc\uc758 Quotation)"
+      "description": "(\ub808\uac70\uc2dc) \uccab \ubc88\uc9f8 \uae30\uc900 \uacac\uc801\uc11c"
+    },
+    "quotation_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\uc815\uc0b0 \uae30\uc900 \uacac\uc801\uc11c\ub4e4 (\uac19\uc740 \uce74\ub4dc\uc758 \uc2b9\uc778\ub41c Quotation)"
     },
     "quote_amount_usd": {
       "type": "number",
-      "description": "\uc120\ud0dd \uacac\uc801\uc11c \ucd5c\uc885 \uc81c\uc548\uac00 (USD)"
+      "description": "\uc120\ud0dd \uacac\uc801\uc11c \ucd5c\uc885 \uc81c\uc548\uac00 \ud569\uacc4 (USD)"
     },
     "client_to_factory_usd": {
       "type": "number",
