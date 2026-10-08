@@ -309,7 +309,14 @@ export default function TaskBoard() {
                                                      </p>
                                                    )}
 
-                              <div className="flex items-center gap-2 text-[10px] text-muted-foreground pt-0.5">
+                                                   {card.current_milestone_label && (
+                                                   <div className="flex items-center gap-1.5 text-[10px]">
+                                                   <span className="px-1.5 py-0.5 rounded bg-muted text-foreground truncate">▸ {card.current_milestone_label}</span>
+                                                   {card.delay_days > 0 && <span className="px-1.5 py-0.5 rounded bg-destructive/15 text-destructive font-semibold">+{card.delay_days}일</span>}
+                                                   </div>
+                                                   )}
+
+                                                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground pt-0.5">
                                 <MessageSquare className="w-3 h-3" />
                                 <span>채팅</span>
                                 <Paperclip className="w-3 h-3 ml-1" />

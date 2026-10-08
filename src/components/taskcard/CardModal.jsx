@@ -23,6 +23,7 @@ import QuotationPublishPanel from './QuotationPublishPanel';
 import CardSchedulePanel from '@/components/taskcard/CardSchedulePanel';
 import TradeDocumentsTab from '@/components/taskcard/TradeDocumentsTab';
 import { useLanguage } from '@/lib/LanguageContext';
+import MilestoneTab from '@/components/taskcard/milestones/MilestoneTab';
 
 const STATUS_META = {
   TODO:        { label: '대기 중',    color: 'bg-muted text-muted-foreground' },
@@ -86,6 +87,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
           <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto gap-0.5">
             <TabsTrigger value="overview" className="text-xs sm:text-sm py-1.5">{t('card.tab.overview', '오버뷰')}</TabsTrigger>
+            <TabsTrigger value="milestones" className="text-xs sm:text-sm py-1.5">일정</TabsTrigger>
             <TabsTrigger value="tasks" className="text-xs sm:text-sm py-1.5">{t('card.tab.tasks', '업무')}</TabsTrigger>
             <TabsTrigger value="meetings" className="text-xs sm:text-sm py-1.5">{t('card.tab.meetings', '미팅·분석')}</TabsTrigger>
             <TabsTrigger value="quotation" className="text-xs sm:text-sm py-1.5">{t('card.tab.quotation', '견적')}</TabsTrigger>
@@ -97,6 +99,9 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
             <TabsTrigger value="decisions" className="text-xs sm:text-sm py-1.5">{t('card.tab.decisions', '결정')}</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="milestones" className="mt-4">
+            <MilestoneTab card={card} user={user} />
+          </TabsContent>
           <TabsContent value="tasks" className="mt-4">
             <AIProposalPanel card={card} user={user} />
             <TaskItemsTab card={card} viewLang={viewLang} />

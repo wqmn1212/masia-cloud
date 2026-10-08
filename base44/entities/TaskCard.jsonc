@@ -125,6 +125,24 @@
       "default": false,
       "description": "\uc911\uad6d\uc5b4 \uc218\ub3d9 \ud655\uc815 \u2014 \uc790\ub3d9 \ubc88\uc5ed \ub36e\uc5b4\uc4f0\uae30 \ubc29\uc9c0"
     },
+    "milestone_template_id": {
+      "type": "string",
+      "description": "\ub9c8\uc77c\uc2a4\ud1a4 \ud15c\ud50c\ub9bf \ud0a4"
+    },
+    "plan_confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\uacc4\ud68d \ud655\uc815 \uc2dc\uc810"
+    },
+    "current_milestone_label": {
+      "type": "string",
+      "description": "\ud604\uc7ac \ub2e8\uacc4 (\ubcf4\ub4dc \ud45c\uc2dc)"
+    },
+    "delay_days": {
+      "type": "number",
+      "default": 0,
+      "description": "\ub0a9\ud488 \ub2e8\uacc4 \uae30\uc900 \uc9c0\uc5f0 \uc77c\uc218"
+    },
     "holiday_conflicts": {
       "type": "array",
       "description": "\uc0dd\uc0b0 \uae30\uac04\uacfc \uacb9\uce58\ub294 \ud734\ubb34 (\uc911\ubcf5 \uc54c\ub9bc \ubc29\uc9c0)",
