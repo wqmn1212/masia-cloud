@@ -9,6 +9,7 @@ import ClientCardTile from '@/components/client/ClientCardTile';
 import ClientSupportCard from '@/components/client/ClientSupportCard';
 import ClientCardModal from '@/components/client/ClientCardModal';
 import CompanyFilesLibrary from '@/components/files/CompanyFilesLibrary';
+import ChinaHolidayNotice from '@/components/client/ChinaHolidayNotice';
 
 export default function ClientPortalDashboard() {
   const { data: cards = [], isLoading } = useClientCards();
@@ -28,6 +29,7 @@ export default function ClientPortalDashboard() {
       ) : (
         <>
           <ClientStatusSummary cards={cards} />
+          <ChinaHolidayNotice />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card className="lg:col-span-2 p-5">

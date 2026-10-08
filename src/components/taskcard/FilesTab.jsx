@@ -384,7 +384,9 @@ export default function FilesTab({ card, tradeOnly = false }) {
               <FileRow
                 key={file.id}
                 file={file}
-                onVisibilityChange={visible => visibility.mutate({ id: file.id, visible })}
+                onVisibilityChange={visible => visibility.mutate({ id: file.id, visible }, {
+                  onSuccess: () => visible && base44.functions.invoke('notifyCardEvent', { card_id: card.id, type: 'file_shared', message: file.file_name }).catch(() => {}),
+                })}
                 visibilityPending={visibility.isPending}
                 onDelete={() => deleteFileMutation.mutate(file.id)}
               />

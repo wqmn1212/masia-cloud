@@ -10,7 +10,7 @@ export const PORTFOLIO_CATEGORIES = [
 
 export const PORTFOLIO_REGIONS = [
   { value: 'shenzhen', label: '선전' },
-  { value: 'dongguan', label: '둥관' },
+  { value: 'dongguan', label: '동관' },
   { value: 'guangzhou', label: '광저우' },
   { value: 'foshan', label: '포산' },
   { value: 'zhongshan', label: '중산' },
@@ -42,6 +42,10 @@ export const slugify = (text) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
+
+// slug 가 비면 {유형}-{연도}-{임의6자리} 로 생성
+export const fallbackSlug = (item) =>
+  `${item.project_type || 'case'}-${item.project_year || new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8)}`;
 
 export const emptyPortfolioItem = () => ({
   slug: '',

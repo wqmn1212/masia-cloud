@@ -8,7 +8,7 @@
     },
     "recipient_id": {
       "type": "string",
-      "description": "\uc218\uc2e0\uc790 User ID (RLS \uc2a4\ucf54\ud504 \ud0a4). cross-tenant \uc54c\ub9bc\uc744 \uc704\ud574 tenant_id \uac00 \uc544\ub2cc \uc774 \ud544\ub4dc\ub85c \uaca9\ub9ac\ud55c\ub2e4"
+      "description": "\uc218\uc2e0\uc790 User ID (RLS \uc2a4\ucf54\ud504 \ud0a4)"
     },
     "recipient_email": {
       "type": "string",
@@ -21,7 +21,19 @@
         "card_shared",
         "chat_message",
         "quote_published",
-        "settlement_due"
+        "settlement_due",
+        "portfolio_edit_request",
+        "payment_confirmed",
+        "schedule_changed",
+        "file_shared",
+        "requirements_updated",
+        "marketing_comment",
+        "sample_submitted",
+        "sample_feedback",
+        "holiday_conflict",
+        "holiday_notice",
+        "reorder_due",
+        "milestone_overdue"
       ],
       "description": "\uc54c\ub9bc \uc720\ud615"
     },

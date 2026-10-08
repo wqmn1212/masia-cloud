@@ -17,6 +17,9 @@ export default function ClientCardTile({ card, onClick }) {
         )}
       </div>
       <p className="text-sm font-medium leading-snug line-clamp-2">{card.title}</p>
+      {(card.holiday_badges || []).map((h) => (
+        <Badge key={h.name + h.start} className="bg-amber-100 text-amber-800 border-0 text-[10px]">{h.name} 휴무 겹침 · {h.start}~{h.end}</Badge>
+      ))}
       {card.due_date && (
         <p className="text-[10px] text-primary font-medium flex items-center gap-1">
           <CalendarDays className="w-3 h-3" />{card.due_date}

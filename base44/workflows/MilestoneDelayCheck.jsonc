@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "milestone_delay_check",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "check_delays": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkMilestoneDelays",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\ub9c8\uc77c\uc2a4\ud1a4 \uc9c0\uc5f0 \uc810\uac80",
+            "description": "\uae30\ud55c \uc9c0\ub09c \ub2e8\uacc4 \uc54c\ub9bc"
+          }
+        }
+      }
+    ]
+  },
+  "description": "\ub9e4\uc77c 08:00 KST \uacc4\ud68d\uc77c\uc774 \uc9c0\ub09c \ubbf8\uc644\ub8cc \ub9c8\uc77c\uc2a4\ud1a4\uc744 \ub2f4\ub2f9 \ud300\uc5d0 \uc54c\ub9bd\ub2c8\ub2e4",
+  "name": "\ub9c8\uc77c\uc2a4\ud1a4 \uc9c0\uc5f0 \uc54c\ub9bc",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 8 * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

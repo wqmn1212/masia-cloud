@@ -91,7 +91,7 @@ export default function QuotationTab({ card, user }) {
   const tenantId = user?.tenant_id || card.tenant_id;
   const { data: dailyQuotations = [] } = useQuery({
     queryKey: ['daily-quotation-rates', tenantId, rateDate],
-    queryFn: () => base44.entities.Quotation.filter({ exchange_rate_date: rateDate }, '-updated_date', 20),
+    queryFn: () => base44.entities.Quotation.list('-updated_date', 50),
     enabled: Boolean(tenantId),
   });
   const dailyRates = findDailyQuotationRates(dailyQuotations, rateDate);

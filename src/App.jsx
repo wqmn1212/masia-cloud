@@ -47,6 +47,9 @@ import JoinInvite from '@/pages/JoinInvite';
 import JoinSetPassword from '@/pages/JoinSetPassword';
 import ServiceGuide from '@/pages/ServiceGuide';
 import ClientGuide from '@/pages/ClientGuide';
+import Marketing from '@/pages/Marketing';
+import ChinaHolidays from '@/pages/ChinaHolidays';
+import MyWork from '@/pages/MyWork';
 
 const AuthenticatedApp = () => {
   const { user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, onboardingPath, completeOnboarding, retryInvitation } = useAuth();
@@ -85,6 +88,8 @@ const AuthenticatedApp = () => {
   // Do not mount protected pages before auth and invitation assignment finish.
   // 초대 참여 링크(?join=1)로 들어오면 랜딩 대신 로그인/가입 화면을 먼저 띄운다.
   const joinEntry = new URLSearchParams(location.search).has('join');
+  // 초대 메일 버튼으로 들어오면 홈 대신 비밀번호 설정 화면을 띄운다.
+  if (!isAuthenticated && appParams.invitationEntry) return <JoinSetPassword />;
   if (!isAuthenticated && (appParams.invitationEntry || joinEntry || !isRoot)) return <AuthRedirect />;
   if (onboardingPath) return <AuthRedirect to={onboardingPath} onComplete={completeOnboarding} />;
   if (isAuthenticated && !user?.account_tier) return <UserNotRegisteredError />;
@@ -107,7 +112,10 @@ const AuthenticatedApp = () => {
         <Route path="/client/guide" element={<ClientGuide />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/service-guide" element={<ServiceGuide />} />
+        <Route path="/my-work" element={<MyWork />} />
         <Route path="/leads" element={<Leads />} />
+        <Route path="/marketing" element={<Marketing />} />
+        <Route path="/china-holidays" element={<ChinaHolidays />} />
         <Route path="/portfolio-admin" element={<PortfolioAdmin />} />
         <Route path="/factories" element={<Factories />} />
         <Route path="/clients" element={<Clients />} />

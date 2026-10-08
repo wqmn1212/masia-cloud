@@ -55,7 +55,7 @@ export default async function(req) {
       if (found.account_tier === 'master' || found.id === user.id) return Response.json({ error: '변경할 수 없는 계정입니다' }, { status: 403 });
       if (found.tenant_id && found.tenant_id !== targetTenantId) return Response.json({ error: '다른 팀에 소속된 계정입니다' }, { status: 403 });
       await base44.asServiceRole.entities.User.update(found.id, accountData);
-      const passwordSetup = await requestPasswordSetup(base44, normalizedEmail, send_password_setup);
+      const passwordSetup = await requestPasswordSetup(base44, normalizedEmail, send_password_setup, true, tenant.name);
       return Response.json({ ok: true, applied: true, password_setup: passwordSetup });
     }
 

@@ -6,6 +6,7 @@ import { withClientView } from '@/lib/clientView';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ClientOverviewPanel from './ClientOverviewPanel';
+import ClientMilestonePanel from './ClientMilestonePanel';
 import ClientQuotationTab from './ClientQuotationTab';
 import ClientChatPanel from './ClientChatPanel';
 import ClientSettlementPanel from './ClientSettlementPanel';
@@ -43,6 +44,7 @@ export default function ClientCardModal({ cardId, open, onClose }) {
                 <TabsTrigger value="files" className="text-xs sm:text-sm">파일</TabsTrigger>
               </TabsList>
               <TabsContent value="overview" className="mt-4">
+                <ClientMilestonePanel milestones={data.milestones} />
                 <ClientOverviewPanel card={data.card} />
               </TabsContent>
               <TabsContent value="quotation" className="mt-4">

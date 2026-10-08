@@ -1,4 +1,4 @@
-import { clientUsersOfCompany } from './notify.ts';
+import { clientUsersOfCompany, emailBody } from './notify.ts';
 export async function sendCollaborationEmail(svc, change) {
   if (['SENT', 'SKIPPED', 'SENDING'].includes(change.email_status)) return { status: change.email_status };
   const card = await svc.entities.TaskCard.get(change.card_id);
@@ -19,7 +19,7 @@ export async function sendCollaborationEmail(svc, change) {
   for (const target of targets) {
     if (sent.includes(target.id) || !target.email) continue;
     try {
-      await svc.integrations.Core.SendEmail({ to: target.email, from_name: 'AEGIS', subject: change.title, text: `${change.body}\n\n변경 사유: ${change.reason || '미입력'}\n변경일시: ${new Date(change.created_date).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} (한국시간)\n\nAEGIS 고객 포털에서 최신 일정을 확인하세요.` });
+      await svc.integrations.Core.SendEmail({ to: target.email, from_name: 'AEGIS', subject: change.title, body: emailBody(`${change.body}\n\n변경 사유: ${change.reason || '미입력'}\n변경일시: ${new Date(change.created_date).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} (한국시간)`, card.title, `/client/board?card=${card.id}`) });
     } catch (error) {
       await svc.entities.CollaborationChange.update(change.id, { email_status: 'FAILED', sent_user_ids: sent, email_error: String(error.message || '이메일 발송 실패').slice(0, 1000) });
       return { status: 'FAILED' };

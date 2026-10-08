@@ -238,6 +238,61 @@
         }
       }
     },
+    "consent_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uace0\uac1d \ub3d9\uc758 \ud655\uc778 \uc5ec\ubd80. master/service \ub9cc \ubcc0\uacbd \uac00\ub2a5. \uacf5\uac1c \uc751\ub2f5 \uc81c\uc678",
+      "rls": {
+        "write": {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "$and": [
+                {
+                  "data.tenant_id": "{{user.data.tenant_id}}"
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "consent_note": {
+      "type": "string",
+      "description": "\ub3d9\uc758 \uadfc\uac70 \uba54\ubaa8 (\uc608: 2026-09 \uacc4\uc57d\uc11c \uc81c7\uc870 / \uba54\uc77c \ub3d9\uc758). \uacf5\uac1c \uc751\ub2f5 \uc81c\uc678",
+      "rls": {
+        "write": {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "$and": [
+                {
+                  "data.tenant_id": "{{user.data.tenant_id}}"
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
     "is_featured": {
       "type": "boolean",
       "default": false

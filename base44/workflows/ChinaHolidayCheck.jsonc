@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "china_holiday_check",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "check_holidays": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkHolidayConflicts",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\ud734\ubb34 \uc810\uac80",
+            "description": "\uacb9\uce68\u00b7\ub9c8\uac10 \uc548\ub0b4"
+          }
+        }
+      }
+    ]
+  },
+  "description": "\ub9e4\uc77c 08:00 KST \uc9c4\ud589 \uce74\ub4dc\uc758 \ud734\ubb34 \uacb9\uce68, \ubc1c\uc8fc \ub9c8\uac10 \uc548\ub0b4, \ub2e4\uc74c \ud574 \ud734\ubb34 \uc785\ub825 \uc694\uccad\uc744 \uc810\uac80\ud569\ub2c8\ub2e4",
+  "name": "\uc911\uad6d \ud734\ubb34 \uacb9\uce68\u00b7\ubc1c\uc8fc \ub9c8\uac10 \uc810\uac80",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 8 * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

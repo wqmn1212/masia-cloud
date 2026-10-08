@@ -1,0 +1,220 @@
+{
+  "name": "MarketingPost",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "description": "\ub0b4\ubd80 \uad00\ub9ac\uc6a9 \uc81c\ubaa9"
+    },
+    "platforms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "instagram",
+          "youtube"
+        ]
+      }
+    },
+    "post_format": {
+      "type": "string",
+      "enum": [
+        "feed",
+        "carousel",
+        "reel",
+        "video",
+        "short"
+      ],
+      "default": "feed"
+    },
+    "caption": {
+      "type": "string"
+    },
+    "hashtags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "youtube_title": {
+      "type": "string"
+    },
+    "youtube_description": {
+      "type": "string"
+    },
+    "youtube_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "media": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "order": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "utm_campaign": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "pending_approval",
+        "approved",
+        "scheduled",
+        "published"
+      ],
+      "default": "draft",
+      "description": "\uc0c1\ud0dc \ubcc0\uacbd\uc740 marketingPostAction \ud568\uc218\ub85c\ub9cc",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
+    },
+    "scheduled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approved_by": {
+      "type": "string",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "published_urls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

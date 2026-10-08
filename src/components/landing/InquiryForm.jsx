@@ -4,11 +4,15 @@ import { CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { form, formTags, tx } from '@/lib/landingContent';
 import InquiryField from './InquiryField';
+import InquiryInterest from './InquiryInterest';
 import { cn } from '@/lib/utils';
 import FileDropArea from '@/components/files/FileDropArea';
 import { mergeFiles } from '@/lib/clientFileUpload';
+import { getFirstTouch } from '@/lib/utmTracking';
 
-const EMPTY = { company: '', contact_name: '', phone: '', email: '', quantity: '', target_price: '', detail: '' };
+const EMPTY = { company: '', contact_name: '', phone: '', email: '', quantity: '', target_price: '', detail: '', expected_volume: '', product_lines: '', how_found: '' };
+const HOW_FOUND = { ko: 'AEGIS를 알게 된 경로 (선택)', en: 'How did you hear about us? (optional)', zh: '您是如何了解我们的？（选填）' };
+const HOW_FOUND_PH = { ko: '예: 인스타그램, 유튜브, 지인 추천', en: 'e.g. Instagram, YouTube, referral', zh: '例如：Instagram、YouTube、朋友推荐' };
 const ACCEPT = '.step,.stp,.dwg,.pdf,.jpg,.jpeg,.png';
 const MAX_FILES = 5;
 
@@ -28,9 +32,18 @@ export default function InquiryForm({ lang }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [inquiryType, setInquiryType] = useState('sourcing');
 
-  // 전담팀 섹션 CTA 클릭 시 '월 계약 상담'으로 미리 선택
+  const [interest, setInterest] = useState(() =>
+    new URLSearchParams(window.location.search).get('interest') === 'enterprise' ? 'ENTERPRISE' : ''
+  );
+  useEffect(() => { if (interest) setInquiryType('monthly'); }, []);
+
+  // 요금 섹션 CTA — 문자열('monthly') 또는 { type, interest } 객체
   useEffect(() => {
-    const onPick = (e) => setInquiryType(e.detail);
+    const onPick = (e) => {
+      const d = e.detail;
+      if (typeof d === 'string') { setInquiryType(d); setInterest(''); }
+      else { setInquiryType(d.type || 'monthly'); setInterest(d.interest || ''); }
+    };
     window.addEventListener('aegis:inquiry-type', onPick);
     return () => window.removeEventListener('aegis:inquiry-type', onPick);
   }, []);
@@ -54,12 +67,14 @@ export default function InquiryForm({ lang }) {
       await base44.functions.invoke('submitInquiry', {
         ...values,
         inquiry_type: inquiryType,
+        interest: interest || 'UNDECIDED',
         categories: tags,
         attachments,
         lang,
         referrer: document.referrer || '',
+        ...getFirstTouch(),
       });
-      base44.analytics.track({ eventName: 'inquiry_submitted' });
+      base44.analytics.track({ eventName: 'inquiry_submitted', properties: { interest: interest || 'UNDECIDED' } });
       setStatus('done');
     } catch (err) {
       const code = err?.response?.status || err?.status;
@@ -68,7 +83,7 @@ export default function InquiryForm({ lang }) {
     }
   };
 
-  const reset = () => { setValues(EMPTY); setTags([]); setInquiryType('sourcing'); setFiles([]); setStatus('idle'); setErrorMsg(''); };
+  const reset = () => { setValues(EMPTY); setTags([]); setInquiryType('sourcing'); setInterest(''); setFiles([]); setStatus('idle'); setErrorMsg(''); };
 
   if (status === 'done') {
     return (
@@ -88,6 +103,7 @@ export default function InquiryForm({ lang }) {
   return (
     <form onSubmit={handleSubmit} className="w-full lg:w-[520px] lg:flex-none bg-white border border-landing-line rounded-2xl p-[30px] shadow-[0_10px_32px_rgba(23,23,25,.08)]">
       <InquiryTypePicker value={inquiryType} onChange={setInquiryType} lang={lang} />
+      <InquiryInterest interest={interest} onClear={() => setInterest('')} values={values} set={set} lang={lang} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <InquiryField label={tx(form.company, lang)} placeholder={tx(form.companyPh, lang)} value={values.company} onChange={set('company')} required />
         <InquiryField label={tx(form.name, lang)} placeholder={tx(form.namePh, lang)} value={values.contact_name} onChange={set('contact_name')} required />
@@ -124,6 +140,7 @@ export default function InquiryForm({ lang }) {
 
       <div className="mt-4">
         <InquiryField label={tx(form.detail, lang)} placeholder={tx(form.detailPh, lang)} value={values.detail} onChange={set('detail')} textarea />
+        <InquiryField label={HOW_FOUND[lang] || HOW_FOUND.ko} placeholder={HOW_FOUND_PH[lang] || HOW_FOUND_PH.ko} value={values.how_found} onChange={set('how_found')} />
       </div>
 
       <FileDropArea className="mt-3.5" onFiles={addFiles} disabled={status === 'sending'}>

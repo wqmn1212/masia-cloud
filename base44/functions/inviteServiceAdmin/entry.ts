@@ -68,7 +68,7 @@ export default async function(req) {
         account_tier: 'service', tenant_id: tenant.id, is_active: true, account_label: team_name.trim(),
       });
       await base44.asServiceRole.entities.Tenant.update(tenant.id, { master_user_id: found.id });
-      const passwordSetup = await requestPasswordSetup(base44, normalizedEmail, send_password_setup);
+      const passwordSetup = await requestPasswordSetup(base44, normalizedEmail, send_password_setup, true, tenant.name);
       return Response.json({ ok: true, applied: true, tenant, password_setup: passwordSetup });
     }
 

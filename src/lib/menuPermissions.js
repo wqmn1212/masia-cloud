@@ -15,6 +15,7 @@ export const TEAM_MENU_OPTIONS = [
   { path: '/factories', label: '공장 관리' },
   { path: '/agent-quotes', label: '에이전트 견적' },
   { path: '/requirements', label: '요구사항' },
+  { path: '/china-holidays', label: '중국 휴무' },
   { path: '/clients', label: '고객사 관리' },
   { path: '/timeline', label: '생산 일정' },
   { path: '/as-requests', label: 'A/S 요청' },
@@ -28,7 +29,7 @@ const matchesPath = (allowedPath, pathname) => {
   return pathname === allowed || pathname.startsWith(`${allowed}/`);
 };
 
-const SERVICE_ADMIN_PATHS = ['/team', '/user-permissions'];
+const SERVICE_ADMIN_PATHS = ['/team', '/user-permissions', '/marketing'];
 
 // 고객사(client) 등급 전용 메뉴 — 대시보드 · 소싱 칸반보드 읽기 전용
 export const CLIENT_MENU_OPTIONS = [
@@ -52,7 +53,7 @@ export const CLIENT_CARD_TABS = ['overview', 'quotation', 'chat', 'settlement'];
 export const canAccessPath = (user, pathname) => {
   if (!user) return false;
   // Static onboarding documentation is shared by internal team members only.
-  if (pathname === '/service-guide') return ['master', 'service', 'sub'].includes(user.account_tier);
+  if (pathname === '/service-guide' || pathname === '/my-work') return ['master', 'service', 'sub'].includes(user.account_tier);
   if (user.account_tier === 'master') return true;
   if (user.account_tier === 'service') {
     return [...TEAM_MENU_OPTIONS.map(item => item.path), ...SERVICE_ADMIN_PATHS]

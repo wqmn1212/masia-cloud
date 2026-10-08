@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -59,6 +59,7 @@ export default function TaskBoard() {
   const [candidateFactories, setCandidateFactories] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
   const [inboxOpen, setInboxOpen] = useState(false);
+  const [linkedCardId, setLinkedCardId] = useState(() => new URLSearchParams(window.location.search).get('card'));
   const { query: search, setQuery: setSearch } = useSearch();
   const { lang, t, content } = useLanguage();
   const [filterCategory, setFilterCategory] = useState('ALL');
@@ -80,6 +81,13 @@ export default function TaskBoard() {
     queryKey: ['task-cards'],
     queryFn: () => base44.entities.TaskCard.list('-created_date', 200),
   });
+  // 알림 링크(/task-board?card=xxx)로 진입한 경우 해당 카드를 바로 연다
+  useEffect(() => {
+    if (!linkedCardId || isLoading) return;
+    const found = cards.find(c => c.id === linkedCardId);
+    if (found) { setSelectedCard(found); setLinkedCardId(null); return; }
+    base44.entities.TaskCard.get(linkedCardId).then(c => c && setSelectedCard(c)).catch(() => {}).finally(() => setLinkedCardId(null));
+  }, [linkedCardId, isLoading, cards]);
   const { data: paymentStages = [] } = useQuery({
     queryKey: ['payment-stages-all'],
     queryFn: () => base44.entities.PaymentStage.list('-created_date', 1000),
@@ -301,7 +309,15 @@ export default function TaskBoard() {
                                                      </p>
                                                    )}
 
-                              <div className="flex items-center gap-2 text-[10px] text-muted-foreground pt-0.5">
+                                                   {card.current_milestone_label && (
+                                                   <div className="flex items-center gap-1.5 text-[10px]">
+                                                   <span className="px-1.5 py-0.5 rounded bg-muted text-foreground truncate">▸ {(lang === 'zh' && card.current_milestone_label_cn) || card.current_milestone_label}</span>
+                                                   {card.delay_days > 0 && <span className="px-1.5 py-0.5 rounded bg-destructive/15 text-destructive font-semibold">+{card.delay_days}{lang === 'zh' ? '天' : '일'}</span>}
+                                                   {card.overdue_steps > 0 && <span className="px-1.5 py-0.5 rounded bg-chart-3/15 text-chart-3 font-semibold">{lang === 'zh' ? '当前延误' : '지금 지연 중'}</span>}
+                                                   </div>
+                                                   )}
+
+                                                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground pt-0.5">
                                 <MessageSquare className="w-3 h-3" />
                                 <span>채팅</span>
                                 <Paperclip className="w-3 h-3 ml-1" />

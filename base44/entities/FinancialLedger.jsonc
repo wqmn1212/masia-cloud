@@ -53,6 +53,54 @@
       "type": "string",
       "description": "\uc6d0\ubcf8 \ud30c\uc77c URL"
     },
+    "quotation_id": {
+      "type": "string",
+      "description": "(\ub808\uac70\uc2dc) \uccab \ubc88\uc9f8 \uae30\uc900 \uacac\uc801\uc11c"
+    },
+    "quotation_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\uc815\uc0b0 \uae30\uc900 \uacac\uc801\uc11c\ub4e4 (\uac19\uc740 \uce74\ub4dc\uc758 \uc2b9\uc778\ub41c Quotation)"
+    },
+    "quote_lines": {
+      "type": "array",
+      "description": "\uc120\ud0dd \uacac\uc801\uc11c \ud56d\ubaa9 \uc2a4\ub0c5\uc0f7",
+      "items": {
+        "type": "object",
+        "properties": {
+          "quotation_id": {
+            "type": "string"
+          },
+          "option_name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "margin_percent": {
+            "type": "number"
+          },
+          "exchange_rate": {
+            "type": "number"
+          },
+          "total_usd": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "quote_amount_usd": {
+      "type": "number",
+      "description": "\uc120\ud0dd \uacac\uc801\uc11c \ucd5c\uc885 \uc81c\uc548\uac00 \ud569\uacc4 (USD)"
+    },
     "client_to_factory_usd": {
       "type": "number",
       "description": "[STEP1] \uace0\uac1d\uc774 \uacf5\uc7a5\uc5d0 \uc9c1\uc811 \uc1a1\uae08\ud55c \uae08\uc561 (USD)"
@@ -93,9 +141,14 @@
       "type": "number",
       "description": "[STEP3] \ub2f9\uc6d4 \ud504\ub85c\uc81d\ud2b8 \uc2e4\uc81c \ub9c8\uc9c4 \ucd1d\ud569 (RMB)"
     },
+    "hq_share_percent": {
+      "type": "number",
+      "default": 50,
+      "description": "HQ \uc815\uc0b0 \ube44\uc728 (%)"
+    },
     "hq_final_share_rmb": {
       "type": "number",
-      "description": "[STEP3] \ubcf8\uc0ac \ucd5c\uc885 \uc218\ub839 50% \ubaab (RMB, \uc790\ub3d9\uacc4\uc0b0)"
+      "description": "[STEP3] \ubcf8\uc0ac \ucd5c\uc885 \uc218\ub839 \ubaab (RMB, \ube44\uc728 + \uc870\uc728 \uc790\ub3d9\uacc4\uc0b0)"
     },
     "adjustment_rmb": {
       "type": "number",

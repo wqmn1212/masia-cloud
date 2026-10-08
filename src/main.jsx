@@ -2,6 +2,9 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
+import { captureFirstTouch } from '@/lib/utmTracking'
+
+captureFirstTouch()
 
 // Defensively unregister any service workers and clear caches that could be
 // serving stale dev chunks (which causes two React copies / invalid hook calls).

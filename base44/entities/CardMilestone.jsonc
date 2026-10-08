@@ -1,0 +1,194 @@
+{
+  "name": "CardMilestone",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string"
+    },
+    "card_id": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "template_key": {
+      "type": "string",
+      "description": "\uc0ac\uc6a9\ud55c \ud15c\ud50c\ub9bf"
+    },
+    "seq": {
+      "type": "number"
+    },
+    "key": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "label_cn": {
+      "type": "string"
+    },
+    "default_days": {
+      "type": "number",
+      "description": "\uc9c1\uc804 \ub2e8\uacc4 \uc774\ud6c4 \uadfc\ubb34\uc77c"
+    },
+    "baseline_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uae30\uc900 \uacc4\ud68d\uc77c (\ud655\uc815 \uc2dc \uc7a0\uae40)"
+    },
+    "planned_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\ud604\uc7ac \uacc4\ud68d\uc77c"
+    },
+    "actual_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc2e4\uc81c \uc644\ub8cc\uc77c"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "done",
+        "skipped"
+      ],
+      "default": "pending"
+    },
+    "owner_id": {
+      "type": "string",
+      "description": "\ub2e8\uacc4 \ub2f4\ub2f9\uc790 User ID"
+    },
+    "owner_name": {
+      "type": "string",
+      "description": "\ub2e8\uacc4 \ub2f4\ub2f9\uc790 \uc774\ub984 (\ud45c\uc2dc\uc6a9)"
+    },
+    "client_visible": {
+      "type": "boolean",
+      "default": true
+    },
+    "needs_qc_report": {
+      "type": "boolean",
+      "default": false
+    },
+    "qc_report_id": {
+      "type": "string"
+    },
+    "delay_reason": {
+      "type": "string"
+    },
+    "delay_reason_public": {
+      "type": "boolean",
+      "default": false
+    },
+    "overdue_notified_on": {
+      "type": "string",
+      "description": "(\ub808\uac70\uc2dc) \uae30\ud55c \ucd08\uacfc \uc54c\ub9bc \ubc1c\uc1a1\uc77c"
+    },
+    "overdue_notified_for": {
+      "type": "string",
+      "description": "\uae30\ud55c \ucd08\uacfc \uc54c\ub9bc\uc744 \ubcf4\ub0b8 \uacc4\ud68d\uc77c \u2014 \uacc4\ud68d\uc77c\uc774 \ubc14\ub00c\uba74 \ub2e4\uc2dc \uc54c\ub9bc"
+    }
+  },
+  "required": [
+    "card_id",
+    "seq",
+    "label"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

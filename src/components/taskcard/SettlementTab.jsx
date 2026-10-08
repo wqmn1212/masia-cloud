@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Save, TrendingUp, DollarSign } from 'lucide-react';
+import SettlementQuotePicker from './SettlementQuotePicker';
+import SettlementQuoteLines from './SettlementQuoteLines';
 
 const STATUS_META = {
   PENDING:           { label: '대기 중',         color: 'bg-muted text-muted-foreground' },
@@ -88,11 +90,40 @@ export default function SettlementTab({ card, user }) {
 
   const setF = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
+  // 선택한 견적서 금액을 그대로 정산 기준으로 채운다
+  const pickQuote = (ids, quotes) => {
+    const sum = (k) => quotes.reduce((s, q) => s + (Number(q[k]) || 0), 0);
+    const q = quotes[0];
+    setForm(f => ({
+      ...f,
+      quotation_ids: ids,
+      quote_lines: quotes.flatMap(x => (x.quote_options || []).map(o => ({
+        quotation_id: x.id,
+        option_name: o.option_name || '',
+        quantity: Number(o.quantity) || 0,
+        unit_price: Number(o.unit_price ?? o.unit_price_usd) || 0,
+        currency: o.currency || 'USD',
+        margin_percent: Number(o.margin_percent) || 0,
+        exchange_rate: Number(x.exchange_rate_usd_cny) || 0,
+        total_usd: Number(o.total_usd) || 0,
+      }))),
+      quotation_id: ids[0] || '',
+      quote_amount_usd: sum('final_price_usd'),
+      client_to_factory_usd: sum('final_price_usd'),
+      factory_base_cost_usd: sum('options_total_usd'),
+      actual_margin_rmb: Number(quotes.reduce((s, x) => s + ((Number(x.final_price_usd) || 0) - (Number(x.options_total_usd) || 0)) * (Number(x.exchange_rate_usd_cny) || 7.2), 0).toFixed(2)),
+      exchange_rate: q?.exchange_rate_usd_cny || f.exchange_rate,
+      incoterms: ['EXW', 'FOB_SHANGHAI', 'FOB_GUANGZHOU', 'CIF'].includes(q?.incoterms) ? q.incoterms : f.incoterms,
+      machine_description: f.machine_description || quotes.map(x => x.product_name).filter(Boolean).join(' + '),
+    }));
+  };
+
   const handleSave = () => {
     if (!form) return;
     const payload = {
       ...form,
       card_id: card.id,
+      tenant_id: form.tenant_id || card.tenant_id,
       factory_name: form.factory_name || card.factory_name || '',
       client_name: form.client_name || card.client_name || '',
       client_to_factory_usd: Number(form.client_to_factory_usd) || 0,
@@ -103,6 +134,10 @@ export default function SettlementTab({ card, user }) {
       masir_fee_value: Number(form.masir_fee_value) || 0,
       actual_margin_rmb: Number(form.actual_margin_rmb) || 0,
       adjustment_rmb: Number(form.adjustment_rmb) || 0,
+      quote_amount_usd: Number(form.quote_amount_usd) || 0,
+      hq_share_percent: sharePct,
+      expected_kickback_usd: Number(expectedKickback),
+      hq_final_share_rmb: Number(hqShare),
     };
     if (form.id) {
       updateMutation.mutate({ id: form.id, data: payload });
@@ -112,11 +147,12 @@ export default function SettlementTab({ card, user }) {
   };
 
   // 자동 계산
+  const sharePct = form && form.hq_share_percent !== '' && form.hq_share_percent != null ? Number(form.hq_share_percent) : 50;
   const expectedKickback = form
     ? ((Number(form.client_to_factory_usd) || 0) - (Number(form.factory_base_cost_usd) || 0)).toFixed(2)
     : '0.00';
   const hqShare = form
-    ? ((Number(form.actual_margin_rmb) || 0) / 2 + (Number(form.adjustment_rmb) || 0)).toFixed(2)
+    ? ((Number(form.actual_margin_rmb) || 0) * sharePct / 100 + (Number(form.adjustment_rmb) || 0)).toFixed(2)
     : '0.00';
 
   if (isLoading) return <div className="h-40 flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
@@ -175,6 +211,9 @@ export default function SettlementTab({ card, user }) {
           </div>
         </div>
       )}
+
+      <SettlementQuotePicker cardId={card.id} value={form.quotation_ids || (form.quotation_id ? [form.quotation_id] : [])} onPick={pickQuote} />
+      <SettlementQuoteLines lines={form.quote_lines} />
 
       {/* STEP 1 */}
       <div className="space-y-2">
@@ -239,6 +278,10 @@ export default function SettlementTab({ card, user }) {
             <Input type="number" value={form.actual_margin_rmb || ''} onChange={e => setF('actual_margin_rmb', e.target.value)} className="h-8 text-xs" />
           </div>
           <div>
+            <Label className="text-xs">HQ 정산 비율 (%)</Label>
+            <Input type="number" min="0" max="100" value={form.hq_share_percent ?? 50} onChange={e => setF('hq_share_percent', e.target.value)} className="h-8 text-xs" />
+          </div>
+          <div>
             <Label className="text-xs">조율 금액 (RMB, +/-)</Label>
             <Input type="number" value={form.adjustment_rmb || ''} onChange={e => setF('adjustment_rmb', e.target.value)} className="h-8 text-xs" />
           </div>
@@ -256,7 +299,7 @@ export default function SettlementTab({ card, user }) {
         {(form.actual_margin_rmb > 0) && (
           <div className="flex items-center gap-2 px-2 py-1.5 bg-primary/10 rounded-lg text-xs">
             <TrendingUp className="w-3.5 h-3.5 text-primary" />
-            <span className="text-muted-foreground">HQ 최종 수령 (50% + 조율):</span>
+            <span className="text-muted-foreground">HQ 최종 수령 ({sharePct}% + 조율):</span>
             <span className="font-bold text-primary">¥{Number(hqShare).toLocaleString()}</span>
           </div>
         )}

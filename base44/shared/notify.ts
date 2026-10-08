@@ -4,6 +4,20 @@
 export const FROM_NAME = 'AEGIS';
 
 const DEBOUNCE_MS = 5 * 60 * 1000;
+// 매번 이메일을 보내는 알림 (5분 규칙 제외)
+const ALWAYS_EMAIL = ['quote_published', 'payment_confirmed', 'schedule_changed'];
+
+// 공통 이메일 본문 틀: 본문 + 프로젝트 + 바로가기 링크 + 안내
+export function emailBody(text, cardTitle, link) {
+  const base = (Deno.env.get('APP_BASE_URL') || 'https://aegistrade.biz').replace(/\/$/, '');
+  const lines = [text || ''];
+  const meta = [];
+  if (cardTitle) meta.push(`프로젝트: ${cardTitle}`);
+  if (link) meta.push(`바로 확인하기: ${base}${link}`);
+  if (meta.length) lines.push('', ...meta);
+  lines.push('', 'AEGIS Cloud 알림 메일입니다. 이 메일에는 회신하지 마시고, 문의는 프로젝트 카드의 문의 탭을 이용해 주세요.');
+  return lines.join('\n');
+}
 
 // 같은 수신자·카드·타입의 미읽음 알림이 최근에 있으면 이메일만 생략한다 (앱 내 알림은 항상 생성)
 async function shouldEmail(svc, recipientId, type, cardId) {
@@ -21,14 +35,16 @@ async function shouldEmail(svc, recipientId, type, cardId) {
 /**
  * @param svc  base44.asServiceRole
  * @param recipients  User 레코드 배열
- * @param payload  { type, title, body, link, task_card_id }
+ * @param payload  { type, title, body, link, task_card_id, card_title }
+ * @param options  { email: false } 이면 이메일 생략 (앱 알림만)
  */
-export async function notifyUsers(svc, recipients, payload) {
+export async function notifyUsers(svc, recipients, payload, options = {}) {
   const targets = (recipients || []).filter((u) => u?.id && u.is_active !== false);
   if (targets.length === 0) return 0;
 
   for (const u of targets) {
-    const emailAllowed = await shouldEmail(svc, u.id, payload.type, payload.task_card_id);
+    const emailAllowed = options.email !== false &&
+      (ALWAYS_EMAIL.includes(payload.type) || await shouldEmail(svc, u.id, payload.type, payload.task_card_id));
 
     await svc.entities.Notification.create({
       tenant_id: u.tenant_id || '',
@@ -48,7 +64,7 @@ export async function notifyUsers(svc, recipients, payload) {
           to: u.email,
           from_name: FROM_NAME,
           subject: payload.title,
-          body: `${payload.body || payload.title}\n\nAEGIS Cloud 에서 확인하세요.`,
+          body: emailBody(payload.body || payload.title, payload.card_title, payload.link),
         });
       } catch (_e) { /* 메일 실패가 알림 생성을 막지 않는다 */ }
     }

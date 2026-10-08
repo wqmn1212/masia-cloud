@@ -32,6 +32,8 @@ export default async function (req) {
         target_machine_category: c.target_machine_category || '',
         category_label: categoryLabels.get(c.target_machine_category) || '',
         updated_date: c.updated_date,
+        // 담당자가 안내를 보낸 공휴일 겹침만 (공장 개별 휴무 제외)
+        holiday_badges: (c.holiday_conflicts || []).filter((h) => h.kind === 'holiday' && h.client_notified_at).map((h) => ({ name: h.name, start: h.start, end: h.end })),
       })),
     });
   } catch (error) {
