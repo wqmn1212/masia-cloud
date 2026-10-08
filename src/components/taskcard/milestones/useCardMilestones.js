@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { MILESTONE_TEMPLATES, buildPlan, cardSummary, deliveryMilestone, countWorkdays } from '@/lib/milestones';
-import { addWorkdays, isWorkday } from '@/lib/chinaHolidays';
+import { MILESTONE_TEMPLATES, buildPlan, cardSummary, deliveryMilestone } from '@/lib/milestones';
 
 const askReason = (fallback) => fallback || window.prompt('예정 납품일이 바뀝니다. 변경 사유를 입력하세요 (고객 공개 카드는 고객에게 안내됩니다).') || '마일스톤 일정 조정';
 
@@ -42,31 +41,35 @@ export default function useCardMilestones(card) {
 
   const confirmed = !!card.plan_confirmed_at;
 
+  // 수정·완료는 서버 함수가 권한(담당자/관리자)과 QC 보고서를 검사한다
+  const act = async (payload) => {
+    const res = await base44.functions.invoke('cardMilestoneAction', { card_id: card.id, ...payload }).catch((e) => e.response || { data: { error: e.message } });
+    if (res.data?.error) { window.alert(res.data.error); return null; }
+    return res.data;
+  };
+
   const update = async (m, patch) => {
-    await base44.entities.CardMilestone.update(m.id, patch);
-    if ('planned_date' in patch || 'status' in patch) await syncCard(list.map((x) => (x.id === m.id ? { ...x, ...patch } : x)), confirmed);
+    const r = await act({ action: 'update', milestone_id: m.id, patch });
+    if (!r) return;
+    if ('planned_date' in patch) await syncCard(r.list, confirmed);
     else qc.invalidateQueries({ queryKey: key });
   };
 
   const confirm = async () => {
     await base44.entities.CardMilestone.bulkUpdate(list.map((m) => ({ id: m.id, baseline_date: m.planned_date })));
-    await base44.entities.TaskCard.update(card.id, { plan_confirmed_at: new Date().toISOString() });
+    await base44.entities.TaskCard.update(card.id, { plan_confirmed_at: new Date().toISOString(), delivery_date_mode: 'MANUAL' });
     await syncCard(list.map((m) => ({ ...m, baseline_date: m.planned_date })), true, '마일스톤 계획 확정');
   };
 
   // 완료: 계획보다 늦으면 뒤 단계를 같은 근무일 수만큼 민다
   const complete = async (m, actual, shift, qcId) => {
-    if (qcId) await base44.entities.CardMilestone.update(m.id, { qc_report_id: qcId });
-    const late = m.planned_date && actual > m.planned_date ? countWorkdays(m.planned_date, actual, (d) => isWorkday(d, holidays)) : 0;
-    const next = list.map((x) => {
-      if (x.id === m.id) return { ...x, status: 'done', actual_date: actual };
-      if (shift && late && x.seq > m.seq && x.status !== 'done' && x.planned_date) return { ...x, planned_date: addWorkdays(x.planned_date, late, holidays) };
-      return x;
-    });
-    await base44.entities.CardMilestone.bulkUpdate(next.filter((x) => x.id === m.id || (x.planned_date !== list.find((o) => o.id === x.id).planned_date))
-      .map((x) => ({ id: x.id, status: x.status, actual_date: x.actual_date || null, planned_date: x.planned_date })));
-    await syncCard(next, confirmed, late ? m.delay_reason || null : undefined);
+    const r = await act({ action: 'complete', milestone_id: m.id, actual_date: actual, shift, qc_report_id: qcId || null });
+    if (!r) return false;
+    await syncCard(r.list, confirmed, r.late ? m.delay_reason || null : undefined);
+    return true;
   };
+
+  const { data: team = [] } = useQuery({ queryKey: ['milestone-team', card.id], queryFn: async () => (await act({ action: 'team' }))?.users || [] });
 
   const reset = async () => {
     await base44.entities.CardMilestone.deleteMany({ card_id: card.id });
@@ -77,5 +80,5 @@ export default function useCardMilestones(card) {
     refresh();
   };
 
-  return { list, isLoading, create, update, confirm, complete, reset };
+  return { list, isLoading, create, update, confirm, complete, reset, team, act };
 }

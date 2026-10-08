@@ -40,7 +40,8 @@ export function buildPlan(steps, startDate, holidays) {
 
 export const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
 
-export const todayStr = () => new Date().toISOString().slice(0, 10);
+// 화면·서버 공통 "오늘" = 한국 날짜
+export const todayStr = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
 
 // 납품 단계: key 'delivery', 없으면 마지막 단계 (base44/shared/milestoneSummary.ts 와 같은 규칙)
 export function deliveryMilestone(list) {
