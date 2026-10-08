@@ -76,7 +76,8 @@ export default async function(req) {
       lines = [`${label} ${stage.percentage}%: ${stage.approval_status === 'APPROVED' ? '입금 확인' : '미확인'} → ${input.confirmed ? '입금 확인' : '확인 취소'}`];
       if (stage.stage_type === 'DOWN_PAYMENT') {
         patch.advance_paid_date = input.confirmed ? input.paid_date : '';
-        if (card.delivery_date_mode !== 'MANUAL') patch.delivery_date = deliveryDate(patch.advance_paid_date, card.delivery_business_days, holidays);
+        // 마일스톤 카드의 납품일은 납품 단계가 정한다
+        if (card.delivery_date_mode !== 'MANUAL' && !card.milestone_template_id) patch.delivery_date = deliveryDate(patch.advance_paid_date, card.delivery_business_days, holidays);
         lines.push(...scheduleDiff(card, { ...card, ...patch }));
       }
       await svc.entities.PaymentStage.update(stage.id, { tenant_id: card.tenant_id, approval_status: next, paid_date: input.confirmed ? input.paid_date : '', ...(input.confirmed ? { approved_at: new Date().toISOString(), approved_by_id: user.id, approved_by_name: user.full_name || user.email } : {}) });
