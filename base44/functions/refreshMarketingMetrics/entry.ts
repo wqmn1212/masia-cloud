@@ -54,6 +54,41 @@ export default async function(req) {
       results.youtube = { ok: true, message: `영상 ${count}건 갱신` };
     }
 
+    // Instagram — 좋아요·댓글 (도달 등 인사이트는 권한 미보유로 미제공)
+    const igConns = await db.SocialConnection.filter({ platform: 'instagram', ...scope });
+    const igConn = igConns[0] || await db.SocialConnection.create({ platform: 'instagram', tenant_id: user.tenant_id, status: 'connected' });
+    const igSince = igConn.connected_at || igConn.created_date;
+    try {
+      const { accessToken } = await base44.asServiceRole.connectors.getConnection('instagram');
+      const res = await fetch(`https://graph.instagram.com/me/media?fields=id,permalink,like_count,comments_count&limit=100&access_token=${accessToken}`, { signal: AbortSignal.timeout(15000) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error?.message || `Instagram API ${res.status}`);
+      const code = (u) => (String(u).match(/\/(?:p|reel|tv)\/([\w-]+)/) || [])[1];
+      const byCode = Object.fromEntries((json.data || []).map((m) => [code(m.permalink), m]));
+      const posts = await db.MarketingPost.filter({ status: 'published', ...scope }, '-published_at', 200);
+      const date = kstToday();
+      let count = 0;
+      for (const p of posts.filter((x) => x.published_at && x.published_at >= igSince)) {
+        for (const u of (p.published_urls || []).filter((x) => x.platform === 'instagram')) {
+          const m = byCode[code(u.url)];
+          if (!m) continue;
+          const data = { tenant_id: p.tenant_id, post_id: p.id, platform: 'instagram', metric_date: date, likes: Number(m.like_count || 0), comments: Number(m.comments_count || 0) };
+          const [existing] = await db.MarketingMetric.filter({ post_id: p.id, platform: 'instagram', metric_date: date });
+          if (existing) await db.MarketingMetric.update(existing.id, data); else await db.MarketingMetric.create(data);
+          count++;
+        }
+      }
+      results.instagram = { ok: true, message: `게시물 ${count}건 갱신` };
+    } catch (e) {
+      results.instagram = { ok: false, message: `인스타그램 갱신 실패: ${e.message}` };
+    }
+    await db.SocialConnection.update(igConn.id, {
+      status: results.instagram.ok ? 'connected' : 'not_connected',
+      connected_at: igSince,
+      last_refreshed_at: new Date().toISOString(),
+      last_refresh_message: results.instagram.message,
+    });
+
     await db.SocialConnection.update(conn.id, {
       status: results.youtube.ok ? 'connected' : 'not_connected',
       connected_at: since,

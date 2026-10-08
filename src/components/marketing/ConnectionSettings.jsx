@@ -31,7 +31,7 @@ export default function ConnectionSettings({ user }) {
             <p className="text-xs text-muted-foreground">
               {pl === 'youtube'
                 ? '공개 통계(조회·좋아요·댓글)를 API 키로 수집합니다. 도달·시청시간은 채널 분석 권한이 필요해 미제공입니다.'
-                : '인스타그램 계정 연결 승인이 아직 없어 데이터를 수집하지 않습니다.'}
+                : '연결된 계정의 좋아요·댓글을 수집합니다. 도달·조회는 인사이트 권한이 없어 미제공입니다.'}
               {c.last_refreshed_at && ` · 최근 갱신 ${new Date(c.last_refreshed_at).toLocaleString('ko-KR')} (${c.last_refresh_message})`}
             </p>
             <Input placeholder="계정명 / 핸들" defaultValue={c.account_name} disabled={!isCeo} onBlur={(e) => e.target.value !== (c.account_name || '') && saveField(pl, 'account_name', e.target.value)} />
