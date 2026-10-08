@@ -28,6 +28,18 @@
       ],
       "default": "manual"
     },
+    "connected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\uc774 \uc2dc\uc810 \uc774\ud6c4 \uac8c\uc2dc\ubb3c\ub9cc \uc218\uc9d1"
+    },
+    "last_refreshed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_refresh_message": {
+      "type": "string"
+    },
     "note": {
       "type": "string"
     }
