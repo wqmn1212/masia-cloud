@@ -89,7 +89,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
           <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto gap-0.5">
             <TabsTrigger value="overview" className="text-xs sm:text-sm py-1.5">{t('card.tab.overview', '오버뷰')}</TabsTrigger>
-            <TabsTrigger value="milestones" className="text-xs sm:text-sm py-1.5">일정</TabsTrigger>
+            <TabsTrigger value="milestones" className="text-xs sm:text-sm py-1.5">{lang === 'zh' ? '进度' : '일정'}</TabsTrigger>
             <TabsTrigger value="tasks" className="text-xs sm:text-sm py-1.5">{t('card.tab.tasks', '업무')}</TabsTrigger>
             <TabsTrigger value="meetings" className="text-xs sm:text-sm py-1.5">{t('card.tab.meetings', '미팅·분석')}</TabsTrigger>
             <TabsTrigger value="quotation" className="text-xs sm:text-sm py-1.5">{t('card.tab.quotation', '견적')}</TabsTrigger>
