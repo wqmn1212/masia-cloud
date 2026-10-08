@@ -10,6 +10,11 @@ export const NOTIFICATION_META = {
   file_shared: { label: '파일 공유', icon: '📎' },
   requirements_updated: { label: '요구사항 변경', icon: '📝' },
   marketing_comment: { label: '마케팅 새 댓글', icon: '💬' },
+  sample_submitted: { label: '샘플 사진 등록', icon: '📷' },
+  sample_feedback: { label: '샘플 의견 도착', icon: '🗨️' },
+  holiday_conflict: { label: '중국 휴무 겹침', icon: '🏮' },
+  holiday_notice: { label: '휴무 전 발주 안내', icon: '🗓️' },
+  reorder_due: { label: '재주문 시점', icon: '🔁' },
 };
 
 export const notificationMeta = (type) => NOTIFICATION_META[type] || { label: '알림', icon: '🔔' };

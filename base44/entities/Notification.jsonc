@@ -27,7 +27,12 @@
         "schedule_changed",
         "file_shared",
         "requirements_updated",
-        "marketing_comment"
+        "marketing_comment",
+        "sample_submitted",
+        "sample_feedback",
+        "holiday_conflict",
+        "holiday_notice",
+        "reorder_due"
       ],
       "description": "\uc54c\ub9bc \uc720\ud615"
     },

@@ -124,6 +124,40 @@
       "type": "boolean",
       "default": false,
       "description": "\uc911\uad6d\uc5b4 \uc218\ub3d9 \ud655\uc815 \u2014 \uc790\ub3d9 \ubc88\uc5ed \ub36e\uc5b4\uc4f0\uae30 \ubc29\uc9c0"
+    },
+    "holiday_conflicts": {
+      "type": "array",
+      "description": "\uc0dd\uc0b0 \uae30\uac04\uacfc \uacb9\uce58\ub294 \ud734\ubb34 (\uc911\ubcf5 \uc54c\ub9bc \ubc29\uc9c0)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source_id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "holiday",
+              "closure"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "start": {
+            "type": "string"
+          },
+          "end": {
+            "type": "string"
+          },
+          "notified_at": {
+            "type": "string"
+          },
+          "client_notified_at": {
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "required": [

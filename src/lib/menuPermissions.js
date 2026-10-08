@@ -15,6 +15,7 @@ export const TEAM_MENU_OPTIONS = [
   { path: '/factories', label: '공장 관리' },
   { path: '/agent-quotes', label: '에이전트 견적' },
   { path: '/requirements', label: '요구사항' },
+  { path: '/china-holidays', label: '중국 휴무' },
   { path: '/clients', label: '고객사 관리' },
   { path: '/timeline', label: '생산 일정' },
   { path: '/as-requests', label: 'A/S 요청' },

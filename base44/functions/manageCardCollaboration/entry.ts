@@ -9,7 +9,7 @@ export default async function(req) {
     if (!user) return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     if (user.is_active === false || !['master', 'service', 'sub'].includes(user.account_tier)) return Response.json({ error: '직원만 변경할 수 있습니다.' }, { status: 403 });
     const input = await req.json();
-    if (!['initialize', 'schedule', 'payment', 'retry_email'].includes(input.action) || typeof input.card_id !== 'string' || !input.card_id) return Response.json({ error: '카드와 작업을 지정하세요.' }, { status: 400 });
+    if (!['initialize', 'schedule', 'payment', 'retry_email', 'notify_holiday'].includes(input.action) || typeof input.card_id !== 'string' || !input.card_id) return Response.json({ error: '카드와 작업을 지정하세요.' }, { status: 400 });
     const svc = base44.asServiceRole;
     const card = await svc.entities.TaskCard.get(input.card_id);
     if (!card || !card.tenant_id || (user.account_tier !== 'master' && card.tenant_id !== user.tenant_id)) return Response.json({ error: '카드 접근 권한이 없습니다.' }, { status: 403 });
@@ -25,12 +25,25 @@ export default async function(req) {
       if (missing.length) await svc.entities.PaymentStage.bulkCreate(missing.map(stage_type => ({ tenant_id: card.tenant_id, card_id: card.id, stage_type, percentage: 50, approval_status: 'PENDING' })));
       return Response.json({ saved: true });
     }
+    if (input.action === 'notify_holiday') {
+      // 담당자가 조정 납기를 확인한 뒤 고객에게 공휴일 겹침을 안내 (공장 개별 휴무는 고객 비공개)
+      const pending = (card.holiday_conflicts || []).filter(c => c.kind === 'holiday' && !c.client_notified_at);
+      if (!pending.length) return Response.json({ error: '안내할 휴무 겹침이 없습니다.' }, { status: 400 });
+      if (card.client_visible !== true || !card.client_id) return Response.json({ error: '고객 공개 카드만 안내할 수 있습니다.' }, { status: 400 });
+      const users = await clientUsersOfCompany(svc, card.client_id);
+      const names = pending.map(c => `${c.name}(${c.start}~${c.end})`).join(', ');
+      await notifyUsers(svc, users, { type: 'holiday_conflict', title: `[AEGIS] ${card.title} 중국 휴무 일정 안내`, body: `예정 납기가 중국 ${names}과 겹칩니다.\n조정된 예정 납품일: ${card.delivery_date || '미정'}`, link: `/client/board?card=${card.id}`, task_card_id: card.id, card_title: card.title });
+      const now = new Date().toISOString();
+      await svc.entities.TaskCard.update(card.id, { holiday_conflicts: card.holiday_conflicts.map(c => pending.includes(c) ? { ...c, client_notified_at: now } : c) });
+      return Response.json({ sent: users.length });
+    }
+    const holidays = await svc.entities.ChinaHoliday.list('-start_date', 200);
     if (typeof input.reason !== 'string' || !input.reason.trim() || input.reason.length > 1000) return Response.json({ error: '변경 사유를 1000자 이내로 입력하세요.' }, { status: 400 });
     let lines = [], patch = {}, title = '', kind = '';
     if (input.action === 'schedule') {
       if (!input.expected_updated_date || input.expected_updated_date !== card.updated_date) return Response.json({ error: '다른 변경이 먼저 저장되었습니다. 최신 내용을 다시 불러오세요.' }, { status: 409 });
       if (!input.data || typeof input.data !== 'object' || Array.isArray(input.data)) return Response.json({ error: '일정을 입력하세요.' }, { status: 400 });
-      patch = schedulePatch(input.data);
+      patch = schedulePatch(input.data, holidays);
       lines = scheduleDiff(card, patch);
       if (!lines.length) return Response.json({ saved: true, unchanged: true });
       title = `[AEGIS] ${card.title} 일정 변경`; kind = 'SCHEDULE';
@@ -46,7 +59,7 @@ export default async function(req) {
       lines = [`${label} ${stage.percentage}%: ${stage.approval_status === 'APPROVED' ? '입금 확인' : '미확인'} → ${input.confirmed ? '입금 확인' : '확인 취소'}`];
       if (stage.stage_type === 'DOWN_PAYMENT') {
         patch.advance_paid_date = input.confirmed ? input.paid_date : '';
-        if (card.delivery_date_mode !== 'MANUAL') patch.delivery_date = deliveryDate(patch.advance_paid_date, card.delivery_business_days);
+        if (card.delivery_date_mode !== 'MANUAL') patch.delivery_date = deliveryDate(patch.advance_paid_date, card.delivery_business_days, holidays);
         lines.push(...scheduleDiff(card, { ...card, ...patch }));
       }
       await svc.entities.PaymentStage.update(stage.id, { tenant_id: card.tenant_id, approval_status: next, paid_date: input.confirmed ? input.paid_date : '', ...(input.confirmed ? { approved_at: new Date().toISOString(), approved_by_id: user.id, approved_by_name: user.full_name || user.email } : {}) });

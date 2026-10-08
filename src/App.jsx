@@ -48,6 +48,7 @@ import JoinSetPassword from '@/pages/JoinSetPassword';
 import ServiceGuide from '@/pages/ServiceGuide';
 import ClientGuide from '@/pages/ClientGuide';
 import Marketing from '@/pages/Marketing';
+import ChinaHolidays from '@/pages/ChinaHolidays';
 
 const AuthenticatedApp = () => {
   const { user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, onboardingPath, completeOnboarding, retryInvitation } = useAuth();
@@ -112,6 +113,7 @@ const AuthenticatedApp = () => {
         <Route path="/service-guide" element={<ServiceGuide />} />
         <Route path="/leads" element={<Leads />} />
         <Route path="/marketing" element={<Marketing />} />
+        <Route path="/china-holidays" element={<ChinaHolidays />} />
         <Route path="/portfolio-admin" element={<PortfolioAdmin />} />
         <Route path="/factories" element={<Factories />} />
         <Route path="/clients" element={<Clients />} />
