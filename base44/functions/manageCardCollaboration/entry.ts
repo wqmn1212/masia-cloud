@@ -9,7 +9,7 @@ export default async function(req) {
     if (!user) return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     if (user.is_active === false || !['master', 'service', 'sub'].includes(user.account_tier)) return Response.json({ error: '직원만 변경할 수 있습니다.' }, { status: 403 });
     const input = await req.json();
-    if (!['initialize', 'schedule', 'payment', 'retry_email', 'notify_holiday'].includes(input.action) || typeof input.card_id !== 'string' || !input.card_id) return Response.json({ error: '카드와 작업을 지정하세요.' }, { status: 400 });
+    if (!['initialize', 'schedule', 'payment', 'retry_email', 'notify_holiday', 'milestone_delivery', 'milestone_reset'].includes(input.action) || typeof input.card_id !== 'string' || !input.card_id) return Response.json({ error: '카드와 작업을 지정하세요.' }, { status: 400 });
     const svc = base44.asServiceRole;
     const card = await svc.entities.TaskCard.get(input.card_id);
     if (!card || !card.tenant_id || (user.account_tier !== 'master' && card.tenant_id !== user.tenant_id)) return Response.json({ error: '카드 접근 권한이 없습니다.' }, { status: 403 });
@@ -44,9 +44,26 @@ export default async function(req) {
       if (!input.expected_updated_date || input.expected_updated_date !== card.updated_date) return Response.json({ error: '다른 변경이 먼저 저장되었습니다. 최신 내용을 다시 불러오세요.' }, { status: 409 });
       if (!input.data || typeof input.data !== 'object' || Array.isArray(input.data)) return Response.json({ error: '일정을 입력하세요.' }, { status: 400 });
       patch = schedulePatch(input.data, holidays);
+      // 마일스톤 카드의 납품일은 일정 탭에서만 바꾼다
+      if (card.milestone_template_id) Object.assign(patch, { delivery_date: card.delivery_date || '', delivery_date_mode: card.delivery_date_mode || 'AUTO', delivery_business_days: card.delivery_business_days ?? patch.delivery_business_days });
       lines = scheduleDiff(card, patch);
       if (!lines.length) return Response.json({ saved: true, unchanged: true });
       title = `[AEGIS] ${card.title} 일정 변경`; kind = 'SCHEDULE';
+    } else if (input.action === 'milestone_delivery') {
+      if (!card.plan_confirmed_at) return Response.json({ saved: true, unchanged: true });
+      const ms = (await svc.entities.CardMilestone.filter({ card_id: card.id }, 'seq', 100)).filter(m => m.status !== 'skipped');
+      const d = ms.find(m => m.key === 'delivery') || ms[ms.length - 1];
+      const next = d ? d.actual_date || d.planned_date : '';
+      if (!next || next === card.delivery_date) return Response.json({ saved: true, unchanged: true });
+      patch = { delivery_date: next, delivery_date_mode: 'MANUAL' };
+      lines = scheduleDiff(card, { ...card, ...patch });
+      title = `[AEGIS] ${card.title} 예정 납품일 변경`; kind = 'SCHEDULE';
+    } else if (input.action === 'milestone_reset') {
+      const pre = card.pre_milestone_schedule || {};
+      patch = { delivery_date: pre.delivery_date || '', delivery_date_mode: pre.delivery_date_mode || 'AUTO', pre_milestone_schedule: null };
+      if (patch.delivery_date_mode === 'AUTO') patch.delivery_date = deliveryDate(card.advance_paid_date, card.delivery_business_days, holidays);
+      lines = ['마일스톤 계획을 지우고 다시 만듭니다.', ...scheduleDiff(card, { ...card, ...patch })];
+      title = `[AEGIS] ${card.title} 진행 계획 재작성`; kind = 'SCHEDULE';
     } else {
       if (typeof input.stage_id !== 'string' || typeof input.confirmed !== 'boolean') return Response.json({ error: '입금 단계를 확인하세요.' }, { status: 400 });
       const stage = await svc.entities.PaymentStage.get(input.stage_id);

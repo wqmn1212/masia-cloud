@@ -79,7 +79,11 @@
     },
     "overdue_notified_on": {
       "type": "string",
-      "description": "\uae30\ud55c \ucd08\uacfc \uc54c\ub9bc \ubc1c\uc1a1\uc77c"
+      "description": "(\ub808\uac70\uc2dc) \uae30\ud55c \ucd08\uacfc \uc54c\ub9bc \ubc1c\uc1a1\uc77c"
+    },
+    "overdue_notified_for": {
+      "type": "string",
+      "description": "\uae30\ud55c \ucd08\uacfc \uc54c\ub9bc\uc744 \ubcf4\ub0b8 \uacc4\ud68d\uc77c \u2014 \uacc4\ud68d\uc77c\uc774 \ubc14\ub00c\uba74 \ub2e4\uc2dc \uc54c\ub9bc"
     }
   },
   "required": [

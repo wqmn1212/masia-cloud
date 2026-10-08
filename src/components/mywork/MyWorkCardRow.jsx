@@ -7,6 +7,7 @@ export default function MyWorkCardRow({ card, onOpen }) {
     <button onClick={() => onOpen(card)} className="w-full text-left border rounded-lg p-3 bg-card hover:border-primary/50 transition-colors space-y-1">
       <div className="flex items-center gap-2">
         <p className="text-sm font-medium flex-1 min-w-0 truncate">{card.title}</p>
+        {card.overdue_steps > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-chart-3/15 text-chart-3">지금 지연 중</span>}
         {card.delay_days > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-destructive/15 text-destructive">+{card.delay_days}일</span>}
       </div>
       <p className="text-[11px] text-muted-foreground truncate">

@@ -17,7 +17,7 @@ export default function CardSchedulePanel({ card, user }) {
   return <section className="space-y-4"><h3 className="text-sm font-semibold">견적·납품 일정 관리</h3>
     {query.data && <HolidayConflictPanel card={query.data} />}
     {query.isError ? <p className="text-destructive" role="alert">일정을 불러오지 못했습니다.</p> : !form ? <p>불러오는 중...</p> : <form className="space-y-3" onSubmit={e => { e.preventDefault(); save.mutate(); }}>
-      <ScheduleFields form={form} setForm={setForm} disabled={!allowed || save.isPending} />
+      <ScheduleFields form={form} setForm={setForm} disabled={!allowed || save.isPending} lockDelivery={!!query.data?.milestone_template_id} />
       <label className="block text-sm">변경 사유<Input value={reason} onChange={e => setReason(e.target.value)} required maxLength={1000} disabled={save.isPending || !allowed} placeholder="예: 고객 요청 납기 변경" /></label>
       <p className="text-xs text-muted-foreground">고객 공개가 켜진 카드만 해당 고객사 담당자에게 변경 전·후 날짜와 사유를 알립니다.</p>
       {save.isError && <p role="alert" className="text-sm text-destructive">{save.error?.response?.data?.error || '저장에 실패했습니다.'}</p>}

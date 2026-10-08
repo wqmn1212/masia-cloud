@@ -8,6 +8,7 @@ import { MILESTONE_TEMPLATES } from '@/lib/milestones';
 export default function MilestonePlanCreator({ onCreate, busy }) {
   const [tpl, setTpl] = useState('general');
   const [start, setStart] = useState(new Date().toISOString().slice(0, 10));
+  const [withOptional, setWithOptional] = useState(false);
   return (
     <div className="border rounded-lg p-4 space-y-3">
       <p className="text-sm font-semibold">마일스톤 계획 만들기</p>
@@ -27,7 +28,12 @@ export default function MilestonePlanCreator({ onCreate, busy }) {
           <Input type="date" value={start} onChange={(e) => setStart(e.target.value)} className="h-9 text-sm" />
         </div>
       </div>
-      <Button size="sm" disabled={busy || !start} onClick={() => onCreate(tpl, start)}>{busy ? '생성 중…' : '계획 생성'}</Button>
+      {MILESTONE_TEMPLATES[tpl].steps.filter((st) => st.optional).map((st) => (
+        <label key={st.key} className="flex items-center gap-2 text-xs">
+          <input type="checkbox" checked={withOptional} onChange={(e) => setWithOptional(e.target.checked)} />{st.label} 단계 포함
+        </label>
+      ))}
+      <Button size="sm" disabled={busy || !start} onClick={() => onCreate(tpl, start, withOptional)}>{busy ? '생성 중…' : '계획 생성'}</Button>
     </div>
   );
 }

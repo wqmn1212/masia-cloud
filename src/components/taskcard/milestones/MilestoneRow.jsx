@@ -25,7 +25,7 @@ export default function MilestoneRow({ m, confirmed, onChange, onComplete }) {
         <div><p className="text-muted-foreground">기준일</p><p>{m.baseline_date || '미확정'}</p></div>
         <div>
           <p className="text-muted-foreground">계획일</p>
-          <Input type="date" disabled={done} value={m.planned_date || ''} onChange={(e) => onChange(m, { planned_date: e.target.value })} className="h-7 text-[11px] px-1" />
+          <Input key={m.planned_date || ''} type="date" disabled={done} defaultValue={m.planned_date || ''} onBlur={(e) => e.target.value && e.target.value !== (m.planned_date || '') && onChange(m, { planned_date: e.target.value })} className="h-7 text-[11px] px-1" />
         </div>
         <div>
           <p className="text-muted-foreground">담당</p>

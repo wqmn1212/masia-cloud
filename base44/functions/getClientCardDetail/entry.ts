@@ -27,7 +27,10 @@ export default async function (req) {
     }
     const chats = await svc.entities.CardChat.filter({ card_id }, 'created_date', 200);
     const stages = await svc.entities.PaymentStage.filter({ card_id }, 'created_date', 20);
-    const milestones = (await svc.entities.CardMilestone.filter({ card_id }, 'seq', 100)).filter((m) => m.client_visible !== false);
+    // 계획 확정 전 초안은 고객에게 보이지 않는다
+    const milestones = card.plan_confirmed_at
+      ? (await svc.entities.CardMilestone.filter({ card_id }, 'seq', 100)).filter((m) => m.client_visible !== false && m.status !== 'skipped')
+      : [];
 
     return Response.json({
       attachments: documents.map(documentMetadata),

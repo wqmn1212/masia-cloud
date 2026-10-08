@@ -17,7 +17,7 @@ export default function MyWork() {
   });
   const active = cards.filter((c) => !['DONE', 'CANCELLED'].includes(c.status));
   const t = today();
-  const overdue = active.filter((c) => (c.next_action_due && c.next_action_due < t) || c.delay_days > 0);
+  const overdue = active.filter((c) => (c.next_action_due && c.next_action_due < t) || c.delay_days > 0 || c.overdue_steps > 0);
   const rest = active.filter((c) => !overdue.includes(c));
 
   return (
