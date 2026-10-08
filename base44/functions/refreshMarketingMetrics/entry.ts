@@ -1,5 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { secrets } from 'base44:runtime';
+import { notifyUsers } from '../../shared/notify.ts';
+
+// 매일 07:00 KST 워크플로(DailyMarketingMetrics)는 로그인 없이 호출되므로 본사 테넌트 기준으로 동작하고,
+// 공개 URL 남용을 막기 위해 짧은 재실행 간격을 제한한다.
+const THROTTLE_MS = 30 * 60 * 1000;
 
 const kstToday = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 const SINCE = () => new Date(Date.now() - 90 * 86400 * 1000).toISOString();
@@ -31,8 +36,25 @@ async function syncItems(db, posts, platform, items, keyOf, tenantId) {
     const [existing] = await db.MarketingMetric.filter({ post_id: post.id, platform, metric_date: date });
     if (existing) await db.MarketingMetric.update(existing.id, data); else await db.MarketingMetric.create(data);
     updated++;
+    it.post = post;
   }
   return `최근 90일 ${updated}건 갱신 (신규 ${created}건 가져옴)`;
+}
+
+// 지난 수집 이후 달린 인스타 댓글을 대표(master) 계정에 알림·이메일
+async function notifyNewComments(base44, items, since) {
+  if (!since) return 0;
+  const { accessToken } = await base44.asServiceRole.connectors.getConnection('instagram');
+  const fresh = [];
+  for (const it of items.filter((i) => i.stats.comments > 0 && i.mediaId)) {
+    const json = await getJson(`https://graph.instagram.com/${it.mediaId}/comments?fields=text,username,timestamp&limit=50&access_token=${accessToken}`);
+    for (const c of json.data || []) if (c.timestamp > since) fresh.push({ ...c, it });
+  }
+  if (!fresh.length) return 0;
+  const masters = await base44.asServiceRole.entities.User.filter({ account_tier: 'master' });
+  const body = fresh.slice(0, 20).map((c) => `· [${(c.it.post?.title || '').slice(0, 30)}] @${c.username || '?'}: ${c.text}\n  ${c.it.url}`).join('\n');
+  await notifyUsers(base44.asServiceRole, masters, { type: 'marketing_comment', title: `인스타그램 새 댓글 ${fresh.length}개`, body, link: '/marketing' });
+  return fresh.length;
 }
 
 async function instagramItems(base44) {
@@ -43,7 +65,7 @@ async function instagramItems(base44) {
   while (url) {
     const json = await getJson(url);
     const page = json.data || [];
-    for (const m of page) if (m.timestamp >= since) items.push({ key: igCode(m.permalink), url: m.permalink, title: m.caption, published_at: m.timestamp, stats: { likes: Number(m.like_count || 0), comments: Number(m.comments_count || 0) } });
+    for (const m of page) if (m.timestamp >= since) items.push({ mediaId: m.id, key: igCode(m.permalink), url: m.permalink, title: m.caption, published_at: m.timestamp, stats: { likes: Number(m.like_count || 0), comments: Number(m.comments_count || 0) } });
     url = page.length && page[page.length - 1].timestamp >= since ? json.paging?.next : null;
   }
   return items;
@@ -82,11 +104,17 @@ async function youtubeItems(key, accountUrl, posts) {
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user || !['master', 'service'].includes(user.account_tier)) {
+    let user = await base44.auth.me().catch(() => null);
+    const db = base44.asServiceRole.entities;
+    if (!user) {
+      const [hq] = await db.Tenant.filter({ is_hq: true }, 'created_date', 1);
+      if (!hq) return Response.json({ error: '본사 테넌트가 없습니다.' }, { status: 400 });
+      const recent = (await db.SocialConnection.filter({ tenant_id: hq.id })).some((c) => c.last_refreshed_at && Date.now() - new Date(c.last_refreshed_at).getTime() < THROTTLE_MS);
+      if (recent) return Response.json({ skipped: '최근에 이미 수집했습니다.' });
+      user = { account_tier: 'service', tenant_id: hq.id };
+    } else if (!['master', 'service'].includes(user.account_tier)) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
-    const db = base44.asServiceRole.entities;
     const scope = user.account_tier === 'master' ? {} : { tenant_id: user.tenant_id };
     const posts = await db.MarketingPost.filter({ status: 'published', ...scope }, '-published_at', 500);
     const results = {};
@@ -98,7 +126,10 @@ export default async function(req) {
       const conn = await connFor(platform);
       try {
         if (platform === 'instagram') {
-          results.instagram = { ok: true, message: await syncItems(db, posts, 'instagram', await instagramItems(base44), igCode, user.tenant_id) };
+          const items = await instagramItems(base44);
+          const msg = await syncItems(db, posts, 'instagram', items, igCode, user.tenant_id);
+          const n = await notifyNewComments(base44, items, conn.last_refreshed_at);
+          results.instagram = { ok: true, message: n ? `${msg} · 새 댓글 ${n}개 알림` : msg };
         } else {
           const key = secrets.get('YOUTUBE_API_KEY');
           if (!key) throw new Error('YouTube API 키가 설정되지 않았습니다.');

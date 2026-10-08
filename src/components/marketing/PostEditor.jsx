@@ -11,8 +11,12 @@ import MediaManager from './MediaManager';
 import PostPreview from './PostPreview';
 import PostWorkflowActions from './PostWorkflowActions';
 
+// 서버(marketingPostAction)의 CONTENT 와 동일 — 바뀌면 재승인 필요
+const CONTENT_FIELDS = ['platforms', 'post_format', 'caption', 'hashtags', 'youtube_title', 'youtube_description', 'youtube_tags', 'media', 'utm_campaign'];
+
 export default function PostEditor({ post, user, onSaved, onNew }) {
   const [p, setP] = useState({ platforms: ['instagram'], post_format: 'feed', status: 'draft', media: [], hashtags: [], youtube_tags: [], ...post });
+  const [orig, setOrig] = useState(post || {});
   const [saving, setSaving] = useState(false);
   const set = (k) => (v) => setP((s) => ({ ...s, [k]: v }));
   const errors = validatePost(p);
@@ -23,13 +27,17 @@ export default function PostEditor({ post, user, onSaved, onNew }) {
     setSaving(true);
     try {
       let id = p.id;
-      if (action !== 'save' && id) {
+      if (action !== 'save' && !id) {
+        // 새 글: 먼저 초안으로 만든 뒤 같은 작업을 이어서 실행
+        const r = await base44.functions.invoke('marketingPostAction', { action: 'save', data: p });
+        id = r.data.post.id;
+      } else if (action !== 'save') {
         // 상태 변경 전 편집 내용을 먼저 저장 (내용이 바뀌면 서버가 초안으로 되돌림)
         const r = await base44.functions.invoke('marketingPostAction', { action: 'save', id, data: p });
         if (r.data.post.status !== p.status) { setP(r.data.post); onSaved(r.data.post); toast({ title: '내용이 바뀌어 다시 승인이 필요합니다.' }); return; }
       }
       const res = await base44.functions.invoke('marketingPostAction', { action, id, data: action === 'save' ? p : data });
-      setP(res.data.post); onSaved(res.data.post);
+      setP(res.data.post); setOrig(res.data.post); onSaved(res.data.post);
     } catch (e) {
       toast({ title: '저장하지 못했습니다', description: e.response?.data?.error || e.message, variant: 'destructive' });
     } finally {
@@ -37,7 +45,8 @@ export default function PostEditor({ post, user, onSaved, onNew }) {
     }
   };
   const save = () => {
-    if (['approved', 'scheduled'].includes(p.status) && !window.confirm('수정하면 다시 승인이 필요합니다. 저장할까요?')) return;
+    const contentChanged = CONTENT_FIELDS.some((k) => JSON.stringify(p[k] ?? null) !== JSON.stringify(orig[k] ?? null));
+    if (contentChanged && ['approved', 'scheduled'].includes(p.status) && !window.confirm('수정하면 다시 승인이 필요합니다. 저장할까요?')) return;
     run('save');
   };
   const toggle = (pl) => set('platforms')(p.platforms.includes(pl) ? p.platforms.filter((x) => x !== pl) : [...p.platforms, pl]);

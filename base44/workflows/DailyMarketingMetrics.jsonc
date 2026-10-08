@@ -1,0 +1,45 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 7 * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "daily_marketing_metrics",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "refresh_metrics": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "refreshMarketingMetrics",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\uc131\uacfc \uc218\uc9d1",
+            "description": "\uc9c0\ud45c\u00b7\uc0c8 \ub313\uae00"
+          }
+        }
+      }
+    ]
+  },
+  "name": "\ub9c8\ucf00\ud305 \uc131\uacfc \ub9e4\uc77c \uc218\uc9d1",
+  "description": "\ub9e4\uc77c \uc624\uc804 7\uc2dc(KST)\uc5d0 \uc778\uc2a4\ud0c0\uadf8\ub7a8\u00b7\uc720\ud29c\ube0c \uc131\uacfc\ub97c \uc218\uc9d1\ud558\uace0 \uc0c8 \ub313\uae00\uc744 \uc54c\ub9bd\ub2c8\ub2e4"
+}

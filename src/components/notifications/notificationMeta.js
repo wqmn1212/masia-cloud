@@ -9,6 +9,7 @@ export const NOTIFICATION_META = {
   schedule_changed: { label: '일정 변경', icon: '📅' },
   file_shared: { label: '파일 공유', icon: '📎' },
   requirements_updated: { label: '요구사항 변경', icon: '📝' },
+  marketing_comment: { label: '마케팅 새 댓글', icon: '💬' },
 };
 
 export const notificationMeta = (type) => NOTIFICATION_META[type] || { label: '알림', icon: '🔔' };
