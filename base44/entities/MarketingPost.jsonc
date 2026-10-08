@@ -191,25 +191,9 @@
       ]
     },
     "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "data.account_tier": "master"
-          }
-        },
-        {
-          "$and": [
-            {
-              "data.tenant_id": "{{user.data.tenant_id}}"
-            },
-            {
-              "user_condition": {
-                "data.account_tier": "service"
-              }
-            }
-          ]
-        }
-      ]
+      "user_condition": {
+        "data.account_tier": "master"
+      }
     },
     "delete": {
       "$or": [
