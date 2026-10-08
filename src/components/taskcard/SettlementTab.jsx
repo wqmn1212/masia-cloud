@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Save, TrendingUp, DollarSign } from 'lucide-react';
 import SettlementQuotePicker from './SettlementQuotePicker';
+import SettlementQuoteLines from './SettlementQuoteLines';
 
 const STATUS_META = {
   PENDING:           { label: '대기 중',         color: 'bg-muted text-muted-foreground' },
@@ -96,10 +97,21 @@ export default function SettlementTab({ card, user }) {
     setForm(f => ({
       ...f,
       quotation_ids: ids,
+      quote_lines: quotes.flatMap(x => (x.quote_options || []).map(o => ({
+        quotation_id: x.id,
+        option_name: o.option_name || '',
+        quantity: Number(o.quantity) || 0,
+        unit_price: Number(o.unit_price ?? o.unit_price_usd) || 0,
+        currency: o.currency || 'USD',
+        margin_percent: Number(o.margin_percent) || 0,
+        exchange_rate: Number(x.exchange_rate_usd_cny) || 0,
+        total_usd: Number(o.total_usd) || 0,
+      }))),
       quotation_id: ids[0] || '',
       quote_amount_usd: sum('final_price_usd'),
       client_to_factory_usd: sum('final_price_usd'),
       factory_base_cost_usd: sum('options_total_usd'),
+      actual_margin_rmb: Number(quotes.reduce((s, x) => s + ((Number(x.final_price_usd) || 0) - (Number(x.options_total_usd) || 0)) * (Number(x.exchange_rate_usd_cny) || 7.2), 0).toFixed(2)),
       exchange_rate: q?.exchange_rate_usd_cny || f.exchange_rate,
       incoterms: ['EXW', 'FOB_SHANGHAI', 'FOB_GUANGZHOU', 'CIF'].includes(q?.incoterms) ? q.incoterms : f.incoterms,
       machine_description: f.machine_description || quotes.map(x => x.product_name).filter(Boolean).join(' + '),
@@ -201,6 +213,7 @@ export default function SettlementTab({ card, user }) {
       )}
 
       <SettlementQuotePicker cardId={card.id} value={form.quotation_ids || (form.quotation_id ? [form.quotation_id] : [])} onPick={pickQuote} />
+      <SettlementQuoteLines lines={form.quote_lines} />
 
       {/* STEP 1 */}
       <div className="space-y-2">
