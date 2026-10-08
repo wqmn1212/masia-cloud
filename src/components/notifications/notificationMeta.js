@@ -15,6 +15,7 @@ export const NOTIFICATION_META = {
   holiday_conflict: { label: '중국 휴무 겹침', icon: '🏮' },
   holiday_notice: { label: '휴무 전 발주 안내', icon: '🗓️' },
   reorder_due: { label: '재주문 시점', icon: '🔁' },
+  milestone_overdue: { label: '일정 지연', icon: '⏰' },
 };
 
 export const notificationMeta = (type) => NOTIFICATION_META[type] || { label: '알림', icon: '🔔' };

@@ -27,6 +27,7 @@ export default async function (req) {
     }
     const chats = await svc.entities.CardChat.filter({ card_id }, 'created_date', 200);
     const stages = await svc.entities.PaymentStage.filter({ card_id }, 'created_date', 20);
+    const milestones = (await svc.entities.CardMilestone.filter({ card_id }, 'seq', 100)).filter((m) => m.client_visible !== false);
 
     return Response.json({
       attachments: documents.map(documentMetadata),
@@ -55,6 +56,12 @@ export default async function (req) {
           file_name: c.file_name || '',
           created_date: c.created_date,
         })),
+      milestones: milestones.map((m) => ({
+        id: m.id, label: m.label, label_cn: m.label_cn || '', status: m.status,
+        planned_date: m.planned_date || '', actual_date: m.actual_date || '',
+        delay_days: m.baseline_date && (m.actual_date || m.planned_date) ? Math.round((Date.parse(m.actual_date || m.planned_date) - Date.parse(m.baseline_date)) / 86400000) : 0,
+        delay_reason: m.delay_reason_public ? (m.delay_reason || '') : '',
+      })),
       payment_stages: stages.map((s) => ({
         id: s.id,
         stage_type: s.stage_type,

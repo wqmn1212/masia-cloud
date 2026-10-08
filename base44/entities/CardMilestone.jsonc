@@ -76,6 +76,10 @@
     "delay_reason_public": {
       "type": "boolean",
       "default": false
+    },
+    "overdue_notified_on": {
+      "type": "string",
+      "description": "\uae30\ud55c \ucd08\uacfc \uc54c\ub9bc \ubc1c\uc1a1\uc77c"
     }
   },
   "required": [

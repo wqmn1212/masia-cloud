@@ -32,7 +32,8 @@
         "sample_feedback",
         "holiday_conflict",
         "holiday_notice",
-        "reorder_due"
+        "reorder_due",
+        "milestone_overdue"
       ],
       "description": "\uc54c\ub9bc \uc720\ud615"
     },
