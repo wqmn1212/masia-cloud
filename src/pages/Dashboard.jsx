@@ -9,6 +9,7 @@ import RecentQuotations from '@/components/dashboard/RecentQuotations';
 import PipelineChart from '@/components/dashboard/PipelineChart';
 import DayDetailDialog from '@/components/calendar/DayDetailDialog';
 import CardModal from '@/components/taskcard/CardModal';
+import OpsMetrics from '@/components/dashboard/OpsMetrics';
 
 export default function Dashboard() {
   const { t } = useLanguage();
@@ -71,6 +72,8 @@ export default function Dashboard() {
         <StatCard title={t('dashboard.quotations')} value={quotations.length} icon={FileText} trend={`5${t('common.count')}`} trendUp />
         <StatCard title={t('dashboard.openAS')} value={openAS.length} icon={Wrench} subtitle={t('dashboard.asSubtitle')} />
       </div>
+
+      <OpsMetrics cards={allCards} onOpenCard={handleCardClickFromCalendar} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <PipelineChart timelines={timelines} />
