@@ -49,6 +49,14 @@
       "type": "string",
       "description": "\uc6d0\ubcf8 \ud30c\uc77c URL"
     },
+    "quotation_id": {
+      "type": "string",
+      "description": "\uc815\uc0b0 \uae30\uc900 \uacac\uc801\uc11c (\uac19\uc740 \uce74\ub4dc\uc758 Quotation)"
+    },
+    "quote_amount_usd": {
+      "type": "number",
+      "description": "\uc120\ud0dd \uacac\uc801\uc11c \ucd5c\uc885 \uc81c\uc548\uac00 (USD)"
+    },
     "client_to_factory_usd": {
       "type": "number",
       "description": "[STEP1] \uace0\uac1d\uc774 \uacf5\uc7a5\uc5d0 \uc9c1\uc811 \uc1a1\uae08\ud55c \uae08\uc561 (USD)"
@@ -89,9 +97,14 @@
       "type": "number",
       "description": "[STEP3] \ub2f9\uc6d4 \ud504\ub85c\uc81d\ud2b8 \uc2e4\uc81c \ub9c8\uc9c4 \ucd1d\ud569 (RMB)"
     },
+    "hq_share_percent": {
+      "type": "number",
+      "default": 50,
+      "description": "HQ \uc815\uc0b0 \ube44\uc728 (%)"
+    },
     "hq_final_share_rmb": {
       "type": "number",
-      "description": "[STEP3] \ubcf8\uc0ac \ucd5c\uc885 \uc218\ub839 50% \ubaab (RMB, \uc790\ub3d9\uacc4\uc0b0)"
+      "description": "[STEP3] \ubcf8\uc0ac \ucd5c\uc885 \uc218\ub839 \ubaab (RMB, \ube44\uc728 + \uc870\uc728 \uc790\ub3d9\uacc4\uc0b0)"
     },
     "adjustment_rmb": {
       "type": "number",
