@@ -49,6 +49,7 @@ import ServiceGuide from '@/pages/ServiceGuide';
 import ClientGuide from '@/pages/ClientGuide';
 import Marketing from '@/pages/Marketing';
 import ChinaHolidays from '@/pages/ChinaHolidays';
+import MyWork from '@/pages/MyWork';
 
 const AuthenticatedApp = () => {
   const { user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, onboardingPath, completeOnboarding, retryInvitation } = useAuth();
@@ -111,6 +112,7 @@ const AuthenticatedApp = () => {
         <Route path="/client/guide" element={<ClientGuide />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/service-guide" element={<ServiceGuide />} />
+        <Route path="/my-work" element={<MyWork />} />
         <Route path="/leads" element={<Leads />} />
         <Route path="/marketing" element={<Marketing />} />
         <Route path="/china-holidays" element={<ChinaHolidays />} />

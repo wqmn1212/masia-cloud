@@ -24,6 +24,7 @@ import CardSchedulePanel from '@/components/taskcard/CardSchedulePanel';
 import TradeDocumentsTab from '@/components/taskcard/TradeDocumentsTab';
 import { useLanguage } from '@/lib/LanguageContext';
 import MilestoneTab from '@/components/taskcard/milestones/MilestoneTab';
+import CardOwnerBar from '@/components/taskcard/CardOwnerBar';
 
 const STATUS_META = {
   TODO:        { label: '대기 중',    color: 'bg-muted text-muted-foreground' },
@@ -82,6 +83,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
               {card.factory_name && `🏭 ${card.factory_name}`}
             </p>
           )}
+          <CardOwnerBar card={card} user={user} />
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">

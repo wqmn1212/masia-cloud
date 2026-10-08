@@ -125,6 +125,23 @@
       "default": false,
       "description": "\uc911\uad6d\uc5b4 \uc218\ub3d9 \ud655\uc815 \u2014 \uc790\ub3d9 \ubc88\uc5ed \ub36e\uc5b4\uc4f0\uae30 \ubc29\uc9c0"
     },
+    "owner_id": {
+      "type": "string",
+      "description": "\uce74\ub4dc \ucc45\uc784\uc790 User ID"
+    },
+    "owner_name": {
+      "type": "string",
+      "description": "\uce74\ub4dc \ucc45\uc784\uc790 \uc774\ub984"
+    },
+    "next_action": {
+      "type": "string",
+      "description": "\ub2e4\uc74c \ud560 \uc77c"
+    },
+    "next_action_due": {
+      "type": "string",
+      "format": "date",
+      "description": "\ub2e4\uc74c \ud560 \uc77c \uae30\ud55c"
+    },
     "milestone_template_id": {
       "type": "string",
       "description": "\ub9c8\uc77c\uc2a4\ud1a4 \ud15c\ud50c\ub9bf \ud0a4"

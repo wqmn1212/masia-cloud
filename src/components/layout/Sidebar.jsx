@@ -16,6 +16,7 @@ const navSectionDefs = [
     labelKey: 'nav.hq',
     items: [
       { path: '/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
+      { path: '/my-work', icon: ListChecks, labelKey: 'nav.myWork' },
       { path: '/service-guide', icon: BookMarked, labelKey: 'nav.serviceGuide' },
       { path: '/leads', icon: Inbox, labelKey: 'nav.leads' },
       { path: '/portfolio-admin', icon: Images, labelKey: 'nav.portfolio' },
