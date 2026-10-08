@@ -21,7 +21,7 @@ export default function MilestonePlanCreator({ onCreate, busy }) {
           <Select value={tpl} onValueChange={setTpl}>
             <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {Object.entries(MILESTONE_TEMPLATES).map(([k, v]) => <SelectItem key={k} value={k}>{tr(v.name)} · {v.steps.length}</SelectItem>)}
+              {Object.entries(MILESTONE_TEMPLATES).map(([k, v]) => <SelectItem key={k} value={k}>{tr(v.name)} · {v.steps.length}{tr('단계')}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>

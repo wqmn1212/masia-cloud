@@ -1,10 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { MILESTONE_TEMPLATES, buildPlan, cardSummary, deliveryMilestone } from '@/lib/milestones';
-
-const askReason = (fallback) => fallback || window.prompt('예정 납품일이 바뀝니다. 변경 사유를 입력하세요 (고객 공개 카드는 고객에게 안내됩니다).') || '마일스톤 일정 조정';
+import { useWorkT } from '@/lib/workI18n';
 
 export default function useCardMilestones(card) {
+  const { tr } = useWorkT();
+  const askReason = (fallback) => fallback || window.prompt(tr('예정 납품일이 바뀝니다. 변경 사유를 입력하세요 (고객 공개 카드는 고객에게 안내됩니다).')) || '마일스톤 일정 조정';
   const qc = useQueryClient();
   const key = ['card-milestones', card.id];
   const { data: list = [], isLoading } = useQuery({ queryKey: key, queryFn: () => base44.entities.CardMilestone.filter({ card_id: card.id }, 'seq', 100) });
@@ -44,7 +45,7 @@ export default function useCardMilestones(card) {
   // 수정·완료는 서버 함수가 권한(담당자/관리자)과 QC 보고서를 검사한다
   const act = async (payload) => {
     const res = await base44.functions.invoke('cardMilestoneAction', { card_id: card.id, ...payload }).catch((e) => e.response || { data: { error: e.message } });
-    if (res.data?.error) { window.alert(res.data.error); return null; }
+    if (res.data?.error) { window.alert(tr(res.data.error)); return null; }
     return res.data;
   };
 
@@ -73,7 +74,7 @@ export default function useCardMilestones(card) {
 
   const reset = async () => {
     await base44.entities.CardMilestone.deleteMany({ card_id: card.id });
-    await base44.entities.TaskCard.update(card.id, { milestone_template_id: null, plan_confirmed_at: null, current_milestone_label: null, delay_days: 0, overdue_steps: 0 });
+    await base44.entities.TaskCard.update(card.id, { milestone_template_id: null, plan_confirmed_at: null, current_milestone_label: null, current_milestone_label_cn: null, delay_days: 0, overdue_steps: 0 });
     // 확정 후 다시 만들기: 원래 납품일·방식으로 되돌리고 이력을 남긴다
     if (confirmed) await base44.functions.invoke('manageCardCollaboration', { action: 'milestone_reset', card_id: card.id, reason: '마일스톤 계획 다시 만들기' });
     qc.invalidateQueries({ queryKey: key });

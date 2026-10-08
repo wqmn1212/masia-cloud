@@ -127,11 +127,57 @@
     },
     "owner_id": {
       "type": "string",
-      "description": "\uce74\ub4dc \ucc45\uc784\uc790 User ID"
+      "description": "\uce74\ub4dc \ucc45\uc784\uc790 User ID (\ub300\ud45c\u00b7\ud300 \uad00\ub9ac\uc790\ub9cc \uc9c0\uc815)",
+      "rls": {
+        "write": {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "$and": [
+                {
+                  "data.tenant_id": "{{user.data.tenant_id}}"
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
     },
     "owner_name": {
       "type": "string",
-      "description": "\uce74\ub4dc \ucc45\uc784\uc790 \uc774\ub984"
+      "description": "\uce74\ub4dc \ucc45\uc784\uc790 \uc774\ub984",
+      "rls": {
+        "write": {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "$and": [
+                {
+                  "data.tenant_id": "{{user.data.tenant_id}}"
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
     },
     "next_action": {
       "type": "string",
@@ -154,6 +200,10 @@
     "current_milestone_label": {
       "type": "string",
       "description": "\ud604\uc7ac \ub2e8\uacc4 (\ubcf4\ub4dc \ud45c\uc2dc)"
+    },
+    "current_milestone_label_cn": {
+      "type": "string",
+      "description": "\ud604\uc7ac \ub2e8\uacc4 \uc911\uad6d\uc5b4 (\ubcf4\ub4dc \ud45c\uc2dc)"
     },
     "delay_days": {
       "type": "number",

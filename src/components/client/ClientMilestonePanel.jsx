@@ -19,7 +19,6 @@ export default function ClientMilestonePanel({ milestones = [] }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className={`text-sm ${current ? 'font-semibold' : done ? 'text-muted-foreground' : ''}`}>{m.label}</p>
-                  {m.delay_days > 0 && <span className="text-[10px] px-1.5 rounded bg-destructive/15 text-destructive">+{m.delay_days}일</span>}
                 </div>
                 <p className="text-[11px] text-muted-foreground">{done ? `완료 ${m.actual_date}` : `예정 ${m.planned_date || '-'}`}</p>
                 {m.delay_reason && <p className="text-[11px] text-muted-foreground mt-0.5">사유: {m.delay_reason}</p>}

@@ -63,6 +63,7 @@ export function cardSummary(list, confirmed, today = todayStr()) {
   const delivery = deliveryMilestone(sorted);
   return {
     current_milestone_label: current?.label || '완료',
+    current_milestone_label_cn: current ? (current.label_cn || current.label) : '完成',
     delay_days: confirmed && delivery ? Math.max(0, delayDays(delivery, today)) : 0,
     overdue_steps: confirmed ? sorted.filter((m) => m.status === 'pending' || m.status === 'in_progress').filter((m) => m.planned_date && m.planned_date < today).length : 0,
   };

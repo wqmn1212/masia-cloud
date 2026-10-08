@@ -311,7 +311,7 @@ export default function TaskBoard() {
 
                                                    {card.current_milestone_label && (
                                                    <div className="flex items-center gap-1.5 text-[10px]">
-                                                   <span className="px-1.5 py-0.5 rounded bg-muted text-foreground truncate">▸ {card.current_milestone_label}</span>
+                                                   <span className="px-1.5 py-0.5 rounded bg-muted text-foreground truncate">▸ {(lang === 'zh' && card.current_milestone_label_cn) || card.current_milestone_label}</span>
                                                    {card.delay_days > 0 && <span className="px-1.5 py-0.5 rounded bg-destructive/15 text-destructive font-semibold">+{card.delay_days}일</span>}
                                                    {card.overdue_steps > 0 && <span className="px-1.5 py-0.5 rounded bg-chart-3/15 text-chart-3 font-semibold">지금 지연 중</span>}
                                                    </div>

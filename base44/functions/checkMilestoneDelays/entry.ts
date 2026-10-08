@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       const list = byCard.get(card.id) || [];
       if (!list.length) continue;
       const s = cardSummary(list, today, true);
-      if (s.delay_days !== (card.delay_days || 0) || s.overdue_steps !== (card.overdue_steps || 0) || s.current_milestone_label !== card.current_milestone_label) { await db.TaskCard.update(card.id, s); updated++; }
+      if (s.delay_days !== (card.delay_days || 0) || s.overdue_steps !== (card.overdue_steps || 0) || s.current_milestone_label !== card.current_milestone_label || s.current_milestone_label_cn !== card.current_milestone_label_cn) { await db.TaskCard.update(card.id, s); updated++; }
       const due = list.filter((m) => ['pending', 'in_progress'].includes(m.status) && m.planned_date && m.planned_date < today && m.overdue_notified_for !== m.planned_date);
       if (!due.length) continue;
       const groups = new Map<string, { users: any[]; steps: any[] }>();
