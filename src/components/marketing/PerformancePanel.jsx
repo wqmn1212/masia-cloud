@@ -3,32 +3,26 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { RefreshCw } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { PLATFORMS, formatKst } from './marketingMeta';
+import { PLATFORMS, SUPPORTED_METRICS, formatKst } from './marketingMeta';
 
-const COLS = [['views', '조회'], ['likes', '좋아요'], ['comments', '댓글'], ['reach', '도달'], ['leads', '문의'], ['converted', '전환']];
+// 문의·전환은 캠페인 합계라 게시물 행에서는 빼고 유입 분석 탭에서만 보여준다
+const COLS = [['views', '조회'], ['likes', '좋아요'], ['comments', '댓글'], ['reach', '도달']];
 
 export default function PerformancePanel({ posts }) {
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const { data: metrics = [] } = useQuery({ queryKey: ['marketingMetrics'], queryFn: () => base44.entities.MarketingMetric.list('-metric_date', 1000) });
-  const { data: leads = [] } = useQuery({ queryKey: ['marketingLeads'], queryFn: () => base44.entities.ManufacturingLead.list('-created_date', 2000) });
   const published = posts.filter((p) => p.status === 'published');
 
   // 게시물별 최신 스냅샷(플랫폼별 마지막 날짜) 합산
-  const latest = (id, k) => Object.values(metrics.filter((m) => m.post_id === id).reduce((acc, m) => {
-    if (!acc[m.platform] || m.metric_date > acc[m.platform].metric_date) acc[m.platform] = m;
-    return acc;
-  }, {})).reduce((a, m) => a + (m[k] || 0), 0);
-  const hasMetric = (id) => metrics.some((m) => m.post_id === id);
+  // 플랫폼별 최신 스냅샷 중 해당 지표를 제공하는 플랫폼만 합산
   const value = (p, k) => {
-    if (k === 'reach') return '미제공';
-    if (k === 'leads' || k === 'converted') {
-      if (!p.utm_campaign) return '미분류';
-      const ls = leads.filter((l) => l.utm_campaign === p.utm_campaign);
-      return k === 'leads' ? ls.length : ls.filter((l) => l.status === 'converted').length;
-    }
-    return hasMetric(p.id) ? latest(p.id, k) : '미제공';
+    const snaps = Object.values(metrics.filter((m) => m.post_id === p.id).reduce((acc, m) => {
+      if (!acc[m.platform] || m.metric_date > acc[m.platform].metric_date) acc[m.platform] = m;
+      return acc;
+    }, {})).filter((m) => SUPPORTED_METRICS[m.platform]?.includes(k));
+    return snaps.length ? snaps.reduce((a, m) => a + (m[k] || 0), 0) : '미제공';
   };
 
   const refresh = async () => {

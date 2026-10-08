@@ -1,3 +1,8 @@
+export const HASHTAG_LIMIT = 5;
+
+// 플랫폼이 제공하는 지표 (나머지는 '미제공')
+export const SUPPORTED_METRICS = { instagram: ['likes', 'comments'], youtube: ['views', 'likes', 'comments'] };
+
 export const PLATFORMS = { instagram: '인스타그램', youtube: '유튜브' };
 
 export const FORMATS = { feed: '피드', carousel: '캐러셀', reel: '릴스', video: '영상', short: '쇼츠' };
@@ -40,7 +45,7 @@ export function validatePost(p) {
   if (!p.platforms?.length) errors.push('게시 플랫폼을 하나 이상 선택하세요.');
   if (p.platforms?.includes('instagram')) {
     if ((p.caption || '').length > 2200) errors.push('인스타그램 캡션은 2,200자 이하여야 합니다.');
-    if ((p.hashtags || []).length > 30) errors.push('해시태그는 30개 이하여야 합니다.');
+    if ((p.hashtags || []).length > HASHTAG_LIMIT) errors.push(`해시태그는 ${HASHTAG_LIMIT}개 이하여야 합니다.`);
     if (!p.media?.length) errors.push('인스타그램 게시물에는 미디어가 필요합니다.');
     if (p.post_format === 'carousel' && (p.media || []).length > 10) errors.push('캐러셀은 최대 10개입니다.');
   }

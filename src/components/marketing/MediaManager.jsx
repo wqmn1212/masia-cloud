@@ -1,19 +1,24 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { toast } from '@/components/ui/use-toast';
 import { ArrowUp, ArrowDown, X, Upload, Loader2 } from 'lucide-react';
 
 // 자동 게시 대비: PNG 등 이미지는 JPEG 로 변환해 업로드
-const toJpeg = (file) => new Promise((resolve) => {
+const UNSUPPORTED = '지원하지 않는 형식입니다. JPEG·PNG로 올려 주세요.';
+const toJpeg = (file) => new Promise((resolve, reject) => {
   if (!file.type.startsWith('image/') || file.type === 'image/jpeg') return resolve(file);
+  const src = URL.createObjectURL(file);
   const img = new Image();
+  img.onerror = () => { URL.revokeObjectURL(src); reject(new Error(UNSUPPORTED)); };
   img.onload = () => {
+    URL.revokeObjectURL(src);
     const c = document.createElement('canvas');
     c.width = img.width; c.height = img.height;
     const ctx = c.getContext('2d');
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0);
-    c.toBlob((b) => resolve(new File([b], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' })), 'image/jpeg', 0.92);
+    c.toBlob((b) => (b ? resolve(new File([b], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' })) : reject(new Error(UNSUPPORTED))), 'image/jpeg', 0.92);
   };
-  img.src = URL.createObjectURL(file);
+  img.src = src;
 });
 
 export default function MediaManager({ media, onChange }) {
@@ -21,13 +26,18 @@ export default function MediaManager({ media, onChange }) {
   const upload = async (files) => {
     setBusy(true);
     const added = [];
-    for (const f of files) {
-      const file = await toJpeg(f);
-      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
-      added.push({ url: file_url, name: file.name, type: file.type.startsWith('video') ? 'video' : 'image' });
+    try {
+      for (const f of files) {
+        const file = await toJpeg(f);
+        const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+        added.push({ url: file_url, name: file.name, type: file.type.startsWith('video') ? 'video' : 'image' });
+      }
+    } catch (e) {
+      toast({ title: '업로드하지 못했습니다', description: e.message, variant: 'destructive' });
+    } finally {
+      if (added.length) onChange([...media, ...added].map((m, i) => ({ ...m, order: i })));
+      setBusy(false);
     }
-    onChange([...media, ...added].map((m, i) => ({ ...m, order: i })));
-    setBusy(false);
   };
   const move = (i, d) => {
     const next = [...media];

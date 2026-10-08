@@ -87,18 +87,40 @@
         "scheduled",
         "published"
       ],
-      "default": "draft"
+      "default": "draft",
+      "description": "\uc0c1\ud0dc \ubcc0\uacbd\uc740 marketingPostAction \ud568\uc218\ub85c\ub9cc",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
     },
     "scheduled_at": {
       "type": "string",
       "format": "date-time"
     },
     "approved_by": {
-      "type": "string"
+      "type": "string",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
     },
     "approved_at": {
       "type": "string",
-      "format": "date-time"
+      "format": "date-time",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
     },
     "published_at": {
       "type": "string",
