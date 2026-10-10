@@ -7,12 +7,12 @@ export function MemberMock({ zh }) {
   return (
     <Frame title={L(zh, '일정 탭 · 팀원', '日程页 · 团队成员')}>
       <div className="flex items-center gap-2 py-1.5">
-        <span className="flex-1">{L(zh, '샘플 제작', '样品制作')} · 왕QC</span>
+        <span className="flex-1">{L(zh, '1차 샘플', '第一次样品')} · 왕QC</span>
         <Mark n={2} inline><span className="text-muted-foreground">10-20</span></Mark>
         <Mark n={1} inline><Btn primary>{L(zh, '완료', '完成')}</Btn></Mark>
       </div>
       <Mark n={3}><Field label={L(zh, '지연 사유', '延误原因')} value={L(zh, '금형 수정', '模具修改')} /></Mark>
-      <div className="mt-2"><Mark n={4}><div className="flex items-center gap-2 py-1.5 px-1 opacity-60"><span className="flex-1">{L(zh, '내부 원가 검토', '内部成本审核')} · 김PM</span><span>10-22</span></div></Mark></div>
+      <div className="mt-2"><Mark n={4}><div className="flex items-center gap-2 py-1.5 px-1 opacity-60"><span className="flex-1">{L(zh, '선금 입금', '预付款到账')} · 김PM</span><span>10-22</span></div></Mark></div>
     </Frame>
   );
 }
@@ -34,7 +34,7 @@ export function MyWorkMock({ zh }) {
 }
 
 export function BoardMock({ zh }) {
-  const cols = [['소싱 중', '采购中'], ['견적 검토', '报价审核'], ['발주·제작', '下单·生产']];
+  const cols = [['진행 중', '进行中'], ['검토', '审核中'], ['생산', '生产中']];
   return (
     <Frame title={L(zh, '소싱 칸반 보드', '采购看板')}>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -44,7 +44,7 @@ export function BoardMock({ zh }) {
             {i === 2 ? (
               <div className="rounded border bg-card p-2 space-y-1.5"><div className="font-medium">LED 마스크 OEM</div>
                 <div className="flex flex-wrap gap-2">
-                  <Mark n={1} inline><span className="text-muted-foreground">{L(zh, '양산', '量产')}</span></Mark>
+                  <Mark n={1} inline><span className="text-muted-foreground">▸ {L(zh, '1차 샘플', '第一次样品')}</span></Mark>
                   <Mark n={2} inline><Badge tone="red">+4{L(zh, '일', '天')}</Badge></Mark>
                   <Mark n={3} inline><Badge tone="amber">{L(zh, '지금 지연 중', '当前延误')}</Badge></Mark>
                 </div></div>
@@ -57,13 +57,13 @@ export function BoardMock({ zh }) {
 }
 
 export function OpsMock() {
-  const items = [['지연 카드', '3'], ['기한 지난 할 일', '5'], ['책임자 미지정', '2'], ['정시 납품률', '86%']];
+  const items = [['지연 카드', '3'], ['다음 할 일 기한 지남', '5'], ['책임자 미지정', '2'], ['정시 납품률', '86%'], ['진행 중 카드', '12']];
   return (
     <Frame title="대시보드 · 운영 지표">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
         {items.map(([k, v], i) => <Mark key={k} n={i + 1}><div className="p-2"><div className="text-[10px] text-muted-foreground">{k}</div><div className="text-base font-bold">{v}</div></div></Mark>)}
       </div>
-      <Mark n={5}><div className="p-2 space-y-1"><div className="font-semibold">지연 상위</div><div>LED 마스크 OEM <Badge tone="red">+4일</Badge></div><div>무선 충전 패드 <Badge tone="red">+2일</Badge></div></div></Mark>
+      <Mark n={6}><div className="p-2 space-y-1"><div className="font-semibold">지연 상위</div><div>LED 마스크 OEM <Badge tone="red">+4일</Badge></div><div>무선 충전 패드 <Badge tone="red">+2일</Badge></div></div></Mark>
     </Frame>
   );
 }
@@ -72,7 +72,7 @@ export function AlertMock() {
   return (
     <Frame title="알림">
       <div className="flex justify-end mb-2"><Mark n={1} inline><span>🔔 <Badge tone="red">2</Badge></span></Mark></div>
-      <Mark n={2}><div className="p-2"><div className="font-semibold">일정 지연: LED 마스크 OEM</div><div className="text-muted-foreground">양산 단계의 계획일(10-08)이 지났습니다.</div></div></Mark>
+      <Mark n={2}><div className="p-2"><div className="font-semibold">LED 마스크 OEM · 기한 지난 단계 1개</div><div className="text-muted-foreground">양산 시작: 계획일 2026-10-08 (담당 왕QC)</div></div></Mark>
     </Frame>
   );
 }
@@ -82,10 +82,10 @@ export function HolidayMock() {
     <Frame title="중국 휴무">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <Field label="휴일" value="춘절 · 2027-02-06 ~ 02-12" />
-        <Mark n={1}><Field label="공장 앞뒤 휴무(일)" value="5" /></Mark>
+        <Mark n={1}><Field label="공장 앞뒤 추가 휴무(일)" value="5" /></Mark>
         <Mark n={2}><Field label="발주 마감일" value="2027-01-15" /></Mark>
         <Mark n={3}><Field label="조휴 근무일" value="2027-01-30, 02-20" /></Mark>
-        <Mark n={4}><div className="flex items-center gap-2 p-1"><input type="checkbox" checked readOnly tabIndex={-1} />고객 안내 (30·7일 전)</div></Mark>
+        <Mark n={4}><div className="flex items-center gap-2 p-1"><input type="checkbox" checked readOnly tabIndex={-1} />고객 발주 마감 안내</div></Mark>
         <Mark n={5}><Field label="공장별 휴무" value="선전 A공장 · 11-03 ~ 11-05" /></Mark>
       </div>
     </Frame>

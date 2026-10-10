@@ -1,4 +1,5 @@
 import React from 'react';
+import { EyeOff } from 'lucide-react';
 import { Frame, Mark, Btn, Field, Badge } from '@/components/guide/mockKit';
 
 const L = (zh, ko, cn) => (zh ? cn : ko);
@@ -9,10 +10,13 @@ export function MenuMock({ zh }) {
       <div className="flex gap-3">
         <div className="w-36 shrink-0 rounded bg-sidebar text-sidebar-foreground p-2 space-y-2">
           <div className="opacity-60 text-[10px]">{L(zh, '본사 관리', '总部管理')}</div>
-          <div>{L(zh, '내 업무', '我的工作')}</div>
-          <Mark n={1}><div className="px-1">{L(zh, '이용 가이드', '使用指南')}</div></Mark>
+          <div>{L(zh, '대시보드', '仪表板')}</div>
           <Mark n={2}><div className="px-1">{L(zh, '내 업무', '我的工作')}</div></Mark>
+          <Mark n={1}><div className="px-1">{L(zh, '이용 가이드', '使用指南')}</div></Mark>
+          <div>{L(zh, '서비스 사용 가이드', '服务使用指南')}</div>
+          <div className="opacity-50">…</div>
           <Mark n={3}><div className="px-1">{L(zh, '중국 휴무', '中国假期')}</div></Mark>
+          <div className="opacity-50">…</div>
           <Mark n={4}><div className="px-1">{L(zh, '소싱 칸반 보드', '采购看板')}</div></Mark>
         </div>
         <div className="flex-1 min-w-0 space-y-3">
@@ -45,9 +49,8 @@ export function CreateMock({ zh }) {
   return (
     <Frame title={L(zh, '일정 탭', '日程页')}>
       <div className="space-y-2">
-        <Mark n={1}><Field label={L(zh, '템플릿', '模板')} value={L(zh, '전자 제품 OEM · 11단계', '电子产品 OEM · 11步')} /></Mark>
+        <Mark n={1}><Field label={L(zh, '템플릿', '模板')} value={L(zh, '일반 OEM · 11단계', '通用OEM · 11步')} /></Mark>
         <Mark n={2}><Field label={L(zh, '시작일', '开始日期')} value="2026-10-12" /></Mark>
-        <div className="flex items-center gap-2"><input type="checkbox" readOnly tabIndex={-1} /> {L(zh, '선택 단계 포함', '包含可选步骤')}</div>
         <Mark n={3} inline><Btn primary>{L(zh, '계획 만들기', '创建计划')}</Btn></Mark>
       </div>
     </Frame>
@@ -58,9 +61,9 @@ export function ConfirmMock({ zh }) {
   return (
     <Frame title={L(zh, '일정 탭', '日程页')}>
       <div className="flex justify-end gap-2 mb-2"><Mark n={5} inline><Btn>{L(zh, '다시 만들기', '重新创建')}</Btn></Mark><Mark n={1} inline><Btn primary>{L(zh, '계획 확정', '确认计划')}</Btn></Mark></div>
-      {[['샘플 제작', '样品制作', '10-20', '왕QC'], ['내부 원가 검토', '内部成本审核', '10-22', '김PM']].map(([k, c, d, o], i) => (
+      {[['사양 확정', '规格确认', '10-15', '김PM'], ['공장 확정', '工厂确认', '10-19', '리PM']].map(([k, c, d, o], i) => (
         <div key={k} className="flex items-center gap-2 py-1.5 border-t">
-          <span className="flex-1">{L(zh, k, c)} {i === 1 && <Mark n={4} inline>🙈</Mark>}</span>
+          <span className="flex-1">{L(zh, k, c)} {i === 1 && <Mark n={4} inline><EyeOff className="w-3 h-3 inline" /></Mark>}</span>
           {i === 0 ? <Mark n={2} inline><span>{d}</span></Mark> : <span>{d}</span>}
           {i === 0 ? <Mark n={3} inline><span>{o}</span></Mark> : <span>{o}</span>}
         </div>
@@ -74,7 +77,7 @@ export function CompleteMock({ zh }) {
     <Frame title={L(zh, '단계 완료', '完成步骤')}>
       <div className="space-y-2">
         <Mark n={1}><Field label={L(zh, '실제 완료일', '实际完成日')} value="2026-10-24" /></Mark>
-        <Mark n={2}><div className="flex items-center gap-2 p-1"><input type="checkbox" checked readOnly tabIndex={-1} />{L(zh, '남은 단계를 2일 뒤로 밀기', '剩余步骤顺延2天')}</div></Mark>
+        <Mark n={2}><div className="flex items-center gap-2 p-1"><input type="checkbox" checked readOnly tabIndex={-1} />{L(zh, '뒤 단계 계획일도 늦어진 만큼 밀기', '后续步骤计划日也按延后天数顺延')}</div></Mark>
         <div className="flex justify-end"><Mark n={3} inline><Btn primary>{L(zh, '완료 처리', '完成')}</Btn></Mark></div>
       </div>
     </Frame>
@@ -85,8 +88,8 @@ export function QcMock({ zh }) {
   return (
     <Frame title={L(zh, '단계 완료 · 출고 전 검수', '完成步骤 · 出货前检验')}>
       <div className="space-y-2">
-        <Mark n={1}><Field label={L(zh, 'QC 보고서 연결', '关联QC报告')} value="QC-1012 · 합격" /></Mark>
-        <Mark n={2}><div className="px-2 py-1 rounded border opacity-50">QC-1008 · <Badge tone="red">불합격</Badge></div></Mark>
+        <Mark n={1}><Field label={L(zh, 'QC 보고서 연결', '关联QC报告')} value={L(zh, '2026-10-06 · 합격', '2026-10-06 · 合格')} /></Mark>
+        <Mark n={2}><div className="px-2 py-1 rounded border opacity-50">2026-10-02 · <Badge tone="red">{L(zh, '불합격', '不合格')}</Badge> ({L(zh, '선택 불가', '不可选')})</div></Mark>
       </div>
     </Frame>
   );

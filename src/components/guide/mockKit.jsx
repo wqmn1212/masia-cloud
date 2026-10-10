@@ -6,11 +6,12 @@ export function Pin({ n, pos = 'tr' }) {
 }
 
 export function Mark({ n, inline = false, pos, className = '', children }) {
+  const Tag = inline ? 'span' : 'div';
   return (
-    <span className={`relative ${inline ? 'inline-block pr-3' : 'block'} rounded border-2 border-destructive/70 ${className}`}>
+    <Tag className={`relative ${inline ? 'inline-block pr-3' : 'block'} rounded border-2 border-destructive/70 ${className}`}>
       {children}
       <Pin n={n} pos={pos} />
-    </span>
+    </Tag>
   );
 }
 
