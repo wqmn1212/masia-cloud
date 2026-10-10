@@ -46,6 +46,7 @@ import CloudGuide from '@/pages/CloudGuide';
 import JoinInvite from '@/pages/JoinInvite';
 import JoinSetPassword from '@/pages/JoinSetPassword';
 import ServiceGuide from '@/pages/ServiceGuide';
+import UserGuide from '@/pages/UserGuide';
 import ClientGuide from '@/pages/ClientGuide';
 import Marketing from '@/pages/Marketing';
 import ChinaHolidays from '@/pages/ChinaHolidays';
@@ -111,6 +112,7 @@ const AuthenticatedApp = () => {
         <Route path="/client/board" element={<ClientBoard />} />
         <Route path="/client/guide" element={<ClientGuide />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/user-guide" element={<UserGuide />} />
         <Route path="/service-guide" element={<ServiceGuide />} />
         <Route path="/my-work" element={<MyWork />} />
         <Route path="/leads" element={<Leads />} />

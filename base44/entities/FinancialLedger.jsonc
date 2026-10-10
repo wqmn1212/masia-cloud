@@ -6,6 +6,10 @@
       "type": "string",
       "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
     },
+    "service_agreement_id": {
+      "type": "string",
+      "description": "\uadc0\uc18d\ub41c \uc6d4 \uacc4\uc57d ServiceAgreement ID. \ud398\uc774\ubc31 \ube44\uc728\uc740 \uc774 \uacc4\uc57d\uc5d0\uc11c \uac00\uc838\uc628\ub2e4"
+    },
     "card_id": {
       "type": "string",
       "description": "\uc5f0\uacb0\ub41c TaskCard ID"

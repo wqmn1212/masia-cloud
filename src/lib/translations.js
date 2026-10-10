@@ -8,7 +8,7 @@ export const translations = {
     'nav.timeline': '생산 타임라인', 'nav.asrequests': 'AS 접수',
     'nav.myWork': '내 업무', 'nav.leads': '문의 접수', 'nav.marketing': '마케팅', 'nav.chinaHolidays': '중국 휴무', 'nav.portfolio': '포트폴리오 관리', 'nav.contracts': '계약서 관리', 'nav.decisions': '결정 기록',
     'nav.bom': 'STEP 도면 분석', 'nav.financial': '재무 리포트', 'nav.assistant': 'AI 업무 비서', 'nav.files': '파일 센터',
-    'nav.serviceGuide': '서비스 사용 가이드',
+    'nav.serviceGuide': '서비스 사용 가이드', 'nav.userGuide': '이용 가이드',
     'brand.name': '이지스 클라우드',
     // TopBar
     'topbar.search': '견적, 공장, 고객사 검색...', 'topbar.tier.master': 'SaaS 마스터', 'topbar.tier.service': '팀 관리자', 'topbar.tier.sub': '팀원', 'topbar.tier.client': '고객사',
@@ -159,7 +159,7 @@ export const translations = {
     'nav.timeline': '生产时间轴', 'nav.asrequests': '售后申请',
     'nav.myWork': '我的工作', 'nav.leads': '咨询受理', 'nav.marketing': '营销', 'nav.chinaHolidays': '中国假期', 'nav.portfolio': '案例管理', 'nav.contracts': '合同管理', 'nav.decisions': '决策记录',
     'nav.bom': 'STEP图纸分析', 'nav.financial': '财务报告', 'nav.assistant': 'AI工作助手', 'nav.files': '文件中心',
-    'nav.serviceGuide': '服务使用指南',
+    'nav.serviceGuide': '服务使用指南', 'nav.userGuide': '使用指南',
     'brand.name': 'AEGIS 云平台',
     // TopBar
     'topbar.search': '搜索报价、工厂、客户...', 'topbar.tier.master': 'SaaS 主管理员', 'topbar.tier.service': '团队管理员', 'topbar.tier.sub': '团队成员', 'topbar.tier.client': '客户',

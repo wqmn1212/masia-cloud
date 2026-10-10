@@ -1,0 +1,353 @@
+// 고객 이용 가이드 본문 [ko, en, zh]
+// 고객 포털(/client/guide)과 공개 가이드(/cloud-guide)가 함께 쓴다.
+// sections[].points 순서 = 예시 화면의 번호 순서 (clientGuideMocks.jsx)
+import { tx } from '@/lib/landingContent';
+
+export const t = (v, lang = 'ko') => tx(v, lang);
+const T = (ko, en, zh) => [ko, en, zh];
+
+export const CG = {
+  eyebrow: T('AEGIS Cloud · 이용 가이드', 'AEGIS Cloud · User guide', 'AEGIS Cloud · 使用指南'),
+  title: T('이용 가이드', 'User guide', '使用指南'),
+  sub: T('AEGIS Cloud에서 프로젝트를 맡기고, 진행 일정과 견적서·결제·파일을 확인하고, 담당자와 소통하는 방법을 화면과 함께 안내합니다.',
+    'How to start a project in AEGIS Cloud, follow its schedule, get quotes, check payments and files, and talk to your AEGIS team — shown on the actual screens.',
+    '结合实际页面，介绍如何在 AEGIS Cloud 委托项目、查看进度、报价单、付款与文件，以及与负责人沟通。'),
+  sample: T('예시 화면', 'Sample screen', '示例画面'),
+  sampleNote: T('예시 화면의 회사·제품·날짜는 설명을 위한 가상의 내용입니다. 화면의 번호는 바로 옆 설명의 번호와 같습니다.',
+    'Companies, products and dates on the sample screens are made up. Numbers on each screen match the notes next to it.',
+    '示例画面中的公司、产品和日期均为虚构。画面上的编号与旁边说明的编号一致。'),
+  legend: T('화면 설명', 'What you see', '画面说明'),
+  tips: T('알아두세요', 'Good to know', '请注意'),
+  toc: T('목차', 'Contents', '目录'),
+  faqTitle: T('자주 묻는 질문', 'FAQ', '常见问题'),
+
+  glance: {
+    title: T('한눈에 보기', 'At a glance', '一览'),
+    desc: T('로그인하면 아래 화면이 열립니다. 왼쪽 메뉴 세 개와 위쪽 막대만 알면 모든 기능을 쓸 수 있습니다.',
+      'This is the screen you see after signing in. Three menus on the left and the bar at the top lead to every feature.',
+      '登录后会看到下面的页面。只要了解左侧三个菜单和顶部栏，就能使用全部功能。'),
+    points: [
+      T('왼쪽 메뉴: 고객 대시보드(진행 현황) · 소싱 보드 · 이용 가이드', 'Left menu: Client dashboard (progress) · Sourcing board · User guide', '左侧菜单：客户仪表板（进度概况）· 采购看板 · 使用指南'),
+      T('알림: 단계 변경, 견적서 발행, 답변 같은 새 소식이 옵니다. 빨간 숫자는 읽지 않은 알림 수입니다.', 'Notifications: stage changes, new quotes, replies and more. The red number counts unread items.', '通知：阶段变更、报价单发布、回复等新消息。红色数字为未读数量。'),
+      T('KR / 中文: 화면 언어를 바꿉니다.', 'KR / 中文: switch the screen language.', 'KR / 中文：切换界面语言。'),
+      T('단계별 프로젝트 수: 다섯 단계마다 몇 건이 있는지 보여 줍니다.', 'Projects per stage: how many projects are in each of the five stages.', '各阶段项目数：显示五个阶段各有多少项目。'),
+      T('진행 중인 프로젝트: 누르면 상세 화면이 열립니다.', 'Active projects: click one to open its details.', '进行中的项目：点击打开详情。'),
+      T('담당자 문의: 로그인이나 진행 상황 문의를 위한 연락처입니다.', 'Contact: who to reach for sign-in or progress questions.', '联系负责人：登录或进度相关问题的联系方式。'),
+    ],
+  },
+
+  flow: {
+    title: T('프로젝트는 이렇게 진행됩니다', 'How a project moves', '项目进行流程'),
+    desc: T('모든 프로젝트는 아래 다섯 단계를 지나갑니다. 단계는 AEGIS 담당자가 옮기며, 단계가 바뀌면 알림이 갑니다.',
+      'Every project passes through these five stages. Your AEGIS team moves the stage and you are notified each time.',
+      '每个项目都会经过以下五个阶段。阶段由 AEGIS 负责人推进，每次变更都会通知您。'),
+    you: T('고객사가 할 일', 'What you do', '贵司要做的事'),
+    aegis: T('AEGIS가 하는 일', 'What AEGIS does', 'AEGIS 要做的事'),
+    stages: [
+      { id: 'TODO', you: T('신규 문의 작성 (제목·요구사항·파일)', 'Send a new inquiry (title, requirements, files)', '填写新询价（标题、需求、文件）'), aegis: T('문의 확인 후 영업일 1일 이내 회신', 'Review it and reply within one business day', '确认询价，一个工作日内回复') },
+      { id: 'IN_PROGRESS', you: T('문의 탭에서 질문에 답하고 요구사항 보완', 'Answer questions in Messages, refine requirements', '在咨询标签回答问题、补充需求'), aegis: T('공장 조사, 사양 확인, 공장 견적 수집', 'Find factories, confirm specs, collect factory quotes', '调查工厂、确认规格、收集工厂报价') },
+      { id: 'REVIEW', you: T('견적서 PDF 확인, 조건 협의', 'Read the PDF quote and agree on terms', '查看 PDF 报价单、协商条件'), aegis: T('견적서 발행, 가격·납기·결제 조건 협의', 'Issue the quote, agree price, lead time and payment', '发布报价单，协商价格、交期、付款条件') },
+      { id: 'PRODUCTION', you: T('선금 입금, 진행 단계·예정 납품일 확인', 'Pay the deposit, follow milestones and delivery date', '支付预付款，查看进行步骤和预计交付日'), aegis: T('입금 확인, 샘플·양산·출고 전 검수, 일정 관리', 'Confirm payment, run samples, production and pre-shipment QC', '确认到账，负责样品、量产、出货前检验和日程') },
+      { id: 'DONE', you: T('잔금 입금, 납품 확인, 서류 보관', 'Pay the balance, receive goods, keep documents', '支付尾款、确认交付、保存文件'), aegis: T('출고·통관·납품, 무역서류 공유', 'Ship, clear customs, deliver, share trade documents', '出货、清关、交付，共享贸易文件') },
+    ],
+  },
+
+  quick: {
+    title: T('이럴 땐 여기로', 'Jump to', '快速查找'),
+    items: [
+      [T('새 프로젝트를 맡기고 싶어요', 'Start a new project', '委托新项目'), 'inquiry'],
+      [T('언제 받을 수 있는지 보고 싶어요', 'When will it arrive?', '什么时候能收到？'), 'progress'],
+      [T('견적서를 받고 싶어요', 'Get the quote', '获取报价单'), 'quotes'],
+      [T('담당자에게 묻고 싶어요', 'Ask your team', '咨询负责人'), 'chat'],
+      [T('입금 확인 여부를 보고 싶어요', 'Check payment status', '查看到账状态'), 'payment'],
+      [T('도면·사진을 보내고 싶어요', 'Send drawings or photos', '发送图纸或照片'), 'files'],
+      [T('지난 서류를 찾고 싶어요', 'Find past documents', '查找以往文件'), 'library'],
+    ],
+  },
+
+  sections: [
+    {
+      id: 'login', short: T('처음 로그인', 'First sign-in', '首次登录'),
+      title: T('처음 로그인하기', 'Signing in for the first time', '首次登录'),
+      intro: T('계정은 AEGIS 담당자가 만들어 드립니다. 초대 메일을 받으면 아래 순서로 비밀번호를 정하고 바로 시작합니다.',
+        'Your AEGIS team creates your account. When the invitation email arrives, set a password as below and you are in.',
+        '账号由 AEGIS 负责人为您开通。收到邀请邮件后，按以下步骤设置密码即可开始使用。'),
+      points: [
+        T('이메일: 초대받은 주소가 미리 채워져 있습니다.', 'Email: already filled with the invited address.', '邮箱：已自动填入受邀地址。'),
+        T('새 비밀번호: 8자 이상으로 정하고, 한 번 더 입력해 확인합니다.', 'New password: at least 8 characters, entered twice.', '新密码：至少 8 位，并再次输入确认。'),
+        T('비밀번호 설정하고 시작하기: 누르면 메일로 인증 코드가 갑니다. 코드를 넣으면 바로 로그인됩니다.', 'Set password and start: a code is emailed to you; enter it to sign in.', '设置密码并开始：系统会向邮箱发送验证码，输入后即可登录。'),
+        T('이미 비밀번호가 있다면 로그인 화면으로 바꿉니다. 비밀번호를 잊었을 때는 로그인 화면의 "비밀번호 재설정"을 누릅니다.', 'Already have a password? Switch to sign-in. Forgot it? Use "Reset password" on the sign-in screen.', '已有密码时切换到登录页面。忘记密码时，点击登录页面的"重置密码"。'),
+      ],
+      tips: [
+        T('다음부터는 로그인 화면에서 이메일과 비밀번호로 들어옵니다.', 'Next time, sign in with your email and password.', '之后在登录页面用邮箱和密码登录。'),
+        T('같은 회사 직원 계정이 더 필요하면 담당자에게 요청하세요. 추가된 계정도 같은 프로젝트를 봅니다.', 'Need accounts for colleagues? Ask your team. They will see the same projects.', '需要为同事开通账号时请联系负责人，新账号可查看相同项目。'),
+      ],
+    },
+    {
+      id: 'dashboard', short: T('고객 대시보드', 'Dashboard', '客户仪表板'),
+      title: T('고객 대시보드 (진행 현황)', 'Client dashboard (Progress)', '客户仪表板（进度概况）'),
+      intro: T('로그인하면 가장 먼저 보이는 화면입니다. 회사의 모든 프로젝트 상황을 한 화면에서 확인합니다.',
+        'The first screen after signing in. See all of your company\'s projects in one place.',
+        '登录后首先看到的页面，可在一个页面查看贵司全部项目。'),
+      points: [
+        T('단계별 건수: 대기 중·소싱 중·견적 검토·발주·제작·완료마다 프로젝트가 몇 건인지 보여 줍니다.', 'Count per stage: Waiting, Sourcing, Quote review, Order & production, Done.', '各阶段数量：待处理、采购中、报价审核、下单·生产、完成各有多少项目。'),
+        T('중국 휴무 안내: 앞으로 90일 안의 중국 공휴일, 공장 휴무 예상 기간, 휴무 전 출고를 위한 발주 마감일입니다.', 'China holidays: public holidays in the next 90 days, expected factory closures and the order cut-off to ship before them.', '中国假期提示：未来 90 天内的中国公休日、预计工厂停工期间，以及假期前出货的下单截止日。'),
+        T('진행 중인 프로젝트: 완료·취소를 뺀 프로젝트입니다. 누르면 상세 화면이 열립니다. 우선순위, 휴무 겹침, 목표일이 작게 표시됩니다.', 'Active projects (excluding done and cancelled). Click to open. Priority, holiday overlap and target date are shown.', '进行中的项目（不含完成和取消），点击打开详情。会显示优先级、假期冲突和目标日期。'),
+        T('보드로 보기: 소싱 보드로 이동합니다.', 'View board: go to the sourcing board.', '看板查看：跳转到采购看板。'),
+        T('담당자 문의: 계정이나 진행 상황 문의를 위한 담당자 이메일입니다.', 'Contact: your team\'s email for account or progress questions.', '联系负责人：账号或进度问题的负责人邮箱。'),
+      ],
+      tips: [
+        T('목록은 30초마다 저절로 새로 고쳐집니다.', 'The list refreshes itself every 30 seconds.', '列表每 30 秒自动刷新。'),
+        T('화면 아래에는 회사별 파일 보관함이 있습니다 (12번).', 'The company file library sits below (section 12).', '页面下方是公司文件库（第 12 节）。'),
+      ],
+    },
+    {
+      id: 'board', short: T('소싱 보드', 'Sourcing board', '采购看板'),
+      title: T('소싱 보드', 'Sourcing board', '采购看板'),
+      intro: T('프로젝트를 단계별 칸으로 나눠 보여 줍니다. 단계는 AEGIS 담당자가 옮기므로 직접 옮기실 필요는 없습니다.',
+        'Projects are laid out in columns by stage. Your AEGIS team moves them, so you never need to.',
+        '按阶段分栏显示项目。阶段由 AEGIS 负责人移动，您无需操作。'),
+      points: [
+        T('신규 문의 작성: 새 프로젝트를 맡길 때 누릅니다 (4번).', 'New inquiry: start a new project (section 4).', '新建询价：委托新项目时点击（第 4 节）。'),
+        T('단계 칸과 건수: 칸마다 그 단계에 있는 프로젝트 수가 표시됩니다.', 'Stage column and count.', '阶段栏及数量。'),
+        T('프로젝트 카드: 누르면 상세 화면이 열립니다.', 'Project card: click to open details.', '项目卡片：点击打开详情。'),
+      ],
+      table: {
+        head: [T('단계', 'Stage', '阶段'), T('뜻', 'Meaning', '含义')],
+        rows: [
+          [T('대기 중', 'Waiting', '待处理'), T('문의가 접수되어 담당자가 검토를 시작하기 전입니다.', 'Your inquiry is in; the team has not started yet.', '询价已受理，负责人尚未开始处理。')],
+          [T('소싱 중', 'Sourcing', '采购中'), T('공장을 찾고 사양을 확인하며 견적을 받는 중입니다.', 'Finding factories, confirming specs and collecting quotes.', '正在寻找工厂、确认规格并收集报价。')],
+          [T('견적 검토', 'Quote review', '报价审核'), T('견적서가 준비되어 조건을 협의하는 단계입니다.', 'The quote is ready and terms are being agreed.', '报价单已备好，正在协商条件。')],
+          [T('발주 · 제작', 'Order & production', '下单 · 生产'), T('발주 후 샘플·양산·검수·출고가 진행됩니다.', 'Order placed; samples, production, QC and shipping.', '已下单，进行样品、量产、检验和出货。')],
+          [T('완료', 'Done', '完成'), T('납품까지 끝난 프로젝트입니다.', 'Delivered.', '已完成交付。')],
+        ],
+      },
+      tips: [T('담당자가 공개한 프로젝트만 보입니다. 직접 접수한 문의는 바로 "대기 중"에 나타납니다.', 'Only projects your team has shared appear. Your own inquiries show up in Waiting right away.', '只显示负责人公开的项目。您提交的询价会立即出现在"待处理"。')],
+    },
+    {
+      id: 'inquiry', short: T('신규 문의', 'New inquiry', '新建询价'),
+      title: T('신규 문의 작성 (새 프로젝트 맡기기)', 'New inquiry (start a project)', '新建询价（委托新项目）'),
+      intro: T('소싱 보드 오른쪽 위 "신규 문의 작성"을 누르면 아래 창이 열립니다. 자세히 적을수록 견적이 정확해집니다.',
+        'Click "New inquiry" at the top right of the sourcing board. The more detail you give, the more accurate the quote.',
+        '点击采购看板右上角的"新建询价"打开下面的窗口。填写越详细，报价越准确。'),
+      points: [
+        T('제목 (필수): 무엇을 원하는지 한 줄로 적습니다. 예: 드립백 충전기 5대 견적 요청', 'Title (required): one line, e.g. "Quote for 5 drip-bag fillers".', '标题（必填）：一句话说明需求，例如"挂耳灌装机 5 台询价"。'),
+        T('품목 카테고리: 해당하는 것을 여러 개 고를 수 있습니다.', 'Category: pick as many as apply.', '品类：可多选。'),
+        T('발주 예정 수량과 희망 단가: 아는 만큼 적습니다.', 'Planned quantity and target price, if you know them.', '预计数量和期望单价：知道多少写多少。'),
+        T('요구사항 상세 (필수): 사양, 마감, 납기, 인증 조건을 자세히 적습니다.', 'Requirements (required): specs, finish, lead time, certifications.', '详细需求（必填）：规格、表面处理、交期、认证要求等。'),
+        T('첨부 파일: 도면·사진·참고 자료를 최대 5개, 파일당 10MB까지 올립니다. 끌어다 놓아도 됩니다.', 'Attachments: up to 5 files, 10 MB each. Drag and drop works.', '附件：图纸、照片、参考资料，最多 5 个，每个 10MB，可拖放。'),
+        T('문의 접수: 누르면 접수됩니다.', 'Submit.', '提交询价。'),
+      ],
+      tips: [
+        T('접수하면 "[고객문의] 제목" 카드가 소싱 보드의 "대기 중"에 바로 생기고, 접수 확인 메일이 갑니다.', 'A "[고객문의] title" card appears in Waiting and a confirmation email is sent.', '提交后，采购看板"待处理"中会立即出现"[고객문의] 标题"卡片，并发送受理确认邮件。'),
+        T('적은 내용은 그 카드의 요구사항에, 첨부 파일은 파일 탭에 들어갑니다.', 'Your text goes into the card\'s requirements and attachments into its Files tab.', '填写的内容会进入该卡片的需求，附件进入文件标签。'),
+        T('담당자가 영업일 기준 1일 안에 회신합니다. 같은 회사에서 5분 안에 다시 접수할 수는 없습니다.', 'We reply within one business day. Another inquiry from your company is blocked for 5 minutes.', '负责人将在一个工作日内回复。同一公司 5 分钟内不能重复提交。'),
+      ],
+    },
+    {
+      id: 'detail', short: T('프로젝트 상세', 'Project details', '项目详情'),
+      title: T('프로젝트 상세 화면', 'Project details', '项目详情'),
+      intro: T('대시보드나 보드에서 프로젝트를 누르면 열립니다. 알림이나 파일 보관함에서 프로젝트 이름을 눌러도 같은 화면이 열립니다.',
+        'Opens when you click a project on the dashboard or board, a notification, or a project name in the file library.',
+        '在仪表板或看板点击项目即可打开；点击通知或文件库中的项目名称也会打开此页面。'),
+      points: [
+        T('프로젝트 이름', 'Project name', '项目名称'),
+        T('최신 일정·입금 상태 새로고침: 화면을 연 뒤 바뀐 내용을 다시 불러옵니다.', 'Refresh schedule and payment status.', '刷新最新日程和到账状态。'),
+        T('다섯 개 탭: 진행 정보 · 견적서 · 문의 · 결제 · 파일. 아래 6~11번에서 하나씩 설명합니다.', 'Five tabs: Progress, Quotes, Messages, Payments, Files — see sections 6–11.', '五个标签：进度信息 · 报价单 · 咨询 · 付款 · 文件，详见第 6~11 节。'),
+      ],
+    },
+    {
+      id: 'progress', short: T('진행 단계', 'Milestones', '进行步骤'),
+      title: T('진행 정보 ① 진행 단계', 'Progress ① Milestones', '进度信息 ① 进行步骤'),
+      intro: T('진행 정보 탭 맨 위에 프로젝트의 세부 단계와 날짜가 나옵니다. "언제 받을 수 있나요?"의 답이 여기 있습니다.',
+        'The top of the Progress tab lists the project\'s steps and dates — the answer to "when will it arrive?".',
+        '进度信息标签顶部列出项目的详细步骤和日期，"什么时候能收到"的答案就在这里。'),
+      points: [
+        T('끝난 단계: 체크 표시와 실제 완료일이 나옵니다.', 'Finished steps: a check mark and the actual date.', '已完成步骤：显示勾号和实际完成日。'),
+        T('지금 진행 중인 단계: 굵은 글씨와 테두리로 표시되고, 예정일이 나옵니다.', 'Current step: bold with an outline, plus its planned date.', '当前步骤：粗体加圆框，并显示预计日期。'),
+        T('앞으로의 단계: 예정일이 나옵니다. 마지막 "납품"의 예정일이 예상 납품일입니다.', 'Upcoming steps with planned dates. The planned date of "Delivery" is your expected delivery date.', '后续步骤：显示预计日期。最后"交付"的预计日期即预计交付日。'),
+        T('사유: 일정이 늦어진 단계에 담당자가 남긴 설명입니다.', 'Reason: a note from your team when a step is late.', '原因：步骤延误时负责人留下的说明。'),
+      ],
+      tips: [
+        T('담당자가 일정 계획을 확정한 뒤에 나타납니다. 아직 계획 전이면 이 부분은 보이지 않습니다.', 'Appears once your team confirms the plan. Before that, this part is hidden.', '负责人确认计划后才显示，计划前不显示此部分。'),
+        T('예정 납품일이 바뀌면 알림과 메일로 바뀐 날짜와 사유를 알려 드립니다.', 'If the delivery date changes, you are notified with the new date and the reason.', '预计交付日变更时，会通过通知和邮件告知新日期及原因。'),
+        T('공장 선정처럼 내부에서만 다루는 단계는 표시되지 않습니다.', 'Internal-only steps, such as factory selection, are not shown.', '工厂选定等内部步骤不会显示。'),
+      ],
+    },
+    {
+      id: 'schedule', short: T('일정·요구사항', 'Schedule & requirements', '日程与需求'),
+      title: T('진행 정보 ② 일정과 요구사항', 'Progress ② Schedule and requirements', '进度信息 ② 日程与需求'),
+      intro: T('진행 단계 아래에는 견적·납품 일정과 현재 단계, 그리고 요청하신 요구사항이 있습니다.',
+        'Below the milestones are the quote and delivery schedule, the current stage and your requirements.',
+        '进行步骤下方是报价·交付日程、当前阶段以及您提出的需求。'),
+      points: [
+        T('견적 발송 기한: 견적서를 보내 드리기로 한 날입니다.', 'Quote due: when we will send the quote.', '报价发送期限：约定发送报价单的日期。'),
+        T('선금 입금 기준일과 납품 소요일: 납품일 계산의 출발일과 걸리는 근무일 수입니다.', 'Deposit date and lead time (working days) used to calculate delivery.', '定金到账基准日和交付所需天数：交付日计算的起点和所需工作日数。'),
+        T('예정 납품일: 입금일 다음 날부터 근무일로 셉니다. 일요일과 중국 공휴일은 빼고 토요일은 셉니다.', 'Expected delivery: counted in working days from the day after payment, skipping Sundays and Chinese holidays (Saturdays count).', '预计交付日：从到账次日起按工作日计算，不含周日和中国公休日，周六计入。'),
+        T('단계·우선순위·목표일: 현재 단계와 우선순위, 목표일입니다.', 'Stage, priority and target date.', '阶段、优先级和目标日期。'),
+        T('요구사항: 고객사가 직접 고칠 수 있는 유일한 항목입니다. 오른쪽 위 KR/CN으로 한국어·중국어 내용을 바꿔 봅니다.', 'Requirements: the only field you can edit. Use KR/CN at the top right to see the Korean or Chinese version.', '需求：贵司唯一可以直接修改的项目。用右上角 KR/CN 切换韩文和中文内容。'),
+        T('요구사항 저장: 저장하면 중국어로 번역되어 담당자에게 알림이 갑니다.', 'Save requirements: translated into Chinese and your team is notified.', '保存需求：保存后会翻译成中文并通知负责人。'),
+      ],
+      tips: [T('일정은 담당자가 정합니다. 날짜 변경이 필요하면 문의 탭으로 요청해 주세요.', 'Your team sets the schedule. Ask in Messages if you need a change.', '日程由负责人确定，需要变更时请在咨询标签提出。')],
+    },
+    {
+      id: 'quotes', short: T('견적서', 'Quotes', '报价单'),
+      title: T('견적서 탭', 'Quotes tab', '报价单标签'),
+      intro: T('담당자가 발행한 견적서를 내려받는 곳입니다.', 'Download the quotes your team has issued.', '下载负责人发布的报价单。'),
+      points: [
+        T('견적서 이름', 'Quote title', '报价单名称'),
+        T('발행일 · 통화 · 모델명', 'Issue date · currency · model', '发布日期 · 币种 · 型号'),
+        T('PDF: 금액이 담긴 공식 견적서를 내려받습니다.', 'PDF: download the official quote with amounts.', 'PDF：下载含金额的正式报价单。'),
+      ],
+      tips: [
+        T('금액은 화면에 표시하지 않고 PDF 안에만 있습니다.', 'Amounts are only inside the PDF.', '金额不在页面显示，仅在 PDF 中。'),
+        T('새 견적서가 발행되면 알림과 메일이 갑니다. 아직 없으면 "아직 발행된 견적서가 없습니다"로 나옵니다.', 'You get a notification and email when a quote is issued. If none yet, the tab says so.', '发布新报价单时会收到通知和邮件。尚无报价单时显示"尚未发布报价单"。'),
+      ],
+    },
+    {
+      id: 'chat', short: T('문의', 'Messages', '咨询'),
+      title: T('문의 탭 (담당자와 대화)', 'Messages tab (talk to your team)', '咨询标签（与负责人对话）'),
+      intro: T('프로젝트별로 담당자와 주고받는 대화 창입니다. 질문, 변경 요청, 확인은 모두 여기서 하시면 기록이 남습니다.',
+        'A conversation with your team for each project. Questions, change requests and approvals all stay on record here.',
+        '按项目与负责人对话的窗口。提问、变更要求和确认都在这里进行，会留下记录。'),
+      points: [
+        T('담당자 메시지: 왼쪽 회색 말풍선입니다. 보낸 사람과 시간이 위에 나옵니다.', 'Team messages: grey bubbles on the left with sender and time.', '负责人消息：左侧灰色气泡，上方显示发送人和时间。'),
+        T('내 메시지: 오른쪽 파란 말풍선입니다.', 'Your messages: blue bubbles on the right.', '我的消息：右侧蓝色气泡。'),
+        T('파일 첨부: 클립을 누르거나 파일을 끌어다 놓습니다. 최대 5개, 파일당 10MB입니다.', 'Attach: click the clip or drag files in. Up to 5 files, 10 MB each.', '附件：点击回形针或拖放文件，最多 5 个，每个 10MB。'),
+        T('입력 언어 KR/CN: 보통은 KR로 한국어를 쓰시면 됩니다. 중국어로 직접 쓰고 싶을 때만 CN을 고릅니다.', 'Input language KR/CN: write in Korean under KR; choose CN only to write Chinese yourself.', '输入语言 KR/CN：一般用 KR 写韩文即可，想直接写中文时选 CN。'),
+        T('보내기', 'Send', '发送'),
+      ],
+      tips: [
+        T('한국어로 쓰시면 중국어로 번역되어 중국 현지 담당자에게도 전달됩니다.', 'Korean messages are translated into Chinese for our staff in China.', '用韩文书写会翻译成中文，转达给中国现场负责人。'),
+        T('담당자가 답하면 "[답변] 프로젝트 이름" 알림이 갑니다.', 'When your team replies you get a "[답변] project" notification.', '负责人回复时会收到"[답변] 项目名称"通知。'),
+        T('알림 메일에는 회신하지 마시고 이 문의 탭을 이용해 주세요.', 'Please don\'t reply to notification emails — use this tab.', '请不要回复通知邮件，请使用此咨询标签。'),
+      ],
+    },
+    {
+      id: 'payment', short: T('결제', 'Payments', '付款'),
+      title: T('결제 탭', 'Payments tab', '付款标签'),
+      intro: T('선금·중도금·잔금이 확인됐는지 보여 줍니다. 입금 확인은 AEGIS 담당자가 처리합니다.',
+        'Shows whether the deposit, interim and balance payments are confirmed. Your AEGIS team confirms them.',
+        '显示预付款、中期款和尾款是否已确认。到账由 AEGIS 负责人确认。'),
+      points: [
+        T('입금 확인 비율: 확인된 결제 단계의 비율 합계입니다.', 'Confirmed share: total percentage of confirmed payments.', '到账确认比例：已确认付款阶段的比例合计。'),
+        T('결제 단계: 선금·중도금·잔금과 비율, 확인된 경우 입금일이 나옵니다.', 'Payment stages with their percentage and payment date once confirmed.', '付款阶段：预付款、中期款、尾款及比例，确认后显示到账日。'),
+        T('상태: 확인 대기 · 입금 확인 · 보류', 'Status: Pending · Confirmed · On hold', '状态：待确认 · 已到账 · 暂缓'),
+      ],
+      tips: [
+        T('입금이 확인되면 알림과 메일이 갑니다.', 'You are notified by app and email when a payment is confirmed.', '到账确认后会收到通知和邮件。'),
+        T('금액은 견적서 PDF에서 확인해 주세요.', 'See the PDF quote for amounts.', '金额请查看报价单 PDF。'),
+      ],
+    },
+    {
+      id: 'files', short: T('파일', 'Files', '文件'),
+      title: T('파일 탭', 'Files tab', '文件标签'),
+      intro: T('이 프로젝트의 파일을 주고받는 곳입니다. 도면이나 사진을 올리면 담당자에게 바로 보입니다.',
+        'Exchange files for this project. Anything you upload is visible to your team right away.',
+        '收发本项目文件的地方。上传的图纸或照片会立即显示给负责人。'),
+      points: [
+        T('업로드: 눌러서 고르거나 끌어다 놓습니다. 한 번에 최대 5개, 파일당 10MB입니다.', 'Upload: click or drag. Up to 5 files at a time, 10 MB each.', '上传：点击选择或拖放，一次最多 5 个，每个 10MB。'),
+        T('파일 이름과 종류: 견적서, 인보이스(CI·PI), 패킹리스트 같은 문서 종류와 확장자가 표시됩니다.', 'File name and type, such as quote, invoice (CI/PI) or packing list, plus the extension.', '文件名和类型：显示报价单、发票（CI·PI）、装箱单等类型及扩展名。'),
+        T('올린 사람과 날짜', 'Uploaded by and date', '上传人和日期'),
+        T('열기: 파일을 열거나 내려받습니다.', 'Open: view or download.', '打开：查看或下载文件。'),
+      ],
+      tips: [T('고객사가 올린 파일과 담당자가 공개한 파일이 함께 나옵니다. 담당자가 공유한 현장 사진이나 검수 리포트도 여기서 받습니다.', 'Shows your uploads together with files your team has shared, such as site photos or inspection reports.', '同时显示贵司上传的文件和负责人公开的文件，负责人共享的现场照片、检验报告也在这里下载。')],
+    },
+    {
+      id: 'library', short: T('파일 보관함', 'File library', '文件库'),
+      title: T('회사별 파일 보관함', 'Company file library', '公司文件库'),
+      intro: T('고객 대시보드 아래쪽에 있습니다. 모든 프로젝트의 파일과 무역서류를 한곳에서 찾습니다.',
+        'At the bottom of the dashboard. Find files and trade documents from every project in one place.',
+        '位于客户仪表板下方，可在一处查找所有项目的文件和贸易文件。'),
+      points: [
+        T('검색 조건: 카드 이름, 문서 유형(일반 파일·인보이스·패킹리스트·견적서·송금계좌), 업로드 기간으로 좁힙니다.', 'Filters: project name, document type and upload dates.', '筛选：卡片名称、文件类型（一般文件、发票、装箱单、报价单、汇款账户）、上传期间。'),
+        T('파일 정보: 이름, 문서 유형, 확장자', 'File name, document type and extension', '文件信息：名称、类型、扩展名'),
+        T('프로젝트 이름: 누르면 그 프로젝트의 상세 화면이 열립니다.', 'Project name: click to open that project.', '项目名称：点击打开该项目详情。'),
+        T('열기', 'Open', '打开'),
+        T('이전 · 다음: 50개씩 나눠 보여 줍니다.', 'Previous · Next: 50 files per page.', '上一页 · 下一页：每页 50 个。'),
+      ],
+      tips: [T('날짜는 한국 시간 기준입니다.', 'Dates are in Korea time.', '日期以韩国时间为准。')],
+    },
+    {
+      id: 'alerts', short: T('알림', 'Notifications', '通知'),
+      title: T('알림과 메일', 'Notifications and email', '通知与邮件'),
+      intro: T('위쪽 막대의 종을 누르면 알림 목록이 열립니다. 중요한 알림은 메일로도 갑니다.',
+        'Click the bell in the top bar to see notifications. Important ones are also emailed.',
+        '点击顶部栏的铃铛打开通知列表，重要通知也会发送邮件。'),
+      points: [
+        T('알림 종: 빨간 숫자는 읽지 않은 알림 수입니다.', 'Bell: the red number counts unread notifications.', '铃铛：红色数字为未读通知数。'),
+        T('모두 읽음', 'Mark all as read', '全部已读'),
+        T('알림을 누르면 해당 프로젝트의 상세 화면이 바로 열립니다. 읽지 않은 알림은 굵은 글씨와 파란 점으로 표시됩니다.', 'Click a notification to open its project. Unread ones are bold with a blue dot.', '点击通知会直接打开对应项目。未读通知以粗体和蓝点显示。'),
+      ],
+      table: {
+        head: [T('알림', 'Notification', '通知'), T('언제 오나요', 'When', '何时发送')],
+        rows: [
+          [T('[신규 프로젝트]', '[신규 프로젝트] New project', '[신규 프로젝트] 新项目'), T('담당자가 프로젝트를 공개했을 때', 'Your team shares a project with you', '负责人公开项目时')],
+          [T('[진행 상황]', '[진행 상황] Stage', '[진행 상황] 进度'), T('단계가 바뀌었을 때 (예: 견적 검토 → 발주·제작)', 'The stage changes', '阶段变更时')],
+          [T('[견적서 발행]', '[견적서 발행] Quote', '[견적서 발행] 报价单'), T('새 견적서가 발행됐을 때 · 메일 항상 발송', 'A quote is issued · always emailed', '发布新报价单时 · 必发邮件')],
+          [T('[답변]', '[답변] Reply', '[답변] 回复'), T('문의 탭에 담당자가 답했을 때', 'Your team replies in Messages', '负责人在咨询标签回复时')],
+          [T('[파일 공유]', '[파일 공유] File', '[파일 공유] 文件'), T('담당자가 파일을 공유했을 때', 'Your team shares a file', '负责人共享文件时')],
+          [T('입금 확인', 'Payment confirmed', '到账确认'), T('선금·중도금·잔금이 확인됐을 때 · 메일 발송', 'A payment is confirmed · emailed', '款项确认时 · 发送邮件')],
+          [T('일정 변경', 'Schedule change', '日程变更'), T('예정 납품일 등 일정이 바뀌었을 때 · 바뀌기 전·후 날짜와 사유를 메일로 발송', 'A date changes · emailed with before/after dates and the reason', '预计交付日等日程变更时 · 邮件告知变更前后日期及原因')],
+          [T('중국 휴무 일정 안내', 'China holiday schedule', '中国假期日程提示'), T('생산 기간이 중국 공휴일과 겹쳐 담당자가 안내할 때', 'Production overlaps a Chinese holiday', '生产期间与中国公休日重叠时')],
+          [T('휴무 전 발주 마감 안내', 'Order cut-off before a holiday', '假期前下单截止提示'), T('긴 휴무 전 발주 마감 30일 전과 7일 전', '30 and 7 days before the cut-off', '下单截止日前 30 天和 7 天')],
+        ],
+      },
+      tips: [T('같은 프로젝트의 같은 알림이 5분 안에 여러 번 생기면 메일은 한 번만 갑니다.', 'Repeated notifications for the same project within 5 minutes are emailed only once.', '同一项目的同类通知 5 分钟内多次产生时，只发送一封邮件。')],
+    },
+    {
+      id: 'holidays', short: T('중국 휴무', 'China holidays', '中国假期'),
+      title: T('중국 휴무 안내', 'China holiday notices', '中国假期提示'),
+      intro: T('춘절·국경절 같은 긴 휴무에는 중국 공장이 쉬어 납기가 늦어질 수 있습니다. 미리 알려 드리는 곳이 두 군데 있습니다.',
+        'Long Chinese holidays such as Spring Festival close factories and can delay delivery. We flag them in two places.',
+        '春节、国庆等长假期间中国工厂停工，交期可能延后。我们会在两处提前提示。'),
+      points: [
+        T('휴일 이름과 공식 기간', 'Holiday name and official dates', '假期名称和法定期间'),
+        T('공장 휴무 예상 기간: 공식 휴일보다 앞뒤로 더 쉬는 경우가 많습니다.', 'Expected factory closure, often longer than the official dates.', '预计工厂停工期间：工厂往往比法定假期多休几天。'),
+        T('휴무 전 출고 발주 마감 (추정): 휴무 전에 받으려면 이날까지 발주해야 합니다.', 'Order cut-off (estimate) to ship before the holiday.', '假期前出货下单截止日（估计）：想在假期前收货需在此日前下单。'),
+        T('프로젝트 카드의 "휴무 겹침" 표시: 그 프로젝트의 생산 기간이 휴일과 겹친다는 뜻입니다.', '"Holiday overlap" on a project card: its production period overlaps the holiday.', '项目卡片上的"假期冲突"：该项目的生产期间与假期重叠。'),
+      ],
+      tips: [T('공장 휴무와 발주 마감일은 추정치이며 공장 사정에 따라 달라질 수 있습니다.', 'Factory closures and cut-offs are estimates and may vary by factory.', '工厂停工和下单截止日为估计值，可能因工厂情况而变化。')],
+    },
+    {
+      id: 'account', short: T('계정·도움말', 'Account & help', '账号与帮助'),
+      title: T('계정 · 언어 · 도움받기', 'Account, language and help', '账号 · 语言 · 帮助'),
+      intro: T('위쪽 막대 오른쪽과 대시보드의 담당자 문의 카드에서 계정과 도움말 기능을 씁니다.',
+        'Account and help options sit at the right of the top bar and in the Contact card on the dashboard.',
+        '账号与帮助功能位于顶部栏右侧及仪表板的"联系负责人"卡片。'),
+      points: [
+        T('메인페이지: AEGIS 홈페이지로 이동합니다.', 'Main page: go to the AEGIS website.', '主页：跳转到 AEGIS 官网。'),
+        T('KR / 中文: 화면 언어를 바꿉니다.', 'KR / 中文: switch the screen language.', 'KR / 中文：切换界面语言。'),
+        T('로그아웃', 'Sign out', '退出登录'),
+        T('담당자 문의: 로그인이 안 되거나 진행 상황이 궁금할 때 연락할 이메일입니다.', 'Contact: email us if you cannot sign in or have questions.', '联系负责人：无法登录或有进度疑问时的联系邮箱。'),
+      ],
+      tips: [T('프로젝트에 관한 질문은 각 프로젝트의 문의 탭을 쓰시면 가장 빠르고 기록도 남습니다.', 'For project questions, the project\'s Messages tab is fastest and keeps a record.', '项目相关问题请使用各项目的咨询标签，最快且有记录。')],
+    },
+  ],
+
+  faq: [
+    [T('프로젝트가 하나도 안 보입니다.', 'I cannot see any projects.', '看不到任何项目。'), T('담당자가 프로젝트를 공개해야 보입니다. 직접 접수한 문의는 소싱 보드의 "대기 중"에 바로 나타납니다.', 'Projects appear once your team shares them. Your own inquiries appear in Waiting right away.', '负责人公开后才会显示。您提交的询价会立即出现在采购看板的"待处理"。')],
+    [T('단계를 제가 옮길 수 있나요?', 'Can I move the stage myself?', '我可以自己移动阶段吗？'), T('아니요. 단계는 AEGIS 담당자가 바꿉니다. 고객사가 직접 할 수 있는 일은 신규 문의, 요구사항 수정, 문의 메시지, 파일 업로드입니다.', 'No. Your AEGIS team updates stages. You can send inquiries, edit requirements, send messages and upload files.', '不可以。阶段由 AEGIS 负责人更新。贵司可以新建询价、修改需求、发送咨询和上传文件。')],
+    [T('예정 납품일은 어디서 보나요?', 'Where is the delivery date?', '在哪里看预计交付日？'), T('프로젝트 상세 → 진행 정보 탭입니다. 진행 단계의 "납품" 예정일과 견적·납품 일정의 예정 납품일을 보세요.', 'Project details → Progress tab: the "Delivery" step and the expected delivery date.', '项目详情 → 进度信息标签，查看进行步骤中"交付"的预计日期和预计交付日。')],
+    [T('견적 금액이 화면에 안 보입니다.', 'I cannot see quote amounts.', '页面上看不到报价金额。'), T('금액은 PDF 견적서 안에만 있습니다. 견적서 탭의 PDF 버튼으로 내려받으세요.', 'Amounts are only in the PDF. Use the PDF button in the Quotes tab.', '金额仅在 PDF 报价单中，请在报价单标签点击 PDF 下载。')],
+    [T('견적서 탭이 비어 있습니다.', 'The Quotes tab is empty.', '报价单标签为空。'), T('견적서는 담당자가 발행한 뒤에 보입니다. 발행되면 알림과 메일이 갑니다.', 'Quotes appear once issued; you will be notified.', '报价单发布后才显示，发布时会收到通知和邮件。')],
+    [T('입금했는데 확인 대기로 나옵니다.', 'I paid but it still says Pending.', '已付款但仍显示待确认。'), T('담당자가 입금을 확인하면 "입금 확인"으로 바뀌고 알림이 갑니다. 시간이 걸리면 문의 탭으로 알려 주세요.', 'It changes to Confirmed once your team checks it, and you are notified. If it takes long, tell us in Messages.', '负责人确认后会变为"已到账"并通知您。如时间较长，请在咨询标签告知。')],
+    [T('중국어로 써야 하나요?', 'Do I need to write in Chinese?', '需要用中文写吗？'), T('아니요. 한국어로 쓰시면 중국어로 번역되어 현지 담당자에게 전달됩니다.', 'No. Messages and requirements are translated for our staff in China.', '不需要。用韩文书写会翻译成中文转达给现场负责人。')],
+    [T('올릴 수 있는 파일 크기는요?', 'How large can files be?', '文件大小有限制吗？'), T('한 번에 최대 5개, 파일당 10MB까지입니다. 더 큰 파일은 문의 탭으로 담당자에게 알려 주세요.', 'Up to 5 files at once, 10 MB each. For larger files, tell us in Messages.', '一次最多 5 个，每个 10MB。更大的文件请在咨询标签联系负责人。')],
+    [T('메일을 받았는데 답장해도 되나요?', 'Can I reply to the notification email?', '可以直接回复通知邮件吗？'), T('알림 메일에는 회신하지 마시고, 메일의 "바로 확인하기" 링크로 들어와 문의 탭을 이용해 주세요.', 'Please don\'t reply; use the link in the email and the Messages tab.', '请不要回复通知邮件，请通过邮件中的链接进入并使用咨询标签。')],
+    [T('비밀번호를 잊었어요.', 'I forgot my password.', '忘记密码了。'), T('로그인 화면의 "비밀번호 재설정"을 누르면 메일로 재설정 링크가 갑니다. 그래도 안 되면 담당자 문의 이메일로 연락 주세요.', 'Use "Reset password" on the sign-in screen. If that fails, email your contact.', '点击登录页面的"重置密码"，系统会发送重置链接。仍无法登录时请通过联系邮箱联系我们。')],
+    [T('계정을 추가하고 싶습니다.', 'I want more accounts.', '想要增加账号。'), T('담당자에게 요청하시면 같은 회사 계정을 추가로 만들어 드립니다. 추가된 계정도 같은 프로젝트를 봅니다.', 'Ask your team; extra accounts for your company see the same projects.', '向负责人申请即可为贵司追加账号，追加账号可查看相同项目。')],
+  ],
+
+  ctaApp: { title: T('이제 프로젝트를 확인해 보세요', 'Open your projects', '现在去查看项目吧'), desc: T('궁금한 점은 각 프로젝트의 문의 탭에서 담당자에게 남겨 주세요.', 'Questions? Leave them in each project\'s Messages tab.', '有疑问请在各项目的咨询标签留言。'), button: T('소싱 보드로 가기', 'Go to the sourcing board', '前往采购看板') },
+  ctaPublic: { title: T('문의를 남기면 AEGIS Cloud 계정을 발급해 드립니다', 'Send an inquiry and we will open your AEGIS Cloud account', '提交询价后，我们将为您开通 AEGIS Cloud 账号'), desc: T('영업일 기준 1일 이내에 담당자가 회신드립니다.', 'We reply within one business day.', '负责人将在一个工作日内回复。'), button: T('견적 요청하기', 'Request a quote', '索取报价') },
+};
+
+// 보드 단계 이름 (예시 화면·흐름 표 공용)
+export const STAGE = {
+  TODO: T('대기 중', 'Waiting', '待处理'),
+  IN_PROGRESS: T('소싱 중', 'Sourcing', '采购中'),
+  REVIEW: T('견적 검토', 'Quote review', '报价审核'),
+  PRODUCTION: T('발주 · 제작', 'Order & production', '下单 · 生产'),
+  DONE: T('완료', 'Done', '完成'),
+};

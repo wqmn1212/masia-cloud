@@ -1,0 +1,109 @@
+{
+  "name": "ServiceInvoice",
+  "type": "object",
+  "description": "월 계약(ServiceAgreement)의 청구 기록. 건별 공장 페이백(FinancialLedger)과 함께 재무 리포트의 두 축을 이룬다.",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "소속 팀 ID (데이터 격리 키)"
+    },
+    "agreement_id": {
+      "type": "string",
+      "description": "연결된 ServiceAgreement ID"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "고객사 Company ID"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "고객사명 (표시용)"
+    },
+    "billing_month": {
+      "type": "string",
+      "description": "청구 월 (YYYY-MM)"
+    },
+    "amount": {
+      "type": "number",
+      "description": "청구 금액"
+    },
+    "currency": {
+      "type": "string",
+      "enum": [
+        "KRW",
+        "USD",
+        "CNY"
+      ],
+      "default": "KRW",
+      "description": "청구 통화"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "ISSUED",
+        "PAID",
+        "OVERDUE"
+      ],
+      "default": "PENDING",
+      "description": "청구 상태"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "발행 시각"
+    },
+    "paid_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "수금 시각"
+    },
+    "note": {
+      "type": "string",
+      "description": "비고"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "agreement_id",
+    "billing_month"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        { "data.tenant_id": "{{user.data.tenant_id}}" },
+        {
+          "$or": [
+            { "user_condition": { "data.account_tier": "master" } },
+            { "user_condition": { "data.account_tier": "service" } }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        { "user_condition": { "data.account_tier": "master" } },
+        {
+          "$and": [
+            { "data.tenant_id": "{{user.data.tenant_id}}" },
+            { "user_condition": { "data.account_tier": "service" } }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "data.account_tier": "master" } },
+        {
+          "$and": [
+            { "data.tenant_id": "{{user.data.tenant_id}}" },
+            { "user_condition": { "data.account_tier": "service" } }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": { "data.account_tier": "master" }
+    }
+  }
+}
