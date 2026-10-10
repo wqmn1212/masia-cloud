@@ -84,7 +84,7 @@ export const supply = {
   aegisDesc: ['현지 가격 협상 · 공장 검증 · QC · 배송 · 통관', 'On-site negotiation · factory audit · QC · shipping · customs', '现场议价 · 验厂 · QC · 运输 · 清关'],
   removed: ['공장을 표방하는 온라인 유통사', 'Trading companies posing as factories', '冒充工厂的贸易商'],
   removedTag: ['제거', 'REMOVED', '已去除'],
-  chinaLabel: ['CHINA · GUANGDONG', 'CHINA · GUANGDONG', '中国 · 广东省'],
+  chinaLabel: ['CHINA', 'CHINA', '中国'],
   china: ['검증 완료 공장', 'Verified factory', '已验证工厂'],
 };
 
