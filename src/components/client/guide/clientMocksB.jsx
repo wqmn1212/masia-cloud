@@ -36,7 +36,7 @@ export function PayMock() {
     <Frame title="결제">
       <Mark n={1}><div className="p-1.5"><div className="flex justify-between"><span>입금 확인</span><span className="font-semibold">30%</span></div><div className="h-1.5 rounded bg-muted mt-1"><div className="h-1.5 rounded bg-primary w-[30%]" /></div></div></Mark>
       <div className="mt-2 space-y-1">
-        {[['선금 30%', '09-20', '확인됨', 'green'], ['잔금 70%', '-', '확인 대기', 'amber']].map(([k, d, s, tone], i) => (
+        {[['선금 30%', '09-20', '입금 확인', 'green'], ['잔금 70%', '-', '확인 대기', 'amber']].map(([k, d, s, tone], i) => (
           <div key={k} className="flex items-center gap-2 py-1 border-t">
             {i === 0 ? <Mark n={2} inline><span>{k} · {d}</span></Mark> : <span>{k} · {d}</span>}
             <span className="ml-auto">{i === 0 ? <Mark n={3} inline><Badge tone={tone}>{s}</Badge></Mark> : <Badge tone={tone}>{s}</Badge>}</span>
@@ -52,7 +52,7 @@ export function FilesMock() {
     <Frame title="파일">
       <Mark n={1}><div className="p-2 border border-dashed rounded text-center text-muted-foreground">파일을 끌어 놓거나 눌러서 올리기</div></Mark>
       <div className="flex items-center gap-2 mt-2 py-1">
-        <Mark n={2} inline><span>도면_v2.pdf <Badge>도면</Badge></span></Mark>
+        <Mark n={2} inline><span>QC_검수보고서_1002.pdf <Badge>검수 보고서</Badge></span></Mark>
         <Mark n={3} inline><span className="text-muted-foreground">김대리 · 10-02</span></Mark>
         <span className="ml-auto"><Mark n={4} inline><Btn>열기</Btn></Mark></span>
       </div>
@@ -63,7 +63,7 @@ export function FilesMock() {
 export function LibraryMock() {
   return (
     <Frame title="회사별 파일 보관함">
-      <Mark n={1}><div className="grid grid-cols-3 gap-1 p-0.5"><Field label="이름" value="인보이스" /><Field label="종류" value="전체" /><Field label="기간" value="최근 3개월" /></div></Mark>
+      <Mark n={1}><div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-0.5"><Field label="이름" value="인보이스" /><Field label="프로젝트" value="전체" /><Field label="종류" value="전체" /><Field label="기간" value="최근 3개월" /></div></Mark>
       <div className="flex flex-wrap items-center gap-2 mt-2 py-1">
         <Mark n={2} inline><span>인보이스_0920.pdf · 09-20</span></Mark>
         <Mark n={3} inline><span className="text-primary">LED 마스크 OEM</span></Mark>

@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { createContext, useContext } from 'react';
+
+// 번호 숨김: 소개 페이지에서 Mark 테두리·Pin·"예시 화면" 배지를 감춘다
+export const MockPlainContext = createContext(false);
 
 export function Pin({ n, pos = 'tr' }) {
   const place = { tl: '-top-2 -left-2', tr: '-top-2 -right-2', bl: '-bottom-2 -left-2', br: '-bottom-2 -right-2' }[pos];
@@ -7,6 +10,8 @@ export function Pin({ n, pos = 'tr' }) {
 
 export function Mark({ n, inline = false, pos, className = '', children }) {
   const Tag = inline ? 'span' : 'div';
+  const plain = useContext(MockPlainContext);
+  if (plain) return <Tag className={`${inline ? 'inline-block' : 'block'} ${className}`}>{children}</Tag>;
   return (
     <Tag className={`relative ${inline ? 'inline-block pr-3' : 'block'} rounded border-2 border-destructive/70 ${className}`}>
       {children}
@@ -16,12 +21,13 @@ export function Mark({ n, inline = false, pos, className = '', children }) {
 }
 
 export function Frame({ title, badge = '예시 화면', children }) {
+  const plain = useContext(MockPlainContext);
   return (
     <div aria-hidden="true" className="pointer-events-none select-none rounded-lg border bg-card shadow-sm overflow-hidden text-xs">
       <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/50">
         <span className="w-2 h-2 rounded-full bg-destructive/60" /><span className="w-2 h-2 rounded-full bg-chart-3/60" /><span className="w-2 h-2 rounded-full bg-accent/60" />
         <span className="font-medium ml-1 truncate">{title}</span>
-        <span className="ml-auto text-[10px] text-muted-foreground shrink-0">{badge}</span>
+        {!plain && <span className="ml-auto text-[10px] text-muted-foreground shrink-0">{badge}</span>}
       </div>
       <div className="p-3 md:p-4">{children}</div>
     </div>

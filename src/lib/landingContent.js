@@ -48,8 +48,8 @@ export const tx = (v, lang) => (Array.isArray(v) ? v[LANG_INDEX[lang] ?? 0] : v)
 export const nav = [
   { href: '/about', label: ['회사소개', 'About', '公司介绍'] },
   { href: '/portfolio', label: ['포트폴리오', 'Portfolio', '案例'] },
+  { href: '/cloud', label: ['AEGIS Cloud', 'AEGIS Cloud', 'AEGIS Cloud'] },
   { href: '/pricing', label: ['비용', 'Pricing', '费用'] },
-  { href: '/cloud-guide', label: ['AEGIS Cloud 사용 가이드', 'AEGIS Cloud guide', 'AEGIS Cloud 指南'] },
 ];
 
 export const header = {
@@ -71,7 +71,7 @@ export const hero = {
   cta2: ['진행 방식 보기', 'See how it works', '查看进行流程'],
   note: [
     '문의 접수 시 AEGIS Cloud 계정이 발급되어 견적 · QC · 물류 현황을 직접 확인할 수 있습니다.',
-    'Submit a request and we issue a AEGIS Cloud account to track quotes, QC and shipping.',
+    'Submit a request and we issue an AEGIS Cloud account to track quotes, QC and shipping.',
     '提交询价后将开通 AEGIS Cloud 账号，可实时查看报价、QC 与物流。',
   ],
 };
@@ -188,7 +188,7 @@ export const trust = {
 export const contact = {
   eyebrow: '07 — GET STARTED',
   h2: ['만들고 싶은 것을 알려주세요', 'Send us what you want made', '告诉我们您想生产什么'],
-  body: ['도면, 사진, 혹은 문장 하나로도 시작할 수 있습니다. 영업일 기준 1일 이내 회신드리며, 견적 · QC 리포트 · 물류 현황을 한곳에서 보는 AEGIS Cloud 계정을 발급해 드립니다.', 'A drawing, a photo or a sentence is enough to start. We reply within one business day, and open a AEGIS Cloud account where your quote, QC reports and shipping status live in one place.', '一张图纸、一张照片或一句话即可开始。我们将在一个工作日内回复，并开通 AEGIS Cloud 账号，报价、QC 报告与物流状态集中可见。'],
+  body: ['도면, 사진, 혹은 문장 하나로도 시작할 수 있습니다. 영업일 기준 1일 이내 회신드리며, 견적 · QC 리포트 · 물류 현황을 한곳에서 보는 AEGIS Cloud 계정을 발급해 드립니다.', 'A drawing, a photo or a sentence is enough to start. We reply within one business day, and open an AEGIS Cloud account where your quote, QC reports and shipping status live in one place.', '一张图纸、一张照片或一句话即可开始。我们将在一个工作日内回复，并开通 AEGIS Cloud 账号，报价、QC 报告与物流状态集中可见。'],
   hqLabel: ['한국 본사', 'KOREA HQ', '韩国总部'],
   hq: ['계약 · 정산 · 지원 업무', 'All contracts, settlement and support', '合同、结算与支持'],
   szLabel: ['중국 광둥성 지사', 'GUANGDONG BRANCH', '广东省分公司'],
@@ -213,7 +213,7 @@ export const form = {
   detailPh: ['사양, 재질, 참고 링크, 희망 납기 등 알고 계신 내용을 적어주세요.', 'Specs, materials, reference links, deadline — anything you already know.', '规格、材质、参考链接、交期 —— 已知信息均可填写。'],
   attach: ['도면 · 사진 첨부', 'Attach drawings or photos', '上传图纸或照片'],
   attachSub: ['STEP, DWG, PDF, JPG · 업로드 시점부터 NNN 적용', 'STEP, DWG, PDF, JPG · NNN applies from the moment you upload', 'STEP、DWG、PDF、JPG · 上传即适用 NNN'],
-  submit: ['견적 요청하고 AEGIS Cloud 계정 받기', 'Request a quote & get a AEGIS Cloud account', '索取报价并开通 AEGIS Cloud 账号'],
+  submit: ['견적 요청하고 AEGIS Cloud 계정 받기', 'Request a quote & get an AEGIS Cloud account', '索取报价并开通 AEGIS Cloud 账号'],
   sending: ['전송 중...', 'Sending...', '发送中...'],
   consent: ['제출 시 위 정보가 견적 목적에 한해 처리되는 것에 동의하게 됩니다.', 'By submitting you agree to our handling of the information above for quotation purposes only.', '提交即表示同意上述信息仅用于报价用途。'],
   doneTitle: ['문의가 접수되었습니다', 'Your request has been received', '询价已提交'],

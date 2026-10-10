@@ -42,7 +42,7 @@ import PortfolioDetail from '@/pages/PortfolioDetail';
 import PortfolioList from '@/pages/PortfolioList';
 import About from '@/pages/About';
 import Pricing from '@/pages/Pricing';
-import CloudGuide from '@/pages/CloudGuide';
+import Cloud from '@/pages/Cloud';
 import JoinInvite from '@/pages/JoinInvite';
 import JoinSetPassword from '@/pages/JoinSetPassword';
 import ServiceGuide from '@/pages/ServiceGuide';
@@ -60,7 +60,8 @@ const AuthenticatedApp = () => {
   // 공개 포트폴리오 상세 — 비로그인 접근 허용
   if (location.pathname === '/about') return <About />;
   if (location.pathname === '/pricing') return <Pricing />;
-  if (location.pathname === '/cloud-guide') return <CloudGuide />;
+  if (location.pathname === '/cloud') return <Cloud />;
+  if (location.pathname === '/cloud-guide') return <Navigate to="/cloud" replace />;
   if (location.pathname === '/portfolio' || location.pathname.startsWith('/portfolio/')) {
     return (
       <Routes>

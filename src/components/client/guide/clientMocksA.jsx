@@ -39,7 +39,8 @@ export function DashMock() {
         <Mark n={1}><div className="grid grid-cols-5 gap-1 p-1 text-center">{['대기', '소싱', '견적', '제작', '완료'].map((k, i) => <div key={k} className="rounded bg-muted py-1"><div className="text-[9px] text-muted-foreground">{k}</div><div className="font-bold">{i + 1}</div></div>)}</div></Mark>
         <Mark n={2}><div className="p-1.5 rounded bg-chart-3/10">국경절 10-01 ~ 10-07 · 발주 마감 09-20</div></Mark>
         <Mark n={3}><div className="p-1"><Card title="LED 마스크 OEM" sub="발주·제작 · 납품 예정 11-10" /></div></Mark>
-        <div className="flex justify-between"><Mark n={4} inline><Btn>보드로 보기</Btn></Mark><Mark n={5} inline><Btn>담당자 문의</Btn></Mark></div>
+        <div className="flex justify-start"><Mark n={4} inline><Btn>보드로 보기</Btn></Mark></div>
+        <Mark n={5}><div className="p-1.5 rounded border bg-background"><div className="text-[10px] text-muted-foreground">담당자 문의</div><div>리PM · lee@aegis.example</div></div></Mark>
       </div>
     </Frame>
   );
