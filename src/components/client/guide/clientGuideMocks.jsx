@@ -7,30 +7,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CLIENT_COLUMNS } from '@/components/client/clientBoardMeta';
+import { Frame as KitFrame, Mark } from '@/components/guide/mockKit';
 import { CG, STAGE, t } from './clientGuideContent';
 
 const T = (ko, en, zh) => [ko, en, zh];
-const PIN = { tl: '-left-2.5 -top-2.5', tr: '-right-2.5 -top-2.5', bl: '-left-2.5 -bottom-2.5', br: '-right-2.5 -bottom-2.5' };
-
-export function Pin({ n, pos = 'tl', className }) {
-  return <span className={cn('absolute z-10 flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold leading-none text-white shadow ring-2 ring-white', PIN[pos], className)}>{n}</span>;
-}
-// 설명 번호가 붙는 영역: 붉은 테두리 + 번호. 번호는 기본으로 오른쪽 위에 붙어 왼쪽 글자를 가리지 않는다.
-// inline: 글자 길이만큼만 감싸고, 번호 자리만큼 오른쪽을 비운다.
-function Mark({ n, pos = 'tr', inline, className, children }) {
-  return <div className={cn('relative rounded-md ring-2 ring-rose-500/80 ring-offset-2 ring-offset-background', inline && 'inline-flex items-center pr-3', className)}>{children}<Pin n={n} pos={pos} /></div>;
-}
-export function Frame({ title, lang, children, className }) {
-  return (
-    <div className="pointer-events-none select-none overflow-hidden rounded-xl border bg-background text-foreground shadow-sm" aria-hidden="true">
-      <div className="flex items-center justify-between gap-2 border-b bg-muted/50 px-3 py-2">
-        <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground"><span className="flex gap-1"><i className="h-2 w-2 rounded-full bg-rose-300" /><i className="h-2 w-2 rounded-full bg-amber-300" /><i className="h-2 w-2 rounded-full bg-emerald-300" /></span>{title}</span>
-        <span className="rounded border bg-card px-1.5 py-0.5 text-[10px] text-muted-foreground">{t(CG.sample, lang)}</span>
-      </div>
-      <div className={cn('p-4', className)}>{children}</div>
-    </div>
-  );
-}
+// 창 틀에 "예시 화면" 표시를 언어에 맞춰 붙인다
+const Frame = ({ lang, ...props }) => <KitFrame badge={t(CG.sample, lang)} {...props} />;
 
 // 예시 데이터
 const P = {
@@ -209,20 +191,18 @@ function BoardMock({ lang }) {
         <div><p className="text-sm font-bold">{t(W.board, lang)}</p><p className="text-[10px] text-muted-foreground">{t(T('단계는 담당자가 업데이트합니다', 'Your team updates the stages', '阶段由负责人更新'), lang)}</p></div>
         <Mark n={1} pos="tr"><span className="flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-[10px] font-medium text-primary-foreground"><Plus className="h-3 w-3" />{t(W.newInq, lang)}</span></Mark>
       </div>
-      <div className="overflow-x-auto pb-1">
-        <div className="grid min-w-[560px] grid-cols-5 gap-2 pt-2">
-          {CLIENT_COLUMNS.map((col, i) => {
-            const head = <div className={cn('flex items-center gap-1 rounded-t-lg border border-b-0 px-2 py-1.5', col.color)}><i className={cn('h-1.5 w-1.5 rounded-full', col.dotColor)} /><span className="truncate text-[10px] font-semibold">{t(STAGE[col.id], lang)}</span><span className="ml-auto rounded bg-secondary px-1 text-[9px]">{BOARD[col.id].length}</span></div>;
-            return (
-              <div key={col.id}>
-                {i === 1 ? <Mark n={2} pos="bl">{head}</Mark> : head}
-                <div className={cn('min-h-[120px] space-y-1.5 rounded-b-lg border border-t-0 p-1.5', col.color)}>
-                  {BOARD[col.id].map((p, j) => (i === 3 ? <Mark key={j} n={3} pos="bl"><Tile lang={lang} title={p} due="2026-11-16" /></Mark> : <Tile key={j} lang={lang} title={p} />))}
-                </div>
+      <div className="grid grid-cols-2 gap-2 pt-2 sm:grid-cols-5">
+        {CLIENT_COLUMNS.map((col, i) => {
+          const head = <div className={cn('flex items-center gap-1 rounded-t-lg border border-b-0 px-2 py-1.5', col.color)}><i className={cn('h-1.5 w-1.5 rounded-full', col.dotColor)} /><span className="truncate text-[10px] font-semibold">{t(STAGE[col.id], lang)}</span><span className="ml-auto rounded bg-secondary px-1 text-[9px]">{BOARD[col.id].length}</span></div>;
+          return (
+            <div key={col.id}>
+              {i === 1 ? <Mark n={2} pos="bl">{head}</Mark> : head}
+              <div className={cn('min-h-[120px] space-y-1.5 rounded-b-lg border border-t-0 p-1.5', col.color)}>
+                {BOARD[col.id].map((p, j) => (i === 3 ? <Mark key={j} n={3} pos="bl"><Tile lang={lang} title={p} due="2026-11-16" /></Mark> : <Tile key={j} lang={lang} title={p} />))}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </Frame>
   );
