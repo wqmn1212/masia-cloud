@@ -21,7 +21,7 @@ export default function GuideToc({ items }) {
   const go = (id) => document.getElementById(`ch-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   return (
-    <div className="sticky top-0 z-20 -mx-1 px-1 py-2 bg-background/95 backdrop-blur">
+    <div className="sticky top-16 z-20 -mx-1 px-1 py-2 bg-background/95 backdrop-blur">
       <div ref={bar} className="flex gap-2 overflow-x-auto pb-1">
         {items.map((it, i) => (
           <button key={it.id} data-id={it.id} onClick={() => go(it.id)}
