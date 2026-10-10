@@ -36,7 +36,7 @@ export default function MilestoneCompleteDialog({ milestone, cardId, onClose, on
                   <SelectTrigger><SelectValue placeholder={tr('보고서 선택')} /></SelectTrigger>
                   <SelectContent>{reports.map((r) => <SelectItem key={r.id} value={r.id} disabled={r.qc_result === 'FAIL'}>{r.created_date?.slice(0, 10)} · {tr(RESULT[r.qc_result] || r.qc_result)}</SelectItem>)}</SelectContent>
                 </Select>
-              ) : <p className="text-xs text-muted-foreground">{tr('이 카드에 QC 보고서가 없습니다. 오버뷰 탭에서 먼저 작성해 주세요.')}</p>}
+              ) : <p className="text-xs text-muted-foreground">{tr('이 카드에 QC 보고서가 없습니다. 업무 탭에서 먼저 작성해 주세요.')}</p>}
             </div>
           )}
           {late && (

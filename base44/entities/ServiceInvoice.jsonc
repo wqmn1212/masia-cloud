@@ -1,0 +1,141 @@
+{
+  "name": "ServiceInvoice",
+  "type": "object",
+  "description": "\uc6d4 \uacc4\uc57d(ServiceAgreement)\uc758 \uccad\uad6c \uae30\ub85d. \uac74\ubcc4 \uacf5\uc7a5 \ud398\uc774\ubc31(FinancialLedger)\uacfc \ud568\uaed8 \uc7ac\ubb34 \ub9ac\ud3ec\ud2b8\uc758 \ub450 \ucd95\uc744 \uc774\ub8ec\ub2e4.",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "agreement_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c ServiceAgreement ID"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac Company ID"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac\uba85 (\ud45c\uc2dc\uc6a9)"
+    },
+    "billing_month": {
+      "type": "string",
+      "description": "\uccad\uad6c \uc6d4 (YYYY-MM)"
+    },
+    "amount": {
+      "type": "number",
+      "description": "\uccad\uad6c \uae08\uc561"
+    },
+    "currency": {
+      "type": "string",
+      "enum": [
+        "KRW",
+        "USD",
+        "CNY"
+      ],
+      "default": "KRW",
+      "description": "\uccad\uad6c \ud1b5\ud654"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "ISSUED",
+        "PAID",
+        "OVERDUE"
+      ],
+      "default": "PENDING",
+      "description": "\uccad\uad6c \uc0c1\ud0dc"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\ubc1c\ud589 \uc2dc\uac01"
+    },
+    "paid_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\uc218\uae08 \uc2dc\uac01"
+    },
+    "note": {
+      "type": "string",
+      "description": "\ube44\uace0"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "agreement_id",
+    "billing_month"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

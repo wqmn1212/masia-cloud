@@ -38,7 +38,7 @@ export default async function (req) {
       await db.TaskCard.update(card.id, { holiday_conflicts: [...existing, ...found] });
       await notifyUsers(base44.asServiceRole, await staffOf(card.tenant_id), {
         type: 'holiday_conflict', title: `${card.title} 생산 기간 휴무 겹침`,
-        body: `${found.map((f) => `${f.name}(${f.start}~${f.end})`).join(', ')}과 생산 기간(${start}~${card.delivery_date})이 겹칩니다. 납기를 확인한 뒤 카드의 일정 탭에서 고객에게 안내해 주세요.`,
+        body: `${found.map((f) => `${f.name}(${f.start}~${f.end})`).join(', ')}과 생산 기간(${start}~${card.delivery_date})이 겹칩니다. 납기를 확인한 뒤 카드 오버뷰 탭의 견적·납품 일정 관리에서 고객에게 안내해 주세요.`,
         link: '/task-board', task_card_id: card.id, card_title: card.title,
       });
       conflictCards++;

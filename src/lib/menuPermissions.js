@@ -53,7 +53,7 @@ export const CLIENT_CARD_TABS = ['overview', 'quotation', 'chat', 'settlement'];
 export const canAccessPath = (user, pathname) => {
   if (!user) return false;
   // Static onboarding documentation is shared by internal team members only.
-  if (pathname === '/service-guide' || pathname === '/my-work') return ['master', 'service', 'sub'].includes(user.account_tier);
+  if (pathname === '/service-guide' || pathname === '/my-work' || pathname === '/user-guide') return ['master', 'service', 'sub'].includes(user.account_tier);
   if (user.account_tier === 'master') return true;
   if (user.account_tier === 'service') {
     return [...TEAM_MENU_OPTIONS.map(item => item.path), ...SERVICE_ADMIN_PATHS]

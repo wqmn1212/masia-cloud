@@ -1,0 +1,126 @@
+{
+  "name": "OperationSetting",
+  "type": "object",
+  "description": "\ud300 \uc6b4\uc601 \uae30\uc900\uac12. \ud14c\ub10c\ud2b8\ub2f9 1\uac74. \uc6d0\uac00\u00b7\uc218\uc6a9 \ud55c\ub3c4\u00b7\uac00\ub3d9\ub960 \uac00\uc911\uce58\u00b7\uc789\uc5ec \ubc30\ubd84 \ube44\uc728\uc744 \ub2f4\ub294\ub2e4.",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4). \ud14c\ub10c\ud2b8\ub2f9 1\uac74"
+    },
+    "team_monthly_cost": {
+      "type": "number",
+      "default": 6000000,
+      "description": "\ud300 \uc6d4 \uc6d0\uac00 (\ud55c\uad6d 1\uba85 400\ub9cc + \uc911\uad6d 2\uba85 \uac01 100\ub9cc \uae30\uc900). \uc778\ub825 \ubcc0\ub3d9 \uc2dc \uc870\uc815"
+    },
+    "capacity_limit": {
+      "type": "number",
+      "default": 10,
+      "description": "\ud300 \uc218\uc6a9 \ud55c\ub3c4. \ubc30\uc815 \uce74\ub4dc\uc758 \ub2e8\uacc4\ubcc4 \uac00\uc911\uce58 \ud569\uacc4 \uc0c1\ud55c"
+    },
+    "status_weights": {
+      "type": "array",
+      "description": "\uce74\ub4dc \uc0c1\ud0dc\ubcc4 \uc5c5\ubb34 \ubd80\ud558 \uac00\uc911\uce58. \uc6b4\uc601\ud558\uba70 \uc870\uc815\ud55c\ub2e4",
+      "items": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "TODO",
+              "IN_PROGRESS",
+              "REVIEW",
+              "PRODUCTION",
+              "DONE",
+              "CANCELLED"
+            ]
+          },
+          "weight": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "owner_share_percent": {
+      "type": "number",
+      "default": 50,
+      "description": "\uc6d4 \uc789\uc5ec \uc911 \ub300\ud45c \ubaab \ube44\uc728 (%). \ub098\uba38\uc9c0\ub294 \ud300\uc6d0 \ubc30\ubd84"
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "\ucd5c\uc885 \uc218\uc815\uc790"
+    }
+  },
+  "required": [
+    "tenant_id"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}
