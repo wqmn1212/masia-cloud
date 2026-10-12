@@ -69,7 +69,7 @@ export default function ScheduleCalendar({ cards = [], onOpenCard }) {
     const fids = new Set(active.filter((c) => c.client_name === prefs.client).map((c) => c.factory_id).filter(Boolean));
     return closures.filter((c) => fids.has(c.factory_id));
   }, [closures, prefs.client, active]);
-  const closuresOn = (key) => shownClosures.filter((c) => c.start_date <= key && key <= c.end_date).map((c) => c.factory_name || '공장');
+  const closuresOn = (key) => [...new Set(shownClosures.filter((c) => c.start_date <= key && key <= c.end_date).map((c) => c.factory_name || '공장'))];
 
   const today = todayStr();
   return (
@@ -88,7 +88,7 @@ export default function ScheduleCalendar({ cards = [], onOpenCard }) {
           {grid.map((c) => <CalendarDayCell key={c.key} cell={c} events={byDate[c.key] || []} hol={holidayOn(holidays, c.key)} closed={closuresOn(c.key)} isToday={c.key === today} onOpen={onOpenCard} />)}
         </div>
       </div>
-      <div className="sm:hidden"><CalendarAgenda grid={grid} byDate={byDate} holidays={holidays} today={today} onOpen={onOpenCard} /></div>
+      <div className="sm:hidden"><CalendarAgenda grid={grid} byDate={byDate} holidays={holidays} closuresOn={closuresOn} today={today} onOpen={onOpenCard} /></div>
       <div className="flex flex-wrap gap-3 mt-3 text-[11px] text-muted-foreground">
         {LEGEND.map(([c, l]) => <span key={l} className="flex items-center gap-1"><i className={`w-3 h-2 rounded ${c}`} />{l}</span>)}
         <span className="flex items-center gap-1"><i className="w-3 h-2 rounded border border-dashed border-muted-foreground/50" />원래 계획일</span>
