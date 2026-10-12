@@ -37,6 +37,11 @@ export default function ScheduleCalendar({ cards = [], onOpenCard }) {
     queryFn: () => base44.entities.ChinaHoliday.filter({ start_date: { $lte: to }, end_date: { $gte: from } }, 'start_date', 50),
   });
 
+  const { data: closures = [] } = useQuery({
+    queryKey: ['factory-closures', 'calendar', from, to],
+    queryFn: () => base44.entities.FactoryClosure.filter({ start_date: { $lte: to }, end_date: { $gte: from } }, 'start_date', 200),
+  });
+
   const owners = useMemo(() => {
     const map = {};
     milestones.forEach((m) => (m.owner_ids || []).forEach((id, i) => { map[id] = m.owner_names?.[i] || map[id] || id; }));
@@ -54,9 +59,9 @@ export default function ScheduleCalendar({ cards = [], onOpenCard }) {
       return true;
     });
     const out = {};
-    buildEvents(ms, cardsById, holidays).forEach((e) => (out[e.date] ||= []).push(e));
+    buildEvents(ms, cardsById, holidays, closures).forEach((e) => (out[e.date] ||= []).push(e));
     return out;
-  }, [milestones, holidays, prefs, active, user?.id]);
+  }, [milestones, holidays, closures, prefs, active, user?.id]);
 
   const today = todayStr();
   return (
@@ -69,7 +74,7 @@ export default function ScheduleCalendar({ cards = [], onOpenCard }) {
       <CalendarToolbar prefs={prefs} set={set} owners={owners} clients={clients} />
       <div className="hidden sm:block border-l border-t rounded-md overflow-hidden">
         <div className="grid grid-cols-7 text-[11px] text-muted-foreground bg-muted">
-          {['월', '화', '수', '목', '금', '토', '일'].map((d) => <div key={d} className="px-2 py-1 border-b border-r">{d}</div>)}
+          {['일', '월', '화', '수', '목', '금', '토'].map((d) => <div key={d} className={`px-2 py-1 border-b border-r ${d === '일' ? 'text-destructive' : ''}`}>{d}</div>)}
         </div>
         <div className="grid grid-cols-7">
           {grid.map((c) => <CalendarDayCell key={c.key} cell={c} events={byDate[c.key] || []} hol={holidayOn(holidays, c.key)} isToday={c.key === today} onOpen={onOpenCard} />)}
