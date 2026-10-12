@@ -2,7 +2,7 @@ import { barTone } from '@/lib/gantt';
 
 export const ds = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-// 월~일 7열 그리드 (5~6주)
+// 일~토 7열 그리드 (5~6주)
 export function monthGrid(month) {
   const [y, mo] = month.split('-').map(Number);
   const first = new Date(y, mo - 1, 1);
@@ -41,7 +41,7 @@ export function buildEvents(milestones, cardsById, holidays, closures = []) {
     const closed = closures.some((c) => c.factory_id && c.factory_id === card.factory_id && c.start_date <= date && date <= c.end_date);
     const conflict = m.status !== 'done' && (!!holidayOn(holidays, date).name || closed);
     out.push({ id: m.id, date, m, card, tone: barTone(m), conflict });
-    if (m.baseline_date && m.planned_date && m.baseline_date !== m.planned_date) {
+    if (m.status !== 'done' && m.baseline_date && m.planned_date && m.baseline_date !== m.planned_date) {
       out.push({ id: `${m.id}-b`, date: m.baseline_date, m, card, ghost: true });
     }
   });

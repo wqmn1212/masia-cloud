@@ -2,7 +2,7 @@ import React from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import CalendarChip from './CalendarChip';
 
-export default function CalendarDayCell({ cell, events, hol, isToday, onOpen }) {
+export default function CalendarDayCell({ cell, events, hol, closed = [], isToday, onOpen }) {
   const shown = events.slice(0, 3);
   const more = events.length - shown.length;
   return (
@@ -13,6 +13,7 @@ export default function CalendarDayCell({ cell, events, hol, isToday, onOpen }) 
         {hol.makeup && <span className="text-[10px] px-1 rounded bg-muted">보강 근무</span>}
         {hol.cutoff && <span className="text-[10px] px-1 rounded bg-chart-3/20 text-foreground">발주 마감</span>}
       </div>
+      {closed.map((n) => <span key={n} className="text-[10px] text-chart-3 truncate">{n} 휴무</span>)}
       {shown.map((ev) => <CalendarChip key={ev.id} ev={ev} onOpen={onOpen} />)}
       {more > 0 && (
         <Popover>

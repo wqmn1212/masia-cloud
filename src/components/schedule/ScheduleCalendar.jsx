@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Card } from '@/components/ui/card';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, ShieldCheck } from 'lucide-react';
 import { todayStr } from '@/lib/gantt';
 import { monthGrid, buildEvents, holidayOn } from '@/lib/scheduleCalendar';
 import CalendarToolbar from './CalendarToolbar';
@@ -63,6 +63,14 @@ export default function ScheduleCalendar({ cards = [], onOpenCard }) {
     return out;
   }, [milestones, holidays, closures, prefs, active, user?.id]);
 
+  // 고객사 필터를 건 경우에만 해당 카드 공장의 휴무를 칸에 표시
+  const shownClosures = useMemo(() => {
+    if (!prefs.client) return [];
+    const fids = new Set(active.filter((c) => c.client_name === prefs.client).map((c) => c.factory_id).filter(Boolean));
+    return closures.filter((c) => fids.has(c.factory_id));
+  }, [closures, prefs.client, active]);
+  const closuresOn = (key) => shownClosures.filter((c) => c.start_date <= key && key <= c.end_date).map((c) => c.factory_name || '공장');
+
   const today = todayStr();
   return (
     <Card className="p-5">
@@ -77,13 +85,15 @@ export default function ScheduleCalendar({ cards = [], onOpenCard }) {
           {['일', '월', '화', '수', '목', '금', '토'].map((d) => <div key={d} className={`px-2 py-1 border-b border-r ${d === '일' ? 'text-destructive' : ''}`}>{d}</div>)}
         </div>
         <div className="grid grid-cols-7">
-          {grid.map((c) => <CalendarDayCell key={c.key} cell={c} events={byDate[c.key] || []} hol={holidayOn(holidays, c.key)} isToday={c.key === today} onOpen={onOpenCard} />)}
+          {grid.map((c) => <CalendarDayCell key={c.key} cell={c} events={byDate[c.key] || []} hol={holidayOn(holidays, c.key)} closed={closuresOn(c.key)} isToday={c.key === today} onOpen={onOpenCard} />)}
         </div>
       </div>
       <div className="sm:hidden"><CalendarAgenda grid={grid} byDate={byDate} holidays={holidays} today={today} onOpen={onOpenCard} /></div>
       <div className="flex flex-wrap gap-3 mt-3 text-[11px] text-muted-foreground">
         {LEGEND.map(([c, l]) => <span key={l} className="flex items-center gap-1"><i className={`w-3 h-2 rounded ${c}`} />{l}</span>)}
         <span className="flex items-center gap-1"><i className="w-3 h-2 rounded border border-dashed border-muted-foreground/50" />원래 계획일</span>
+        <span className="flex items-center gap-1"><i className="w-3 h-2 rounded bg-primary/35 ring-2 ring-chart-3" />공휴일·공장 휴무 충돌</span>
+        <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3" />출고 전 검수</span>
       </div>
     </Card>
   );
