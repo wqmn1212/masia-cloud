@@ -90,7 +90,10 @@ Deno.serve(async (req) => {
       if (!manager) return deny('단계 삭제는 대표·팀 관리자만 할 수 있습니다.');
       if (list.length <= 1) return Response.json({ error: '마지막 단계는 삭제할 수 없습니다. 다시 만들기를 사용하세요.' }, { status: 400 });
       await db.CardMilestone.delete(m.id);
-      return Response.json({ list: list.filter((x) => x.id !== m.id) });
+      const rest = list.filter((x) => x.id !== m.id).map((x) => (x.seq > m.seq ? { ...x, seq: x.seq - 1 } : x));
+      const moved = rest.filter((x) => x.seq >= m.seq);
+      if (moved.length) await db.CardMilestone.bulkUpdate(moved.map((x) => ({ id: x.id, seq: x.seq })));
+      return Response.json({ list: rest });
     }
 
     if (input.action === 'reopen') {
