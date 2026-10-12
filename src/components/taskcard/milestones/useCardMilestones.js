@@ -81,5 +81,15 @@ export default function useCardMilestones(card) {
     refresh();
   };
 
-  return { list, isLoading, create, update, confirm, complete, reset, team, act };
+  // 단계 추가·삭제·완료 취소 (서버에서 관리자 권한 검사)
+  const structural = async (payload) => {
+    const r = await act(payload);
+    if (r) await syncCard(r.list, confirmed);
+    return !!r;
+  };
+  const addStep = (data) => structural({ action: 'add', ...data });
+  const removeStep = (m) => structural({ action: 'remove', milestone_id: m.id });
+  const reopen = (m) => structural({ action: 'reopen', milestone_id: m.id });
+
+  return { list, isLoading, create, update, confirm, complete, reset, team, act, addStep, removeStep, reopen };
 }

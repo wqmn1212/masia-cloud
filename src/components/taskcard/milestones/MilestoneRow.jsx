@@ -1,12 +1,12 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Check, EyeOff, ClipboardCheck } from 'lucide-react';
+import { Check, EyeOff, ClipboardCheck, Pencil, Trash2, Undo2 } from 'lucide-react';
 import { delayDays, todayStr } from '@/lib/milestones';
 import { useWorkT } from '@/lib/workI18n';
 import OwnerMultiSelect from '@/components/gantt/OwnerMultiSelect';
 
-export default function MilestoneRow({ m, confirmed, onChange, onComplete, canManage, userId, team }) {
+export default function MilestoneRow({ m, confirmed, onChange, onComplete, onEdit, onRemove, onReopen, canManage, userId, team }) {
   const { tr, label } = useWorkT();
   const delay = delayDays(m);
   const done = m.status === 'done';
@@ -25,6 +25,9 @@ export default function MilestoneRow({ m, confirmed, onChange, onComplete, canMa
         {done
           ? <span className="text-[10px] text-primary">{tr('완료')} {m.actual_date}</span>
           : canComplete && <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => onComplete(m)}><Check className="w-3 h-3" />{tr('완료')}</Button>}
+        {canManage && done && <Button size="icon" variant="ghost" className="h-7 w-7" title={tr('완료 취소')} onClick={() => window.confirm(tr('완료를 취소할까요?')) && onReopen(m)}><Undo2 className="w-3.5 h-3.5" /></Button>}
+        {canManage && <Button size="icon" variant="ghost" className="h-7 w-7" title={tr('단계 수정')} onClick={() => onEdit(m)}><Pencil className="w-3.5 h-3.5" /></Button>}
+        {canManage && <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" title={tr('단계 삭제')} onClick={() => window.confirm(tr('이 단계를 삭제할까요?')) && onRemove(m)}><Trash2 className="w-3.5 h-3.5" /></Button>}
       </div>
       <div className="grid grid-cols-3 gap-2 text-[11px]">
         <div><p className="text-muted-foreground">{tr('기준일')}</p><p>{m.baseline_date || tr('미확정')}</p></div>
