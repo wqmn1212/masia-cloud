@@ -34,10 +34,20 @@ Deno.serve(async (req) => {
     const list = await db.CardMilestone.filter({ card_id: card.id }, 'seq', 200);
     const m = list.find((x) => x.id === input.milestone_id);
     if (!m) return Response.json({ error: '단계를 찾을 수 없습니다.' }, { status: 404 });
-    const isOwner = m.owner_id && m.owner_id === user.id;
+    const isOwner = (m.owner_id && m.owner_id === user.id) || (m.owner_ids || []).includes(user.id);
 
     if (input.action === 'update') {
       const p = input.patch || {}, patch: any = {};
+      if ('owner_ids' in p) {
+        if (!manager) return deny('계획일·담당 변경은 대표·팀 관리자만 할 수 있습니다.');
+        const members = await team();
+        const ids = Array.isArray(p.owner_ids) ? [...new Set(p.owner_ids.map(String))] : [];
+        const owners = ids.map((id) => members.find((u) => u.id === id));
+        if (owners.some((o) => !o)) return Response.json({ error: '팀 사용자가 아닙니다.' }, { status: 400 });
+        patch.owner_ids = owners.map((o) => o.id);
+        patch.owner_names = owners.map((o) => o.full_name || o.email);
+        patch.owner_id = patch.owner_ids[0] || null; patch.owner_name = patch.owner_names[0] || null;
+      }
       if ('planned_date' in p || 'owner_id' in p) { if (!manager) return deny('계획일·담당 변경은 대표·팀 관리자만 할 수 있습니다.'); }
       else if (!manager && !isOwner) return deny('이 단계의 담당자가 아닙니다.');
       if ('planned_date' in p) { if (!validDate(p.planned_date) || m.status === 'done') return Response.json({ error: '계획일을 확인하세요.' }, { status: 400 }); patch.planned_date = p.planned_date; }

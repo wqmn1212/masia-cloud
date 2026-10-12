@@ -10,6 +10,7 @@ import PipelineChart from '@/components/dashboard/PipelineChart';
 import DayDetailDialog from '@/components/calendar/DayDetailDialog';
 import CardModal from '@/components/taskcard/CardModal';
 import OpsMetrics from '@/components/dashboard/OpsMetrics';
+import GanttOverview from '@/components/gantt/GanttOverview';
 
 export default function Dashboard() {
   const { t } = useLanguage();
@@ -74,6 +75,8 @@ export default function Dashboard() {
       </div>
 
       <OpsMetrics cards={allCards} onOpenCard={handleCardClickFromCalendar} />
+
+      <GanttOverview cards={allCards} onOpenCard={(c) => { setSelectedCardTab('milestones'); setSelectedCard(c); }} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <PipelineChart timelines={timelines} />

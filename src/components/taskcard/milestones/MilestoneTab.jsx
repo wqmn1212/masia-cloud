@@ -8,10 +8,11 @@ import MilestoneRow from './MilestoneRow';
 import MilestoneCompleteDialog from './MilestoneCompleteDialog';
 import { MILESTONE_TEMPLATES, delayDays, deliveryMilestone } from '@/lib/milestones';
 import { useWorkT } from '@/lib/workI18n';
+import GanttChart from '@/components/gantt/GanttChart';
 
 export default function MilestoneTab({ card, user }) {
   const { list, isLoading, create, update, confirm, complete, reset, team } = useCardMilestones(card);
-  const { tr } = useWorkT();
+  const { tr, label } = useWorkT();
   const [busy, setBusy] = useState(false);
   const [completing, setCompleting] = useState(null);
   const { toast } = useToast();
@@ -38,6 +39,7 @@ export default function MilestoneTab({ card, user }) {
         {canManage && <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" disabled={busy} onClick={() => window.confirm(tr(confirmed ? '확정된 계획은 고객에게 이미 보인 일정입니다. 지우면 고객 화면에서도 사라지고, 예정 납품일은 계획 전 값으로 되돌아가며 변경 이력이 남습니다. 계속할까요?' : '마일스톤을 모두 지우고 다시 만들까요?')) && run(reset)}><RotateCcw className="w-3 h-3" />{tr('다시 만들기')}</Button>}
       </div>
       {!confirmed && <p className="text-xs text-muted-foreground bg-muted/40 rounded p-2">{tr('계획 확정 전입니다. 날짜·담당자를 조정한 뒤 확정하면 기준일이 잠기고 지연이 계산됩니다.')}</p>}
+      <div className="border rounded-lg p-3 overflow-x-auto"><div className="min-w-[480px]"><GanttChart milestones={list} start={card.created_date} labelOf={label} /></div></div>
       <div className="space-y-2">
         {list.map((m) => <MilestoneRow key={m.id} m={m} confirmed={confirmed} onChange={update} onComplete={setCompleting} canManage={canManage} userId={user?.id} team={team} />)}
       </div>

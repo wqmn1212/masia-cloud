@@ -4,13 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Check, EyeOff, ClipboardCheck } from 'lucide-react';
 import { delayDays, todayStr } from '@/lib/milestones';
 import { useWorkT } from '@/lib/workI18n';
+import OwnerMultiSelect from '@/components/gantt/OwnerMultiSelect';
 
 export default function MilestoneRow({ m, confirmed, onChange, onComplete, canManage, userId, team }) {
   const { tr, label } = useWorkT();
   const delay = delayDays(m);
   const done = m.status === 'done';
   const overdue = !done && m.planned_date && m.planned_date < todayStr();
-  const canComplete = canManage || (m.owner_id && m.owner_id === userId);
+  const ownerIds = m.owner_ids?.length ? m.owner_ids : m.owner_id ? [m.owner_id] : [];
+  const canComplete = canManage || ownerIds.includes(userId);
   return (
     <div className={`border rounded-lg p-2.5 space-y-2 ${done ? 'bg-muted/30' : ''}`}>
       <div className="flex items-center gap-2">
@@ -33,11 +35,8 @@ export default function MilestoneRow({ m, confirmed, onChange, onComplete, canMa
         <div>
           <p className="text-muted-foreground">{tr('담당')}</p>
           {canManage ? (
-            <select value={m.owner_id || ''} onChange={(e) => onChange(m, { owner_id: e.target.value || null })} className="h-7 w-full rounded-md border border-input bg-transparent text-[11px] px-1">
-              <option value="">{tr('미지정')}</option>
-              {team.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-            </select>
-          ) : <p className="h-7 flex items-center">{m.owner_name || tr('미지정')}</p>}
+            <OwnerMultiSelect value={ownerIds} team={team} placeholder={tr('미지정')} onChange={(ids) => onChange(m, { owner_ids: ids })} />
+          ) : <p className="h-7 flex items-center truncate">{(m.owner_names?.length ? m.owner_names.join(', ') : m.owner_name) || tr('미지정')}</p>}
         </div>
       </div>
       {confirmed && delay > 0 && canComplete && (
