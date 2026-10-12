@@ -105,7 +105,7 @@ export async function generateQuotationPDF(quotation) {
     y += h;
   };
   drawRow(cols.map((c) => c.t), true);
-  (p.line_items || []).forEach((r, i) => drawRow([i + 1, r.option_name, r.specification, r.quantity ?? '-', fmt(r.unit_price_display, cur, 5), fmt(r.total_display, cur)]));
+  (p.line_items || []).forEach((r, i) => drawRow([i + 1, r.option_name, r.specification, r.quantity ?? '-', fmt(r.unit_price_display, cur, 2), fmt(r.total_display, cur)]));
   y += 6;
 
   // 합계 + 참고 환산
