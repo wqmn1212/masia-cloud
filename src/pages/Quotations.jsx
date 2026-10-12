@@ -18,7 +18,7 @@ import RiskAlertPopup from '@/components/quotation/RiskAlertPopup';
 import QuotationHistoryButton from '@/components/quotation/QuotationHistoryButton';
 import ManualExchangeRates from '@/components/quotation/ManualExchangeRates';
 import CurrencyPanel from '@/components/quotation/CurrencyPanel';
-import { quotePriceLabel } from '@/components/quotation/quoteCurrency';
+import { quotePriceLabel, calculateQuote } from '@/components/quotation/quoteCurrency';
 import saveBilingualQuotation from '@/lib/saveBilingualQuotation';
 import { findDailyQuotationRates } from '@/lib/quotationRates';
 
@@ -87,10 +87,8 @@ export default function Quotations() {
   }, [createOpen, dailyRates]);
 
   useEffect(() => {
-    const usdToCny = Number(form.exchange_rate_usd_cny) || 0;
-    const baseUSD = usdToCny > 0 ? ((form.factory_total_cost || 0) + (form.logistics_cost || 0)) / usdToCny : 0;
-    const feeUSD = form.masir_fee_type === 'PERCENT' ? baseUSD * (form.masir_fee_value || 0) / 100 : Number(form.masir_fee_value) || 0;
-    updateField('final_client_price', Math.round((baseUSD + feeUSD) * 100) / 100);
+    const calc = calculateQuote({ ...form, final_currency: 'USD', quote_options: [], factory_cost_currency: 'CNY', logistics_cost_currency: 'CNY' });
+    updateField('final_client_price', Number(form.exchange_rate_usd_cny) > 0 ? calc.total : 0);
   }, [form.factory_total_cost, form.logistics_cost, form.masir_fee_type, form.masir_fee_value, form.exchange_rate_usd_cny]);
 
   // Recalculate factory total from line items
@@ -111,7 +109,7 @@ export default function Quotations() {
   }, [form.machine_category, qcLogs]);
 
   const createMutation = useMutation({
-    mutationFn: (data) => saveBilingualQuotation({ ...data, final_currency: 'USD', final_price_usd: data.final_client_price, exchange_rate_usd: Number(data.exchange_rate_usd), exchange_rate_usd_cny: Number(data.exchange_rate_usd_cny), tenant_id: me?.tenant_id }),
+    mutationFn: (data) => saveBilingualQuotation({ ...data, final_currency: 'USD', final_price_usd: data.final_client_price, rounding_version: 2, final_total: data.final_client_price, auto_total: data.final_client_price, price_lines: calculateQuote({ ...data, final_currency: 'USD', quote_options: [], factory_cost_currency: 'CNY', logistics_cost_currency: 'CNY' }).lines, exchange_rate_usd: Number(data.exchange_rate_usd), exchange_rate_usd_cny: Number(data.exchange_rate_usd_cny), tenant_id: me?.tenant_id }),
     onSuccess: (saved) => {
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
       setCreateOpen(false);
@@ -294,7 +292,7 @@ export default function Quotations() {
                   <p className="text-lg font-bold text-primary">{quotePriceLabel(detailQuote)}</p>
                 </div>
               </div>
-              {detailQuote.final_client_price > 0 && <CurrencyPanel {...(detailQuote.exchange_rate_usd_cny ? { usd: detailQuote.final_client_price, usdToCny: detailQuote.exchange_rate_usd_cny, usdToKrw: detailQuote.exchange_rate_usd } : { legacyCny: detailQuote.final_client_price, usdToKrw: detailQuote.exchange_rate_usd, legacyCnyToKrw: detailQuote.exchange_rate_krw })} />}
+              {detailQuote.final_client_price > 0 && <CurrencyPanel {...(detailQuote.rounding_version === 2 && detailQuote.final_total != null ? { total: detailQuote.final_total, currency: detailQuote.final_currency || 'USD', usdToCny: detailQuote.exchange_rate_usd_cny, usdToKrw: detailQuote.exchange_rate_usd } : detailQuote.exchange_rate_usd_cny ? { usd: detailQuote.final_client_price, usdToCny: detailQuote.exchange_rate_usd_cny, usdToKrw: detailQuote.exchange_rate_usd } : { legacyCny: detailQuote.final_client_price, usdToKrw: detailQuote.exchange_rate_usd, legacyCnyToKrw: detailQuote.exchange_rate_krw })} />}
               {detailQuote.line_items?.length > 0 && (
                 <div>
                   <p className="text-sm font-semibold mb-2">{t('quotations.detail.items')}</p>

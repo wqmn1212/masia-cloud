@@ -44,7 +44,16 @@ export default async function (req) {
     let totalDisplay = 0;
     let currency = 'USD';
 
-    if (options.length > 0 && modernUSD) {
+    const v2 = q.rounding_version === 2 && q.final_total != null;
+    if (v2) {
+      // 새 규칙: 저장 시 확정된 품목 금액·총액을 그대로 사용 (재계산·재반올림 없음)
+      currency = ['CNY', 'KRW'].includes(q.final_currency) ? q.final_currency : 'USD';
+      lineItems = (Array.isArray(q.price_lines) ? q.price_lines : []).map((l) => ({
+        option_name: l.option_name || '', specification: l.specification || '', quantity: l.quantity ?? null,
+        unit_price_display: l.unit_price ?? null, total_display: l.total ?? null,
+      }));
+      totalDisplay = Number(q.final_total) || 0;
+    } else if (options.length > 0 && modernUSD) {
       const feeUSD = Number(q.final_price_usd) > 0 ? 0 : (Number(q.masir_fee_amount_cny) || 0) / usdToCny;
       const withMarginUSD = options.reduce((s, o) => s + baseOf(o) * (1 + (Number(o.margin_percent) || 0) / 100), 0);
       const totalUSD = Number(q.final_price_usd) > 0 ? Number(q.final_price_usd) : withMarginUSD + feeUSD;
@@ -91,7 +100,7 @@ export default async function (req) {
     let totalUsd = currency === 'USD' ? totalDisplay : null;
     const target = ['CNY', 'KRW'].includes(q.final_currency) ? q.final_currency : 'USD';
     const rate = target === 'CNY' ? usdToCny : target === 'KRW' ? usdToKrw : 1;
-    if (currency === 'USD' && target !== 'USD' && rate > 0) {
+    if (!v2 && currency === 'USD' && target !== 'USD' && rate > 0) {
       lineItems = lineItems.map((l) => ({ ...l, unit_price_display: l.unit_price_display * rate, total_display: l.total_display * rate }));
       totalDisplay = totalDisplay * rate;
       currency = target;
@@ -120,7 +129,8 @@ export default async function (req) {
       product_image_url: q.product_image_url || '',
       line_items: lineItems,
       total_display: totalDisplay,
-      total_usd: totalUsd,
+      total_usd: v2 ? null : totalUsd,
+      rounding_version: v2 ? 2 : 1,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FileBox, Factory, Inbox } from 'lucide-react';
 import { format } from 'date-fns';
+import { quotePriceLabel } from '@/components/quotation/quoteCurrency';
 
 const STATUS_META = {
   DRAFT:    { label: '초안',   color: 'bg-slate-100 text-slate-700 border-slate-200' },
@@ -66,7 +67,7 @@ export default function ClientQuotationsPanel({ quotations, cardsById, onCardCli
             {q.final_client_price ? (
               <div className="text-right flex-shrink-0">
                 <div className="text-sm font-semibold tabular-nums">
-                  ¥{Number(q.final_client_price).toLocaleString()}
+                  {quotePriceLabel(q)}
                 </div>
                 <div className="text-[10px] text-muted-foreground">고객 제안가</div>
               </div>

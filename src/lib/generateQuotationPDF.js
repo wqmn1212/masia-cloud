@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import { base44 } from '@/api/base44Client';
 import { INCOTERMS_LABEL } from '@/lib/incoterms';
 import { loadPdfFonts, imageToJpeg } from '@/lib/pdfFonts';
+import { convertAmount, formatMoney } from '@/components/quotation/quoteCurrency';
 
 // 텍스트 기반 PDF — 글자·표는 실제 텍스트로, 제품 사진만 압축 이미지로 넣는다.
 const SYM = { USD: '$', CNY: '¥', KRW: '₩' };
@@ -15,6 +16,8 @@ export async function generateQuotationPDF(quotation) {
   const quotationId = typeof quotation === 'string' ? quotation : quotation?.id;
   const res = await base44.functions.invoke('getQuotationPresentation', { quotation_id: quotationId });
   const p = res.data;
+  const v2 = p.rounding_version === 2;
+  const money = v2 ? (v, c) => (v == null ? '-' : formatMoney(v, c)) : fmt;
   if (!p || p.error) throw new Error(p?.error || '견적서 표시 정보를 불러올 수 없습니다');
 
   const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
@@ -105,7 +108,7 @@ export async function generateQuotationPDF(quotation) {
     y += h;
   };
   drawRow(cols.map((c) => c.t), true);
-  (p.line_items || []).forEach((r, i) => drawRow([i + 1, r.option_name, r.specification, r.quantity ?? '-', fmt(r.unit_price_display, cur, 2), fmt(r.total_display, cur)]));
+  (p.line_items || []).forEach((r, i) => drawRow([i + 1, r.option_name, r.specification, r.quantity ?? '-', money(r.unit_price_display, cur, 2), money(r.total_display, cur)]));
   y += 6;
 
   // 합계 + 참고 환산
@@ -113,11 +116,16 @@ export async function generateQuotationPDF(quotation) {
   const tx = W - M - 90;
   pdf.setFillColor(...BLUE); pdf.roundedRect(tx, y, 90, 11, 2, 2, 'F');
   font(9, true); pdf.setTextColor(255, 255, 255); pdf.text('TOTAL · 합계', tx + 4, y + 7);
-  font(13, true); pdf.text(fmt(p.total_display, cur), W - M - 4, y + 7.5, { align: 'right' });
+  font(13, true); pdf.text(money(p.total_display, cur), W - M - 4, y + 7.5, { align: 'right' });
   y += 15;
   const usd = p.total_usd != null ? p.total_usd : null;
   const refs = [];
-  if (usd != null) {
+  if (v2) {
+    ['USD', 'CNY', 'KRW'].filter(c => c !== cur).forEach(c => {
+      const v = convertAmount(p.total_display, cur, c, p.exchange_rate_usd, p.exchange_rate_usd_cny);
+      if (v != null && v > 0) refs.push(formatMoney(v, c));
+    });
+  } else if (usd != null) {
     if (cur !== 'USD') refs.push(fmt(usd, 'USD'));
     if (cur !== 'CNY' && p.exchange_rate_usd_cny > 0) refs.push(fmt(usd * p.exchange_rate_usd_cny, 'CNY'));
     if (cur !== 'KRW' && p.exchange_rate_usd > 0) refs.push(fmt(usd * p.exchange_rate_usd, 'KRW'));
