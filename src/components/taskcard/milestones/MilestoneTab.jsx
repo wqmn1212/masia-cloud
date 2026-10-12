@@ -49,9 +49,11 @@ export default function MilestoneTab({ card, user }) {
       <MilestoneEditDialog open={!!editing} milestone={editing?.m} onClose={() => setEditing(null)}
         onSave={async (f) => {
           if (!editing.m) return addStep(f);
-          const { planned_date, ...meta } = f;
-          await update(editing.m, meta);
-          return true;
+          const m = editing.m;
+          const patch = { label: f.label, label_cn: f.label_cn, client_visible: f.client_visible, needs_qc_report: f.needs_qc_report };
+          if (f.planned_date && f.planned_date !== (m.planned_date || '')) patch.planned_date = f.planned_date;
+          if (m.status === 'done' && f.actual_date && f.actual_date !== (m.actual_date || '')) patch.actual_date = f.actual_date;
+          return update(m, patch);
         }} />
       <MilestoneCompleteDialog milestone={completing} cardId={card.id} onClose={() => setCompleting(null)}
         onConfirm={async (actual, shift, qcId) => { if (await complete(completing, actual, shift, qcId)) setCompleting(null); }} />

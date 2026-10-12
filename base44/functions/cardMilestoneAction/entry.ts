@@ -69,7 +69,12 @@ Deno.serve(async (req) => {
       }
       if ('planned_date' in p || 'owner_id' in p) { if (!manager) return deny('계획일·담당 변경은 대표·팀 관리자만 할 수 있습니다.'); }
       else if (!meta.length && !('owner_ids' in p) && !manager && !isOwner) return deny('이 단계의 담당자가 아닙니다.');
-      if ('planned_date' in p) { if (!validDate(p.planned_date) || m.status === 'done') return Response.json({ error: '계획일을 확인하세요.' }, { status: 400 }); patch.planned_date = p.planned_date; }
+      if ('planned_date' in p) { if (!validDate(p.planned_date)) return Response.json({ error: '계획일을 확인하세요.' }, { status: 400 }); patch.planned_date = p.planned_date; }
+      if ('actual_date' in p) {
+        if (!manager) return deny('완료일 변경은 대표·팀 관리자만 할 수 있습니다.');
+        if (m.status !== 'done' || !validDate(p.actual_date)) return Response.json({ error: '완료된 단계의 완료일만 바꿀 수 있습니다.' }, { status: 400 });
+        patch.actual_date = p.actual_date;
+      }
       if ('owner_id' in p) {
         const owner = p.owner_id ? (await team()).find((u) => u.id === p.owner_id) : null;
         if (p.owner_id && !owner) return Response.json({ error: '팀 사용자가 아닙니다.' }, { status: 400 });

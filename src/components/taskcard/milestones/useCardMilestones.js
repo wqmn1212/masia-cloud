@@ -51,9 +51,10 @@ export default function useCardMilestones(card) {
 
   const update = async (m, patch) => {
     const r = await act({ action: 'update', milestone_id: m.id, patch });
-    if (!r) return;
-    if ('planned_date' in patch) await syncCard(r.list, confirmed);
+    if (!r) return false;
+    if ('planned_date' in patch || 'actual_date' in patch) await syncCard(r.list, confirmed);
     else qc.invalidateQueries({ queryKey: key });
+    return true;
   };
 
   const confirm = async () => {
