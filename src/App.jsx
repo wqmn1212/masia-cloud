@@ -33,6 +33,7 @@ import FileCenter from '@/pages/FileCenter';
 import Contracts from '@/pages/Contracts';
 import Decisions from '@/pages/Decisions';
 import BomExtractor from '@/pages/BomExtractor';
+import MoldReview from '@/pages/MoldReview';
 import Landing from '@/pages/Landing';
 import Leads from '@/pages/Leads';
 import ClientPortalDashboard from '@/pages/ClientPortalDashboard';
@@ -135,6 +136,7 @@ const AuthenticatedApp = () => {
         <Route path="/contracts" element={<Contracts />} />
         <Route path="/decisions" element={<Decisions />} />
         <Route path="/bom-extractor" element={<BomExtractor />} />
+        <Route path="/mold-review" element={<MoldReview />} />
         <Route path="/factories/:factoryId/dashboard" element={<FactoryDashboard />} />
         <Route path="/clients/:clientId/dashboard" element={<ClientDashboard />} />
         <Route path="/master-admin" element={<MasterAdminDashboard />} />
