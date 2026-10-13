@@ -734,6 +734,182 @@
         }
       }
     },
+    "rounding_version": {
+      "type": "number",
+      "description": "2 = \ud1b5\ud654 \ub2e8\uc704 \ud488\ubaa9\ubcc4 \uc62c\ub9bc \uaddc\uce59 \uc801\uc6a9 \uacac\uc801"
+    },
+    "final_total": {
+      "type": "number",
+      "description": "\uacac\uc801 \ud1b5\ud654(final_currency) \uae30\uc900 \ucd5c\uc885 \uae08\uc561 (\ud45c\uae30 \ub2e8\uc704\ub85c \ud655\uc815)"
+    },
+    "price_lines": {
+      "type": "array",
+      "description": "\uace0\uac1d \ud45c\uc2dc\uc6a9 \ud488\ubaa9 \uae08\uc561 (\uacac\uc801 \ud1b5\ud654, \uc62c\ub9bc \ud655\uc815\uac12)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "option_name": {
+            "type": "string"
+          },
+          "specification": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "auto_total": {
+      "type": "number",
+      "description": "\uc790\ub3d9 \uacc4\uc0b0 \ucd5c\uc885 \uae08\uc561 (\uacac\uc801 \ud1b5\ud654)",
+      "rls": {
+        "read": {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "$and": [
+                {
+                  "data.tenant_id": "{{user.data.tenant_id}}"
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "write": {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "$and": [
+                {
+                  "data.tenant_id": "{{user.data.tenant_id}}"
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "manual_total": {
+      "type": "number",
+      "description": "\uc9c1\uc811 \uc785\ub825\ud55c \ucd5c\uc885 \uae08\uc561 (\uacac\uc801 \ud1b5\ud654). \ube44\uc5b4 \uc788\uc73c\uba74 \uc790\ub3d9 \uacc4\uc0b0",
+      "rls": {
+        "read": {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "$and": [
+                {
+                  "data.tenant_id": "{{user.data.tenant_id}}"
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "write": {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "$and": [
+                {
+                  "data.tenant_id": "{{user.data.tenant_id}}"
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "manual_reason": {
+      "type": "string",
+      "description": "\ucd5c\uc885 \uae08\uc561 \uc9c1\uc811 \uc785\ub825 \uc0ac\uc720",
+      "rls": {
+        "read": {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "$and": [
+                {
+                  "data.tenant_id": "{{user.data.tenant_id}}"
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "write": {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "$and": [
+                {
+                  "data.tenant_id": "{{user.data.tenant_id}}"
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
     "exchange_rate_date": {
       "type": "string",
       "format": "date",

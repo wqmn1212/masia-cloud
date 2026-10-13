@@ -37,7 +37,9 @@ export default function PricingTable({ head, rows, lang, colThemes = [], badgeCo
                   'px-4 py-3 leading-[1.6]',
                   j === 0 ? 'font-semibold text-landing-ink2 whitespace-nowrap' : 'text-landing-ink',
                   i === priceRow && j > 0 && theme(j) && cn('font-extrabold', colThemes[j] === 'ent' ? 'text-landing-ink' : theme(j).text)
-                )}>{tx(c, lang)}</td>
+                )}>{j === 0 && c[0] === 'AEGIS Cloud'
+                  ? <a href="/cloud" className="text-landing-brand hover:underline">AEGIS Cloud</a>
+                  : tx(c, lang)}</td>
               ))}
             </tr>
           ))}

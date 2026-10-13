@@ -8,7 +8,7 @@ export default function LandingFooter({ lang }) {
         <span className="text-[19px] font-extrabold tracking-[-0.5px] text-landing-ink leading-none">AEGIS</span>
         <div className="text-[13px] text-landing-muted2">{tx(footer.tagline, lang)}</div>
         <div className="flex-1" />
-        <a href="/cloud-guide" className="text-[13px] font-semibold text-landing-ink2 hover:text-landing-brand">{tx(['AEGIS Cloud 사용 가이드', 'AEGIS Cloud guide', 'AEGIS Cloud 指南'], lang)}</a>
+        <a href="/cloud" className="text-[13px] font-semibold text-landing-ink2 hover:text-landing-brand">AEGIS Cloud</a>
         <div className="text-[12.5px] text-landing-muted3 font-mono">{footer.copyright}</div>
       </div>
     </footer>

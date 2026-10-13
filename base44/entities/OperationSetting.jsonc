@@ -1,25 +1,25 @@
 {
   "name": "OperationSetting",
   "type": "object",
-  "description": "팀 운영 기준값. 테넌트당 1건. 원가·수용 한도·가동률 가중치·잉여 배분 비율을 담는다.",
+  "description": "\ud300 \uc6b4\uc601 \uae30\uc900\uac12. \ud14c\ub10c\ud2b8\ub2f9 1\uac74. \uc6d0\uac00\u00b7\uc218\uc6a9 \ud55c\ub3c4\u00b7\uac00\ub3d9\ub960 \uac00\uc911\uce58\u00b7\uc789\uc5ec \ubc30\ubd84 \ube44\uc728\uc744 \ub2f4\ub294\ub2e4.",
   "properties": {
     "tenant_id": {
       "type": "string",
-      "description": "소속 팀 ID (데이터 격리 키). 테넌트당 1건"
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4). \ud14c\ub10c\ud2b8\ub2f9 1\uac74"
     },
     "team_monthly_cost": {
       "type": "number",
       "default": 6000000,
-      "description": "팀 월 원가 (한국 1명 400만 + 중국 2명 각 100만 기준). 인력 변동 시 조정"
+      "description": "\ud300 \uc6d4 \uc6d0\uac00 (\ud55c\uad6d 1\uba85 400\ub9cc + \uc911\uad6d 2\uba85 \uac01 100\ub9cc \uae30\uc900). \uc778\ub825 \ubcc0\ub3d9 \uc2dc \uc870\uc815"
     },
     "capacity_limit": {
       "type": "number",
       "default": 10,
-      "description": "팀 수용 한도. 배정 카드의 단계별 가중치 합계 상한"
+      "description": "\ud300 \uc218\uc6a9 \ud55c\ub3c4. \ubc30\uc815 \uce74\ub4dc\uc758 \ub2e8\uacc4\ubcc4 \uac00\uc911\uce58 \ud569\uacc4 \uc0c1\ud55c"
     },
     "status_weights": {
       "type": "array",
-      "description": "카드 상태별 업무 부하 가중치. 운영하며 조정한다",
+      "description": "\uce74\ub4dc \uc0c1\ud0dc\ubcc4 \uc5c5\ubb34 \ubd80\ud558 \uac00\uc911\uce58. \uc6b4\uc601\ud558\uba70 \uc870\uc815\ud55c\ub2e4",
       "items": {
         "type": "object",
         "properties": {
@@ -43,11 +43,11 @@
     "owner_share_percent": {
       "type": "number",
       "default": 50,
-      "description": "월 잉여 중 대표 몫 비율 (%). 나머지는 팀원 배분"
+      "description": "\uc6d4 \uc789\uc5ec \uc911 \ub300\ud45c \ubaab \ube44\uc728 (%). \ub098\uba38\uc9c0\ub294 \ud300\uc6d0 \ubc30\ubd84"
     },
     "updated_by": {
       "type": "string",
-      "description": "최종 수정자"
+      "description": "\ucd5c\uc885 \uc218\uc815\uc790"
     }
   },
   "required": [
@@ -56,39 +56,71 @@
   "rls": {
     "create": {
       "$and": [
-        { "data.tenant_id": "{{user.data.tenant_id}}" },
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
         {
           "$or": [
-            { "user_condition": { "data.account_tier": "master" } },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         }
       ]
     },
     "read": {
       "$or": [
-        { "user_condition": { "data.account_tier": "master" } },
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
         {
           "$and": [
-            { "data.tenant_id": "{{user.data.tenant_id}}" },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         }
       ]
     },
     "update": {
       "$or": [
-        { "user_condition": { "data.account_tier": "master" } },
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
         {
           "$and": [
-            { "data.tenant_id": "{{user.data.tenant_id}}" },
-            { "user_condition": { "data.account_tier": "service" } }
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
           ]
         }
       ]
     },
     "delete": {
-      "user_condition": { "data.account_tier": "master" }
+      "user_condition": {
+        "data.account_tier": "master"
+      }
     }
   }
 }

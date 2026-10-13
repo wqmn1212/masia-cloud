@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calculator, TrendingUp } from 'lucide-react';
 import LogisticsEstimator from './LogisticsEstimator';
+import { convertAmount, formatMoney } from '@/components/quotation/quoteCurrency';
 
 export default function MarginCalculator({
   factoryTotal,
@@ -19,8 +20,8 @@ export default function MarginCalculator({
   usdToKrw = 0,
 }) {
   const baseCost = (factoryTotal || 0) + (logisticsCost || 0);
-  const finalCNY = usdToCny > 0 ? (Number(finalPrice) || 0) * usdToCny : 0;
-  const finalKRW = usdToKrw > 0 ? (Number(finalPrice) || 0) * usdToKrw : 0;
+  const finalCNY = usdToCny > 0 ? convertAmount(finalPrice, 'USD', 'CNY', usdToKrw, usdToCny) : 0;
+  const finalKRW = usdToKrw > 0 ? convertAmount(finalPrice, 'USD', 'KRW', usdToKrw, usdToCny) : 0;
   const [cargo, setCargo] = React.useState({ shipping_mode: 'SEA_LCL', shipping_term: 'FOB', cargo_quantity: 1 });
 
   return (
@@ -92,7 +93,7 @@ export default function MarginCalculator({
             <p className="text-xs font-semibold text-primary">최종 고객사 제안가</p>
           </div>
           <p className="text-3xl font-extrabold text-primary">${(finalPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-          <p className="text-xs text-muted-foreground mt-1">참고: {finalCNY > 0 ? `¥${finalCNY.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : 'CNY 환율 입력 필요'} · {finalKRW > 0 ? `₩${Math.round(finalKRW).toLocaleString()}` : 'KRW 환율 입력 필요'}</p>
+          <p className="text-xs text-muted-foreground mt-1">참고: {finalCNY > 0 ? formatMoney(finalCNY, 'CNY') : 'CNY 환율 입력 필요'} · {finalKRW > 0 ? formatMoney(finalKRW, 'KRW') : 'KRW 환율 입력 필요'}</p>
         </div>
       </CardContent>
     </Card>

@@ -1,43 +1,31 @@
 import React from 'react';
-import { Lightbulb } from 'lucide-react';
-import GuideShot from './GuideShot';
+import { Card } from '@/components/ui/card';
+import { STAFF_MOCKS } from '@/components/userguide/staffGuideMocks';
 
-export default function GuideChapter({ section, index, lang, content }) {
-  const no = String(index + 1).padStart(2, '0');
+export default function GuideChapter({ ch, no, zh }) {
+  const t = (p) => (zh ? p[1] : p[0]);
+  const Mock = STAFF_MOCKS[ch.id];
+  const list = (
+    <ol className="space-y-2">
+      {ch.points.map((p, i) => (
+        <li key={i} className="flex gap-2 text-sm"><span className="shrink-0 w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span><span>{t(p)}</span></li>
+      ))}
+    </ol>
+  );
   return (
-    <section id={`guide-${section.id}`} aria-labelledby={`guide-title-${section.id}`} className="scroll-mt-36 rounded-2xl border bg-card text-card-foreground">
-      <header className="p-5 pb-0 sm:p-7 sm:pb-0">
-        <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold tabular-nums text-primary">{no}</span>
-          <h2 id={`guide-title-${section.id}`} className="text-lg font-bold leading-snug sm:text-xl">{section.title}</h2>
-        </div>
-        <p className="mt-3 text-sm leading-7 text-muted-foreground">{section.intro}</p>
-      </header>
-      <div className="space-y-6 p-5 pt-4 sm:p-7 sm:pt-5">
-        {section.shots.map((shot) => <GuideShot key={shot.img} shot={shot} lang={lang} content={content} />)}
-        {section.table && (
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full min-w-[520px] text-sm">
-              <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-                <tr>{section.table.head.map((h) => <th key={h} className="px-3 py-2 font-semibold">{h}</th>)}</tr>
-              </thead>
-              <tbody className="divide-y">
-                {section.table.rows.map(([name, steps]) => (
-                  <tr key={name}><td className="whitespace-nowrap px-3 py-2.5 align-top font-medium">{name}</td><td className="px-3 py-2.5 leading-6">{steps}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {section.tips && (
-          <aside className="rounded-xl border border-primary/20 bg-primary/5 p-4">
-            <p className="flex items-center gap-1.5 text-sm font-semibold text-primary"><Lightbulb className="h-4 w-4" />{content.tips}</p>
-            <ul className="mt-2 space-y-1.5 text-sm leading-6">
-              {section.tips.map((tip) => <li key={tip} className="flex gap-2"><span className="mt-2.5 h-1 w-1 shrink-0 rounded-full bg-primary" aria-hidden="true" />{tip}</li>)}
-            </ul>
-          </aside>
-        )}
+    <Card id={`ch-${ch.id}`} className="p-5 md:p-6 scroll-mt-28">
+      <div className="text-xs font-semibold text-primary">{String(no).padStart(2, '0')}</div>
+      <h2 className="text-lg font-bold mt-0.5">{t(ch.title)}</h2>
+      <p className="text-sm text-muted-foreground mt-1 mb-4">{t(ch.intro)}</p>
+      <div className={ch.wide ? 'space-y-4' : 'grid lg:grid-cols-2 gap-5 items-start'}>
+        {ch.wide ? <><Mock zh={zh} />{list}</> : <>{list}<Mock zh={zh} /></>}
       </div>
-    </section>
+      {ch.tips && (
+        <div className="mt-4 rounded-md bg-muted p-3 text-sm space-y-1">
+          <div className="font-semibold">{zh ? '注意' : '알아두세요'}</div>
+          {ch.tips.map((p, i) => <p key={i}>· {t(p)}</p>)}
+        </div>
+      )}
+    </Card>
   );
 }

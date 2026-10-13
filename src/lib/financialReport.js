@@ -12,7 +12,9 @@ export const quoteAmounts = (quote, currency) => {
   const revenueUSD = modern ? Number(quote.final_client_price) || Number(quote.final_price_usd) || 0 : rate.usdKrw > 0 && rate.legacyCnyKrw > 0 ? (Number(quote.final_client_price) || 0) * rate.legacyCnyKrw / rate.usdKrw : 0;
   const costUSD = modern ? ((Number(quote.factory_total_cost) || 0) + (Number(quote.logistics_cost) || 0)) / rate.usdCny : rate.usdKrw > 0 && rate.legacyCnyKrw > 0 ? ((Number(quote.factory_total_cost) || 0) + (Number(quote.logistics_cost) || 0)) * rate.legacyCnyKrw / rate.usdKrw : 0;
   const convert = (value) => currency === 'USD' ? value : currency === 'KRW' ? value * rate.usdKrw : value * (modern ? rate.usdCny : rate.usdKrw / rate.legacyCnyKrw);
-  return { revenue: convert(revenueUSD), margin: convert(Math.max(0, revenueUSD - costUSD)) };
+  // 새 규칙 견적: 같은 통화면 저장된 확정 금액을 그대로 쓴다
+  const exact = quote.rounding_version === 2 && quote.final_total != null && (quote.final_currency || 'USD') === currency;
+  return { revenue: exact ? Number(quote.final_total) : convert(revenueUSD), margin: convert(Math.max(0, revenueUSD - costUSD)) };
 };
 
 export const buildMonthlyTrend = (quotes, currency) => {

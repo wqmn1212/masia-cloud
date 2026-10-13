@@ -8,7 +8,7 @@ export default function ProcessSection({ lang }) {
     <section id="process" className="border-t border-landing-line px-5 lg:px-8 py-16 lg:py-[88px]">
       <div className="max-w-[1200px] mx-auto">
         <SectionHeading eyebrow={process.eyebrow} title={tx(process.h2, lang)} maxWidth="max-w-[620px]" />
-        <p className="mt-3.5 text-base text-landing-ink3 max-w-[560px] leading-[1.6]">{tx(process.sub, lang)}</p>
+        <p className="mt-3.5 text-base text-landing-ink3 max-w-[560px] leading-[1.6]">{tx(process.sub, lang)} <a href="/cloud" className="font-semibold text-landing-brand hover:underline whitespace-nowrap">{tx(['AEGIS Cloud 살펴보기 →', 'Explore AEGIS Cloud →', '了解 AEGIS Cloud →'], lang)}</a></p>
         <div className="lm-steps">
           {process.steps.map((s, i) => (
             <div

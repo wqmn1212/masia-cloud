@@ -2,25 +2,18 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useLanguage } from '@/lib/LanguageContext';
 import ClientGuideBody from '@/components/client/guide/ClientGuideBody';
-import { CG, t } from '@/components/client/guide/clientGuideContent';
 
-// 고객 포털 이용 가이드 — 모든 고객 기능을 HTML 예시 화면과 함께 설명
 export default function ClientGuide() {
-  const { lang } = useLanguage();
   return (
-    <ClientGuideBody
-      lang={lang}
-      cta={
-        <Card className="flex flex-col justify-between gap-3 p-5 sm:flex-row sm:items-center md:p-6">
-          <div>
-            <p className="font-semibold">{t(CG.ctaApp.title, lang)}</p>
-            <p className="text-sm text-muted-foreground">{t(CG.ctaApp.desc, lang)}</p>
-          </div>
-          <Button asChild><Link to="/client/board">{t(CG.ctaApp.button, lang)}</Link></Button>
-        </Card>
-      }
-    />
+    <ClientGuideBody lang="ko" footer={
+      <Card className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <p className="font-semibold">이제 프로젝트를 확인해 보세요</p>
+          <p className="text-sm text-muted-foreground">궁금한 점은 각 프로젝트의 문의 탭에서 담당자에게 남겨 주세요.</p>
+        </div>
+        <Button asChild><Link to="/client/board">소싱 보드로 가기</Link></Button>
+      </Card>
+    } />
   );
 }

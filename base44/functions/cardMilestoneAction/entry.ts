@@ -32,15 +32,49 @@ Deno.serve(async (req) => {
     }
 
     const list = await db.CardMilestone.filter({ card_id: card.id }, 'seq', 200);
+
+    if (input.action === 'add') {
+      if (!manager) return deny('단계 추가는 대표·팀 관리자만 할 수 있습니다.');
+      const label = String(input.label || '').trim().slice(0, 100);
+      if (!label) return Response.json({ error: '단계 이름을 입력하세요.' }, { status: 400 });
+      if (input.planned_date && !validDate(input.planned_date)) return Response.json({ error: '계획일을 확인하세요.' }, { status: 400 });
+      const seq = list.length ? Math.max(...list.map((x) => Number(x.seq) || 0)) + 1 : 0;
+      const row = await db.CardMilestone.create({ tenant_id: card.tenant_id, card_id: card.id, client_id: card.client_id, template_key: list[0]?.template_key, seq, key: `custom_${Date.now()}`, label, label_cn: String(input.label_cn || '').slice(0, 100), planned_date: input.planned_date || null, baseline_date: card.plan_confirmed_at ? input.planned_date || null : null, status: 'pending', client_visible: input.client_visible !== false, needs_qc_report: !!input.needs_qc_report });
+      return Response.json({ list: [...list, row] });
+    }
+
     const m = list.find((x) => x.id === input.milestone_id);
     if (!m) return Response.json({ error: '단계를 찾을 수 없습니다.' }, { status: 404 });
-    const isOwner = m.owner_id && m.owner_id === user.id;
+    const isOwner = (m.owner_id && m.owner_id === user.id) || (m.owner_ids || []).includes(user.id);
 
     if (input.action === 'update') {
       const p = input.patch || {}, patch: any = {};
+      const meta = ['label', 'label_cn', 'client_visible', 'needs_qc_report'].filter((k) => k in p);
+      if (meta.length) {
+        if (!manager) return deny('단계 정보 수정은 대표·팀 관리자만 할 수 있습니다.');
+        if ('label' in p) { const l = String(p.label || '').trim().slice(0, 100); if (!l) return Response.json({ error: '단계 이름을 입력하세요.' }, { status: 400 }); patch.label = l; }
+        if ('label_cn' in p) patch.label_cn = String(p.label_cn || '').slice(0, 100);
+        if ('client_visible' in p) patch.client_visible = !!p.client_visible;
+        if ('needs_qc_report' in p) patch.needs_qc_report = !!p.needs_qc_report;
+      }
+      if ('owner_ids' in p) {
+        if (!manager) return deny('계획일·담당 변경은 대표·팀 관리자만 할 수 있습니다.');
+        const members = await team();
+        const ids = Array.isArray(p.owner_ids) ? [...new Set(p.owner_ids.map(String))] : [];
+        const owners = ids.map((id) => members.find((u) => u.id === id));
+        if (owners.some((o) => !o)) return Response.json({ error: '팀 사용자가 아닙니다.' }, { status: 400 });
+        patch.owner_ids = owners.map((o) => o.id);
+        patch.owner_names = owners.map((o) => o.full_name || o.email);
+        patch.owner_id = patch.owner_ids[0] || null; patch.owner_name = patch.owner_names[0] || null;
+      }
       if ('planned_date' in p || 'owner_id' in p) { if (!manager) return deny('계획일·담당 변경은 대표·팀 관리자만 할 수 있습니다.'); }
-      else if (!manager && !isOwner) return deny('이 단계의 담당자가 아닙니다.');
-      if ('planned_date' in p) { if (!validDate(p.planned_date) || m.status === 'done') return Response.json({ error: '계획일을 확인하세요.' }, { status: 400 }); patch.planned_date = p.planned_date; }
+      else if (!meta.length && !('owner_ids' in p) && !manager && !isOwner) return deny('이 단계의 담당자가 아닙니다.');
+      if ('planned_date' in p) { if (!validDate(p.planned_date)) return Response.json({ error: '계획일을 확인하세요.' }, { status: 400 }); patch.planned_date = p.planned_date; }
+      if ('actual_date' in p) {
+        if (!manager) return deny('완료일 변경은 대표·팀 관리자만 할 수 있습니다.');
+        if (m.status !== 'done' || !validDate(p.actual_date)) return Response.json({ error: '완료된 단계의 완료일만 바꿀 수 있습니다.' }, { status: 400 });
+        patch.actual_date = p.actual_date;
+      }
       if ('owner_id' in p) {
         const owner = p.owner_id ? (await team()).find((u) => u.id === p.owner_id) : null;
         if (p.owner_id && !owner) return Response.json({ error: '팀 사용자가 아닙니다.' }, { status: 400 });
@@ -50,6 +84,22 @@ Deno.serve(async (req) => {
       if ('delay_reason_public' in p) patch.delay_reason_public = !!p.delay_reason_public;
       await db.CardMilestone.update(m.id, patch);
       return Response.json({ list: list.map((x) => (x.id === m.id ? { ...x, ...patch } : x)) });
+    }
+
+    if (input.action === 'remove') {
+      if (!manager) return deny('단계 삭제는 대표·팀 관리자만 할 수 있습니다.');
+      if (list.length <= 1) return Response.json({ error: '마지막 단계는 삭제할 수 없습니다. 다시 만들기를 사용하세요.' }, { status: 400 });
+      await db.CardMilestone.delete(m.id);
+      const rest = list.filter((x) => x.id !== m.id).map((x) => (x.seq > m.seq ? { ...x, seq: x.seq - 1 } : x));
+      const moved = rest.filter((x) => x.seq >= m.seq);
+      if (moved.length) await db.CardMilestone.bulkUpdate(moved.map((x) => ({ id: x.id, seq: x.seq })));
+      return Response.json({ list: rest });
+    }
+
+    if (input.action === 'reopen') {
+      if (!manager) return deny('완료 취소는 대표·팀 관리자만 할 수 있습니다.');
+      await db.CardMilestone.update(m.id, { status: 'pending', actual_date: null, qc_report_id: null });
+      return Response.json({ list: list.map((x) => (x.id === m.id ? { ...x, status: 'pending', actual_date: null, qc_report_id: null } : x)) });
     }
 
     if (input.action === 'complete') {

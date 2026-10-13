@@ -60,7 +60,7 @@ export default async function (req) {
           created_date: c.created_date,
         })),
       milestones: milestones.map((m) => ({
-        id: m.id, label: m.label, label_cn: m.label_cn || '', status: m.status,
+        id: m.id, seq: Number(m.seq) || 0, label: m.label, label_cn: m.label_cn || '', status: m.status,
         planned_date: m.planned_date || '', actual_date: m.actual_date || '',
         delay_reason: m.delay_reason_public ? (m.delay_reason || '') : '',
       })),

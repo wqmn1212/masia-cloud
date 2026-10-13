@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Lock, RotateCcw } from 'lucide-react';
+import { Lock, RotateCcw, Plus } from 'lucide-react';
+import MilestoneEditDialog from './MilestoneEditDialog';
 import { useToast } from '@/components/ui/use-toast';
 import useCardMilestones from './useCardMilestones';
 import MilestonePlanCreator from './MilestonePlanCreator';
@@ -8,10 +9,12 @@ import MilestoneRow from './MilestoneRow';
 import MilestoneCompleteDialog from './MilestoneCompleteDialog';
 import { MILESTONE_TEMPLATES, delayDays, deliveryMilestone } from '@/lib/milestones';
 import { useWorkT } from '@/lib/workI18n';
+import GanttChart from '@/components/gantt/GanttChart';
 
 export default function MilestoneTab({ card, user }) {
-  const { list, isLoading, create, update, confirm, complete, reset, team } = useCardMilestones(card);
-  const { tr } = useWorkT();
+  const { list, isLoading, create, update, confirm, complete, reset, team, addStep, removeStep, reopen } = useCardMilestones(card);
+  const [editing, setEditing] = useState(null);
+  const { tr, label } = useWorkT();
   const [busy, setBusy] = useState(false);
   const [completing, setCompleting] = useState(null);
   const { toast } = useToast();
@@ -38,9 +41,20 @@ export default function MilestoneTab({ card, user }) {
         {canManage && <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" disabled={busy} onClick={() => window.confirm(tr(confirmed ? '확정된 계획은 고객에게 이미 보인 일정입니다. 지우면 고객 화면에서도 사라지고, 예정 납품일은 계획 전 값으로 되돌아가며 변경 이력이 남습니다. 계속할까요?' : '마일스톤을 모두 지우고 다시 만들까요?')) && run(reset)}><RotateCcw className="w-3 h-3" />{tr('다시 만들기')}</Button>}
       </div>
       {!confirmed && <p className="text-xs text-muted-foreground bg-muted/40 rounded p-2">{tr('계획 확정 전입니다. 날짜·담당자를 조정한 뒤 확정하면 기준일이 잠기고 지연이 계산됩니다.')}</p>}
+      <div className="border rounded-lg p-3 overflow-x-auto"><div className="min-w-[480px]"><GanttChart milestones={list} start={card.created_date} labelOf={label} /></div></div>
       <div className="space-y-2">
-        {list.map((m) => <MilestoneRow key={m.id} m={m} confirmed={confirmed} onChange={update} onComplete={setCompleting} canManage={canManage} userId={user?.id} team={team} />)}
+        {list.map((m) => <MilestoneRow key={m.id} m={m} confirmed={confirmed} onChange={update} onComplete={setCompleting} onEdit={(x) => setEditing({ m: x })} onRemove={removeStep} onReopen={reopen} canManage={canManage} userId={user?.id} team={team} />)}
       </div>
+      {canManage && <Button size="sm" variant="outline" className="w-full h-8 text-xs gap-1" onClick={() => setEditing({ m: null })}><Plus className="w-3 h-3" />{tr('단계 추가')}</Button>}
+      <MilestoneEditDialog open={!!editing} milestone={editing?.m} onClose={() => setEditing(null)}
+        onSave={async (f) => {
+          if (!editing.m) return addStep(f);
+          const m = editing.m;
+          const patch = { label: f.label, label_cn: f.label_cn, client_visible: f.client_visible, needs_qc_report: f.needs_qc_report };
+          if (f.planned_date && f.planned_date !== (m.planned_date || '')) patch.planned_date = f.planned_date;
+          if (m.status === 'done' && f.actual_date && f.actual_date !== (m.actual_date || '')) patch.actual_date = f.actual_date;
+          return update(m, patch);
+        }} />
       <MilestoneCompleteDialog milestone={completing} cardId={card.id} onClose={() => setCompleting(null)}
         onConfirm={async (actual, shift, qcId) => { if (await complete(completing, actual, shift, qcId)) setCompleting(null); }} />
     </div>

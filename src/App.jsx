@@ -42,15 +42,15 @@ import PortfolioDetail from '@/pages/PortfolioDetail';
 import PortfolioList from '@/pages/PortfolioList';
 import About from '@/pages/About';
 import Pricing from '@/pages/Pricing';
-import CloudGuide from '@/pages/CloudGuide';
+import Cloud from '@/pages/Cloud';
 import JoinInvite from '@/pages/JoinInvite';
 import JoinSetPassword from '@/pages/JoinSetPassword';
 import ServiceGuide from '@/pages/ServiceGuide';
-import UserGuide from '@/pages/UserGuide';
 import ClientGuide from '@/pages/ClientGuide';
 import Marketing from '@/pages/Marketing';
 import ChinaHolidays from '@/pages/ChinaHolidays';
 import MyWork from '@/pages/MyWork';
+import UserGuide from '@/pages/UserGuide';
 
 const AuthenticatedApp = () => {
   const { user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, onboardingPath, completeOnboarding, retryInvitation } = useAuth();
@@ -60,7 +60,8 @@ const AuthenticatedApp = () => {
   // 공개 포트폴리오 상세 — 비로그인 접근 허용
   if (location.pathname === '/about') return <About />;
   if (location.pathname === '/pricing') return <Pricing />;
-  if (location.pathname === '/cloud-guide') return <CloudGuide />;
+  if (location.pathname === '/cloud') return <Cloud />;
+  if (location.pathname === '/cloud-guide') return <Navigate to="/cloud" replace />;
   if (location.pathname === '/portfolio' || location.pathname.startsWith('/portfolio/')) {
     return (
       <Routes>
@@ -112,9 +113,9 @@ const AuthenticatedApp = () => {
         <Route path="/client/board" element={<ClientBoard />} />
         <Route path="/client/guide" element={<ClientGuide />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/user-guide" element={<UserGuide />} />
         <Route path="/service-guide" element={<ServiceGuide />} />
         <Route path="/my-work" element={<MyWork />} />
+        <Route path="/user-guide" element={<UserGuide />} />
         <Route path="/leads" element={<Leads />} />
         <Route path="/marketing" element={<Marketing />} />
         <Route path="/china-holidays" element={<ChinaHolidays />} />

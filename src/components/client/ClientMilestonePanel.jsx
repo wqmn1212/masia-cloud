@@ -1,5 +1,6 @@
 import React from 'react';
 import { Check } from 'lucide-react';
+import GanttChart from '@/components/gantt/GanttChart';
 
 export default function ClientMilestonePanel({ milestones = [] }) {
   if (!milestones.length) return null;
@@ -7,6 +8,7 @@ export default function ClientMilestonePanel({ milestones = [] }) {
   return (
     <div className="border rounded-lg p-3 mb-4">
       <p className="text-sm font-semibold mb-3">진행 단계</p>
+      <div className="mb-4 overflow-x-auto"><div className="min-w-[480px]"><GanttChart milestones={milestones.map((m, i) => ({ ...m, seq: m.seq ?? i }))} showOwners={false} /></div></div>
       <ol className="space-y-2">
         {milestones.map((m, i) => {
           const done = m.status === 'done';
