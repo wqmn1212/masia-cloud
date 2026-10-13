@@ -3,7 +3,7 @@
 // Base44 함수(Deno)에서는 처리하지 않는다.
 
 export const MAX_FILE_SIZE_MB = 50;
-export const MAX_PART_COUNT = 200;
+export const MAX_PART_COUNT = 500;
 export const DEFAULT_DEFLECTION_MM = 0.1;
 
 /**

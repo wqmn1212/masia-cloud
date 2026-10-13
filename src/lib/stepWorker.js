@@ -19,7 +19,7 @@ function loadOcct() {
 }
 
 self.onmessage = async (event) => {
-  const { buffer, deflection = 0.1, maxParts = 200 } = event.data || {};
+  const { buffer, deflection = 0.1, maxParts = 500 } = event.data || {};
 
   try {
     const startedAt = performance.now();
