@@ -1,0 +1,267 @@
+{
+  "name": "MoldReview",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "card_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c TaskCard (\uc120\ud0dd)"
+    },
+    "source_file_name": {
+      "type": "string",
+      "description": "\uc6d0\ubcf8 \ud30c\uc77c\uba85 (STEP \u00b7 STL)"
+    },
+    "part_name": {
+      "type": "string",
+      "description": "\uac80\ud1a0\ud55c \ubd80\ud488\uba85"
+    },
+    "material": {
+      "type": "string",
+      "description": "\uc7ac\uc9c8 (\uac80\ud1a0 \uae30\uc900)"
+    },
+    "engine_version": {
+      "type": "string",
+      "description": "\uac80\ud1a0 \uc5d4\uc9c4 \ubc84\uc804"
+    },
+    "pull_direction": {
+      "type": "string",
+      "description": "\ube7c\uae30 \ubc29\ud5a5 (\uc608: Z+)"
+    },
+    "settings": {
+      "type": "object",
+      "description": "\uac80\ud1a0 \uc870\uac74",
+      "properties": {
+        "draft_min_deg": {
+          "type": "number"
+        },
+        "texture_depth_mm": {
+          "type": "number"
+        },
+        "cavities": {
+          "type": "number"
+        },
+        "cosmetic": {
+          "type": "string"
+        },
+        "sink_ratio": {
+          "type": "number"
+        },
+        "pull": {
+          "type": "string"
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "description": "\ud615\uc0c1 \u00b7 \uc131\ud615 \uc694\uc57d",
+      "properties": {
+        "size_mm": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "volume_cm3": {
+          "type": "number"
+        },
+        "weight_g": {
+          "type": "number"
+        },
+        "nominal_wall_mm": {
+          "type": "number"
+        },
+        "projected_area_cm2": {
+          "type": "number"
+        },
+        "tonnage": {
+          "type": "number"
+        },
+        "machine_ton": {
+          "type": "number"
+        },
+        "undercut_count": {
+          "type": "number"
+        },
+        "slide_count": {
+          "type": "number"
+        },
+        "lifter_count": {
+          "type": "number"
+        },
+        "parting_length_mm": {
+          "type": "number"
+        },
+        "gate_plan": {
+          "type": "string"
+        },
+        "flow_ratio": {
+          "type": "number"
+        },
+        "weld_count": {
+          "type": "number"
+        }
+      }
+    },
+    "issues": {
+      "type": "array",
+      "description": "\uac80\ud1a0 \uacb0\uacfc \ud56d\ubaa9",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "hi",
+              "mid",
+              "ok",
+              "info"
+            ]
+          },
+          "title_ko": {
+            "type": "string"
+          },
+          "text_ko": {
+            "type": "string"
+          },
+          "title_zh": {
+            "type": "string"
+          },
+          "text_zh": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "high_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\ub192\uc74c \ud56d\ubaa9 \uc218"
+    },
+    "caution_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\uc8fc\uc758 \ud56d\ubaa9 \uc218"
+    },
+    "spec_ko": {
+      "type": "string",
+      "description": "\uae08\ud615 \uc124\uacc4 \uc9c0\uc2dc\uc11c \ucd08\uc548 (\ud55c\uad6d\uc5b4)"
+    },
+    "spec_zh": {
+      "type": "string",
+      "description": "\uae08\ud615 \uc124\uacc4 \uc9c0\uc2dc\uc11c \ucd08\uc548 (\uc911\uad6d\uc5b4, \uacf5\uc7a5 \uc804\ub2ec\uc6a9)"
+    },
+    "snapshot_url": {
+      "type": "string",
+      "description": "\uac80\ud1a0 \ud654\uba74 \ucea1\ucc98"
+    },
+    "note": {
+      "type": "string",
+      "description": "\ube44\uace0"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "part_name"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
