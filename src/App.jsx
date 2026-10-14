@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -9,50 +10,58 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AuthRedirect from '@/components/auth/AuthRedirect';
 
-import AppLayout from '@/components/layout/AppLayout';
-import Dashboard from '@/pages/Dashboard';
-import Factories from '@/pages/Factories';
-import Clients from '@/pages/Clients';
-import Quotations from '@/pages/Quotations';
-import AgentQuotes from '@/pages/AgentQuotes';
-import Knowledge from '@/pages/Knowledge';
-import Timeline from '@/pages/Timeline';
-import ASRequests from '@/pages/ASRequests';
-import Settlement from '@/pages/Settlement';
-import Requirements from '@/pages/Requirements';
-import TaskBoard from '@/pages/TaskBoard';
-import FactoryDashboard from '@/pages/FactoryDashboard';
-import ClientDashboard from '@/pages/ClientDashboard';
-import MasterAdminDashboard from '@/pages/MasterAdminDashboard';
-import TeamManagement from '@/pages/TeamManagement';
-import UserPermissions from '@/pages/UserPermissions';
-import FinancialReport from '@/pages/FinancialReport';
-import MasterTeamDashboard from '@/pages/MasterTeamDashboard';
-import Assistant from '@/pages/Assistant';
-import FileCenter from '@/pages/FileCenter';
-import Contracts from '@/pages/Contracts';
-import Decisions from '@/pages/Decisions';
-import BomExtractor from '@/pages/BomExtractor';
-import MoldReview from '@/pages/MoldReview';
-import ArtCraft from '@/pages/ArtCraft';
 import Landing from '@/pages/Landing';
-import Leads from '@/pages/Leads';
-import ClientPortalDashboard from '@/pages/ClientPortalDashboard';
-import ClientBoard from '@/pages/ClientBoard';
-import PortfolioAdmin from '@/pages/PortfolioAdmin';
 import PortfolioDetail from '@/pages/PortfolioDetail';
 import PortfolioList from '@/pages/PortfolioList';
 import About from '@/pages/About';
 import Pricing from '@/pages/Pricing';
 import Cloud from '@/pages/Cloud';
-import JoinInvite from '@/pages/JoinInvite';
 import JoinSetPassword from '@/pages/JoinSetPassword';
-import ServiceGuide from '@/pages/ServiceGuide';
-import ClientGuide from '@/pages/ClientGuide';
-import Marketing from '@/pages/Marketing';
-import ChinaHolidays from '@/pages/ChinaHolidays';
-import MyWork from '@/pages/MyWork';
-import UserGuide from '@/pages/UserGuide';
+
+// 공개 페이지(랜딩·소개·요금·포트폴리오)만 첫 파일에 넣고, 로그인 후 화면은 열 때 따로 불러온다.
+const AppLayout = lazy(() => import('@/components/layout/AppLayout'));
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const Factories = lazy(() => import('@/pages/Factories'));
+const Clients = lazy(() => import('@/pages/Clients'));
+const Quotations = lazy(() => import('@/pages/Quotations'));
+const AgentQuotes = lazy(() => import('@/pages/AgentQuotes'));
+const Knowledge = lazy(() => import('@/pages/Knowledge'));
+const Timeline = lazy(() => import('@/pages/Timeline'));
+const ASRequests = lazy(() => import('@/pages/ASRequests'));
+const Settlement = lazy(() => import('@/pages/Settlement'));
+const Requirements = lazy(() => import('@/pages/Requirements'));
+const TaskBoard = lazy(() => import('@/pages/TaskBoard'));
+const FactoryDashboard = lazy(() => import('@/pages/FactoryDashboard'));
+const ClientDashboard = lazy(() => import('@/pages/ClientDashboard'));
+const MasterAdminDashboard = lazy(() => import('@/pages/MasterAdminDashboard'));
+const TeamManagement = lazy(() => import('@/pages/TeamManagement'));
+const UserPermissions = lazy(() => import('@/pages/UserPermissions'));
+const FinancialReport = lazy(() => import('@/pages/FinancialReport'));
+const MasterTeamDashboard = lazy(() => import('@/pages/MasterTeamDashboard'));
+const Assistant = lazy(() => import('@/pages/Assistant'));
+const FileCenter = lazy(() => import('@/pages/FileCenter'));
+const Contracts = lazy(() => import('@/pages/Contracts'));
+const Decisions = lazy(() => import('@/pages/Decisions'));
+const BomExtractor = lazy(() => import('@/pages/BomExtractor'));
+const MoldReview = lazy(() => import('@/pages/MoldReview'));
+const ArtCraft = lazy(() => import('@/pages/ArtCraft'));
+const Leads = lazy(() => import('@/pages/Leads'));
+const ClientPortalDashboard = lazy(() => import('@/pages/ClientPortalDashboard'));
+const ClientBoard = lazy(() => import('@/pages/ClientBoard'));
+const PortfolioAdmin = lazy(() => import('@/pages/PortfolioAdmin'));
+const JoinInvite = lazy(() => import('@/pages/JoinInvite'));
+const ServiceGuide = lazy(() => import('@/pages/ServiceGuide'));
+const ClientGuide = lazy(() => import('@/pages/ClientGuide'));
+const Marketing = lazy(() => import('@/pages/Marketing'));
+const ChinaHolidays = lazy(() => import('@/pages/ChinaHolidays'));
+const MyWork = lazy(() => import('@/pages/MyWork'));
+const UserGuide = lazy(() => import('@/pages/UserGuide'));
+
+const Spinner = () => (
+  <div className="fixed inset-0 flex items-center justify-center">
+    <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+  </div>
+);
 
 const AuthenticatedApp = () => {
   const { user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, onboardingPath, completeOnboarding, retryInvitation } = useAuth();
@@ -74,11 +83,7 @@ const AuthenticatedApp = () => {
   }
 
   if (isLoadingPublicSettings || isLoadingAuth) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-      </div>
-    );
+    return <Spinner />;
   }
 
   // 초대 참여 링크 — 로그인 전이면 비밀번호 설정 화면을 바로 띄운다.
@@ -107,6 +112,7 @@ const AuthenticatedApp = () => {
   }
 
   return (
+    <Suspense fallback={<Spinner />}>
     <Routes>
       <Route path="/join" element={<JoinInvite />} />
       <Route element={<AppLayout />}>
@@ -149,6 +155,7 @@ const AuthenticatedApp = () => {
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </Suspense>
   );
 };
 
