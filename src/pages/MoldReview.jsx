@@ -53,6 +53,10 @@ export default function MoldReview() {
   const queryClient = useQueryClient();
   const viewerRef = useRef(null);
   const jobRef = useRef(null);
+  const parsingRef = useRef(false);
+  const savingRef = useRef(false);
+  const canSave = !!user?.tenant_id && user?.is_active !== false && ['master', 'service'].includes(user?.account_tier);
+  const inputBlocked = () => parsingRef.current || !!jobRef.current || savingRef.current;
 
   const [source, setSource] = useState(null); // { kind: 'step'|'stl'|'sample', fileName, parts }
   const [partIndex, setPartIndex] = useState(null);
@@ -78,7 +82,7 @@ export default function MoldReview() {
   const dirty = !!ranAnalysis && JSON.stringify(analysis) !== JSON.stringify(ranAnalysis);
 
   const analyze = (input, opts) => {
-    jobRef.current?.cancel();
+    if (jobRef.current || savingRef.current) return;
     setError('');
     setRunning({ label: '검토 시작', percent: 0 });
     const job = runMoldReview(input, { ...DEFAULT_ANALYSIS_OPTIONS, ...opts }, (p) => setRunning(p));
@@ -116,6 +120,9 @@ export default function MoldReview() {
   };
 
   const handleFile = async (file) => {
+    if (!file || inputBlocked()) return;
+    parsingRef.current = true;
+    setParsing({ label: '도면 읽는 중', percent: 0 });
     const name = (file?.name || '').toLowerCase();
     setError('');
     try {
@@ -135,25 +142,28 @@ export default function MoldReview() {
       });
       if (!raw.length) throw new Error('부품 형상이 없습니다');
       const parts = raw.map((p) => ({ ...p, ...classifyPartForMolding(p) }));
-      // 사출 부품을 앞에, 그 안에서는 큰 부품부터
-      parts.sort((a, b) => (b.molded - a.molded) || (b.triangle_count - a.triangle_count));
+      // 사출 부품을 앞에, 실제 부피(cm³)가 큰 순서로 선택. 부피가 없으면 외곽 부피 사용.
+      const volume = (p) => Number(p.volume_cm3) > 0 ? Number(p.volume_cm3) : (p.bbox_x_mm || 0) * (p.bbox_y_mm || 0) * (p.bbox_z_mm || 0) / 1000;
+      parts.sort((a, b) => (Number(b.molded) - Number(a.molded)) || (volume(b) - volume(a)));
       setSource({ kind: 'step', fileName: file.name, parts });
       selectPart(parts, 0);
     } catch (e) {
       setError(e.message);
     } finally {
+      parsingRef.current = false;
       setParsing(null);
     }
   };
 
   const loadSample = () => {
+    if (inputBlocked()) return;
     const parts = [{ part_name: '샘플 하우징 (75 × 46 × 22mm)', sample: true, molded: true }];
     setSource({ kind: 'sample', fileName: null, parts });
     setSettings((s) => ({ ...s, materialKey: 'ABS' }));
     selectPart(parts, 0);
   };
 
-  const rerun = () => part && analyze(inputOf(part), analysis);
+  const rerun = () => !inputBlocked() && part && analyze(inputOf(part), analysis);
   const cancel = () => jobRef.current?.cancel();
 
   const showItem = (it) => {
@@ -163,7 +173,8 @@ export default function MoldReview() {
   };
 
   const handleSave = async ({ cardId, note, withSnapshot }) => {
-    if (!result || !report) return;
+    if (!canSave || inputBlocked() || !result || !report) return;
+    savingRef.current = true;
     setSaving(true);
     try {
       let snapshotUrl;
@@ -171,8 +182,9 @@ export default function MoldReview() {
         const blob = await viewerRef.current?.snapshot();
         if (blob) {
           const file = new File([blob], `mold-review-${Date.now()}.png`, { type: 'image/png' });
-          const uploaded = await base44.integrations.Core.UploadFile({ file });
-          snapshotUrl = uploaded.file_url;
+          const uploaded = await base44.integrations.Core.UploadPrivateFile({ file });
+          if (!uploaded.file_uri) throw new Error('캡처를 비공개로 저장하지 못했습니다.');
+          snapshotUrl = uploaded.file_uri;
         }
       }
       const s = result.summary, c = report.calc;
@@ -224,11 +236,12 @@ export default function MoldReview() {
     } catch (e) {
       toast({ title: '저장하지 못했습니다', description: e.message, variant: 'destructive' });
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
 
-  const busy = !!running || !!parsing;
+  const busy = !!running || !!parsing || saving;
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5 p-4 md:p-6">
@@ -249,7 +262,7 @@ export default function MoldReview() {
       </div>
 
       <div className="rounded-xl border bg-card p-4">
-        <DropZone onFile={handleFile} accept=".stp,.step,.stl">
+        <DropZone onFile={handleFile} accept=".stp,.step,.stl" disabled={busy}>
           <div className="flex flex-wrap items-center gap-3">
             <label className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed px-4 py-3 text-sm text-muted-foreground hover:border-primary/50 ${busy ? 'pointer-events-none opacity-50' : ''}`}>
               <Upload className="h-4 w-4" />
@@ -257,6 +270,7 @@ export default function MoldReview() {
               <input
                 type="file"
                 className="hidden"
+                disabled={busy}
                 accept=".stp,.step,.stl"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
@@ -267,7 +281,7 @@ export default function MoldReview() {
             </label>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               STL 단위
-              <Select value={stlUnit} onValueChange={setStlUnit}>
+              <Select value={stlUnit} onValueChange={setStlUnit} disabled={busy}>
                 <SelectTrigger className="h-8 w-[88px] text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {STL_UNITS.map((u) => <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>)}
@@ -276,7 +290,7 @@ export default function MoldReview() {
             </div>
             {source?.parts?.length > 1 && (
               <div className="min-w-[260px] flex-1">
-                <MoldPartPicker parts={source.parts} value={partIndex} onChange={(i) => selectPart(source.parts, i)} disabled={busy} />
+                <MoldPartPicker parts={source.parts} value={partIndex} onChange={(i) => !inputBlocked() && selectPart(source.parts, i)} disabled={busy} />
               </div>
             )}
           </div>
@@ -347,9 +361,10 @@ export default function MoldReview() {
           <Section title="검토 조건">
             <MoldSettingsPanel
               analysis={analysis}
-              onAnalysisChange={setAnalysis}
+              onAnalysisChange={(value) => !inputBlocked() && setAnalysis(value)}
               settings={settings}
-              onSettingsChange={setSettings}
+              onSettingsChange={(value) => !inputBlocked() && setSettings(value)}
+              disabled={busy}
               onRerun={rerun}
               canRerun={!!part && !busy}
               dirty={dirty}
@@ -382,10 +397,12 @@ export default function MoldReview() {
                 <MoldSpecBox spec={report.spec} />
               </Section>
 
-              <Button type="button" className="w-full" onClick={() => setSaveOpen(true)} disabled={busy}>
-                <Save className="h-4 w-4" />
-                검토 결과 저장
-              </Button>
+              {canSave && (
+                <Button type="button" className="w-full" onClick={() => !inputBlocked() && setSaveOpen(true)} disabled={busy}>
+                  <Save className="h-4 w-4" />
+                  검토 결과 저장
+                </Button>
+              )}
             </>
           )}
 
@@ -395,13 +412,13 @@ export default function MoldReview() {
         </div>
       </div>
 
-      <MoldReviewSaveDialog
+      {canSave && <MoldReviewSaveDialog
         open={saveOpen}
         onOpenChange={setSaveOpen}
         onConfirm={handleSave}
         isSaving={saving}
         partName={part?.part_name}
-      />
+      />}
     </div>
   );
 }

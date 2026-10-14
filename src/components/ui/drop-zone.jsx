@@ -16,6 +16,7 @@ import { Upload, Loader2 } from 'lucide-react';
 export default function DropZone({
   onFile,
   uploading = false,
+  disabled = false,
   accept,
   label = '파일 선택',
   className = '',
@@ -29,9 +30,10 @@ export default function DropZone({
   const handleDragEnter = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (disabled) return;
     dragCounter.current++;
     setIsDragging(true);
-  }, []);
+  }, [disabled]);
 
   const handleDragLeave = useCallback((e) => {
     e.preventDefault();
@@ -53,9 +55,10 @@ export default function DropZone({
     e.stopPropagation();
     dragCounter.current = 0;
     setIsDragging(false);
+    if (disabled) return;
     const file = e.dataTransfer?.files?.[0];
     if (file) onFile(file);
-  }, [onFile]);
+  }, [onFile, disabled]);
 
   if (children) {
     return (
@@ -66,7 +69,7 @@ export default function DropZone({
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
-        {isDragging && (
+        {isDragging && !disabled && (
           <div className="absolute inset-0 z-20 rounded-lg border-2 border-dashed border-primary bg-primary/10 backdrop-blur-sm flex items-center justify-center pointer-events-none">
             <div className="flex items-center gap-2 text-primary">
               <Upload className="w-5 h-5" />
@@ -80,6 +83,7 @@ export default function DropZone({
           type="file"
           className="hidden"
           accept={accept}
+          disabled={disabled}
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) onFile(file);
@@ -102,7 +106,7 @@ export default function DropZone({
         <label className={`inline-flex items-center gap-1.5 cursor-pointer border rounded-lg px-3 py-1.5 text-xs hover:bg-muted transition-colors ${isDragging ? 'border-primary bg-primary/10' : ''} ${className}`}>
           {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
           {uploading ? '업로드 중...' : label}
-          <input ref={inputRef} type="file" className="hidden" accept={accept} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
+          <input ref={inputRef} type="file" className="hidden" accept={accept} disabled={disabled} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
         </label>
       </div>
     );
@@ -125,7 +129,7 @@ export default function DropZone({
             <span>{label}</span>
           </div>
         )}
-        <input ref={inputRef} type="file" className="hidden" accept={accept} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
+        <input ref={inputRef} type="file" className="hidden" accept={accept} disabled={disabled} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
       </label>
     </div>
   );

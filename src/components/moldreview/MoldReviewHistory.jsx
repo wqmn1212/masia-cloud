@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Loader2, History } from 'lucide-react';
 import MoldIssueList from '@/components/moldreview/MoldIssueList';
 import MoldSpecBox from '@/components/moldreview/MoldSpecBox';
+import MoldReviewSnapshot from '@/components/moldreview/MoldReviewSnapshot';
 
 const fmtDate = (v) => (v ? new Date(v).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' }) : '');
 
@@ -56,7 +57,7 @@ export default function MoldReviewHistory() {
                 {open.source_file_name || '샘플'} · {open.material} · 빼기 방향 {open.pull_direction} · {fmtDate(open.created_date)}
                 {open.note ? ` · ${open.note}` : ''}
               </p>
-              {open.snapshot_url && <img src={open.snapshot_url} alt="검토 화면" className="w-full rounded-lg border" />}
+              {open.snapshot_url && <MoldReviewSnapshot key={open.id} reviewId={open.id} />}
               <MoldIssueList items={items} onShow={() => {}} />
               <MoldSpecBox spec={{ ko: open.spec_ko || '', zh: open.spec_zh || '' }} />
             </div>

@@ -147,14 +147,15 @@ export function buildMoldReport(result, settings = {}) {
 
   // 2. 구배
   const badDraft = stats.draftNoneA + stats.draftReverseA;
-  const draftLevel = badDraft > stats.wallA * 0.005 && badDraft > 1 ? 'hi' : stats.draftLowA > 1 ? 'mid' : 'ok';
+  const belowDraft = badDraft + stats.draftLowA;
+  const draftLevel = badDraft > stats.wallA * 0.005 && badDraft > 1 ? 'hi' : belowDraft > 1 ? 'mid' : 'ok';
   const need = `${st.draftMin}°${textureExtra ? ` (부식면 ${st.draftMin + textureExtra}°)` : ''}`;
   const needZh = `${st.draftMin}°${textureExtra ? ` (蚀纹面 ${st.draftMin + textureExtra}°)` : ''}`;
   add({
     id: 'draft', level: draftLevel, mode: 'draft', view: 'front',
     title: { ko: '구배', zh: '拔模斜度' },
     text: draftLevel === 'ok'
-      ? { ko: `모든 벽면이 기준 ${need} 이상입니다.`, zh: `所有侧壁均满足 ${needZh} 以上。` }
+      ? { ko: `기준 ${need} 미만의 벽면이 주의 판정 면적(1mm²)을 넘지 않습니다.`, zh: `低于标准 ${needZh} 的侧壁面积未超过注意判定阈值 (1mm²)。` }
       : {
         ko: `기준의 절반 미만 ${fmt(stats.draftNoneA, 0)}mm²${stats.draftReverseA > 1 ? ` · 역구배 ${fmt(stats.draftReverseA, 0)}mm²` : ''} · 기준 미만 ${fmt(stats.draftLowA, 0)}mm² (기준 ${need}). 제품이 금형에서 잘 빠지지 않거나 표면이 긁힐 수 있습니다.`,
         zh: `低于标准一半 ${fmt(stats.draftNoneA, 0)}mm²${stats.draftReverseA > 1 ? ` · 倒拔模 ${fmt(stats.draftReverseA, 0)}mm²` : ''} · 低于标准 ${fmt(stats.draftLowA, 0)}mm² (标准 ${needZh})。可能脱模困难或拉伤表面。`,
@@ -307,10 +308,11 @@ function specText(result, report, lang) {
   const extra = textureDraftDeg(st.textureDepth);
   const fix = [];
   const stats = report.stats;
-  if (stats.draftNoneA + stats.draftReverseA > 1) {
+  const belowDraft = stats.draftNoneA + stats.draftReverseA + stats.draftLowA;
+  if (belowDraft > 1) {
     fix.push(L(
-      `- 구배 부족 벽면 ${fmt(stats.draftNoneA + stats.draftReverseA, 0)}mm² → ${st.draftMin}° 이상${extra ? ` (부식면 ${st.draftMin + extra}°)` : ''}`,
-      `- 拔模不足侧壁 ${fmt(stats.draftNoneA + stats.draftReverseA, 0)}mm² → ${st.draftMin}° 以上${extra ? ` (蚀纹面 ${st.draftMin + extra}°)` : ''}`,
+      `- 구배 부족 벽면 ${fmt(belowDraft, 0)}mm² → ${st.draftMin}° 이상${extra ? ` (부식면 ${st.draftMin + extra}°)` : ''}`,
+      `- 拔模不足侧壁 ${fmt(belowDraft, 0)}mm² → ${st.draftMin}° 以上${extra ? ` (蚀纹面 ${st.draftMin + extra}°)` : ''}`, 
     ));
   }
   if (s.thickA > 2) fix.push(L(`- 두꺼운 부분 ${fmt(s.thickA, 0)}mm² → 리브 두께 기본 두께의 ${Math.round(m.ribRatio * 100)}% 이하, 보스는 속 빼기`, `- 过厚部位 ${fmt(s.thickA, 0)}mm² → 筋厚为基本壁厚的 ${Math.round(m.ribRatio * 100)}% 以下，螺柱掏空`));
