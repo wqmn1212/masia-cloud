@@ -7,6 +7,7 @@ export const TEAM_MENU_OPTIONS = [
   { path: '/decisions', label: '결정 기록' },
   { path: '/bom-extractor', label: 'STEP 도면 분석' },
   { path: '/mold-review', label: '금형 사전 검토' },
+  { path: '/artcraft', label: 'ArtCraft' },
   { path: '/financial-report', label: '재무 리포트' },
   { path: '/task-board', label: '업무 보드' },
   { path: '/assistant', label: 'AI 업무 비서' },
