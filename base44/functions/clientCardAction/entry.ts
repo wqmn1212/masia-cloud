@@ -3,9 +3,10 @@ import { requireClient, cardVisibleToClient } from '../../shared/clientAccess.ts
 import { notifyUsers, internalUsersOfTenant } from '../../shared/notify.ts';
 import { fillMissingTranslation } from '../../shared/bilingualTranslation.ts';
 import { uploadPrivateAttachments, linkCardAttachments } from '../../shared/privateAttachments.ts';
-import { QC_DECISIONS } from '../../shared/clientQc.ts';
+import { QC_DECISIONS, SPEC_DECISIONS, latestSentSpecs } from '../../shared/clientQc.ts';
 
-// 고객이 수행 가능한 쓰기 동작: 채팅 작성 · 요구사항(hq_requirements) 수정 · 공개된 검수 결과의 출고 승인/보류.
+// 고객이 수행 가능한 쓰기 동작: 채팅 작성 · 요구사항(hq_requirements) 수정 · 공개된 검수 결과의 출고 승인/보류
+// · 보낸 품질 기준서의 승인/수정 요청.
 // 그 외 필드는 서버에서 아예 받지 않으므로 프런트 우회로 변경할 수 없다.
 export default async function (req) {
   try {
@@ -13,7 +14,7 @@ export default async function (req) {
     const auth = await requireClient(base44);
     if (auth.error) return auth.error;
 
-    const { card_id, action, message, message_cn, hq_requirements, hq_requirements_cn, attachments, report_id, decision, note } = await req.json();
+    const { card_id, action, message, message_cn, hq_requirements, hq_requirements_cn, attachments, report_id, spec_id, decision, note } = await req.json();
     if (!card_id || !action) return Response.json({ error: 'card_id, action 이 필요합니다' }, { status: 400 });
 
     const svc = base44.asServiceRole;
@@ -132,6 +133,37 @@ export default async function (req) {
           type: 'qc_decision',
           title: `[${label}] ${card.title}`,
           body: `${senderName}: ${kind} 검수 결과 ${label}${memo ? `\n${memo.slice(0, 300)}` : ''}`,
+          link: `/task-board?card=${card.id}`,
+          task_card_id: card.id,
+          card_title: card.title,
+        });
+      } catch (_e) { /* 알림 실패가 고객 판단을 막지 않는다 */ }
+      return Response.json({ ok: true, decision, decided_at: decidedAt });
+    }
+
+    if (action === 'spec_decision') {
+      if (!SPEC_DECISIONS.includes(decision)) return Response.json({ error: '승인 또는 수정 요청을 선택하세요' }, { status: 400 });
+      // 이 카드의 가장 최근에 보낸 판본만 판단할 수 있다
+      const latest = latestSentSpecs(await svc.entities.QualitySpec.filter({ card_id: card.id, status: 'SENT' }, '-version', 10)).get(card.id);
+      if (!latest || latest.id !== spec_id) return Response.json({ error: '최신 품질 기준서가 아닙니다. 새로고침해 주세요' }, { status: 409 });
+      if (latest.client_decision === 'APPROVED') return Response.json({ error: '이미 승인한 기준서입니다' }, { status: 409 });
+      const memo = String(note || '').trim().slice(0, 1000);
+      if (decision === 'REVISION_REQUESTED' && !memo) return Response.json({ error: '고칠 내용을 적어 주세요' }, { status: 400 });
+      const decidedAt = new Date().toISOString();
+      await svc.entities.QualitySpec.update(latest.id, { client_decision: decision, client_comment: memo, client_decided_at: decidedAt, client_decided_by_name: senderName });
+      const label = decision === 'APPROVED' ? '기준서 승인' : '기준서 수정 요청';
+      try {
+        await svc.entities.ProjectAuditLog.create({
+          tenant_id: card.tenant_id, card_id: card.id, event_type: 'SPEC_CLIENT_DECISION',
+          actor_id: auth.user.id, actor_name: senderName, details: `품질 기준서 v${latest.version || 1} 고객 ${label}${memo ? `: ${memo}` : ''}`,
+        });
+      } catch (_e) { /* 기록 실패가 고객 판단을 막지 않는다 */ }
+      try {
+        const staff = await internalUsersOfTenant(svc, card.tenant_id);
+        await notifyUsers(svc, staff, {
+          type: 'spec_decision',
+          title: `[${label}] ${card.title}`,
+          body: `${senderName}: 품질 기준서 v${latest.version || 1} ${label}${memo ? `\n${memo.slice(0, 300)}` : ''}`,
           link: `/task-board?card=${card.id}`,
           task_card_id: card.id,
           card_title: card.title,

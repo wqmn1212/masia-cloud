@@ -1,0 +1,165 @@
+{
+  "name": "MonthlyReport",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac Company ID"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac\uba85 (\ud45c\uc2dc\uc6a9)"
+    },
+    "agreement_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c \uc6d4 \uacc4\uc57d ServiceAgreement ID"
+    },
+    "month": {
+      "type": "string",
+      "description": "\ub300\uc0c1 \uc6d4 YYYY-MM"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "PUBLISHED"
+      ],
+      "default": "DRAFT",
+      "description": "\ucd08\uc548 / \uace0\uac1d\uc5d0\uac8c \ubc1c\ud589"
+    },
+    "metrics": {
+      "type": "object",
+      "description": "\uc790\ub3d9 \uc9d1\uacc4 \uc22b\uc790 (\ucd08\uc548 \uc0dd\uc131 \uc2dc\uc810 \uae30\uc900)"
+    },
+    "cards": {
+      "type": "array",
+      "description": "\ud504\ub85c\uc81d\ud2b8\ubcc4 \uc694\uc57d",
+      "items": {
+        "type": "object"
+      }
+    },
+    "highlights": {
+      "type": "string",
+      "description": "\uc774\ubc88 \ub2ec \uc8fc\uc694 \ub0b4\uc6a9 (\ub2f4\ub2f9\uc790 \uc791\uc131)"
+    },
+    "next_plan": {
+      "type": "string",
+      "description": "\ub2e4\uc74c \ub2ec \uacc4\ud68d (\ub2f4\ub2f9\uc790 \uc791\uc131)"
+    },
+    "generated_at": {
+      "type": "string",
+      "description": "\uc22b\uc790\ub97c \ub9c8\uc9c0\ub9c9\uc73c\ub85c \uc9d1\uacc4\ud55c \uc2dc\uac01"
+    },
+    "published_at": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc5d0\uac8c \ubc1c\ud589\ud55c \uc2dc\uac01"
+    },
+    "published_by_name": {
+      "type": "string",
+      "description": "\ubc1c\ud589\ud55c \ub2f4\ub2f9\uc790"
+    }
+  },
+  "required": [
+    "company_id",
+    "month"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

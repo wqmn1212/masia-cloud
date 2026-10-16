@@ -44,6 +44,7 @@ const Contracts = lazy(() => import('@/pages/Contracts'));
 const Decisions = lazy(() => import('@/pages/Decisions'));
 const BomExtractor = lazy(() => import('@/pages/BomExtractor'));
 const MoldReview = lazy(() => import('@/pages/MoldReview'));
+const Agreements = lazy(() => import('@/pages/Agreements'));
 const ArtCraft = lazy(() => import('@/pages/ArtCraft'));
 const Leads = lazy(() => import('@/pages/Leads'));
 const ClientPortalDashboard = lazy(() => import('@/pages/ClientPortalDashboard'));
@@ -145,6 +146,7 @@ const AuthenticatedApp = () => {
         <Route path="/decisions" element={<Decisions />} />
         <Route path="/bom-extractor" element={<BomExtractor />} />
         <Route path="/mold-review" element={<MoldReview />} />
+        <Route path="/agreements" element={<Agreements />} />
         <Route path="/artcraft" element={<ArtCraft />} />
         <Route path="/factories/:factoryId/dashboard" element={<FactoryDashboard />} />
         <Route path="/clients/:clientId/dashboard" element={<ClientDashboard />} />

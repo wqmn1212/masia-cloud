@@ -171,6 +171,13 @@
     "note": {
       "type": "string",
       "description": "\ube44\uace0"
+    },
+    "renewal_notices": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ubcf4\ub0b8 \ub9cc\ub8cc \uc54c\ub9bc \uae30\ub85d (\uc885\ub8cc\uc77c:\ub0a8\uc740\uc77c\uc218). \uac19\uc740 \uc54c\ub9bc\uc744 \ubc18\ubcf5\ud558\uc9c0 \uc54a\ub294\ub2e4"
     }
   },
   "required": [

@@ -20,7 +20,9 @@
         "CONTRACT_CREATED",
         "CONTRACT_STATUS_CHANGED",
         "QC_PUBLISHED",
-        "QC_CLIENT_DECISION"
+        "QC_CLIENT_DECISION",
+        "SPEC_SENT",
+        "SPEC_CLIENT_DECISION"
       ]
     },
     "actor_id": {

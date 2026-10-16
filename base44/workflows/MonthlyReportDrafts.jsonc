@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "monthly_report_drafts",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "monthly_report_drafts": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "draftMonthlyReports",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\uc6d4\uac04 \ub9ac\ud3ec\ud2b8 \ucd08\uc548 \ub9cc\ub4e4\uae30",
+            "description": "\uc9c0\ub09c\ub2ec \uc22b\uc790 \uc9d1\uacc4"
+          }
+        }
+      }
+    ]
+  },
+  "description": "\ub9e4\uc6d4 1\uc77c 09:00 KST \uc9c4\ud589 \uc911\uc778 \uc6d4 \uacc4\uc57d\ub9c8\ub2e4 \uc9c0\ub09c\ub2ec \uc5c5\ubb34 \ub9ac\ud3ec\ud2b8 \ucd08\uc548\uc744 \ub9cc\ub4e4\uace0 \ubc30\uc815 \ud300\uc6d0\uc5d0\uac8c \uc54c\ub9bd\ub2c8\ub2e4",
+  "name": "\uc6d4\uac04 \ub9ac\ud3ec\ud2b8 \ucd08\uc548",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 9 1 * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

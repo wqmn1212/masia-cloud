@@ -35,7 +35,13 @@
         "reorder_due",
         "milestone_overdue",
         "qc_published",
-        "qc_decision"
+        "qc_decision",
+        "agreement_renewal",
+        "monthly_report",
+        "spec_sent",
+        "spec_decision",
+        "shipment_updated",
+        "shipment_docs_missing"
       ],
       "description": "\uc54c\ub9bc \uc720\ud615"
     },

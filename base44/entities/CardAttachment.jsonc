@@ -54,7 +54,13 @@
         "INVOICE_PI",
         "PACKING_LIST",
         "QUOTATION",
-        "REMITTANCE_ACCOUNT"
+        "REMITTANCE_ACCOUNT",
+        "BILL_OF_LADING",
+        "CERT_ORIGIN",
+        "UN38_3",
+        "MSDS",
+        "BATTERY_SPEC",
+        "DG_DECLARATION"
       ],
       "default": "GENERAL"
     },

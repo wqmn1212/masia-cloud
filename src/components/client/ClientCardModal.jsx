@@ -11,6 +11,7 @@ import ClientQuotationTab from './ClientQuotationTab';
 import ClientChatPanel from './ClientChatPanel';
 import ClientSettlementPanel from './ClientSettlementPanel';
 import ClientQCPanel from './ClientQCPanel';
+import ClientShipmentPanel from './ClientShipmentPanel';
 import ClientSharedFiles from '@/components/client/ClientSharedFiles';
 
 const TABS = ['overview', 'quotation', 'qc', 'chat', 'settlement', 'files'];
@@ -44,13 +45,14 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab }) {
                 <TabsTrigger value="quotation" className="text-xs sm:text-sm">견적서</TabsTrigger>
                 <TabsTrigger value="qc" className="relative text-xs sm:text-sm">
                   검수
-                  {(data.qc_reports || []).some((r) => r.decision !== 'APPROVED') && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" aria-label="확인할 검수 결과 있음" />}
+                  {((data.qc_reports || []).some((r) => r.decision !== 'APPROVED') || data.quality_spec?.decision === 'PENDING') && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" aria-label="확인할 검수 결과 있음" />}
                 </TabsTrigger>
                 <TabsTrigger value="chat" className="text-xs sm:text-sm">문의</TabsTrigger>
                 <TabsTrigger value="settlement" className="text-xs sm:text-sm">결제</TabsTrigger>
                 <TabsTrigger value="files" className="text-xs sm:text-sm">파일</TabsTrigger>
               </TabsList>
               <TabsContent value="overview" className="mt-4">
+                <ClientShipmentPanel shipments={data.shipments || []} />
                 <ClientMilestonePanel milestones={data.milestones} />
                 <ClientOverviewPanel card={data.card} />
               </TabsContent>
@@ -58,7 +60,7 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab }) {
                 <ClientQuotationTab cardId={data.card.id} />
               </TabsContent>
               <TabsContent value="qc" className="mt-4">
-                <ClientQCPanel cardId={data.card.id} reports={data.qc_reports || []} />
+                <ClientQCPanel cardId={data.card.id} reports={data.qc_reports || []} spec={data.quality_spec || null} />
               </TabsContent>
               <TabsContent value="chat" className="mt-4">
                 <ClientChatPanel cardId={data.card.id} chats={data.chats || []} />

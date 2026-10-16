@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "shipment_docs_check",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "shipment_docs_check": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkShipmentDocs",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\uc120\uc801 \uc11c\ub958 \uc810\uac80",
+            "description": "\ucd9c\ud56d 30\uc77c\u00b77\uc77c \uc804 \uc11c\ub958 \ubbf8\ube44 \uc54c\ub9bc"
+          }
+        }
+      }
+    ]
+  },
+  "description": "\ub9e4\uc77c 08:20 KST \ucd9c\ud56d 30\uc77c\u00b77\uc77c \uc804\uc778\ub370 \ucd9c\ud56d \uc804 \uc11c\ub958(\uc704\ud5d8\ubb3c \uc11c\ub958 \ud3ec\ud568)\uac00 \ube60\uc9c4 \uc120\uc801\uc744 \ub2f4\ub2f9\uc790\uc5d0\uac8c \uc54c\ub9bd\ub2c8\ub2e4",
+  "name": "\uc120\uc801 \uc11c\ub958 \ubbf8\ube44 \uc54c\ub9bc",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "20 8 * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

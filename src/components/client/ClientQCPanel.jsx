@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
+import ClientSpecSection from './ClientSpecSection';
 
 const RESULT = {
   PASS: { label: '합격', cls: 'bg-primary/15 text-primary' },
@@ -82,14 +83,16 @@ function Decision({ cardId, report, canDecide }) {
 }
 
 // 담당자가 공개한 검수 결과. 고객은 사진·체크리스트를 보고 승인(샘플·출고) 또는 보류를 선택한다.
-export default function ClientQCPanel({ cardId, reports = [] }) {
+export default function ClientQCPanel({ cardId, reports = [], spec = null }) {
   const { user } = useAuth();
   const canDecide = user?.account_tier === 'client';
-  if (!reports.length) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">아직 공개된 검수 결과가 없습니다.<br />출고 전 검수가 끝나면 담당자가 사진과 함께 올려 드립니다.</p>;
+  if (!reports.length && !spec) {
+    return <p className="py-8 text-center text-sm text-muted-foreground">아직 공개된 품질 기준서·검수 결과가 없습니다.<br />양산 전에 기준서를, 출고 전 검수가 끝나면 사진과 함께 결과를 올려 드립니다.</p>;
   }
   return (
     <div className="space-y-4">
+      {spec && <ClientSpecSection cardId={cardId} spec={spec} canDecide={canDecide} />}
+      {!reports.length && <p className="py-4 text-center text-sm text-muted-foreground">출고 전 검수가 끝나면 사진과 함께 결과를 올려 드립니다.</p>}
       {reports.map((r) => {
         const result = RESULT[r.qc_result] || RESULT.PASS;
         const fails = r.checklist.filter((i) => i.status === 'FAIL').length;
@@ -136,7 +139,7 @@ export default function ClientQCPanel({ cardId, reports = [] }) {
           </article>
         );
       })}
-      <p className="text-[11px] text-muted-foreground">* 검수는 리포트에 적힌 항목과 수량을 기준으로 합니다. 사진은 눌러서 크게 보실 수 있습니다.</p>
+      {reports.length > 0 && <p className="text-[11px] text-muted-foreground">* 검수는 리포트에 적힌 항목과 수량을 기준으로 합니다. 사진은 눌러서 크게 보실 수 있습니다.</p>}
     </div>
   );
 }

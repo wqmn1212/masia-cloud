@@ -11,6 +11,7 @@ import QuotationTab from './QuotationTab';
 import SettlementTab from './SettlementTab';
 import TaskItemsTab from './TaskItemsTab';
 import QCReportPanel from './QCReportPanel';
+import QualitySpecPanel from './QualitySpecPanel';
 import PaymentGatePanel from './PaymentGatePanel';
 import ProcessControlPanel from './ProcessControlPanel';
 import AIProposalPanel from './AIProposalPanel';
@@ -107,6 +108,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
           <TabsContent value="tasks" className="mt-4">
             <AIProposalPanel card={card} user={user} />
             <TaskItemsTab card={card} viewLang={viewLang} />
+            <QualitySpecPanel card={card} user={user} />
             <QCReportPanel card={card} user={user} />
           </TabsContent>
           <TabsContent value="overview" className="mt-4">

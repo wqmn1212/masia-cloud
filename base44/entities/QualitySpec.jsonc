@@ -1,0 +1,278 @@
+{
+  "name": "QualitySpec",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "card_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c \ud0dc\uc2a4\ud06c \uce74\ub4dc ID"
+    },
+    "version": {
+      "type": "number",
+      "default": 1,
+      "description": "\uae30\uc900\uc11c \ubc84\uc804. \ubcf4\ub0b8 \ub4a4 \uace0\uce58\uba74 \uc0c8 \ubc84\uc804 \ub808\ucf54\ub4dc\ub97c \ub9cc\ub4e0\ub2e4 (\uace0\uac1d\uc774 \uc2b9\uc778\ud55c \ud310\ubcf8\uc744 \uc99d\uac70\ub85c \ub0a8\uae40)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "SENT"
+      ],
+      "default": "DRAFT",
+      "description": "\uc9c1\uc6d0 \uc791\uc131 \uc0c1\ud0dc: \uc791\uc131 \uc911 / \uace0\uac1d\uc5d0\uac8c \ubcf4\ub0c4. \ubcf4\ub0b8 \ud310\ubcf8\uc740 \uc218\uc815\ud558\uc9c0 \uc54a\ub294\ub2e4"
+    },
+    "aql_level": {
+      "type": "string",
+      "description": "\uac80\uc0ac \uc218\uc900 (\uc608: \uc77c\ubc18 \uac80\uc0ac \uc218\uc900 II)"
+    },
+    "aql_critical": {
+      "type": "number",
+      "description": "\uce58\uba85 \uacb0\ud568 AQL (\ubcf4\ud1b5 0)"
+    },
+    "aql_major": {
+      "type": "number",
+      "description": "\uc911\uacb0\ud568 AQL (\uc608: 2.5)"
+    },
+    "aql_minor": {
+      "type": "number",
+      "description": "\uacbd\uacb0\ud568 AQL (\uc608: 4.0)"
+    },
+    "sampling_note": {
+      "type": "string",
+      "description": "\ud45c\ubcf8 \uc218\u00b7\uac80\uc0ac \ubc29\ubc95 \uba54\ubaa8"
+    },
+    "items": {
+      "type": "array",
+      "description": "\uac80\uc0ac \ud56d\ubaa9\ubcc4 \uae30\uc900",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string",
+            "description": "\ud56d\ubaa9 \uc774\ub984 (\ud55c\uad6d\uc5b4)"
+          },
+          "label_cn": {
+            "type": "string",
+            "description": "\ud56d\ubaa9 \uc774\ub984 (\uc911\uad6d\uc5b4, \uacf5\uc7a5\uc6a9)"
+          },
+          "standard": {
+            "type": "string",
+            "description": "\ud569\uaca9 \uae30\uc900 \uc124\uba85 (\ud55c\uad6d\uc5b4)"
+          },
+          "standard_cn": {
+            "type": "string",
+            "description": "\ud569\uaca9 \uae30\uc900 \uc124\uba85 (\uc911\uad6d\uc5b4)"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "CRITICAL",
+              "MAJOR",
+              "MINOR"
+            ],
+            "description": "\uacb0\ud568 \ub4f1\uae09"
+          },
+          "ok_photo_url": {
+            "type": "string",
+            "description": "\ud5c8\uc6a9 \uc608\uc2dc \uc0ac\uc9c4 (\ud55c\ub3c4\uacac\ubcf8)"
+          },
+          "ng_photo_url": {
+            "type": "string",
+            "description": "\ubd88\ud5c8 \uc608\uc2dc \uc0ac\uc9c4"
+          }
+        }
+      }
+    },
+    "note": {
+      "type": "string",
+      "description": "\uae30\uc900\uc11c \uc804\uccb4 \uba54\ubaa8"
+    },
+    "sent_at": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc5d0\uac8c \ubcf4\ub0b8 \uc2dc\uac01"
+    },
+    "sent_by_name": {
+      "type": "string",
+      "description": "\ubcf4\ub0b8 \ub2f4\ub2f9\uc790"
+    },
+    "factory_confirmed_at": {
+      "type": "string",
+      "description": "\uacf5\uc7a5\uc774 \uae30\uc900\uc11c\ub97c \ud655\uc778\ud55c \uc2dc\uac01 (\ub2f4\ub2f9\uc790\uac00 \uae30\ub85d)"
+    },
+    "factory_confirmed_by_name": {
+      "type": "string",
+      "description": "\uacf5\uc7a5 \ud655\uc778\uc744 \uae30\ub85d\ud55c \ub2f4\ub2f9\uc790"
+    },
+    "client_decision": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "APPROVED",
+        "REVISION_REQUESTED"
+      ],
+      "description": "\uace0\uac1d \ud310\ub2e8. \uace0\uac1d \uc804\uc6a9 \uc11c\ubc84 \ud568\uc218\ub85c\ub9cc \ubc14\ub010\ub2e4. \ube44\uc5b4 \uc788\uc73c\uba74 \ub300\uae30",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
+    },
+    "client_comment": {
+      "type": "string",
+      "description": "\uace0\uac1d \uc218\uc815 \uc694\uccad\u00b7\uc758\uacac",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
+    },
+    "client_decided_at": {
+      "type": "string",
+      "description": "\uace0\uac1d \ud310\ub2e8 \uc2dc\uac01",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
+    },
+    "client_decided_by_name": {
+      "type": "string",
+      "description": "\ud310\ub2e8\ud55c \uace0\uac1d \ub2f4\ub2f9\uc790",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "\uc791\uc131\uc790"
+    }
+  },
+  "required": [
+    "card_id"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
