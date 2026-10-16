@@ -10,11 +10,14 @@ import ClientMilestonePanel from './ClientMilestonePanel';
 import ClientQuotationTab from './ClientQuotationTab';
 import ClientChatPanel from './ClientChatPanel';
 import ClientSettlementPanel from './ClientSettlementPanel';
+import ClientQCPanel from './ClientQCPanel';
 import ClientSharedFiles from '@/components/client/ClientSharedFiles';
 
-// 고객 전용 카드 모달 — 오버뷰 · 견적 · 채팅 · 정산 4개 탭만 존재한다.
+const TABS = ['overview', 'quotation', 'qc', 'chat', 'settlement', 'files'];
+
+// 고객 전용 카드 모달 — 진행 정보 · 견적 · 검수 · 문의 · 결제 · 파일 탭만 존재한다.
 // 어드민 CardModal 에 조건 분기를 넣지 않고 별도 컴포넌트로 분리해 원가 노출 경로를 원천 차단한다.
-export default function ClientCardModal({ cardId, open, onClose }) {
+export default function ClientCardModal({ cardId, open, onClose, initialTab }) {
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['client-card-detail', cardId],
     queryFn: async () => {
@@ -35,10 +38,14 @@ export default function ClientCardModal({ cardId, open, onClose }) {
               <DialogTitle className="text-base pr-6">{data.card.title}</DialogTitle>
               <button type="button" className="text-xs text-primary self-start" disabled={isFetching} onClick={() => refetch()}>{isFetching ? '불러오는 중...' : '최신 일정·입금 상태 새로고침'}</button>
             </DialogHeader>
-            <Tabs defaultValue="overview" className="mt-3">
-              <TabsList className="grid w-full grid-cols-5">
+            <Tabs key={`${cardId}-${initialTab || ''}`} defaultValue={TABS.includes(initialTab) ? initialTab : 'overview'} className="mt-3">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="overview" className="text-xs sm:text-sm">진행 정보</TabsTrigger>
                 <TabsTrigger value="quotation" className="text-xs sm:text-sm">견적서</TabsTrigger>
+                <TabsTrigger value="qc" className="relative text-xs sm:text-sm">
+                  검수
+                  {(data.qc_reports || []).some((r) => r.decision !== 'APPROVED') && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" aria-label="확인할 검수 결과 있음" />}
+                </TabsTrigger>
                 <TabsTrigger value="chat" className="text-xs sm:text-sm">문의</TabsTrigger>
                 <TabsTrigger value="settlement" className="text-xs sm:text-sm">결제</TabsTrigger>
                 <TabsTrigger value="files" className="text-xs sm:text-sm">파일</TabsTrigger>
@@ -49,6 +56,9 @@ export default function ClientCardModal({ cardId, open, onClose }) {
               </TabsContent>
               <TabsContent value="quotation" className="mt-4">
                 <ClientQuotationTab cardId={data.card.id} />
+              </TabsContent>
+              <TabsContent value="qc" className="mt-4">
+                <ClientQCPanel cardId={data.card.id} reports={data.qc_reports || []} />
               </TabsContent>
               <TabsContent value="chat" className="mt-4">
                 <ClientChatPanel cardId={data.card.id} chats={data.chats || []} />

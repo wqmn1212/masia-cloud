@@ -1,8 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { requireClient, cardVisibleToClient } from '../../shared/clientAccess.ts';
 import { clientCardDocuments, documentMetadata, documentUrl } from '../../shared/cardDocuments.ts';
+import { clientQcReport } from '../../shared/clientQc.ts';
 
-// 고객 포털 카드 상세: 오버뷰 · 공개 채팅 · 정산 단계(읽기 전용).
+// 고객 포털 카드 상세: 오버뷰 · 공개 채팅 · 정산 단계(읽기 전용) · 담당자가 공개한 검수 리포트.
 // 내부 전용 데이터(견적 원가, BOM, 결정, 내부 채팅)는 응답에 포함하지 않는다.
 export default async function (req) {
   try {
@@ -27,6 +28,7 @@ export default async function (req) {
     }
     const chats = await svc.entities.CardChat.filter({ card_id }, 'created_date', 200);
     const stages = await svc.entities.PaymentStage.filter({ card_id }, 'created_date', 20);
+    const qcReports = await svc.entities.QCReport.filter({ card_id, client_visible: true }, '-created_date', 50);
     // 계획 확정 전 초안은 고객에게 보이지 않는다
     const milestones = card.plan_confirmed_at
       ? (await svc.entities.CardMilestone.filter({ card_id }, 'seq', 100)).filter((m) => m.client_visible !== false && m.status !== 'skipped')
@@ -71,6 +73,7 @@ export default async function (req) {
         approval_status: s.approval_status,
         approved_at: s.approved_at || '',
       })),
+      qc_reports: qcReports.filter((r) => r.card_id === card.id && r.client_visible === true).map(clientQcReport),
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

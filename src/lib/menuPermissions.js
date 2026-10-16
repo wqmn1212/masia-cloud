@@ -33,10 +33,11 @@ const matchesPath = (allowedPath, pathname) => {
 
 const SERVICE_ADMIN_PATHS = ['/team', '/user-permissions', '/marketing'];
 
-// 고객사(client) 등급 전용 메뉴 — 대시보드 · 소싱 칸반보드 읽기 전용
+// 고객사(client) 등급 전용 메뉴 — 대시보드 · 소싱 칸반보드 읽기 전용 · 금형 사전 검토(브라우저 안 계산)
 export const CLIENT_MENU_OPTIONS = [
   { path: '/client/dashboard', label: '고객 대시보드', labelKey: 'nav.clientDashboard' },
   { path: '/client/board', label: '소싱 보드', labelKey: 'nav.clientBoard' },
+  { path: '/client/mold-review', label: '금형 사전 검토', labelKey: 'nav.clientMoldReview' },
   { path: '/client/guide', label: '이용 가이드', labelKey: 'nav.clientGuide' },
 ];
 
@@ -50,7 +51,7 @@ export const getHomePath = (user) => {
   return '/dashboard';
 };
 
-export const CLIENT_CARD_TABS = ['overview', 'quotation', 'chat', 'settlement'];
+export const CLIENT_CARD_TABS = ['overview', 'quotation', 'qc', 'chat', 'settlement', 'files'];
 
 export const canAccessPath = (user, pathname) => {
   if (!user) return false;

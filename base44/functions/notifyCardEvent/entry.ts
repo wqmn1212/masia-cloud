@@ -12,7 +12,7 @@ const STATUS_LABEL = {
 };
 
 // 카드 이벤트 알림 라우터.
-// 내부 팀(master/service/sub) → 고객: card_moved · card_shared · quote_published
+// 내부 팀(master/service/sub) → 고객: card_moved · card_shared · quote_published · qc_published
 // 고객(client) → 내부 팀: chat_message
 export default async function (req) {
   try {
@@ -52,7 +52,7 @@ export default async function (req) {
     if (user.account_tier !== 'master' && card.tenant_id !== user.tenant_id) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
-    if (!['card_moved', 'card_shared', 'chat_message', 'quote_published', 'file_shared'].includes(type)) {
+    if (!['card_moved', 'card_shared', 'chat_message', 'quote_published', 'file_shared', 'qc_published'].includes(type)) {
       return Response.json({ error: '지원하지 않는 알림 유형입니다' }, { status: 400 });
     }
     // 공개되지 않은 카드는 고객에게 알리지 않는다
@@ -68,7 +68,9 @@ export default async function (req) {
             ? `[견적서 발행] ${card.title}`
             : type === 'file_shared'
               ? `[파일 공유] ${card.title}`
-              : `[답변] ${card.title}`;
+              : type === 'qc_published'
+                ? `[검수 결과] ${card.title}`
+                : `[답변] ${card.title}`;
     const body =
       type === 'card_moved'
         ? `프로젝트 단계가 "${STATUS_LABEL[card.status] || card.status}" 로 변경되었습니다.`
@@ -78,13 +80,15 @@ export default async function (req) {
             ? '견적서가 발행되었습니다. 고객 포털에서 PDF 로 다운로드하실 수 있습니다.'
             : type === 'file_shared'
               ? `담당자가 파일을 공유했습니다: ${String(message || '').slice(0, 200)}`
-              : String(message || '').slice(0, 300);
+              : type === 'qc_published'
+                ? '검수 결과가 올라왔습니다. 사진과 판정을 확인하고 승인 또는 보류를 선택해 주세요.'
+                : String(message || '').slice(0, 300);
 
     const sent = await notifyUsers(svc, clients, {
       type,
       title,
       body,
-      link: `/client/board?card=${card.id}`,
+      link: `/client/board?card=${card.id}${type === 'qc_published' ? '&tab=qc' : ''}`,
       task_card_id: card.id,
       card_title: card.title,
     });

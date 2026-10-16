@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trash2, Pencil, FileText, ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
+import { Trash2, Pencil, FileText, ChevronDown, ChevronRight, Sparkles, Share2 } from 'lucide-react';
 
 import MeetingRecorder from '@/components/taskcard/MeetingRecorder';
 import MeetingLiveNotes from '@/components/taskcard/MeetingLiveNotes';
 import { useLanguage } from '@/lib/LanguageContext';
 const TYPE_LABEL = { ONLINE: '화상', OFFLINE: '대면', CALL: '전화', WECHAT: '위챗' };
 
-export default function MeetingLogItem({ log, onDelete, onEdit, onAnalyze, userId, onBusy, disabled, recordDisabled }) {
+export default function MeetingLogItem({ log, onDelete, onEdit, onAnalyze, onShare, userId, onBusy, disabled, recordDisabled }) {
   const [open, setOpen] = useState(false);
   const [writing, setWriting] = useState(false);
   const qc = useQueryClient();
@@ -26,6 +26,12 @@ export default function MeetingLogItem({ log, onDelete, onEdit, onAnalyze, userI
         <Button variant="ghost" size="sm" className="h-6 px-2 shrink-0 text-[11px] gap-1" disabled={disabled} onClick={() => onAnalyze(log)}>
           <Sparkles className="h-3.5 w-3.5 text-primary" /> AI 분석
         </Button>
+        {onShare && (
+          <Button variant="ghost" size="sm" className="h-6 px-2 shrink-0 text-[11px] gap-1" disabled={disabled || !(log.notes || log.notes_cn || log.decisions || log.decisions_cn || log.next_steps || log.next_steps_cn)} onClick={() => onShare(log)}
+            title={log.client_shared_at ? `고객 공유함 · ${new Date(log.client_shared_at).toLocaleString('ko-KR')}` : '고객에게 미팅 요약 공유'}>
+            <Share2 className={`h-3.5 w-3.5 ${log.client_shared_at ? 'text-primary' : 'text-muted-foreground'}`} /> {log.client_shared_at ? '공유함' : '고객 공유'}
+          </Button>
+        )}
         <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setWriting(value => !value)} title="미팅 내용 작성">
           <FileText className="h-3.5 w-3.5 text-muted-foreground" />
         </Button>

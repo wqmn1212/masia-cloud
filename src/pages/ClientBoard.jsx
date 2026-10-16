@@ -12,12 +12,14 @@ import NewInquiryDialog from '@/components/client/NewInquiryDialog';
 export default function ClientBoard() {
   const { data: cards = [], isLoading } = useClientCards();
   const [selectedId, setSelectedId] = useState(null);
+  const [initialTab, setInitialTab] = useState(null);
   const [inquiryOpen, setInquiryOpen] = useState(false);
 
-  // 알림 링크(/client/board?card=xxx)로 진입한 경우 해당 카드를 바로 연다
+  // 알림 링크(/client/board?card=xxx&tab=qc)로 진입한 경우 해당 카드·탭을 바로 연다
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get('card');
-    if (id) setSelectedId(id);
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('card');
+    if (id) { setSelectedId(id); setInitialTab(params.get('tab')); }
   }, []);
 
   return (
@@ -46,7 +48,7 @@ export default function ClientBoard() {
                   <Badge variant="secondary" className="ml-auto text-[10px] h-4 px-1.5">{colCards.length}</Badge>
                 </div>
                 <div className={`min-h-[460px] p-2 rounded-b-xl border border-border border-t-0 space-y-2 ${col.color}`}>
-                  {colCards.map((c) => <ClientCardTile key={c.id} card={c} onClick={() => setSelectedId(c.id)} />)}
+                  {colCards.map((c) => <ClientCardTile key={c.id} card={c} onClick={() => { setInitialTab(null); setSelectedId(c.id); }} />)}
                 </div>
               </div>
             );
@@ -54,7 +56,7 @@ export default function ClientBoard() {
         </div>
       )}
 
-      <ClientCardModal cardId={selectedId} open={!!selectedId} onClose={() => setSelectedId(null)} />
+      <ClientCardModal cardId={selectedId} initialTab={initialTab} open={!!selectedId} onClose={() => setSelectedId(null)} />
       <NewInquiryDialog open={inquiryOpen} onClose={() => setInquiryOpen(false)} />
     </div>
   );

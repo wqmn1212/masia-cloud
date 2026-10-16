@@ -18,7 +18,9 @@
         "SHIPMENT_COMPLETED",
         "SHIPMENT_OVERRIDDEN",
         "CONTRACT_CREATED",
-        "CONTRACT_STATUS_CHANGED"
+        "CONTRACT_STATUS_CHANGED",
+        "QC_PUBLISHED",
+        "QC_CLIENT_DECISION"
       ]
     },
     "actor_id": {

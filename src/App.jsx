@@ -120,6 +120,7 @@ const AuthenticatedApp = () => {
         <Route path="/client/dashboard" element={<ClientPortalDashboard />} />
         <Route path="/client/board" element={<ClientBoard />} />
         <Route path="/client/guide" element={<ClientGuide />} />
+        <Route path="/client/mold-review" element={<MoldReview />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/service-guide" element={<ServiceGuide />} />
         <Route path="/my-work" element={<MyWork />} />

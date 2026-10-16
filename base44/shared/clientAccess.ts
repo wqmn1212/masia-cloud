@@ -2,8 +2,8 @@
 // 원칙: 고객의 모든 조회는 asServiceRole 전용 함수 경로로만 처리한다.
 // TaskCard/Quotation 의 read RLS 는 tenant_id 기준이므로, 다른 테넌트인 고객은 직접 쿼리로 접근할 수 없다.
 
-export const CLIENT_MENU = ['/client/dashboard', '/client/board', '/client/guide'];
-export const CLIENT_CARD_TABS = ['overview', 'quotation', 'chat', 'settlement', 'files'];
+export const CLIENT_MENU = ['/client/dashboard', '/client/board', '/client/mold-review', '/client/guide'];
+export const CLIENT_CARD_TABS = ['overview', 'quotation', 'qc', 'chat', 'settlement', 'files'];
 
 // 고객 요청의 유효성 검사 — 통과 시 { user, companyId } 반환, 실패 시 Response 반환
 // req 를 넘기면 마스터 관리자가 view_company_id 로 해당 고객사 포털을 조회(읽기 전용)할 수 있다.

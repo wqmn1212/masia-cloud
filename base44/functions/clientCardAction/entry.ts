@@ -3,8 +3,9 @@ import { requireClient, cardVisibleToClient } from '../../shared/clientAccess.ts
 import { notifyUsers, internalUsersOfTenant } from '../../shared/notify.ts';
 import { fillMissingTranslation } from '../../shared/bilingualTranslation.ts';
 import { uploadPrivateAttachments, linkCardAttachments } from '../../shared/privateAttachments.ts';
+import { QC_DECISIONS } from '../../shared/clientQc.ts';
 
-// 고객이 수행 가능한 유일한 쓰기 동작: 채팅 작성 · 요구사항(hq_requirements) 수정.
+// 고객이 수행 가능한 쓰기 동작: 채팅 작성 · 요구사항(hq_requirements) 수정 · 공개된 검수 결과의 출고 승인/보류.
 // 그 외 필드는 서버에서 아예 받지 않으므로 프런트 우회로 변경할 수 없다.
 export default async function (req) {
   try {
@@ -12,7 +13,7 @@ export default async function (req) {
     const auth = await requireClient(base44);
     if (auth.error) return auth.error;
 
-    const { card_id, action, message, message_cn, hq_requirements, hq_requirements_cn, attachments } = await req.json();
+    const { card_id, action, message, message_cn, hq_requirements, hq_requirements_cn, attachments, report_id, decision, note } = await req.json();
     if (!card_id || !action) return Response.json({ error: 'card_id, action 이 필요합니다' }, { status: 400 });
 
     const svc = base44.asServiceRole;
@@ -97,6 +98,46 @@ export default async function (req) {
         });
       } catch (_e) { /* 알림 실패가 저장을 막지 않는다 */ }
       return Response.json({ ok: true, translation_failed: translationFailed });
+    }
+
+    if (action === 'qc_decision') {
+      if (!QC_DECISIONS.includes(decision)) return Response.json({ error: '승인 또는 보류를 선택하세요' }, { status: 400 });
+      const report = typeof report_id === 'string' && report_id ? await svc.entities.QCReport.get(report_id).catch(() => null) : null;
+      // 담당자가 공개한, 이 카드의 리포트만 판단할 수 있다
+      if (!report || report.card_id !== card.id || report.client_visible !== true) {
+        return Response.json({ error: '검수 결과를 찾을 수 없습니다' }, { status: 404 });
+      }
+      if (report.client_decision === 'APPROVED') return Response.json({ error: '이미 승인한 검수 결과입니다' }, { status: 409 });
+      const memo = String(note || '').trim().slice(0, 1000);
+      if (decision === 'ON_HOLD' && !memo) return Response.json({ error: '보류 사유를 입력해 주세요' }, { status: 400 });
+      const decidedAt = new Date().toISOString();
+      await svc.entities.QCReport.update(report.id, {
+        client_decision: decision,
+        client_decision_note: memo,
+        client_decided_at: decidedAt,
+        client_decided_by_name: senderName,
+      });
+      // 샘플 검수 승인 = 양산 진행, 양산품 검수 승인 = 출고
+      const kind = report.inspection_type === 'SAMPLE' ? '샘플' : '양산품';
+      const label = `${report.inspection_type === 'SAMPLE' ? '샘플' : '출고'} ${decision === 'APPROVED' ? '승인' : '보류'}`;
+      try {
+        await svc.entities.ProjectAuditLog.create({
+          tenant_id: card.tenant_id, card_id: card.id, event_type: 'QC_CLIENT_DECISION',
+          actor_id: auth.user.id, actor_name: senderName, details: `${kind} 검수 결과 고객 ${label}${memo ? `: ${memo}` : ''}`,
+        });
+      } catch (_e) { /* 기록 실패가 고객 판단을 막지 않는다 */ }
+      try {
+        const staff = await internalUsersOfTenant(svc, card.tenant_id);
+        await notifyUsers(svc, staff, {
+          type: 'qc_decision',
+          title: `[${label}] ${card.title}`,
+          body: `${senderName}: ${kind} 검수 결과 ${label}${memo ? `\n${memo.slice(0, 300)}` : ''}`,
+          link: `/task-board?card=${card.id}`,
+          task_card_id: card.id,
+          card_title: card.title,
+        });
+      } catch (_e) { /* 알림 실패가 고객 판단을 막지 않는다 */ }
+      return Response.json({ ok: true, decision, decided_at: decidedAt });
     }
 
     return Response.json({ error: '지원하지 않는 동작입니다' }, { status: 400 });

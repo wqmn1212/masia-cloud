@@ -3,9 +3,10 @@ import { base44 } from '@/api/base44Client';
 import { MILESTONE_TEMPLATES, buildPlan, cardSummary, deliveryMilestone } from '@/lib/milestones';
 import { useWorkT } from '@/lib/workI18n';
 
-export default function useCardMilestones(card) {
+// askNotice({ before, after, draft }) → Promise<사유>: 납품일 변경 안내 대화상자 (없으면 기본 입력창)
+export default function useCardMilestones(card, { askNotice } = {}) {
   const { tr } = useWorkT();
-  const askReason = (fallback) => fallback || window.prompt(tr('예정 납품일이 바뀝니다. 변경 사유를 입력하세요 (고객 공개 카드는 고객에게 안내됩니다).')) || '마일스톤 일정 조정';
+  const askReason = async (ctx) => (askNotice ? await askNotice(ctx) : window.prompt(tr('예정 납품일이 바뀝니다. 변경 사유를 입력하세요 (고객 공개 카드는 고객에게 안내됩니다).'), ctx.draft || '')) || ctx.draft || '마일스톤 일정 조정';
   const qc = useQueryClient();
   const key = ['card-milestones', card.id];
   const { data: list = [], isLoading } = useQuery({ queryKey: key, queryFn: () => base44.entities.CardMilestone.filter({ card_id: card.id }, 'seq', 100) });
@@ -14,13 +15,15 @@ export default function useCardMilestones(card) {
   const refresh = () => ['task-cards', 'card-schedule', 'collaboration-history', 'client-card-detail'].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
 
   // 카드 요약값 동기화. 납품일은 확정 후에만, 서버 경로(이력·고객 알림)로 반영한다.
-  const syncCard = async (items, confirmed, reason) => {
+  // fixedReason: 계획 확정처럼 시스템이 정한 사유는 묻지 않는다. draft: 안내창에 미리 채울 설명.
+  const syncCard = async (items, confirmed, { fixedReason, draft } = {}) => {
     await base44.entities.TaskCard.update(card.id, cardSummary(items, confirmed));
     if (confirmed) {
       const d = deliveryMilestone(items);
       const next = d ? d.actual_date || d.planned_date : '';
       if (next && next !== card.delivery_date) {
-        await base44.functions.invoke('manageCardCollaboration', { action: 'milestone_delivery', card_id: card.id, reason: askReason(reason ?? d.delay_reason) });
+        const reason = fixedReason || await askReason({ before: card.delivery_date || '', after: next, draft: draft ?? d.delay_reason ?? '' });
+        await base44.functions.invoke('manageCardCollaboration', { action: 'milestone_delivery', card_id: card.id, reason });
       }
     }
     qc.invalidateQueries({ queryKey: key });
@@ -60,14 +63,14 @@ export default function useCardMilestones(card) {
   const confirm = async () => {
     await base44.entities.CardMilestone.bulkUpdate(list.map((m) => ({ id: m.id, baseline_date: m.planned_date })));
     await base44.entities.TaskCard.update(card.id, { plan_confirmed_at: new Date().toISOString(), delivery_date_mode: 'MANUAL' });
-    await syncCard(list.map((m) => ({ ...m, baseline_date: m.planned_date })), true, '마일스톤 계획 확정');
+    await syncCard(list.map((m) => ({ ...m, baseline_date: m.planned_date })), true, { fixedReason: '마일스톤 계획 확정' });
   };
 
   // 완료: 계획보다 늦으면 뒤 단계를 같은 근무일 수만큼 민다
   const complete = async (m, actual, shift, qcId) => {
     const r = await act({ action: 'complete', milestone_id: m.id, actual_date: actual, shift, qc_report_id: qcId || null });
     if (!r) return false;
-    await syncCard(r.list, confirmed, r.late ? m.delay_reason || null : undefined);
+    await syncCard(r.list, confirmed, { draft: r.late ? m.delay_reason || '' : undefined });
     return true;
   };
 

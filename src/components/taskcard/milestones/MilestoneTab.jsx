@@ -7,12 +7,16 @@ import useCardMilestones from './useCardMilestones';
 import MilestonePlanCreator from './MilestonePlanCreator';
 import MilestoneRow from './MilestoneRow';
 import MilestoneCompleteDialog from './MilestoneCompleteDialog';
+import ScheduleNoticeDialog from './ScheduleNoticeDialog';
 import { MILESTONE_TEMPLATES, delayDays, deliveryMilestone } from '@/lib/milestones';
 import { useWorkT } from '@/lib/workI18n';
 import GanttChart from '@/components/gantt/GanttChart';
 
 export default function MilestoneTab({ card, user }) {
-  const { list, isLoading, create, update, confirm, complete, reset, team, addStep, removeStep, reopen } = useCardMilestones(card);
+  // 납품일이 바뀌면 사유·고객 안내문을 확인받는다 (Promise 로 훅에 사유를 돌려준다)
+  const [notice, setNotice] = useState(null);
+  const askNotice = (ctx) => new Promise((resolve) => setNotice({ ...ctx, resolve }));
+  const { list, isLoading, create, update, confirm, complete, reset, team, addStep, removeStep, reopen } = useCardMilestones(card, { askNotice });
   const [editing, setEditing] = useState(null);
   const { tr, label } = useWorkT();
   const [busy, setBusy] = useState(false);
@@ -57,6 +61,7 @@ export default function MilestoneTab({ card, user }) {
         }} />
       <MilestoneCompleteDialog milestone={completing} cardId={card.id} onClose={() => setCompleting(null)}
         onConfirm={async (actual, shift, qcId) => { if (await complete(completing, actual, shift, qcId)) setCompleting(null); }} />
+      <ScheduleNoticeDialog request={notice} card={card} onDone={(reason) => { notice?.resolve(reason); setNotice(null); }} />
     </div>
   );
 }

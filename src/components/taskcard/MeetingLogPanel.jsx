@@ -7,6 +7,7 @@ import MeetingLogForm from './MeetingLogForm';
 import MeetingLogItem from './MeetingLogItem';
 import MeetingAnalysisDialog from './MeetingAnalysisDialog';
 import MeetingRecordingLibrary from './MeetingRecordingLibrary';
+import MeetingShareDialog from './MeetingShareDialog';
 import { saveBilingual } from '@/lib/saveBilingual';
 import { toast } from '@/components/ui/use-toast';
 
@@ -15,6 +16,8 @@ export default function MeetingLogPanel({ card, user, onRecordingBusy = () => {}
   const [editing, setEditing] = useState(null);
   const [analyzing, setAnalyzing] = useState(null);
   const [recordingId, setRecordingId] = useState(null);
+  const [sharing, setSharing] = useState(null);
+  const canShare = card.client_visible === true && !!card.client_id;
   useEffect(() => { onRecordingBusy(!!recordingId); }, [recordingId]);
   const qc = useQueryClient();
 
@@ -93,6 +96,7 @@ export default function MeetingLogPanel({ card, user, onRecordingBusy = () => {}
                 onEdit={(log) => { setAdding(false); setEditing(log); }}
                 onDelete={(id) => deleteMut.mutate(id)}
                 onAnalyze={(log) => setAnalyzing(log)}
+                onShare={canShare ? (log) => setSharing(log) : null}
               />
             )
           ))}
@@ -100,6 +104,7 @@ export default function MeetingLogPanel({ card, user, onRecordingBusy = () => {}
       )}
 
       <MeetingRecordingLibrary logs={logs} />
+      <MeetingShareDialog log={sharing} card={card} user={user} onClose={() => setSharing(null)} />
 
       {analyzing && (
         <MeetingAnalysisDialog

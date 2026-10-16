@@ -10,10 +10,13 @@ import ClientSupportCard from '@/components/client/ClientSupportCard';
 import ClientCardModal from '@/components/client/ClientCardModal';
 import CompanyFilesLibrary from '@/components/files/CompanyFilesLibrary';
 import ChinaHolidayNotice from '@/components/client/ChinaHolidayNotice';
+import ClientTodoCard from '@/components/client/ClientTodoCard';
 
 export default function ClientPortalDashboard() {
   const { data: cards = [], isLoading } = useClientCards();
   const [selectedId, setSelectedId] = useState(null);
+  const [initialTab, setInitialTab] = useState(null);
+  const open = (id, tab = null) => { setInitialTab(tab); setSelectedId(id); };
 
   const active = cards.filter((c) => !['DONE', 'CANCELLED'].includes(c.status));
 
@@ -28,6 +31,7 @@ export default function ClientPortalDashboard() {
         <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
       ) : (
         <>
+          <ClientTodoCard onOpen={open} />
           <ClientStatusSummary cards={cards} />
           <ChinaHolidayNotice />
 
@@ -45,7 +49,7 @@ export default function ClientPortalDashboard() {
                 </p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
-                  {active.map((c) => <ClientCardTile key={c.id} card={c} onClick={() => setSelectedId(c.id)} />)}
+                  {active.map((c) => <ClientCardTile key={c.id} card={c} onClick={() => open(c.id)} />)}
                 </div>
               )}
             </Card>
@@ -54,8 +58,8 @@ export default function ClientPortalDashboard() {
         </>
       )}
 
-      <CompanyFilesLibrary onCardClick={card => setSelectedId(card.id)} />
-      <ClientCardModal cardId={selectedId} open={!!selectedId} onClose={() => setSelectedId(null)} />
+      <CompanyFilesLibrary onCardClick={card => open(card.id)} />
+      <ClientCardModal cardId={selectedId} initialTab={initialTab} open={!!selectedId} onClose={() => setSelectedId(null)} />
     </div>
   );
 }
