@@ -12,6 +12,7 @@ import CompanyFilesLibrary from '@/components/files/CompanyFilesLibrary';
 import ChinaHolidayNotice from '@/components/client/ChinaHolidayNotice';
 import ClientTodoCard from '@/components/client/ClientTodoCard';
 import ClientContractCard from '@/components/client/ClientContractCard';
+import ClientExportButton from '@/components/client/ClientExportButton';
 
 export default function ClientPortalDashboard() {
   const { data: cards = [], isLoading } = useClientCards();
@@ -41,9 +42,12 @@ export default function ClientPortalDashboard() {
             <Card className="lg:col-span-2 p-5">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold">진행 중인 프로젝트 {active.length}건</h2>
-                <Button asChild variant="outline" size="sm" className="gap-1.5">
-                  <Link to="/client/board"><Kanban className="w-3.5 h-3.5" />보드로 보기</Link>
-                </Button>
+                <div className="flex gap-1.5">
+                  <ClientExportButton />
+                  <Button asChild variant="outline" size="sm" className="gap-1.5">
+                    <Link to="/client/board"><Kanban className="w-3.5 h-3.5" />보드로 보기</Link>
+                  </Button>
+                </div>
               </div>
               {active.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-10">
@@ -61,7 +65,7 @@ export default function ClientPortalDashboard() {
       )}
 
       <CompanyFilesLibrary onCardClick={card => open(card.id)} />
-      <ClientCardModal cardId={selectedId} initialTab={initialTab} open={!!selectedId} onClose={() => setSelectedId(null)} />
+      <ClientCardModal cardId={selectedId} initialTab={initialTab} open={!!selectedId} onClose={() => setSelectedId(null)} onOpenCard={(id) => open(id)} />
     </div>
   );
 }

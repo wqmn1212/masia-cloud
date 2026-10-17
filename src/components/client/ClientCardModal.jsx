@@ -1,6 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Repeat } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
+import { Button } from '@/components/ui/button';
+import PdfButton from '@/components/reports/PdfButton';
+import { generateProjectSummaryPDF } from '@/lib/reportPdf';
+import ClientReorderDialog from './ClientReorderDialog';
 import { base44 } from '@/api/base44Client';
 import { withClientView } from '@/lib/clientView';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -18,7 +23,9 @@ const TABS = ['overview', 'quotation', 'qc', 'chat', 'settlement', 'files'];
 
 // 고객 전용 카드 모달 — 진행 정보 · 견적 · 검수 · 문의 · 결제 · 파일 탭만 존재한다.
 // 어드민 CardModal 에 조건 분기를 넣지 않고 별도 컴포넌트로 분리해 원가 노출 경로를 원천 차단한다.
-export default function ClientCardModal({ cardId, open, onClose, initialTab }) {
+export default function ClientCardModal({ cardId, open, onClose, initialTab, onOpenCard }) {
+  const { user } = useAuth();
+  const [reorderOpen, setReorderOpen] = useState(false);
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['client-card-detail', cardId],
     queryFn: async () => {
@@ -37,8 +44,15 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab }) {
           <>
             <DialogHeader>
               <DialogTitle className="text-base pr-6">{data.card.title}</DialogTitle>
-              <button type="button" className="text-xs text-primary self-start" disabled={isFetching} onClick={() => refetch()}>{isFetching ? '불러오는 중...' : '최신 일정·입금 상태 새로고침'}</button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" className="mr-auto text-xs text-primary" disabled={isFetching} onClick={() => refetch()}>{isFetching ? '불러오는 중...' : '최신 일정·입금 상태 새로고침'}</button>
+                <PdfButton generate={() => generateProjectSummaryPDF(data)} label="보고용 PDF" className="h-8" />
+                {user?.account_tier === 'client' && ['PRODUCTION', 'DONE'].includes(data.card.status) && (
+                  <Button type="button" size="sm" className="h-8 gap-1.5" onClick={() => setReorderOpen(true)}><Repeat className="h-3.5 w-3.5" />재주문 요청</Button>
+                )}
+              </div>
             </DialogHeader>
+            <ClientReorderDialog open={reorderOpen} onOpenChange={setReorderOpen} card={data.card} onOpenCard={onOpenCard} />
             <Tabs key={`${cardId}-${initialTab || ''}`} defaultValue={TABS.includes(initialTab) ? initialTab : 'overview'} className="mt-3">
               <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="overview" className="text-xs sm:text-sm">진행 정보</TabsTrigger>

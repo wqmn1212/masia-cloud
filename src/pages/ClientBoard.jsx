@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import ClientCardModal from '@/components/client/ClientCardModal';
 import NewInquiryDialog from '@/components/client/NewInquiryDialog';
+import ClientExportButton from '@/components/client/ClientExportButton';
 
 export default function ClientBoard() {
   const { data: cards = [], isLoading } = useClientCards();
@@ -29,9 +30,12 @@ export default function ClientBoard() {
           <h1 className="text-2xl font-bold tracking-tight">소싱 보드</h1>
           <p className="text-sm text-muted-foreground mt-1">단계는 담당자가 업데이트하며, 카드를 눌러 상세 내용을 확인하실 수 있습니다</p>
         </div>
-        <Button onClick={() => setInquiryOpen(true)} className="shrink-0">
-          <Plus className="w-4 h-4" /> 신규 문의 작성
-        </Button>
+        <div className="flex shrink-0 gap-2">
+          <ClientExportButton size="default" />
+          <Button onClick={() => setInquiryOpen(true)}>
+            <Plus className="w-4 h-4" /> 신규 문의 작성
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -56,7 +60,7 @@ export default function ClientBoard() {
         </div>
       )}
 
-      <ClientCardModal cardId={selectedId} initialTab={initialTab} open={!!selectedId} onClose={() => setSelectedId(null)} />
+      <ClientCardModal cardId={selectedId} initialTab={initialTab} open={!!selectedId} onClose={() => setSelectedId(null)} onOpenCard={(id) => { setInitialTab(null); setSelectedId(id); }} />
       <NewInquiryDialog open={inquiryOpen} onClose={() => setInquiryOpen(false)} />
     </div>
   );

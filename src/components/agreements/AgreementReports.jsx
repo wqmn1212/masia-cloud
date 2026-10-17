@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import MonthlyReportView from '@/components/reports/MonthlyReportView';
+import PdfButton from '@/components/reports/PdfButton';
+import { generateMonthlyReportPDF } from '@/lib/reportPdf';
 import { kstMonth, monthLabel, monthsBetween, shiftMonth } from '@/lib/agreements';
 
 const errorText = (e) => e?.response?.data?.error || e?.message || '처리하지 못했습니다';
@@ -62,7 +64,7 @@ function ReportEditor({ report, companyName, onChanged }) {
           <Button className="gap-1.5" disabled={!!busy || !text.highlights.trim()} onClick={publish}>{busy === 'publish' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}고객에게 발행</Button>
         </div>
       )}
-      {published && <p className="text-xs text-muted-foreground">{report.published_by_name} · {report.published_at ? new Date(report.published_at).toLocaleString('ko-KR') : ''} 발행</p>}
+      {published && <div className="flex items-center gap-2"><p className="flex-1 text-xs text-muted-foreground">{report.published_by_name} · {report.published_at ? new Date(report.published_at).toLocaleString('ko-KR') : ''} 발행</p><PdfButton generate={() => generateMonthlyReportPDF(report, companyName)} /></div>}
     </div>
   );
 }

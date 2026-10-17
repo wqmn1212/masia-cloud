@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Handshake, Plus, RotateCw, Loader2 } from 'lucide-react';
+import { Handshake, Plus, RotateCw, Loader2, FileSpreadsheet } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/use-toast';
 import AgreementDialog from '@/components/agreements/AgreementDialog';
 import { AGREEMENT_STATUS, INVOICE_STATUS, daysLeft, endDateOf, kstMonth, money } from '@/lib/agreements';
+import { downloadCsv, fileDate } from '@/lib/csv';
 
 const LIVE = ['DRAFT', 'ACTIVE', 'SUSPENDED'];
 
@@ -75,6 +76,13 @@ export default function Agreements() {
     }
   };
 
+  // 대표 보고용 계약 목록 (내부 전용: 월 계약료·페이백 포함)
+  const exportCsv = () => downloadCsv(`AEGIS_Agreements_${fileDate()}`,
+    ['고객사', '계약명', '계약 번호', '시작일', '종료일', '남은 일수', '상태', '월 계약료', '통화', '페이백 %', '진행 중 프로젝트', `${Number(month.slice(5))}월 청구`, '담당'],
+    agreements.map((a) => [a.company_name, a.title, a.agreement_no, a.start_date, a.end_date, a.status === 'ACTIVE' ? daysLeft(a.end_date) : '', (AGREEMENT_STATUS[a.status] || {}).label || a.status,
+      a.monthly_fee ?? '', a.currency || 'KRW', a.factory_rebate_percent ?? '', linkedCards.filter((c) => c.agreement_id === a.id && !['DONE', 'CANCELLED'].includes(c.status)).length,
+      invoiceOf(a) ? (INVOICE_STATUS[invoiceOf(a).status] || {}).label : '', (a.assigned_user_ids || []).map((id) => names.get(id)).filter(Boolean).join(', ')]));
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
@@ -83,6 +91,7 @@ export default function Agreements() {
           <h1 className="text-xl font-bold tracking-tight">월 계약 관리</h1>
           <p className="text-xs text-muted-foreground">프로젝트별 월 계약의 기간·청구·월간 리포트를 관리합니다. 월 계약료와 페이백 비율은 대표·팀 관리자에게만 보입니다.</p>
         </div>
+        <Button variant="outline" onClick={exportCsv} disabled={!agreements.length} className="gap-1.5"><FileSpreadsheet className="h-4 w-4" />엑셀로 내보내기</Button>
         <Button onClick={() => setDialog({ agreement: null })} className="gap-1.5"><Plus className="h-4 w-4" />새 계약</Button>
       </div>
 

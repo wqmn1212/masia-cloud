@@ -7,6 +7,8 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import MonthlyReportView from '@/components/reports/MonthlyReportView';
+import PdfButton from '@/components/reports/PdfButton';
+import { generateMonthlyReportPDF } from '@/lib/reportPdf';
 import { AGREEMENT_STATUS, INVOICE_STATUS, daysLeft, monthLabel } from '@/lib/agreements';
 
 // 고객 대시보드: 진행 중인 월 계약(기간·담당 팀·청구 상태)과 발행된 월간 리포트.
@@ -80,7 +82,10 @@ export default function ClientContractCard() {
       <Dialog open={!!open} onOpenChange={(o) => !o && setOpenId(null)}>
         <DialogContent className="max-h-[92vh] w-[95vw] max-w-2xl overflow-y-auto">
           <DialogHeader><DialogTitle className="sr-only">월간 업무 리포트</DialogTitle></DialogHeader>
-          {open && <MonthlyReportView report={open} />}
+          {open && <>
+            <div className="flex justify-end"><PdfButton generate={() => generateMonthlyReportPDF(open)} label="보고용 PDF로 저장" /></div>
+            <MonthlyReportView report={open} />
+          </>}
         </DialogContent>
       </Dialog>
     </Card>
