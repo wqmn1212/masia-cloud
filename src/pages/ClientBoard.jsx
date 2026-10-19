@@ -8,16 +8,19 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import ClientCardModal from '@/components/client/ClientCardModal';
 import NewInquiryDialog from '@/components/client/NewInquiryDialog';
+import ClientExportButton from '@/components/client/ClientExportButton';
 
 export default function ClientBoard() {
   const { data: cards = [], isLoading } = useClientCards();
   const [selectedId, setSelectedId] = useState(null);
+  const [initialTab, setInitialTab] = useState(null);
   const [inquiryOpen, setInquiryOpen] = useState(false);
 
-  // 알림 링크(/client/board?card=xxx)로 진입한 경우 해당 카드를 바로 연다
+  // 알림 링크(/client/board?card=xxx&tab=qc)로 진입한 경우 해당 카드·탭을 바로 연다
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get('card');
-    if (id) setSelectedId(id);
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('card');
+    if (id) { setSelectedId(id); setInitialTab(params.get('tab')); }
   }, []);
 
   return (
@@ -27,9 +30,12 @@ export default function ClientBoard() {
           <h1 className="text-2xl font-bold tracking-tight">소싱 보드</h1>
           <p className="text-sm text-muted-foreground mt-1">단계는 담당자가 업데이트하며, 카드를 눌러 상세 내용을 확인하실 수 있습니다</p>
         </div>
-        <Button onClick={() => setInquiryOpen(true)} className="shrink-0">
-          <Plus className="w-4 h-4" /> 신규 문의 작성
-        </Button>
+        <div className="flex shrink-0 gap-2">
+          <ClientExportButton size="default" />
+          <Button onClick={() => setInquiryOpen(true)}>
+            <Plus className="w-4 h-4" /> 신규 문의 작성
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -46,7 +52,7 @@ export default function ClientBoard() {
                   <Badge variant="secondary" className="ml-auto text-[10px] h-4 px-1.5">{colCards.length}</Badge>
                 </div>
                 <div className={`min-h-[460px] p-2 rounded-b-xl border border-border border-t-0 space-y-2 ${col.color}`}>
-                  {colCards.map((c) => <ClientCardTile key={c.id} card={c} onClick={() => setSelectedId(c.id)} />)}
+                  {colCards.map((c) => <ClientCardTile key={c.id} card={c} onClick={() => { setInitialTab(null); setSelectedId(c.id); }} />)}
                 </div>
               </div>
             );
@@ -54,7 +60,7 @@ export default function ClientBoard() {
         </div>
       )}
 
-      <ClientCardModal cardId={selectedId} open={!!selectedId} onClose={() => setSelectedId(null)} />
+      <ClientCardModal cardId={selectedId} initialTab={initialTab} open={!!selectedId} onClose={() => setSelectedId(null)} onOpenCard={(id) => { setInitialTab(null); setSelectedId(id); }} />
       <NewInquiryDialog open={inquiryOpen} onClose={() => setInquiryOpen(false)} />
     </div>
   );

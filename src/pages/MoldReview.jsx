@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DropZone from '@/components/ui/drop-zone';
-import { FlaskConical, Loader2, Save, ScanSearch, Upload, X } from 'lucide-react';
+import { FlaskConical, Loader2, Save, ScanSearch, Send, Upload, X } from 'lucide-react';
 import { parseStepFileFromFile } from '@/lib/stepParser';
 import { guessMaterial } from '@/lib/materialGuess';
 import { parseStl, STL_UNITS } from '@/lib/moldReview/stl';
@@ -24,6 +24,7 @@ import MoldSpecBox from '@/components/moldreview/MoldSpecBox';
 import MoldPartPicker from '@/components/moldreview/MoldPartPicker';
 import MoldReviewSaveDialog from '@/components/moldreview/MoldReviewSaveDialog';
 import MoldReviewHistory from '@/components/moldreview/MoldReviewHistory';
+import MoldReviewRequestDialog, { moldReviewSummary } from '@/components/moldreview/MoldReviewRequestDialog';
 
 const MODES = [
   ['all', '종합'],
@@ -56,6 +57,8 @@ export default function MoldReview() {
   const parsingRef = useRef(false);
   const savingRef = useRef(false);
   const canSave = !!user?.tenant_id && user?.is_active !== false && ['master', 'service'].includes(user?.account_tier);
+  // 고객 포털(/client/mold-review): 저장·이력 대신 이지스 담당자에게 검토를 요청한다
+  const isClient = user?.account_tier === 'client';
   const inputBlocked = () => parsingRef.current || !!jobRef.current || savingRef.current;
 
   const [source, setSource] = useState(null); // { kind: 'step'|'stl'|'sample', fileName, parts }
@@ -73,6 +76,7 @@ export default function MoldReview() {
   const [lang, setLang] = useState('ko');
   const [saveOpen, setSaveOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
 
   const part = source && partIndex != null ? source.parts[partIndex] : null;
   const report = useMemo(
@@ -131,7 +135,7 @@ export default function MoldReview() {
         const unit = STL_UNITS.find((u) => u.value === stlUnit) || STL_UNITS[0];
         const mesh = parseStl(await file.arrayBuffer(), unit.scale);
         const parts = [{ part_name: file.name.replace(/\.stl$/i, ''), triangle_count: mesh.indices.length / 3, mesh, molded: true }];
-        setSource({ kind: 'stl', fileName: file.name, parts });
+        setSource({ kind: 'stl', fileName: file.name, parts, file });
         selectPart(parts, 0);
         return;
       }
@@ -145,7 +149,7 @@ export default function MoldReview() {
       // 사출 부품을 앞에, 실제 부피(cm³)가 큰 순서로 선택. 부피가 없으면 외곽 부피 사용.
       const volume = (p) => Number(p.volume_cm3) > 0 ? Number(p.volume_cm3) : (p.bbox_x_mm || 0) * (p.bbox_y_mm || 0) * (p.bbox_z_mm || 0) / 1000;
       parts.sort((a, b) => (Number(b.molded) - Number(a.molded)) || (volume(b) - volume(a)));
-      setSource({ kind: 'step', fileName: file.name, parts });
+      setSource({ kind: 'step', fileName: file.name, parts, file });
       selectPart(parts, 0);
     } catch (e) {
       setError(e.message);
@@ -403,12 +407,24 @@ export default function MoldReview() {
                   검토 결과 저장
                 </Button>
               )}
+              {isClient && (
+                <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-4">
+                  <p className="text-sm font-semibold">자동 검토 결과를 이지스 담당자에게 확인받으세요</p>
+                  <p className="text-xs text-muted-foreground">담당자가 결과를 다시 검토하고, 공장 금형 설계자와 함께 보완점을 정리해 드립니다.</p>
+                  <Button type="button" className="w-full" onClick={() => setRequestOpen(true)} disabled={busy}>
+                    <Send className="h-4 w-4" />
+                    이지스 검토 요청
+                  </Button>
+                </div>
+              )}
             </>
           )}
 
-          <Section title="저장한 검토">
-            <MoldReviewHistory />
-          </Section>
+          {!isClient && (
+            <Section title="저장한 검토">
+              <MoldReviewHistory />
+            </Section>
+          )}
         </div>
       </div>
 
@@ -418,6 +434,13 @@ export default function MoldReview() {
         onConfirm={handleSave}
         isSaving={saving}
         partName={part?.part_name}
+      />}
+      {isClient && result && report && <MoldReviewRequestDialog
+        open={requestOpen}
+        onOpenChange={setRequestOpen}
+        partName={part?.part_name}
+        sourceFile={source?.file || null}
+        summary={moldReviewSummary({ partName: part?.part_name, fileName: source?.fileName, result, report })}
       />}
     </div>
   );

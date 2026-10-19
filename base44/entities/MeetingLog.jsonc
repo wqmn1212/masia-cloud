@@ -52,6 +52,10 @@
     "next_steps_cn": {
       "type": "string"
     },
+    "client_shared_at": {
+      "type": "string",
+      "description": "담당자가 고객 문의 탭에 미팅 요약을 공유한 마지막 시각"
+    },
     "created_by_name": {
       "type": "string"
     },

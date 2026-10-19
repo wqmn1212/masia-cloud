@@ -12,7 +12,7 @@ const STATUS_LABEL = {
 };
 
 // 카드 이벤트 알림 라우터.
-// 내부 팀(master/service/sub) → 고객: card_moved · card_shared · quote_published
+// 내부 팀(master/service/sub) → 고객: card_moved · card_shared · quote_published · qc_published · spec_sent · shipment_updated
 // 고객(client) → 내부 팀: chat_message
 export default async function (req) {
   try {
@@ -52,7 +52,7 @@ export default async function (req) {
     if (user.account_tier !== 'master' && card.tenant_id !== user.tenant_id) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
-    if (!['card_moved', 'card_shared', 'chat_message', 'quote_published', 'file_shared'].includes(type)) {
+    if (!['card_moved', 'card_shared', 'chat_message', 'quote_published', 'file_shared', 'qc_published', 'spec_sent', 'shipment_updated'].includes(type)) {
       return Response.json({ error: '지원하지 않는 알림 유형입니다' }, { status: 400 });
     }
     // 공개되지 않은 카드는 고객에게 알리지 않는다
@@ -68,7 +68,13 @@ export default async function (req) {
             ? `[견적서 발행] ${card.title}`
             : type === 'file_shared'
               ? `[파일 공유] ${card.title}`
-              : `[답변] ${card.title}`;
+              : type === 'qc_published'
+                ? `[검수 결과] ${card.title}`
+                : type === 'spec_sent'
+                  ? `[품질 기준서] ${card.title}`
+                  : type === 'shipment_updated'
+                    ? `[선적] ${card.title}`
+                    : `[답변] ${card.title}`;
     const body =
       type === 'card_moved'
         ? `프로젝트 단계가 "${STATUS_LABEL[card.status] || card.status}" 로 변경되었습니다.`
@@ -78,13 +84,19 @@ export default async function (req) {
             ? '견적서가 발행되었습니다. 고객 포털에서 PDF 로 다운로드하실 수 있습니다.'
             : type === 'file_shared'
               ? `담당자가 파일을 공유했습니다: ${String(message || '').slice(0, 200)}`
-              : String(message || '').slice(0, 300);
+              : type === 'qc_published'
+                ? '검수 결과가 올라왔습니다. 사진과 판정을 확인하고 승인 또는 보류를 선택해 주세요.'
+                : type === 'spec_sent'
+                  ? '양산 전에 불량 기준을 정리했습니다. 항목별 기준과 예시 사진을 확인하고 승인 또는 수정 요청을 남겨 주세요.'
+                  : type === 'shipment_updated'
+                    ? `선적 상태가 바뀌었습니다. ${String(message || '').slice(0, 200)}`
+                    : String(message || '').slice(0, 300);
 
     const sent = await notifyUsers(svc, clients, {
       type,
       title,
       body,
-      link: `/client/board?card=${card.id}`,
+      link: `/client/board?card=${card.id}${['qc_published', 'spec_sent', 'shipment_updated'].includes(type) ? '&tab=qc' : ''}`,
       task_card_id: card.id,
       card_title: card.title,
     });

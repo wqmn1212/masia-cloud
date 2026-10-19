@@ -237,4 +237,9 @@ export const formTags = [
 export const footer = {
   tagline: ['한국 본사 · 중국 광둥성 지사 · 공장 소싱, QC, 배송 및 통관', 'Korean HQ · Guangdong branch · Factory sourcing, QC, shipping and customs', '韩国总部 · 广东省分公司 · 工厂采购、QC、运输与清关'],
   copyright: '© 2026 AEGIS',
+  // 주소는 현지 표기 그대로 둔다 (본사는 한국어, 지사는 중국어). 라벨만 언어별로 바뀐다.
+  addresses: [
+    { label: ['한국 본사', 'Korea HQ', '韩国总部'], address: '경기도 고양시 덕양구 향동로 217, KA807호' },
+    { label: ['중국 동관 지사', 'Dongguan Branch, China', '中国东莞分公司'], address: '中国广东省东莞市塘厦镇迎宾大道21号卓越华堂时光3栋914室' },
+  ],
 };

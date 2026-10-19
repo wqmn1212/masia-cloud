@@ -14,7 +14,7 @@ export default async function(req) {
     const offset = input.offset ?? 0;
     if (!Number.isInteger(offset) || offset < 0 || typeof (input.card_name || '') !== 'string') return Response.json({ error: '검색 조건을 확인하세요.' }, { status: 400 });
     for (const key of ['from_date', 'to_date']) if (input[key] && !validDate(input[key])) return Response.json({ error: '검색 날짜를 확인하세요.' }, { status: 400 });
-    const types = ['GENERAL', 'INVOICE_CI', 'INVOICE_PI', 'PACKING_LIST', 'QUOTATION', 'REMITTANCE_ACCOUNT'];
+    const types = ['GENERAL', 'INVOICE_CI', 'INVOICE_PI', 'PACKING_LIST', 'QUOTATION', 'REMITTANCE_ACCOUNT', 'BILL_OF_LADING', 'CERT_ORIGIN', 'UN38_3', 'MSDS', 'BATTERY_SPEC', 'DG_DECLARATION'];
     if (input.document_type && !types.includes(input.document_type)) return Response.json({ error: '문서 유형을 확인하세요.' }, { status: 400 });
     const cards = (await documentRows(svc.entities.TaskCard, { client_id: companyId, tenant_id: company.tenant_id, ...(isClient ? { client_visible: true } : {}) }, '-created_date')).filter(c => c.title?.toLowerCase().includes((input.card_name || '').toLowerCase()));
     if (!cards.length) return Response.json({ attachments: [], cards: [], has_more: false });

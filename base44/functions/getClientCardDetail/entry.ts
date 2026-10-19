@@ -1,8 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { requireClient, cardVisibleToClient } from '../../shared/clientAccess.ts';
 import { clientCardDocuments, documentMetadata, documentUrl } from '../../shared/cardDocuments.ts';
+import { clientQcReport, clientQualitySpec, latestSentSpecs } from '../../shared/clientQc.ts';
+import { docStatus } from '../../shared/shipments.ts';
 
-// 고객 포털 카드 상세: 오버뷰 · 공개 채팅 · 정산 단계(읽기 전용).
+// 고객 포털 카드 상세: 오버뷰 · 공개 채팅 · 정산 단계(읽기 전용) · 담당자가 공개한 검수 리포트.
 // 내부 전용 데이터(견적 원가, BOM, 결정, 내부 채팅)는 응답에 포함하지 않는다.
 export default async function (req) {
   try {
@@ -27,6 +29,11 @@ export default async function (req) {
     }
     const chats = await svc.entities.CardChat.filter({ card_id }, 'created_date', 200);
     const stages = await svc.entities.PaymentStage.filter({ card_id }, 'created_date', 20);
+    const qcReports = await svc.entities.QCReport.filter({ card_id, client_visible: true }, '-created_date', 50);
+    // 선적: 고객 공개분만. 서류는 준비 여부만 알리고 파일·포워더·내부 메모는 보내지 않는다
+    const shipments = (await svc.entities.Shipment.filter({ card_id, client_visible: true }, 'created_date', 20)).filter((s) => s.card_id === card.id);
+    const attachmentTypes = shipments.length ? (await svc.entities.CardAttachment.filter({ card_id }, '-created_date', 500)).map((a) => a.document_type).filter(Boolean) : [];
+    const spec = latestSentSpecs((await svc.entities.QualitySpec.filter({ card_id, status: 'SENT' }, '-version', 10)).filter((s) => s.card_id === card.id)).get(card.id);
     // 계획 확정 전 초안은 고객에게 보이지 않는다
     const milestones = card.plan_confirmed_at
       ? (await svc.entities.CardMilestone.filter({ card_id }, 'seq', 100)).filter((m) => m.client_visible !== false && m.status !== 'skipped')
@@ -70,6 +77,14 @@ export default async function (req) {
         percentage: Number(s.percentage) || 0,
         approval_status: s.approval_status,
         approved_at: s.approved_at || '',
+      })),
+      qc_reports: qcReports.filter((r) => r.card_id === card.id && r.client_visible === true).map(clientQcReport),
+      quality_spec: spec ? clientQualitySpec(spec) : null,
+      shipments: shipments.map((s) => ({
+        id: s.id, label: s.label || '', mode: s.mode || '', status: s.status || 'PREPARING', carrier: s.carrier || '', tracking_no: s.tracking_no || '',
+        port_from: s.port_from || '', port_to: s.port_to || '', etd: s.etd || '', eta: s.eta || '', atd: s.atd || '', ata: s.ata || '',
+        dangerous_goods: !!s.dangerous_goods, package_note: s.package_note || '', client_note: s.client_note || '',
+        docs: docStatus(s, attachmentTypes).map((d) => ({ key: d.key, label: d.label, status: d.status })),
       })),
     });
   } catch (error) {

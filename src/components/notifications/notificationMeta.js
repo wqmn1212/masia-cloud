@@ -16,6 +16,15 @@ export const NOTIFICATION_META = {
   holiday_notice: { label: '휴무 전 발주 안내', icon: '🗓️' },
   reorder_due: { label: '재주문 시점', icon: '🔁' },
   milestone_overdue: { label: '일정 지연', icon: '⏰' },
+  qc_published: { label: '검수 결과 공개', icon: '🔍' },
+  qc_decision: { label: '고객 출고 판단', icon: '✅' },
+  agreement_renewal: { label: '계약 만료 임박', icon: '📆' },
+  monthly_report: { label: '월간 리포트', icon: '📊' },
+  spec_sent: { label: '품질 기준서', icon: '📐' },
+  spec_decision: { label: '기준서 고객 판단', icon: '📝' },
+  shipment_updated: { label: '선적 상태 변경', icon: '🚢' },
+  shipment_docs_missing: { label: '선적 서류 미비', icon: '⚠️' },
+  reorder_requested: { label: '재주문 요청', icon: '🔁' },
 };
 
 export const notificationMeta = (type) => NOTIFICATION_META[type] || { label: '알림', icon: '🔔' };

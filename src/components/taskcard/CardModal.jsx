@@ -11,6 +11,7 @@ import QuotationTab from './QuotationTab';
 import SettlementTab from './SettlementTab';
 import TaskItemsTab from './TaskItemsTab';
 import QCReportPanel from './QCReportPanel';
+import QualitySpecPanel from './QualitySpecPanel';
 import PaymentGatePanel from './PaymentGatePanel';
 import ProcessControlPanel from './ProcessControlPanel';
 import AIProposalPanel from './AIProposalPanel';
@@ -25,6 +26,9 @@ import TradeDocumentsTab from '@/components/taskcard/TradeDocumentsTab';
 import { useLanguage } from '@/lib/LanguageContext';
 import MilestoneTab from '@/components/taskcard/milestones/MilestoneTab';
 import CardOwnerBar from '@/components/taskcard/CardOwnerBar';
+import ReorderDialog from '@/components/taskcard/ReorderDialog';
+import { Button } from '@/components/ui/button';
+import { Repeat } from 'lucide-react';
 
 const STATUS_META = {
   TODO:        { label: '대기 중',    color: 'bg-muted text-muted-foreground' },
@@ -44,6 +48,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
   const { lang, t, content } = useLanguage();
   const viewLang = lang === 'zh' ? 'CN' : 'KR';
   const [recordingBusy, setRecordingBusy] = useState(false);
+  const [reorderOpen, setReorderOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(initialTab);
   useEffect(() => { if (open) setActiveTab(initialTab); }, [open, card?.id, initialTab]);
 
@@ -74,8 +79,14 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
                 <Badge variant="outline" className="text-[10px]">{CAT_LABEL[card.target_machine_category]}</Badge>
               )}
               <Badge className={`${st.color} border-0 text-[10px]`}>{st.label}</Badge>
+              {['master', 'service', 'sub'].includes(user?.account_tier) && (
+                <Button type="button" size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => setReorderOpen(true)}><Repeat className="h-3 w-3" />재주문</Button>
+              )}
             </div>
           </div>
+          {card.reorder_of && (
+            <p className="mt-1 text-xs text-muted-foreground">🔁 재주문 프로젝트 · <a className="text-primary underline-offset-2 hover:underline" href={`/task-board?card=${card.reorder_of}`}>원 프로젝트 보기 (이전 견적·검수 기록)</a></p>
+          )}
           {(card.client_name || card.factory_name) && (
             <p className="text-xs text-muted-foreground mt-1">
               {card.client_name && `🏢 ${card.client_name}`}
@@ -85,6 +96,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
           )}
           <CardOwnerBar card={card} user={user} />
         </DialogHeader>
+        <ReorderDialog open={reorderOpen} onOpenChange={setReorderOpen} card={card} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
           <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto gap-0.5">
@@ -107,6 +119,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
           <TabsContent value="tasks" className="mt-4">
             <AIProposalPanel card={card} user={user} />
             <TaskItemsTab card={card} viewLang={viewLang} />
+            <QualitySpecPanel card={card} user={user} />
             <QCReportPanel card={card} user={user} />
           </TabsContent>
           <TabsContent value="overview" className="mt-4">

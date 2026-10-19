@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "agreement_renewal_check",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "agreement_renewal_check": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkAgreementRenewals",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\uc6d4 \uacc4\uc57d \ub9cc\ub8cc \uc810\uac80",
+            "description": "\ub9cc\ub8cc 30\uc77c\u00b77\uc77c \uc804 \uc54c\ub9bc"
+          }
+        }
+      }
+    ]
+  },
+  "description": "\ub9e4\uc77c 08:10 KST \uc9c4\ud589 \uc911\uc778 \uc6d4 \uacc4\uc57d\uc758 \ub9cc\ub8cc 30\uc77c\u00b77\uc77c \uc804\uc5d0 \ubc30\uc815 \ud300\uc6d0\uacfc \ud300 \uad00\ub9ac\uc790\uc5d0\uac8c \uc54c\ub9bd\ub2c8\ub2e4",
+  "name": "\uc6d4 \uacc4\uc57d \ub9cc\ub8cc \uc54c\ub9bc",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "10 8 * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

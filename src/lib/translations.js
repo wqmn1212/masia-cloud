@@ -7,7 +7,7 @@ export const translations = {
     'nav.agentquotes': '견적 업로드', 'nav.requirements': '요구사항 트래커', 'nav.clients': '고객사 관리',
     'nav.timeline': '생산 타임라인', 'nav.asrequests': 'AS 접수',
     'nav.myWork': '내 업무', 'nav.userGuide': '이용 가이드', 'nav.leads': '문의 접수', 'nav.marketing': '마케팅', 'nav.chinaHolidays': '중국 휴무', 'nav.portfolio': '포트폴리오 관리', 'nav.contracts': '계약서 관리', 'nav.decisions': '결정 기록',
-    'nav.bom': 'STEP 도면 분석', 'nav.moldReview': '금형 사전 검토', 'nav.artcraft': 'ArtCraft', 'nav.financial': '재무 리포트', 'nav.assistant': 'AI 업무 비서', 'nav.files': '파일 센터',
+    'nav.bom': 'STEP 도면 분석', 'nav.moldReview': '금형 사전 검토', 'nav.agreements': '월 계약 관리', 'nav.artcraft': 'ArtCraft', 'nav.financial': '재무 리포트', 'nav.assistant': 'AI 업무 비서', 'nav.files': '파일 센터',
     'nav.serviceGuide': '서비스 사용 가이드',
     'brand.name': '이지스 클라우드',
     // TopBar
@@ -21,7 +21,7 @@ export const translations = {
     'common.candidates': '후보', 'common.register': '등록', 'common.registering': '등록 중...',
     'common.all': '전체', 'common.uploading': '업로드 중...', 'common.contact': '담당', 'common.count': '건',
     'nav.management': '관리', 'nav.masterAdmin': '마스터 관리자', 'nav.team': '팀 관리', 'nav.permissions': '사용자 권한',
-    'nav.clientPortal': '고객 포털', 'nav.clientDashboard': '고객 대시보드', 'nav.clientBoard': '소싱 보드', 'nav.clientGuide': '이용 가이드',
+    'nav.clientPortal': '고객 포털', 'nav.clientDashboard': '고객 대시보드', 'nav.clientBoard': '소싱 보드', 'nav.clientGuide': '이용 가이드', 'nav.clientMoldReview': '금형 사전 검토',
     // Status / Priority / Category
     'status.TODO': '대기', 'status.IN_PROGRESS': '진행 중', 'status.REVIEW': '검토',
     'status.PRODUCTION': '생산', 'status.DONE': '완료',
@@ -158,7 +158,7 @@ export const translations = {
     'nav.agentquotes': '上传报价', 'nav.requirements': '需求跟踪', 'nav.clients': '客户管理',
     'nav.timeline': '生产时间轴', 'nav.asrequests': '售后申请',
     'nav.myWork': '我的工作', 'nav.userGuide': '使用指南', 'nav.leads': '咨询受理', 'nav.marketing': '营销', 'nav.chinaHolidays': '中国假期', 'nav.portfolio': '案例管理', 'nav.contracts': '合同管理', 'nav.decisions': '决策记录',
-    'nav.bom': 'STEP图纸分析', 'nav.moldReview': '模具预审', 'nav.artcraft': 'ArtCraft', 'nav.financial': '财务报告', 'nav.assistant': 'AI工作助手', 'nav.files': '文件中心',
+    'nav.bom': 'STEP图纸分析', 'nav.moldReview': '模具预审', 'nav.agreements': '月度合同管理', 'nav.artcraft': 'ArtCraft', 'nav.financial': '财务报告', 'nav.assistant': 'AI工作助手', 'nav.files': '文件中心',
     'nav.serviceGuide': '服务使用指南',
     'brand.name': 'AEGIS 云平台',
     // TopBar
@@ -172,7 +172,7 @@ export const translations = {
     'common.candidates': '候选', 'common.register': '注册', 'common.registering': '注册中...',
     'common.all': '全部', 'common.uploading': '上传中...', 'common.contact': '负责人', 'common.count': '条',
     'nav.management': '管理', 'nav.masterAdmin': '超级管理员', 'nav.team': '团队管理', 'nav.permissions': '用户权限',
-    'nav.clientPortal': '客户门户', 'nav.clientDashboard': '客户仪表盘', 'nav.clientBoard': '采购看板', 'nav.clientGuide': '使用指南',
+    'nav.clientPortal': '客户门户', 'nav.clientDashboard': '客户仪表盘', 'nav.clientBoard': '采购看板', 'nav.clientGuide': '使用指南', 'nav.clientMoldReview': '模具预审',
     // Status / Priority / Category
     'status.TODO': '待办', 'status.IN_PROGRESS': '进行中', 'status.REVIEW': '审核中',
     'status.PRODUCTION': '生产中', 'status.DONE': '完成',

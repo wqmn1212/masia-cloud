@@ -10,10 +10,15 @@ import ClientSupportCard from '@/components/client/ClientSupportCard';
 import ClientCardModal from '@/components/client/ClientCardModal';
 import CompanyFilesLibrary from '@/components/files/CompanyFilesLibrary';
 import ChinaHolidayNotice from '@/components/client/ChinaHolidayNotice';
+import ClientTodoCard from '@/components/client/ClientTodoCard';
+import ClientContractCard from '@/components/client/ClientContractCard';
+import ClientExportButton from '@/components/client/ClientExportButton';
 
 export default function ClientPortalDashboard() {
   const { data: cards = [], isLoading } = useClientCards();
   const [selectedId, setSelectedId] = useState(null);
+  const [initialTab, setInitialTab] = useState(null);
+  const open = (id, tab = null) => { setInitialTab(tab); setSelectedId(id); };
 
   const active = cards.filter((c) => !['DONE', 'CANCELLED'].includes(c.status));
 
@@ -28,16 +33,21 @@ export default function ClientPortalDashboard() {
         <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
       ) : (
         <>
+          <ClientTodoCard onOpen={open} />
           <ClientStatusSummary cards={cards} />
+          <ClientContractCard />
           <ChinaHolidayNotice />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card className="lg:col-span-2 p-5">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold">진행 중인 프로젝트 {active.length}건</h2>
-                <Button asChild variant="outline" size="sm" className="gap-1.5">
-                  <Link to="/client/board"><Kanban className="w-3.5 h-3.5" />보드로 보기</Link>
-                </Button>
+                <div className="flex gap-1.5">
+                  <ClientExportButton />
+                  <Button asChild variant="outline" size="sm" className="gap-1.5">
+                    <Link to="/client/board"><Kanban className="w-3.5 h-3.5" />보드로 보기</Link>
+                  </Button>
+                </div>
               </div>
               {active.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-10">
@@ -45,7 +55,7 @@ export default function ClientPortalDashboard() {
                 </p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
-                  {active.map((c) => <ClientCardTile key={c.id} card={c} onClick={() => setSelectedId(c.id)} />)}
+                  {active.map((c) => <ClientCardTile key={c.id} card={c} onClick={() => open(c.id)} />)}
                 </div>
               )}
             </Card>
@@ -54,8 +64,8 @@ export default function ClientPortalDashboard() {
         </>
       )}
 
-      <CompanyFilesLibrary onCardClick={card => setSelectedId(card.id)} />
-      <ClientCardModal cardId={selectedId} open={!!selectedId} onClose={() => setSelectedId(null)} />
+      <CompanyFilesLibrary onCardClick={card => open(card.id)} />
+      <ClientCardModal cardId={selectedId} initialTab={initialTab} open={!!selectedId} onClose={() => setSelectedId(null)} onOpenCard={(id) => open(id)} />
     </div>
   );
 }

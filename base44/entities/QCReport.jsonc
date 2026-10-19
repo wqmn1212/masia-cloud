@@ -67,6 +67,64 @@
     },
     "comments": {
       "type": "string"
+    },
+    "client_visible": {
+      "type": "boolean",
+      "default": false,
+      "description": "고객 포털 공개 여부 (담당자가 공장 식별 정보를 확인한 뒤 켬다)"
+    },
+    "client_published_at": {
+      "type": "string",
+      "description": "고객에게 공개한 시각"
+    },
+    "client_decision": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "APPROVED",
+        "ON_HOLD"
+      ],
+      "description": "고객 출고 판단. 고객 전용 서버 함수(clientCardAction)로만 바뀐다. 비어 있으면 대기",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
+    },
+    "client_decision_note": {
+      "type": "string",
+      "description": "고객이 남긴 보류 사유·의견",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
+    },
+    "client_decided_at": {
+      "type": "string",
+      "description": "고객 판단 시각",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
+    },
+    "client_decided_by_name": {
+      "type": "string",
+      "description": "판단한 고객 담당자 이름",
+      "rls": {
+        "write": {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        }
+      }
     }
   },
   "required": [

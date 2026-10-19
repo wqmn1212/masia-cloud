@@ -11,6 +11,11 @@ export default function LandingFooter({ lang }) {
         <a href="/cloud" className="text-[13px] font-semibold text-landing-ink2 hover:text-landing-brand">AEGIS Cloud</a>
         <div className="text-[12.5px] text-landing-muted3 font-mono">{footer.copyright}</div>
       </div>
+      <address className="max-w-[1200px] mx-auto mt-5 pt-5 border-t border-landing-line not-italic flex flex-col lg:flex-row gap-1.5 lg:gap-8 text-[12.5px] text-landing-muted2">
+        {footer.addresses.map((a) => (
+          <p key={a.address} className="flex flex-col sm:flex-row sm:gap-2"><span className="font-semibold text-landing-ink2 whitespace-nowrap">{tx(a.label, lang)}</span><span>{a.address}</span></p>
+        ))}
+      </address>
     </footer>
   );
 }
