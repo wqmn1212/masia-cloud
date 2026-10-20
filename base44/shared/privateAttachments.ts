@@ -25,10 +25,10 @@ export async function uploadPrivateAttachments(svc, input) {
   return attachments;
 }
 
-export async function linkCardAttachments(svc, { tenantId, cardId, attachments, uploaderName, clientVisible = false, uploaderRole = 'HQ' }) {
+export async function linkCardAttachments(svc, { tenantId, cardId, attachments, uploaderName, clientVisible = false, uploaderRole = 'HQ', documentType = 'GENERAL' }) {
   const records = attachments.map((item) => ({
     client_visible: clientVisible,
-    document_type: 'GENERAL',
+    document_type: documentType,
     tenant_id: tenantId,
     card_id: cardId,
     file_name: item.name,

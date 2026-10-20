@@ -7,6 +7,7 @@ import Breadcrumbs from './files/Breadcrumbs';
 import FolderRow from './files/FolderRow';
 import FileApprovalDialog from '@/components/taskcard/files/FileApprovalDialog';
 import { approvalPatches } from '@/lib/fileApproval';
+import { TRADE_DOCUMENT_TYPES } from '@/components/files/documentTypes';
 import FileRow from './files/FileRow';
 import NewFolderDialog from './files/NewFolderDialog';
 import useAttachmentVisibility from '@/components/files/useAttachmentVisibility';
@@ -67,7 +68,7 @@ export default function FilesTab({ card, tradeOnly = false }) {
     [folders, currentFolderId]
   );
   const currentFiles = useMemo(
-    () => files.filter(f => (f.folder_id || null) === currentFolderId && (!tradeOnly || (f.document_type && f.document_type !== 'GENERAL'))),
+    () => files.filter(f => (f.folder_id || null) === currentFolderId && (!tradeOnly || TRADE_DOCUMENT_TYPES.includes(f.document_type))),
     [files, currentFolderId, tradeOnly]
   );
 

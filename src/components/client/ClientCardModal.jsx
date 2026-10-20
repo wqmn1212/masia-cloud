@@ -89,7 +89,7 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
               </TabsContent>
               <TabsContent value="files" className="mt-4"><ClientSharedFiles cardId={data.card.id} /></TabsContent>
               <TabsContent value="settlement" className="mt-4">
-                <ClientSettlementPanel stages={data.payment_stages || []} factoryPayment={data.factory_payment || null} />
+                <ClientSettlementPanel stages={data.payment_stages || []} factoryPayment={data.factory_payment || null} receipts={(data.attachments || []).filter((a) => a.document_type?.startsWith('REMITTANCE_'))} />
               </TabsContent>
             </Tabs>
           </>

@@ -14,6 +14,8 @@ import useLogisticsRates from '@/components/landedcost/useLogisticsRates';
 import { calcLandedCost, compareModes, fmtWon } from '@/lib/landedCost';
 import { DEST_COST_STATE, ENGINE_MODE, destCostDiff, destCostSnapshot, destCostState } from '@/lib/destCost';
 import { daysUntil } from '@/lib/shipments';
+import useCardAttachments from '@/components/files/useCardAttachments';
+import DocChips from '@/components/files/DocChips';
 
 const WARN_DAYS = 14;
 const STATE_STYLE = {
@@ -82,6 +84,8 @@ export default function DestCostSection({ shipment, card, onSaved }) {
   }, [shipment.id, shipment.dest_cost_actual, shipment.dest_cost_actual_vat, shipment.dest_cost_actual_note]);
   // 입력하는 동안 바로 예상과 비교해 보여 준다
   const diff = destCostDiff(est, actual.amount === '' ? null : actual.amount);
+  const { data: attachments = [] } = useCardAttachments(card.id);
+  const invoices = attachments.filter((a) => a.document_type === 'LOGISTICS_INVOICE');
   const toEtd = daysUntil(shipment.etd);
   const beforeDeparture = ['PREPARING', 'BOOKED'].includes(shipment.status);
   const warn = beforeDeparture && toEtd != null && toEtd <= WARN_DAYS && state !== 'ACKNOWLEDGED';
@@ -178,6 +182,7 @@ export default function DestCostSection({ shipment, card, onSaved }) {
                 예상 대비 {diff.diff >= 0 ? '+' : ''}{fmtWon(diff.diff)}{diff.pct != null ? ` (${pct(diff.pct)})` : ''}{diff.inRange ? ' · 안내한 범위 안' : ' · 안내한 범위 밖 — 이유를 적어 주세요'}
               </span>
             )}
+            {invoices.length ? <DocChips docs={invoices} max={2} /> : <span className="text-[11px] text-muted-foreground">청구서는 무역서류에 &lsquo;물류비 청구서&rsquo;로 올려 주세요</span>}
             <Button size="sm" variant="outline" className="ml-auto h-7 text-xs" disabled={busy || !actualDirty} onClick={saveActual}>실제 금액 저장</Button>
           </div>
         </>

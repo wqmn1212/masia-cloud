@@ -15,7 +15,7 @@ export default async function (req) {
     const auth = await requireClient(base44);
     if (auth.error) return auth.error;
 
-    const { card_id, action, message, message_cn, hq_requirements, hq_requirements_cn, attachments, report_id, spec_id, shipment_id, sent_at, decision, note, claim } = await req.json();
+    const { card_id, action, message, message_cn, hq_requirements, hq_requirements_cn, attachments, report_id, spec_id, shipment_id, sent_at, decision, note, claim, document_type } = await req.json();
     if (!card_id || !action) return Response.json({ error: 'card_id, action 이 필요합니다' }, { status: 400 });
 
     const svc = base44.asServiceRole;
@@ -25,19 +25,22 @@ export default async function (req) {
     }
     const senderName = auth.user.full_name || auth.user.account_label || auth.user.email;
     // 고객 업로드 파일: 비공개 저장 후 카드 파일 탭에 고객 공개 상태로 연동
-    const saveFiles = async () => {
+    // 고객이 고를 수 있는 파일 종류 (직접 송금한 송금확인증, 고객이 가진 사양서·인증서). 그 외는 일반 파일
+    const CLIENT_DOC_TYPES: Record<string, string> = { REMITTANCE_DOWN: '송금확인증 (선금)', REMITTANCE_BALANCE: '송금확인증 (잔금)', SPEC_SHEET: '사양서', CERTIFICATE: '인증서' };
+    const docType = typeof document_type === 'string' && CLIENT_DOC_TYPES[document_type] ? document_type : 'GENERAL';
+    const saveFiles = async (documentType = 'GENERAL') => {
       const files = await uploadPrivateAttachments(svc, attachments);
-      await linkCardAttachments(svc, { tenantId: card.tenant_id, cardId: card.id, attachments: files, uploaderName: senderName, clientVisible: true, uploaderRole: null });
+      await linkCardAttachments(svc, { tenantId: card.tenant_id, cardId: card.id, attachments: files, uploaderName: senderName, clientVisible: true, uploaderRole: null, documentType });
       return files;
     };
 
     if (action === 'upload_files') {
-      const files = await saveFiles();
+      const files = await saveFiles(docType);
       if (!files.length) return Response.json({ error: '업로드할 파일이 없습니다' }, { status: 400 });
       const staff = await internalUsersOfTenant(svc, card.tenant_id);
       await notifyUsers(svc, staff, {
         type: 'card_shared',
-        title: `[고객 파일] ${card.title}`,
+        title: `[고객 ${CLIENT_DOC_TYPES[docType] || '파일'}] ${card.title}`,
         body: `${senderName}: ${files.map((f) => f.name).join(', ')}`,
         link: `/task-board?card=${card.id}`,
         task_card_id: card.id,

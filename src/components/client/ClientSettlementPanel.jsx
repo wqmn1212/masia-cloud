@@ -1,6 +1,8 @@
 import React from 'react';
 import { AlertTriangle, CheckCircle2, Landmark } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import DocChips from '@/components/files/DocChips';
+import { REMITTANCE_FOR_STAGE } from '@/components/files/documentTypes';
 
 const STAGE_LABEL = {
   DOWN_PAYMENT: '선금',
@@ -46,7 +48,7 @@ function FactoryPaymentBox({ payment }) {
   );
 }
 
-export default function ClientSettlementPanel({ stages, factoryPayment }) {
+export default function ClientSettlementPanel({ stages, factoryPayment, receipts = [] }) {
   if (stages.length === 0) {
     return (
       <div className="space-y-3">
@@ -72,10 +74,13 @@ export default function ClientSettlementPanel({ stages, factoryPayment }) {
         {stages.map((s) => {
           const m = STATUS_META[s.approval_status] || STATUS_META.PENDING;
           return (
-            <div key={s.id} className="flex items-center gap-3 border rounded-lg px-3 py-2.5">
+            <div key={s.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border rounded-lg px-3 py-2.5">
               <span className="text-sm font-medium">{STAGE_LABEL[s.stage_type] || s.stage_type}</span>
               <span className="text-sm text-muted-foreground">{s.percentage}%{s.amount ? ` · ${fmtMoney(s.amount, s.currency)}` : ''}{s.paid_date ? ` · 입금일 ${s.paid_date}` : ''}</span>
               <Badge className={`${m.cls} border-0 ml-auto`}>{m.label}</Badge>
+              {receipts.some((r) => r.document_type === REMITTANCE_FOR_STAGE[s.stage_type]) && (
+                <div className="flex w-full flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">송금확인증<DocChips docs={receipts.filter((r) => r.document_type === REMITTANCE_FOR_STAGE[s.stage_type])} max={2} /></div>
+              )}
             </div>
           );
         })}
