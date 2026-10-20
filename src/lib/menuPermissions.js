@@ -39,6 +39,7 @@ export const CLIENT_MENU_OPTIONS = [
   { path: '/client/dashboard', label: '고객 대시보드', labelKey: 'nav.clientDashboard' },
   { path: '/client/board', label: '소싱 보드', labelKey: 'nav.clientBoard' },
   { path: '/client/mold-review', label: '금형 사전 검토', labelKey: 'nav.clientMoldReview' },
+  { path: '/client/landed-cost', label: '물류비 계산기', labelKey: 'nav.clientLandedCost' },
   { path: '/client/guide', label: '이용 가이드', labelKey: 'nav.clientGuide' },
 ];
 
