@@ -9,6 +9,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import TaskCardSummaryItem from '@/components/taskcard/TaskCardSummaryItem';
 import CardModal from '@/components/taskcard/CardModal';
 import FactoryDocumentTabs from '@/components/factory/FactoryDocumentTabs';
+import FactoryAccountPanel from '@/components/factory/FactoryAccountPanel';
+import FactoryCheckPanel from '@/components/factory/FactoryCheckPanel';
+import { useAuth } from '@/lib/AuthContext';
 
 const STATUS_FILTERS = [
   { key: 'ALL',         label: '전체' },
@@ -21,6 +24,7 @@ const STATUS_FILTERS = [
 
 export default function FactoryDashboard() {
   const { factoryId } = useParams();
+  const { user } = useAuth();
   const [selectedCard, setSelectedCard] = useState(null);
   const [statusFilter, setStatusFilter] = useState('ALL');
 
@@ -161,6 +165,10 @@ export default function FactoryDashboard() {
         </Card>
       </div>
 
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <FactoryCheckPanel factory={factory} user={user} />
+        <FactoryAccountPanel factory={factory} user={user} />
+      </div>
       <FactoryDocumentTabs factory={factory} />
       {/* Status filter */}
       <div className="flex items-center gap-2 flex-wrap">

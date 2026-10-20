@@ -23,7 +23,7 @@ const STATE_STYLE = {
   ACKNOWLEDGED: 'bg-primary/10 text-primary',
   QUESTION: 'bg-destructive/10 text-destructive',
 };
-const CLEAR_DECISION = { dest_cost_decision: null, dest_cost_decided_at: '', dest_cost_decided_by_name: '', dest_cost_client_note: '' };
+const CLEAR_DECISION = { dest_cost_decision: 'PENDING', dest_cost_decided_at: '', dest_cost_decided_by_name: '', dest_cost_client_note: '' };
 const fmtAt = (iso) => (iso ? new Date(iso).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '');
 const pct = (v) => `${v > 0 ? '+' : ''}${Math.round(v * 100)}%`;
 

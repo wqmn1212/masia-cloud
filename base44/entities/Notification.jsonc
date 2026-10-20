@@ -45,7 +45,11 @@
         "reorder_requested",
         "dest_cost_sent",
         "dest_cost_decision",
-        "dest_cost_unconfirmed"
+        "dest_cost_unconfirmed",
+        "factory_account_changed",
+        "factory_account_verified",
+        "claim_submitted",
+        "claim_updated"
       ],
       "description": "\uc54c\ub9bc \uc720\ud615"
     },

@@ -56,6 +56,7 @@ assert.equal(destCostState({}), 'NONE');
 assert.equal(destCostState({ dest_cost_estimate: snap }), 'DRAFT');
 assert.equal(destCostState({ dest_cost_estimate: snap, dest_cost_sent_at: '2026-10-20T00:00:00Z' }), 'SENT');
 assert.equal(destCostState({ dest_cost_estimate: snap, dest_cost_sent_at: '2026-10-20T00:00:00Z', dest_cost_decision: 'QUESTION' }), 'QUESTION');
+assert.equal(destCostState({ dest_cost_estimate: snap, dest_cost_sent_at: '2026-10-20T00:00:00Z', dest_cost_decision: 'PENDING' }), 'SENT');
 // 실제 청구와 비교
 assert.equal(destCostDiff(snap, null), null);
 assert.equal(destCostDiff(snap, snap.buyer_ex_vat).diff, 0);

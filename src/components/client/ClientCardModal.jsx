@@ -17,6 +17,8 @@ import ClientChatPanel from './ClientChatPanel';
 import ClientSettlementPanel from './ClientSettlementPanel';
 import ClientQCPanel from './ClientQCPanel';
 import ClientShipmentPanel from './ClientShipmentPanel';
+import ClientFactoryCheck from './ClientFactoryCheck';
+import ClientClaimPanel from './ClientClaimPanel';
 import ClientSharedFiles from '@/components/client/ClientSharedFiles';
 
 const TABS = ['overview', 'quotation', 'qc', 'chat', 'settlement', 'files'];
@@ -68,6 +70,7 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
               <TabsContent value="overview" className="mt-4">
                 <ClientShipmentPanel cardId={data.card.id} shipments={data.shipments || []} onChanged={refetch} />
                 <ClientMilestonePanel milestones={data.milestones} />
+                <ClientFactoryCheck check={data.factory_check || null} />
                 <ClientOverviewPanel card={data.card} />
               </TabsContent>
               <TabsContent value="quotation" className="mt-4">
@@ -75,13 +78,14 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
               </TabsContent>
               <TabsContent value="qc" className="mt-4">
                 <ClientQCPanel cardId={data.card.id} reports={data.qc_reports || []} spec={data.quality_spec || null} />
+                <ClientClaimPanel cardId={data.card.id} claims={data.claims || []} onChanged={refetch} />
               </TabsContent>
               <TabsContent value="chat" className="mt-4">
                 <ClientChatPanel cardId={data.card.id} chats={data.chats || []} />
               </TabsContent>
               <TabsContent value="files" className="mt-4"><ClientSharedFiles cardId={data.card.id} /></TabsContent>
               <TabsContent value="settlement" className="mt-4">
-                <ClientSettlementPanel stages={data.payment_stages || []} />
+                <ClientSettlementPanel stages={data.payment_stages || []} factoryPayment={data.factory_payment || null} />
               </TabsContent>
             </Tabs>
           </>

@@ -269,6 +269,11 @@
           }
         }
       }
+    },
+    "client_pays_factory": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uace0\uac1d\uc0ac\uac00 \uacf5\uc7a5\uc5d0 \uc9c1\uc811 \uc1a1\uae08 (\uc6d4\uc815\uc561 \uad00\ub9ac\ud615). \ucf1c\uba74 \uace0\uac1d \ud3ec\ud138 \uacb0\uc81c \ud0ed\uc5d0 \uc774\uc9c0\uc2a4\uac00 \ud655\uc778\ud55c \uacf5\uc7a5 \uacc4\uc88c\uac00 \ubcf4\uc778\ub2e4"
     }
   },
   "required": [

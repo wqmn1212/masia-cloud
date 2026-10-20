@@ -17,7 +17,8 @@ export const DEST_COST_STATE = {
 export function destCostState(s) {
   if (!s?.dest_cost_estimate) return 'NONE';
   if (!s.dest_cost_sent_at) return 'DRAFT';
-  return s.dest_cost_decision || 'SENT';
+  // PENDING = 다시 보내 고객 응답을 기다리는 중
+  return s.dest_cost_decision && s.dest_cost_decision !== 'PENDING' ? s.dest_cost_decision : 'SENT';
 }
 
 // 저장·고객 화면용 고정본. 구매자(고객) 부담 항목만 담고, 요율 근거(source)는 넣지 않는다.

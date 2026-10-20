@@ -92,6 +92,11 @@ export default function TaskBoard() {
     queryKey: ['payment-stages-all'],
     queryFn: () => base44.entities.PaymentStage.list('-created_date', 1000),
   });
+  // 공장 확인 카드 상태 (생산 착수 잠금에 쓴다)
+  const { data: factoryCompanies = [] } = useQuery({
+    queryKey: ['companies-factory'],
+    queryFn: () => base44.entities.Company.filter({ company_type: 'FACTORY' }, 'company_name'),
+  });
   const { data: pendingProposals = [] } = useQuery({
     queryKey: ['ai-proposals', 'pending-all'],
     queryFn: () => base44.entities.AIProposal.filter({ status: 'PENDING' }, '-created_date', 100),
@@ -132,6 +137,11 @@ export default function TaskBoard() {
     const collectionRate = approved.reduce((sum, stage) => sum + Number(stage.percentage || 0), 0);
     if (newStatus === 'PRODUCTION' && !downPaid) {
       toast({ title: '생산 착수 잠금', description: '선금 입금 승인 후 이동할 수 있습니다.', variant: 'destructive' });
+      return;
+    }
+    const factory = card?.factory_id ? factoryCompanies.find((f) => f.id === card.factory_id) : null;
+    if (newStatus === 'PRODUCTION' && factory && factory.verification_status !== 'VERIFIED') {
+      toast({ title: '생산 착수 잠금', description: `${factory.company_name} 공장 확인 카드를 먼저 끝내 주세요 (공장 관리 > 공장 대시보드).`, variant: 'destructive' });
       return;
     }
     if (newStatus === 'DONE' && collectionRate < 100) {

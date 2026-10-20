@@ -4,7 +4,8 @@ export const DEST_COST_DECISIONS = ['ACKNOWLEDGED', 'QUESTION'];
 export function destCostState(s: any) {
   if (!s?.dest_cost_estimate) return 'NONE';
   if (!s.dest_cost_sent_at) return 'DRAFT';
-  return s.dest_cost_decision || 'SENT';
+  // PENDING = 다시 보내 고객 응답을 기다리는 중
+  return s.dest_cost_decision && s.dest_cost_decision !== 'PENDING' ? s.dest_cost_decision : 'SENT';
 }
 
 // 고객에게 보내는 값. 보내기 전(초안)은 보이지 않고, 계산 입력값·내부 메모는 넣지 않는다.

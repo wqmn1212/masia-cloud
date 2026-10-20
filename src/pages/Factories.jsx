@@ -13,6 +13,7 @@ import { Plus, Factory, MapPin, Users, Calendar, DollarSign, LayoutDashboard } f
 import { useToast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
 import FactoryDocumentTabs from '@/components/factory/FactoryDocumentTabs';
+import { FACTORY_CHECK_STATE } from '@/lib/factoryCheck';
 
 const emptyFactory = {
   company_type: 'FACTORY',
@@ -37,6 +38,17 @@ export default function Factories() {
     queryKey: ['companies-factory'],
     queryFn: () => base44.entities.Company.filter({ company_type: 'FACTORY' }, 'company_name'),
   });
+  // 공장별 지급 계좌 상태 (확인됨 / 확인 대기 / 없음)
+  const { data: accounts = [] } = useQuery({
+    queryKey: ['factory-accounts', 'all'],
+    queryFn: () => base44.entities.FactoryAccount.filter({ status: { $in: ['VERIFIED', 'PENDING'] } }, '-created_date', 500),
+  });
+  const accountBadge = (id) => {
+    const rows = accounts.filter((a) => a.factory_id === id);
+    if (rows.some((a) => a.status === 'PENDING')) return <Badge className="border-0 bg-chart-3/15 text-[10px] text-chart-3">계좌 확인 대기</Badge>;
+    if (rows.some((a) => a.status === 'VERIFIED')) return <Badge className="border-0 bg-primary/10 text-[10px] text-primary">계좌 확인됨</Badge>;
+    return <Badge className="border-0 bg-destructive/10 text-[10px] text-destructive">계좌 미확인</Badge>;
+  };
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
@@ -143,7 +155,11 @@ export default function Factories() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-base">{f.company_name}</CardTitle>
-                  <Badge variant="secondary" className="text-[10px]">공장</Badge>
+                  <div className="flex shrink-0 flex-wrap justify-end gap-1">
+                    <Badge className={`border-0 text-[10px] ${FACTORY_CHECK_STATE[f.verification_status || 'NONE'].cls}`}>{FACTORY_CHECK_STATE[f.verification_status || 'NONE'].label}</Badge>
+                    {accountBadge(f.id)}
+                    <Badge variant="secondary" className="text-[10px]">공장</Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2.5 text-sm">

@@ -77,6 +77,30 @@
           "file_uri"
         ]
       }
+    },
+    "verification_items": {
+      "type": "object",
+      "description": "\uacf5\uc7a5 \ud655\uc778 \uce74\ub4dc \ud56d\ubaa9\ubcc4 \uacb0\uacfc {\ud0a4: {status: OK|NG|NA, note}}. \ud0a4\ub294 LICENSE\u00b7SCOPE\u00b7MANUFACTURER\u00b7SITE_VISIT\u00b7EQUIPMENT"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "PARTIAL",
+        "VERIFIED",
+        "FLAGGED"
+      ],
+      "description": "\uacf5\uc7a5 \ud655\uc778 \uacb0\uacfc \uc694\uc57d. VERIFIED \uc5ec\uc57c \uc0dd\uc0b0 \ucc29\uc218 \uac00\ub2a5, FLAGGED \ub294 \ubb38\uc81c \ud56d\ubaa9 \uc788\uc74c"
+    },
+    "verification_visited_at": {
+      "type": "string",
+      "description": "\uacf5\uc7a5 \ud604\uc7a5 \ubc29\ubb38\uc77c YYYY-MM-DD"
+    },
+    "verification_checked_by_name": {
+      "type": "string"
+    },
+    "verification_updated_at": {
+      "type": "string"
     }
   },
   "required": [

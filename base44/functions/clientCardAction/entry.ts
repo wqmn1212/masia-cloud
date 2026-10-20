@@ -7,7 +7,7 @@ import { QC_DECISIONS, SPEC_DECISIONS, latestSentSpecs } from '../../shared/clie
 import { DEST_COST_DECISIONS, destCostState } from '../../shared/destCost.ts';
 
 // 고객이 수행 가능한 쓰기 동작: 채팅 작성 · 요구사항(hq_requirements) 수정 · 공개된 검수 결과의 출고 승인/보류
-// · 보낸 품질 기준서의 승인/수정 요청 · 선적 도착지 비용 예상액의 확인/문의.
+// · 보낸 품질 기준서의 승인/수정 요청 · 선적 도착지 비용 예상액의 확인/문의 · 받은 물건의 불량 신고(클레임).
 // 그 외 필드는 서버에서 아예 받지 않으므로 프런트 우회로 변경할 수 없다.
 export default async function (req) {
   try {
@@ -15,7 +15,7 @@ export default async function (req) {
     const auth = await requireClient(base44);
     if (auth.error) return auth.error;
 
-    const { card_id, action, message, message_cn, hq_requirements, hq_requirements_cn, attachments, report_id, spec_id, shipment_id, sent_at, decision, note } = await req.json();
+    const { card_id, action, message, message_cn, hq_requirements, hq_requirements_cn, attachments, report_id, spec_id, shipment_id, sent_at, decision, note, claim } = await req.json();
     if (!card_id || !action) return Response.json({ error: 'card_id, action 이 필요합니다' }, { status: 400 });
 
     const svc = base44.asServiceRole;
@@ -213,6 +213,50 @@ export default async function (req) {
         });
       } catch (_e) { /* 알림 실패가 고객 판단을 막지 않는다 */ }
       return Response.json({ ok: true, decision, decided_at: decidedAt });
+    }
+
+    if (action === 'claim_create') {
+      const c = claim && typeof claim === 'object' ? claim : {};
+      const title = String(c.title || '').trim().slice(0, 200);
+      const description = String(c.description || '').trim().slice(0, 4000);
+      if (!title || !description) return Response.json({ error: '불량 요약과 내용을 적어 주세요' }, { status: 400 });
+      const qty = (v: unknown) => (v === '' || v == null || !Number.isFinite(Number(v)) || Number(v) < 0 ? null : Math.round(Number(v)));
+      // 사진은 비공개 저장 후 카드 파일에 '불량 신고 사진'으로 연결 (고객·담당자 모두 열람)
+      const files = await uploadPrivateAttachments(svc, attachments);
+      if (files.length) {
+        await svc.entities.CardAttachment.bulkCreate(files.map((f) => ({
+          tenant_id: card.tenant_id, card_id: card.id, file_name: f.name, file_type: (f.name.split('.').pop() || '').toLowerCase(),
+          file_url: f.url, document_type: 'CLAIM_PHOTO', client_visible: true, uploader_name: senderName,
+        })));
+      }
+      const photos = files.length ? (await svc.entities.CardAttachment.filter({ card_id: card.id, document_type: 'CLAIM_PHOTO' }, '-created_date', 50)).filter((a) => files.some((f) => f.url === a.file_url)) : [];
+      const now = new Date().toISOString();
+      const saved = await svc.entities.QualityClaim.create({
+        tenant_id: card.tenant_id, card_id: card.id, client_id: card.client_id, title, description,
+        defect_qty: qty(c.defect_qty), received_qty: qty(c.received_qty), lot_note: String(c.lot_note || '').trim().slice(0, 300),
+        photo_ids: photos.map((p) => p.id), status: 'SUBMITTED', submitted_by_name: senderName, submitted_at: now,
+        history: [{ at: now, status: 'SUBMITTED', by: senderName, note: '' }],
+      });
+      // 공장 전달용 중국어 번역 (실패해도 접수는 유지, 담당자 화면에서 다시 번역 가능)
+      try { await fillMissingTranslation(svc, 'QualityClaim', saved, ['title', 'description'], 'zh'); } catch (_e) { /* 번역 실패가 접수를 막지 않는다 */ }
+      try {
+        await svc.entities.ProjectAuditLog.create({
+          tenant_id: card.tenant_id, card_id: card.id, event_type: 'CLAIM_SUBMITTED',
+          actor_id: auth.user.id, actor_name: senderName, details: `불량 신고: ${title}${saved.defect_qty != null ? ` (불량 ${saved.defect_qty}개)` : ''}`,
+        });
+      } catch (_e) { /* 기록 실패가 접수를 막지 않는다 */ }
+      try {
+        const staff = await internalUsersOfTenant(svc, card.tenant_id);
+        await notifyUsers(svc, staff, {
+          type: 'claim_submitted',
+          title: `[불량 신고] ${card.title}`,
+          body: `${senderName}: ${title}${saved.defect_qty != null ? ` · 불량 ${saved.defect_qty}개` : ''}${photos.length ? ` · 사진 ${photos.length}장` : ''}\n${description.slice(0, 300)}`,
+          link: `/task-board?card=${card.id}`,
+          task_card_id: card.id,
+          card_title: card.title,
+        });
+      } catch (_e) { /* 알림 실패가 접수를 막지 않는다 */ }
+      return Response.json({ ok: true, id: saved.id });
     }
 
     return Response.json({ error: '지원하지 않는 동작입니다' }, { status: 400 });
