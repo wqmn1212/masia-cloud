@@ -32,7 +32,7 @@ const Num = ({ value, onChange, placeholder, step, suffix }) => (
 
 const Pick = ({ value, onChange, options }) => (
   <div className="relative">
-    <select className={cn(inputCls, 'appearance-none pr-9')} value={value} onChange={(e) => onChange(e.target.value)}>
+    <select className={cn(inputCls, 'appearance-none pr-9 text-[16px]')} value={value} onChange={(e) => onChange(e.target.value)}>
       {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
     <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-landing-muted2" />

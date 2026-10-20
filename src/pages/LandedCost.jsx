@@ -92,7 +92,7 @@ export default function LandedCost() {
         <a href="#result" className="fixed inset-x-3 bottom-3 z-40 flex items-center justify-between gap-3 rounded-[12px] bg-landing-ink px-4 py-3 text-white shadow-[0_8px_24px_#17171940] lg:hidden">
           <span className="min-w-0">
             <span className="block text-[11.5px] text-landing-dark-body">따로 낼 돈 (부가세 제외)</span>
-            <span className="block truncate text-[18px] font-extrabold tabular-nums">{fmtWon(result.totals.buyerExtraExVat)}</span>
+            <span className="block truncate text-[18px] font-extrabold">{fmtWon(result.totals.buyerExtraExVat)}</span>
           </span>
           <span className="shrink-0 text-[13px] font-bold">결과 보기 ↓</span>
         </a>

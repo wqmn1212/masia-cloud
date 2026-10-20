@@ -19,7 +19,7 @@ function Summary({ t, units }) {
     <div className={cn(card, 'p-6')}>
       <div className={eyebrow}>RESULT</div>
       <p className="mt-2 text-[14px] text-landing-body">공장 견적 외에 따로 낼 돈 <span className="text-landing-muted">(예상, 부가세 제외)</span></p>
-      <p className="mt-1 text-[40px] font-extrabold leading-[1.15] tracking-[-1px] tabular-nums text-landing-brand">{fmtWon(t.buyerExtraExVat)}</p>
+      <p className="mt-1 text-[40px] font-extrabold leading-[1.15] tracking-[-1.2px] text-landing-brand">{fmtWon(t.buyerExtraExVat)}</p>
       <p className="mt-2 text-[13px] text-landing-muted">범위 {fmtWon(t.buyerExtraExVatRange.low)} ~ {fmtWon(t.buyerExtraExVatRange.high)}</p>
       {t.buyerVat > 0 && <p className="mt-1 text-[13px] text-landing-muted">+ 수입 부가세 {fmtWon(t.buyerVat)} · 통관 때 납부하고 사업자는 매입세액으로 돌려받습니다</p>}
       <dl className="mt-5 grid grid-cols-1 border-t border-[#dedee1] sm:grid-cols-3">
@@ -30,7 +30,7 @@ function Summary({ t, units }) {
         ].map(([k, v], i) => (
           <div key={k} className={cn('flex min-w-0 items-baseline justify-between gap-3 border-b border-[#efeff0] py-2.5 sm:block sm:border-b-0 sm:py-0 sm:pt-4', i > 0 && 'sm:border-l sm:border-[#e6e6e8] sm:pl-4')}>
             <dt className="text-[12.5px] text-landing-muted">{k}</dt>
-            <dd className="mt-0.5 truncate text-[17px] font-extrabold tracking-[-.4px] tabular-nums text-landing-ink">{v}</dd>
+            <dd className="mt-0.5 truncate text-[17px] font-extrabold tracking-[-.4px] text-landing-ink">{v}</dd>
           </div>
         ))}
       </dl>
@@ -47,7 +47,7 @@ function Segments({ segments }) {
         <div key={s.key} className={cn('min-w-0 px-3 py-3.5', s.payer === 'BUYER' ? 'bg-landing-tint-soft' : 'bg-white')}>
           <div className="text-[11px] font-extrabold text-landing-brand">{s.key}</div>
           <div className="mt-0.5 truncate text-[13px] font-bold text-landing-ink2">{s.short}</div>
-          <div className={cn('mt-1 truncate text-[14px] font-extrabold tabular-nums', s.payer === 'BUYER' ? 'text-landing-brand' : 'text-landing-ink')}>{s.amount > 0 ? fmtWon(s.amount) : '-'}</div>
+          <div className={cn('mt-1 truncate text-[14px] font-extrabold', s.payer === 'BUYER' ? 'text-landing-brand' : 'text-landing-ink')}>{s.amount > 0 ? fmtWon(s.amount) : '-'}</div>
           <div className="mt-1.5"><PayerTag payer={s.payer} /></div>
         </div>
       ))}
@@ -63,7 +63,7 @@ function Lines({ result }) {
           <summary className="flex cursor-pointer list-none items-center gap-2 bg-landing-page px-4 py-3">
             <span className="text-[14px] font-bold text-landing-ink">{s.key}. {s.label}</span>
             <PayerTag payer={s.payer} />
-            <span className="ml-auto text-[14px] font-extrabold tabular-nums text-landing-ink">{fmtWon(s.amount)}</span>
+            <span className="ml-auto text-[14px] font-extrabold text-landing-ink">{fmtWon(s.amount)}</span>
             <span className="text-[12px] text-landing-muted2 group-open:rotate-180">▾</span>
           </summary>
           <ul className="divide-y divide-landing-line">
@@ -76,7 +76,7 @@ function Lines({ result }) {
                   </p>
                   <p className="mt-0.5 text-[12.5px] leading-[1.6] text-landing-muted">{l.basis}{l.note ? ` · ${l.note}` : ''}</p>
                 </div>
-                <span className="shrink-0 text-[14px] font-bold tabular-nums text-landing-ink">{fmtWon(l.amount)}</span>
+                <span className="shrink-0 text-[14px] font-bold text-landing-ink">{fmtWon(l.amount)}</span>
               </li>
             ))}
           </ul>
@@ -107,10 +107,10 @@ function Compare({ rows, current }) {
                 {r.allCosts === best && <span className="ml-1.5 rounded-full bg-landing-brand px-2 py-0.5 text-[11px] font-extrabold text-white">{r.verifiedShare < 0.5 ? '최저 (추정)' : '최저'}</span>}
                 {r.blocked && <span className="ml-1.5 text-[12px] font-bold text-landing-muted">배터리 제한</span>}
               </td>
-              <td className="whitespace-nowrap px-3 py-3 text-right font-extrabold tabular-nums text-landing-ink">{fmtWon(r.allCosts)}</td>
-              <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-landing-ink">{r.perUnitAll ? fmtWon(r.perUnitAll) : '-'}</td>
+              <td className="whitespace-nowrap px-3 py-3 text-right font-extrabold text-landing-ink">{fmtWon(r.allCosts)}</td>
+              <td className="whitespace-nowrap px-3 py-3 text-right text-landing-ink">{r.perUnitAll ? fmtWon(r.perUnitAll) : '-'}</td>
               <td className="whitespace-nowrap px-3 py-3 text-landing-muted">{r.transit}</td>
-              <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-landing-muted">{Math.round(r.verifiedShare * 100)}%</td>
+              <td className="whitespace-nowrap px-3 py-3 text-right text-landing-muted">{Math.round(r.verifiedShare * 100)}%</td>
             </tr>
           ))}
         </tbody>
@@ -167,7 +167,7 @@ export default function LandingCostResult({ result, compare }) {
           <div className="mt-3 rounded-[10px] border border-dashed border-landing-line3 px-4 py-3">
             <p className="text-[13px] font-bold text-landing-ink2">상황에 따라 더 생길 수 있는 비용 (합계에 미포함)</p>
             {result.variables.map((l) => (
-              <p key={l.code} className="mt-1 flex justify-between gap-3 text-[13px] text-landing-muted"><span>{l.label} · {l.basis}</span><span className="tabular-nums">{fmtWon(l.amount)}</span></p>
+              <p key={l.code} className="mt-1 flex justify-between gap-3 text-[13px] text-landing-muted"><span>{l.label} · {l.basis}</span><span>{fmtWon(l.amount)}</span></p>
             ))}
           </div>
         )}
