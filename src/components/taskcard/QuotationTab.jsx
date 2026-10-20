@@ -17,7 +17,7 @@ import QuoteOptionsEditor, { optionToUSD } from '@/components/quotation/QuoteOpt
 import SettlementFields from '@/components/quotation/SettlementFields';
 import { INCOTERMS_2020, LEGACY_INCOTERMS } from '@/lib/incoterms';
 import LogisticsEstimator from '@/components/quotation/LogisticsEstimator';
-import { calcCbm } from '@/lib/logisticsEstimator';
+import { calcCbm } from '@/lib/landedCost';
 import QuotationHistoryButton from '@/components/quotation/QuotationHistoryButton';
 import ManualExchangeRates from '@/components/quotation/ManualExchangeRates';
 import CurrencyPanel from '@/components/quotation/CurrencyPanel';

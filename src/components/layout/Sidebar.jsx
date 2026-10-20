@@ -4,7 +4,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import {
   LayoutDashboard, Factory, FileText, Shield, Users,
   Clock, Wrench, Package, ChevronLeft, ChevronRight, Cloud, Calculator, ListChecks, Kanban,
-  ShieldCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, Inbox, Images, BookOpen, Megaphone, CalendarOff, ScanSearch, Palette, Handshake
+  ShieldCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, Inbox, Images, BookOpen, Megaphone, CalendarOff, ScanSearch, Palette, Handshake, Ship
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { canAccessPath, CLIENT_MENU_OPTIONS } from '@/lib/menuPermissions';
@@ -26,6 +26,7 @@ const navSectionDefs = [
       { path: '/quotations', icon: FileText, labelKey: 'nav.quotations' },
       { path: '/contracts', icon: FileSignature, labelKey: 'nav.contracts' },
       { path: '/agreements', icon: Handshake, labelKey: 'nav.agreements' },
+      { path: '/logistics-rates', icon: Ship, labelKey: 'nav.logisticsRates' },
       { path: '/decisions', icon: BookMarked, labelKey: 'nav.decisions' },
       { path: '/bom-extractor', icon: Boxes, labelKey: 'nav.bom' },
       { path: '/mold-review', icon: ScanSearch, labelKey: 'nav.moldReview' },

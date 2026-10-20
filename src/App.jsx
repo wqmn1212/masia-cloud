@@ -57,6 +57,8 @@ const Marketing = lazy(() => import('@/pages/Marketing'));
 const ChinaHolidays = lazy(() => import('@/pages/ChinaHolidays'));
 const MyWork = lazy(() => import('@/pages/MyWork'));
 const UserGuide = lazy(() => import('@/pages/UserGuide'));
+const LandedCost = lazy(() => import('@/pages/LandedCost'));
+const LogisticsRates = lazy(() => import('@/pages/LogisticsRates'));
 
 const Spinner = () => (
   <div className="fixed inset-0 flex items-center justify-center">
@@ -73,6 +75,7 @@ const AuthenticatedApp = () => {
   if (location.pathname === '/about') return <About />;
   if (location.pathname === '/pricing') return <Pricing />;
   if (location.pathname === '/cloud') return <Cloud />;
+  if (location.pathname === '/tools/landed-cost') return <Suspense fallback={<Spinner />}><LandedCost /></Suspense>;
   if (location.pathname === '/cloud-guide') return <Navigate to="/cloud" replace />;
   if (location.pathname === '/portfolio' || location.pathname.startsWith('/portfolio/')) {
     return (
@@ -147,6 +150,7 @@ const AuthenticatedApp = () => {
         <Route path="/bom-extractor" element={<BomExtractor />} />
         <Route path="/mold-review" element={<MoldReview />} />
         <Route path="/agreements" element={<Agreements />} />
+        <Route path="/logistics-rates" element={<LogisticsRates />} />
         <Route path="/artcraft" element={<ArtCraft />} />
         <Route path="/factories/:factoryId/dashboard" element={<FactoryDashboard />} />
         <Route path="/clients/:clientId/dashboard" element={<ClientDashboard />} />
