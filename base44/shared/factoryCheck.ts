@@ -11,7 +11,8 @@ const FACTORY_CHECKS = [
 export async function clientFactoryCheck(svc: any, card: any) {
   if (!card?.factory_id) return null;
   const f = await svc.entities.Company.get(card.factory_id).catch(() => null);
-  if (!f || f.company_type !== 'FACTORY' || f.tenant_id !== card.tenant_id) return null;
+  // 예전에 팀 없이 만든 공장도 카드가 가리키는 공장이면 보여 준다 (다른 팀 공장은 제외)
+  if (!f || f.company_type !== 'FACTORY' || (f.tenant_id && f.tenant_id !== card.tenant_id)) return null;
   const items = f.verification_items || {};
   return {
     status: f.verification_status || 'NONE',

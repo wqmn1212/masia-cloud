@@ -20,7 +20,11 @@ export default function FactoryMultiSelect({ selectedFactories = [], onChange })
   });
 
   const createMutation = useMutation({
-    mutationFn: (name) => base44.entities.Company.create({ company_type: 'FACTORY', company_name: name }),
+    // 소속 팀(tenant_id)을 함께 저장해야 담당자(service·sub)가 보고 고칠 수 있다
+    mutationFn: async (name) => {
+      const me = await base44.auth.me().catch(() => null);
+      return base44.entities.Company.create({ company_type: 'FACTORY', company_name: name, ...(me?.tenant_id ? { tenant_id: me.tenant_id } : {}) });
+    },
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['companies-factory'] });
       addFactory({ id: created.id, name: created.company_name });
