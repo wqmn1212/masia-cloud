@@ -337,7 +337,7 @@ export function calcLandedCost(input, rates = mergeRates()) {
   if (['FOB', 'CFR', 'CIF'].includes(term) && (mode === 'AIR' || mode === 'EXPRESS')) warnings.push(`${term} 는 해상 전용 조건입니다. 항공·특송은 FCA·CPT·CIP 로 계약하는 것이 맞습니다. 계산은 같은 구간 기준으로 했습니다.`);
   if (mode === 'SEA_LCL' && cbm > 0 && cbm < 1) warnings.push(`LCL 은 최소 1 R/T 로 청구됩니다. ${fmtNum(cbm)}CBM 도 1CBM 으로 계산했습니다.`);
   if (mode === 'SEA_LCL' && cbm >= 15) warnings.push('15CBM 이상이면 FCL 20ft 가 더 저렴할 수 있습니다. 비교 표를 확인하세요.');
-  if (['CIF', 'CFR', 'FOB', 'FCA', 'EXW'].includes(term) && mode !== 'EXPRESS') warnings.push(`${term} 조건에서는 한국 도착지 비용(D)이 별도로 청구됩니다. 출발 전에 고객에게 이 금액을 안내하세요.`);
+  if (['CIF', 'CFR', 'FOB', 'FCA', 'EXW'].includes(term) && mode !== 'EXPRESS') warnings.push(`${term} 조건에서는 한국 도착 후 비용(D)이 공장 견적과 별도로 청구됩니다. 배가 출발하기 전에 이 금액을 확인해 두세요.`);
   if (term === 'CIF' && mode === 'SEA_LCL' && lines.some((l) => l.code === 'BAF_CAF')) warnings.push('CIF 운임에 유류·환율 할증료가 포함됐는지 판매자에게 확인하세요. 포함됐다면 도착지 할증료는 이중 청구입니다.');
 
   if (needsCargo) warnings.unshift('화물 부피나 무게를 넣어야 정확히 계산됩니다. 지금은 최소 청구 단위로만 계산했습니다.');
