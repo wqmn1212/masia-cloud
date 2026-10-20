@@ -7,11 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { IMPORT_REQS, REQ_STATUS, pendingReqs, reqDone } from '@/lib/importRequirements';
+import useCardAttachments from '@/components/files/useCardAttachments';
+import DocChips from '@/components/files/DocChips';
 
 const sel = 'h-8 rounded-md border bg-background px-2 text-xs';
 
 // 수입 요건 확인: 발주 전에 이 제품에 필요한 인증·신고를 고르고 진행 상태를 남긴다. 남은 요건이 있으면 출항 전에 경고.
-export default function ImportRequirementsPanel({ card, user }) {
+export default function ImportRequirementsPanel({ card }) {
   const qc = useQueryClient();
   const [list, setList] = useState(card.import_requirements || []);
   const [custom, setCustom] = useState('');
@@ -27,6 +29,8 @@ export default function ImportRequirementsPanel({ card, user }) {
     onError: (e) => toast({ title: '저장하지 못했습니다', description: e.message, variant: 'destructive' }),
   });
   const pending = pendingReqs(list).length;
+  const { data: attachments = [] } = useCardAttachments(card.id);
+  const certs = attachments.filter((a) => ['CERTIFICATE', 'TEST_REPORT'].includes(a.document_type));
   return (
     <section className="mt-6 space-y-3 rounded-xl border p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -60,6 +64,10 @@ export default function ImportRequirementsPanel({ card, user }) {
           ))}
         </ul>
       )}
+      <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+        <span>올린 인증서·성적서</span>
+        {certs.length ? <DocChips docs={certs} max={4} /> : <span>없음 · 위 &lsquo;무역서류 업로드&rsquo;에서 &lsquo;인증서&rsquo;·&lsquo;성적서&rsquo;로 올려 주세요</span>}
+      </div>
       <div className="flex flex-wrap items-center gap-2">
         <Input className="h-8 max-w-xs text-xs" placeholder="그 외 요건 직접 추가" value={custom} onChange={(e) => setCustom(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addCustom()} />
         <Button size="sm" variant="outline" className="h-8 gap-1 text-xs" onClick={addCustom}><Plus className="h-3 w-3" />추가</Button>

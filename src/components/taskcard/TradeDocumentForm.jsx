@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { DOCUMENT_TYPES } from '@/components/files/documentTypes';
+import { DOCUMENT_TYPES, TRADE_DOCUMENT_GROUPS } from '@/components/files/documentTypes';
 import CompanyBankDocuments from '@/components/files/CompanyBankDocuments';
 export default function TradeDocumentForm({ card, user }) {
   const qc = useQueryClient(), [type, setType] = React.useState('INVOICE_CI'), [folder, setFolder] = React.useState(''), [visible, setVisible] = React.useState(false), [file, setFile] = React.useState(null), fileInput = React.useRef(null);
@@ -15,7 +15,7 @@ export default function TradeDocumentForm({ card, user }) {
   }, onSuccess: () => { qc.invalidateQueries({ queryKey: ['card_attachments', card.id] }); qc.invalidateQueries({ queryKey: ['shipment-attachments', card.id] }); qc.invalidateQueries({ queryKey: ['company-files'] }); qc.invalidateQueries({ queryKey: ['client-attachments'] }); qc.invalidateQueries({ queryKey: ['client-shared-files', card.id] }); setFile(null); if (fileInput.current) fileInput.current.value = ''; } });
   const allowed = ['master', 'service', 'sub'].includes(user?.account_tier);
   return <div className="space-y-4"><form className="rounded-xl border bg-muted/20 p-3 space-y-3" onSubmit={e => { e.preventDefault(); save.mutate(null); }}><h3 className="text-sm font-semibold">무역서류 업로드</h3>
-    <fieldset disabled={!allowed || save.isPending} className="space-y-3"><div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><label className="text-xs">문서 유형<select className="w-full h-9 rounded-md border bg-background px-2 mt-1" value={type} onChange={e => setType(e.target.value)}>{Object.entries(DOCUMENT_TYPES).filter(([key]) => key !== 'GENERAL').map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label><label className="text-xs">보관 폴더<select className="w-full h-9 rounded-md border bg-background px-2 mt-1" value={folder} onChange={e => setFolder(e.target.value)}><option value="">루트</option>{(folders.data || []).map(f => <option key={f.id} value={f.id}>{f.folder_name}</option>)}</select></label></div>
+    <fieldset disabled={!allowed || save.isPending} className="space-y-3"><div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><label className="text-xs">문서 유형<select className="w-full h-9 rounded-md border bg-background px-2 mt-1" value={type} onChange={e => setType(e.target.value)}>{TRADE_DOCUMENT_GROUPS.map(g => <optgroup key={g.label} label={g.label}>{g.types.map(key => <option key={key} value={key}>{DOCUMENT_TYPES[key]}</option>)}</optgroup>)}</select></label><label className="text-xs">보관 폴더<select className="w-full h-9 rounded-md border bg-background px-2 mt-1" value={folder} onChange={e => setFolder(e.target.value)}><option value="">루트</option>{(folders.data || []).map(f => <option key={f.id} value={f.id}>{f.folder_name}</option>)}</select></label></div>
     <Input ref={fileInput} type="file" required accept=".pdf,.png,.jpg,.jpeg,.webp,.xlsx,.xls,.doc,.docx" onChange={e => setFile(e.target.files?.[0] || null)} />
     <label className="flex gap-2 items-center text-sm"><input type="checkbox" checked={visible} onChange={e => setVisible(e.target.checked)} />고객에게 공개 (카드도 공개되어야 함)</label>
     <div className="flex justify-end"><Button type="submit" disabled={!file || !allowed || save.isPending}>{save.isPending ? '저장 중...' : '서류 업로드'}</Button></div></fieldset>

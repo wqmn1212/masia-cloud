@@ -62,7 +62,13 @@
         "BATTERY_SPEC",
         "DG_DECLARATION",
         "CLAIM_PHOTO",
-        "MOLD_OWNERSHIP"
+        "MOLD_OWNERSHIP",
+        "REMITTANCE_DOWN",
+        "REMITTANCE_BALANCE",
+        "SPEC_SHEET",
+        "TEST_REPORT",
+        "CERTIFICATE",
+        "LOGISTICS_INVOICE"
       ],
       "default": "GENERAL"
     },
