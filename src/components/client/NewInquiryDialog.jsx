@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Plus, X, Upload } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -26,7 +26,7 @@ const fileToBase64 = (file) =>
     reader.readAsDataURL(file);
   });
 
-export default function NewInquiryDialog({ open, onClose }) {
+export default function NewInquiryDialog({ open, onClose, initialTitle = '', initialDetail = '' }) {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [title, setTitle] = useState('');
@@ -35,6 +35,13 @@ export default function NewInquiryDialog({ open, onClose }) {
   const [targetPrice, setTargetPrice] = useState('');
   const [detail, setDetail] = useState('');
   const [files, setFiles] = useState([]);
+
+  // 다른 화면(물류비 계산기 등)에서 내용을 채워 열 때
+  useEffect(() => {
+    if (!open) return;
+    if (initialTitle) setTitle(initialTitle);
+    if (initialDetail) setDetail(initialDetail);
+  }, [open, initialTitle, initialDetail]);
 
   const reset = () => {
     setTitle('');

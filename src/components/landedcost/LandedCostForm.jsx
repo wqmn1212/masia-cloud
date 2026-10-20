@@ -10,13 +10,13 @@ export const EMPTY_LANDED_INPUT = {
   dutyRate: 8, fta: false, ftaRate: 0, insure: false, battery: 'NONE', storageDays: 0, usdKrw: '', actual: {},
 };
 
-// 공개 랜딩 디자인(InquiryField·카테고리 칩)과 같은 규칙
-const inputCls = 'w-full border border-landing-line3 rounded-[9px] px-[13px] py-[11px] text-[14.5px] outline-none bg-landing-input text-landing-ink placeholder:text-landing-muted3 focus:border-landing-brand focus:bg-white transition-colors';
-const labelCls = 'text-[13px] font-bold text-landing-ink2';
-const hintCls = 'text-[12.5px] leading-[1.6] text-landing-muted';
+// 고객 포털(앱) 디자인 규칙
+const inputCls = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring';
+const labelCls = 'text-xs font-semibold';
+const hintCls = 'text-[11px] leading-relaxed text-muted-foreground';
 
 const Field = ({ label, hint, children, className }) => (
-  <label className={cn('lm-field flex min-w-0 flex-col gap-1.5', className)}>
+  <label className={cn('flex min-w-0 flex-col gap-1.5', className)}>
     <span className={labelCls}>{label}</span>
     {children}
     {hint && <span className={hintCls}>{hint}</span>}
@@ -26,28 +26,28 @@ const Field = ({ label, hint, children, className }) => (
 const Num = ({ value, onChange, placeholder, step, suffix }) => (
   <div className="relative">
     <input type="number" inputMode="decimal" min="0" step={step} className={cn(inputCls, suffix && 'pr-14')} value={value ?? ''} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
-    {suffix && <span className="pointer-events-none absolute right-[13px] top-1/2 -translate-y-1/2 text-[13px] text-landing-muted2">{suffix}</span>}
+    {suffix && <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{suffix}</span>}
   </div>
 );
 
 const Pick = ({ value, onChange, options }) => (
   <div className="relative">
-    <select className={cn(inputCls, 'appearance-none pr-9 text-[16px]')} value={value} onChange={(e) => onChange(e.target.value)}>
+    <select className={cn(inputCls, 'appearance-none pr-9')} value={value} onChange={(e) => onChange(e.target.value)}>
       {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
-    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-landing-muted2" />
+    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
   </div>
 );
 
-// 문의 폼 카테고리 칩과 같은 선택 버튼
+// 선택 버튼
 const Chips = ({ value, onChange, options, render }) => (
   <div className="flex flex-wrap gap-[7px]">
     {options.map((o) => {
       const on = value === o.value;
       return (
         <button key={o.value} type="button" aria-pressed={on} onClick={() => onChange(o.value)}
-          className={cn('flex-none whitespace-nowrap rounded-lg border px-[13px] py-2 text-[13px] font-semibold transition-colors',
-            on ? 'border-landing-brand bg-landing-tint text-landing-brand' : 'border-landing-line2 bg-white text-landing-ink2 hover:border-landing-line3')}>
+          className={cn('flex-none whitespace-nowrap rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors',
+            on ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-foreground hover:bg-muted')}>
           {render ? render(o) : o.label}
         </button>
       );
@@ -56,17 +56,17 @@ const Chips = ({ value, onChange, options, render }) => (
 );
 
 const Step = ({ no, title, children }) => (
-  <section className="border-t border-landing-line pt-6 first:border-0 first:pt-0">
-    <div className="text-[11px] font-extrabold tracking-[.08em] text-landing-brand">STEP {no}</div>
-    <h2 className="mt-1 text-[18px] font-extrabold tracking-[-.4px] text-landing-ink">{title}</h2>
-    <div className="mt-4 space-y-4">{children}</div>
+  <section className="border-t pt-5 first:border-0 first:pt-0">
+    <div className="text-[10px] font-bold tracking-wider text-primary">STEP {no}</div>
+    <h2 className="mt-0.5 text-sm font-bold">{title}</h2>
+    <div className="mt-3 space-y-3">{children}</div>
   </section>
 );
 
 const TERM_SHORT = { EXW: '공장 인도', FCA: '운송인 인도', FOB: '중국 항구 선적', CFR: '한국 항구까지 운임', CIF: '한국 항구까지 운임·보험', DAP: '문 앞 (세금 별도)', DDP: '문 앞 (세금 포함)' };
 const MODE_SHORT = { SEA_LCL: '해상 LCL', SEA_FCL20: 'FCL 20ft', SEA_FCL40: 'FCL 40ft', AIR: '항공', EXPRESS: '특송' };
 
-// 공개 물류비 계산기 입력
+// 고객 포털 물류비 계산기 입력
 export default function LandedCostForm({ value, onChange, defaultUsdKrw }) {
   const [more, setMore] = useState(false);
   const v = value;
@@ -132,25 +132,25 @@ export default function LandedCostForm({ value, onChange, defaultUsdKrw }) {
             ? <Field label="한중 FTA 협정 세율"><Num value={v.ftaRate} onChange={set('ftaRate')} step="0.1" suffix="%" /></Field>
             : <div />}
         </div>
-        <label className="flex cursor-pointer items-center gap-2 text-[14px] text-landing-ink2">
-          <input type="checkbox" className="h-4 w-4 accent-[#0066FF]" checked={!!v.fta} onChange={(e) => onChange({ ...v, fta: e.target.checked })} />
+        <label className="flex cursor-pointer items-center gap-2 text-sm">
+          <input type="checkbox" className="h-4 w-4 accent-[hsl(var(--primary))]" checked={!!v.fta} onChange={(e) => onChange({ ...v, fta: e.target.checked })} />
           한중 FTA 원산지증명서가 있습니다
         </label>
       </Step>
 
-      <div className="border-t border-landing-line pt-5">
-        <button type="button" onClick={() => setMore((m) => !m)} aria-expanded={more} className="flex items-center gap-1.5 text-[14px] font-bold text-landing-brand">
+      <div className="border-t pt-4">
+        <button type="button" onClick={() => setMore((m) => !m)} aria-expanded={more} className="flex items-center gap-1.5 text-xs font-semibold text-primary">
           <ChevronDown className={cn('h-4 w-4 transition-transform', more && 'rotate-180')} />받은 견적이 있으면 더 정확하게
         </button>
         {more && (
-          <div className="mt-4 space-y-4 rounded-[10px] border border-landing-line bg-landing-page p-4">
+          <div className="mt-4 space-y-4 rounded-lg border bg-muted/40 p-4">
             <div className="grid grid-cols-2 gap-3">
               <Field label="환율" hint={defaultUsdKrw ? `비우면 오늘 환율 ${Number(defaultUsdKrw).toLocaleString('ko-KR')}원` : '비우면 1,400원'}><Num value={v.usdKrw} onChange={set('usdKrw')} placeholder={defaultUsdKrw ? String(defaultUsdKrw) : '1400'} suffix="원/$" /></Field>
               <Field label="무료 기간 초과 보관" hint="통관이 늦어질 때"><Num value={v.storageDays} onChange={set('storageDays')} suffix="일" /></Field>
             </div>
             {!['CIF', 'DAP', 'DDP'].includes(v.term) && (
-              <label className="flex cursor-pointer items-center gap-2 text-[14px] text-landing-ink2">
-                <input type="checkbox" className="h-4 w-4 accent-[#0066FF]" checked={!!v.insure} onChange={(e) => onChange({ ...v, insure: e.target.checked })} />적하보험에 가입합니다
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <input type="checkbox" className="h-4 w-4 accent-[hsl(var(--primary))]" checked={!!v.insure} onChange={(e) => onChange({ ...v, insure: e.target.checked })} />적하보험에 가입합니다
               </label>
             )}
             <div>

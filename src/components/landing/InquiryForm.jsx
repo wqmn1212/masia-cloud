@@ -24,8 +24,8 @@ const toBase64 = (file) =>
     reader.readAsDataURL(file);
   });
 
-export default function InquiryForm({ lang, initialDetail = '' }) {
-  const [values, setValues] = useState(() => ({ ...EMPTY, detail: initialDetail }));
+export default function InquiryForm({ lang }) {
+  const [values, setValues] = useState(EMPTY);
   const [tags, setTags] = useState([]);
   const [files, setFiles] = useState([]);
   const [status, setStatus] = useState('idle');

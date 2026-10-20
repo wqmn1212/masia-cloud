@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BadgeCheck, ExternalLink, Loader2, Pencil, RotateCcw, Ship } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,7 +43,7 @@ function EditDialog({ rate, onClose }) {
           <div><Label className="text-xs">기준일</Label><Input type="date" value={f.valid_from} onChange={(e) => setF({ ...f, valid_from: e.target.value })} /></div>
           <label className="mt-6 flex items-center gap-2 text-sm"><input type="checkbox" checked={f.verified} onChange={(e) => setF({ ...f, verified: e.target.checked })} />실제 청구서로 확인</label>
         </div>
-        <div><Label className="text-xs">근거 (내부용, 공개 계산기에 안 보임)</Label><Input value={f.source} onChange={(e) => setF({ ...f, source: e.target.value })} placeholder="예: OO포워더 D/O 산정표 2026-11" /></div>
+        <div><Label className="text-xs">근거 (내부용, 고객 화면에 안 보임)</Label><Input value={f.source} onChange={(e) => setF({ ...f, source: e.target.value })} placeholder="예: OO포워더 D/O 산정표 2026-11" /></div>
         <div><Label className="text-xs">설명</Label><Textarea rows={2} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></div>
         <DialogFooter><Button onClick={() => save.mutate()} disabled={save.isPending || f.amount === ''}>{save.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}저장</Button></DialogFooter>
       </DialogContent>
@@ -111,6 +112,7 @@ function InvoiceCalibrator({ rates }) {
 }
 
 export default function LogisticsRates() {
+  const { user } = useAuth();
   const qc = useQueryClient();
   const [tab, setTab] = useState('SEA_LCL');
   const [editing, setEditing] = useState(null);
@@ -133,9 +135,9 @@ export default function LogisticsRates() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight"><Ship className="h-6 w-6 text-primary" />물류비 요율</h1>
-          <p className="mt-1 text-sm text-muted-foreground">수입 물류비 계산기(공개 페이지·견적 화면)가 쓰는 요율입니다. 실제 청구서로 확인한 요율 {verifiedCount}개 / 전체 {rates.length}개{stale ? ` · 90일 지난 요율 ${stale}개` : ''}</p>
+          <p className="mt-1 text-sm text-muted-foreground">수입 물류비 계산기(고객 포털·견적 화면)가 쓰는 요율입니다. 실제 청구서로 확인한 요율 {verifiedCount}개 / 전체 {rates.length}개{stale ? ` · 90일 지난 요율 ${stale}개` : ''}</p>
         </div>
-        <Button asChild variant="outline" size="sm" className="gap-1"><a href="/tools/landed-cost" target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" />공개 계산기 열기</a></Button>
+        {user?.account_tier === 'master' && <Button asChild variant="outline" size="sm" className="gap-1"><a href="/client/landed-cost" target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" />고객 화면 미리보기</a></Button>}
       </div>
 
       <InvoiceCalibrator rates={rates} />
@@ -176,7 +178,7 @@ export default function LogisticsRates() {
             </table>
           </div>
         )}
-        <p className="mt-3 text-[11px] text-muted-foreground">‘추정’ 요율은 시장 평균 기본값입니다. 포워더 견적을 받을 때마다 고쳐 두면 계산이 실제 청구에 가까워집니다. 근거는 내부용이라 공개 계산기에는 보이지 않습니다.</p>
+        <p className="mt-3 text-[11px] text-muted-foreground">‘추정’ 요율은 시장 평균 기본값입니다. 포워더 견적을 받을 때마다 고쳐 두면 계산이 실제 청구에 가까워집니다. 근거는 내부용이라 고객 화면에는 보이지 않습니다.</p>
       </Card>
       {editing && <EditDialog rate={editing} onClose={() => setEditing(null)} />}
     </div>

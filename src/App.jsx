@@ -57,7 +57,7 @@ const Marketing = lazy(() => import('@/pages/Marketing'));
 const ChinaHolidays = lazy(() => import('@/pages/ChinaHolidays'));
 const MyWork = lazy(() => import('@/pages/MyWork'));
 const UserGuide = lazy(() => import('@/pages/UserGuide'));
-const LandedCost = lazy(() => import('@/pages/LandedCost'));
+const ClientLandedCost = lazy(() => import('@/pages/ClientLandedCost'));
 const LogisticsRates = lazy(() => import('@/pages/LogisticsRates'));
 
 const Spinner = () => (
@@ -75,7 +75,8 @@ const AuthenticatedApp = () => {
   if (location.pathname === '/about') return <About />;
   if (location.pathname === '/pricing') return <Pricing />;
   if (location.pathname === '/cloud') return <Cloud />;
-  if (location.pathname === '/tools/landed-cost') return <Suspense fallback={<Spinner />}><LandedCost /></Suspense>;
+  // 물류비 계산기는 고객 전용 — 예전 공개 주소는 고객 포털로 보낸다 (로그인 필요)
+  if (location.pathname === '/tools/landed-cost') return <Navigate to="/client/landed-cost" replace />;
   if (location.pathname === '/cloud-guide') return <Navigate to="/cloud" replace />;
   if (location.pathname === '/portfolio' || location.pathname.startsWith('/portfolio/')) {
     return (
@@ -125,6 +126,7 @@ const AuthenticatedApp = () => {
         <Route path="/client/board" element={<ClientBoard />} />
         <Route path="/client/guide" element={<ClientGuide />} />
         <Route path="/client/mold-review" element={<MoldReview />} />
+        <Route path="/client/landed-cost" element={<ClientLandedCost />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/service-guide" element={<ServiceGuide />} />
         <Route path="/my-work" element={<MyWork />} />
