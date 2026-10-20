@@ -19,10 +19,10 @@ const DO_ITEMS = DEFAULT_RATES.filter((r) => r.mode === 'SEA_LCL' && r.segment =
 
 function EditDialog({ rate, onClose }) {
   const qc = useQueryClient();
-  const [f, setF] = useState(() => ({ amount: rate.amount, min: rate.min ?? '', verified: !!rate.verified, source: rate.source || '', note: rate.note || '', valid_from: rate.valid_from || today() }));
+  const [f, setF] = useState(() => ({ amount: rate.amount, fx_krw: rate.fx_krw ?? '', min: rate.min ?? '', verified: !!rate.verified, source: rate.source || '', note: rate.note || '', valid_from: rate.valid_from || today() }));
   const save = useMutation({
     mutationFn: async () => {
-      const data = { amount: Number(f.amount), min: f.min === '' ? null : Number(f.min), verified: f.verified, source: f.source, note: f.note, valid_from: f.valid_from, active: true };
+      const data = { amount: Number(f.amount), fx_krw: f.fx_krw === '' ? null : Number(f.fx_krw), min: f.min === '' ? null : Number(f.min), verified: f.verified, source: f.source, note: f.note, valid_from: f.valid_from, active: true };
       if (rate.id) return base44.entities.LogisticsRate.update(rate.id, data);
       const { from: _from, id: _id, ...base } = rate;
       return base44.entities.LogisticsRate.create({ ...base, ...data });
@@ -38,6 +38,7 @@ function EditDialog({ rate, onClose }) {
         <div className="grid grid-cols-2 gap-3">
           <div><Label className="text-xs">단가 ({rate.currency})</Label><Input type="number" step="any" value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} /></div>
           <div><Label className="text-xs">최소 청구액 ({rate.currency})</Label><Input type="number" step="any" value={f.min} onChange={(e) => setF({ ...f, min: e.target.value })} placeholder="없음" /></div>
+          {rate.currency === 'USD' && <div><Label className="text-xs">포워더 청구 환율 (원/$)</Label><Input type="number" value={f.fx_krw} onChange={(e) => setF({ ...f, fx_krw: e.target.value })} placeholder="비우면 시장 환율" /></div>}
           <div><Label className="text-xs">기준일</Label><Input type="date" value={f.valid_from} onChange={(e) => setF({ ...f, valid_from: e.target.value })} /></div>
           <label className="mt-6 flex items-center gap-2 text-sm"><input type="checkbox" checked={f.verified} onChange={(e) => setF({ ...f, verified: e.target.checked })} />실제 청구서로 확인</label>
         </div>
@@ -72,7 +73,7 @@ function InvoiceCalibrator({ rates }) {
     mutationFn: async () => {
       const rows = await base44.entities.LogisticsRate.filter({ mode: 'SEA_LCL', segment: 'D' }, '-created_date', 100);
       for (const d of derived) {
-        const data = { mode: 'SEA_LCL', segment: 'D', code: d.code, label: d.label, unit: d.unit, amount: d.amount, currency: d.currency, verified: true, source: src || 'D/O 산정표', valid_from: today(), active: true, note: d.note || '' };
+        const data = { mode: 'SEA_LCL', segment: 'D', code: d.code, label: d.label, unit: d.unit, amount: d.amount, currency: d.currency, ...(d.currency === 'USD' ? { fx_krw: x } : {}), verified: true, source: src || 'D/O 산정표', valid_from: today(), active: true, note: d.note || '' };
         const hit = rows.find((row) => rateKey(row) === rateKey(d));
         if (hit) await base44.entities.LogisticsRate.update(hit.id, data);
         else await base44.entities.LogisticsRate.create(data);
@@ -159,7 +160,7 @@ export default function LogisticsRates() {
                       <p className="font-medium">{r.label}{r.region ? <span className="text-muted-foreground"> · {REGION_LABEL[r.region]}</span> : ''}{r.max_cbm ? <span className="text-muted-foreground"> · {r.max_cbm}CBM 이하</span> : ''}</p>
                       {(r.note || r.source) && <p className="text-[11px] text-muted-foreground">{[r.note, r.source && `근거: ${r.source}`, r.valid_from && `기준일 ${r.valid_from}`].filter(Boolean).join(' · ')}</p>}
                     </td>
-                    <td className="py-2.5 pr-3 text-right tabular-nums">{r.currency === 'USD' ? `$${r.amount}` : r.unit === 'FACTOR' ? `${r.amount}배` : r.unit === 'PCT_GOODS' ? `${r.amount}%` : `${Number(r.amount).toLocaleString()}원`}{r.min ? <p className="text-[11px] text-muted-foreground">최소 {r.currency === 'USD' ? `$${r.min}` : `${r.min.toLocaleString()}원`}</p> : null}</td>
+                    <td className="py-2.5 pr-3 text-right tabular-nums">{r.currency === 'USD' ? <>${r.amount}{r.fx_krw ? <p className="text-[11px] text-muted-foreground">청구 환율 {Number(r.fx_krw).toLocaleString()}원</p> : null}</> : r.unit === 'FACTOR' ? `${r.amount}배` : r.unit === 'PCT_GOODS' ? `${r.amount}%` : `${Number(r.amount).toLocaleString()}원`}{r.min ? <p className="text-[11px] text-muted-foreground">최소 {r.currency === 'USD' ? `$${r.min}` : `${r.min.toLocaleString()}원`}</p> : null}</td>
                     <td className="py-2.5 pr-3 text-xs">{UNITS[r.unit]}{r.variable && <Badge variant="outline" className="ml-1 text-[10px]">변동</Badge>}</td>
                     <td className="py-2.5 pr-3">
                       {r.verified ? <Badge className="gap-0.5 border-0 bg-primary/15 text-[10px] text-primary"><BadgeCheck className="h-3 w-3" />청구서 확인</Badge> : <Badge variant="outline" className="text-[10px]">추정</Badge>}

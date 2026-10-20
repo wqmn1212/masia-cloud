@@ -53,7 +53,7 @@ export default function LandedCost() {
           </div>
           <div className="min-w-0 space-y-4">
             <LandedCostResult result={result} compare={compare} />
-            <button type="button" onClick={ask} className="w-full rounded-[10px] bg-landing-ink px-6 py-3.5 text-[15px] font-bold text-white transition-colors hover:bg-landing-brand-hover">
+            <button type="button" onClick={ask} disabled={result.needsCargo} className="w-full rounded-[10px] bg-landing-ink px-6 py-3.5 text-[15px] font-bold text-white transition-colors hover:bg-landing-brand-hover disabled:opacity-40">
               이 조건으로 정확한 견적 받기
             </button>
             <p className="text-[12px] leading-relaxed text-landing-muted2">

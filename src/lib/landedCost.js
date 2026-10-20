@@ -73,7 +73,7 @@ export const DEFAULT_RATES = [
   { mode: 'SEA_LCL', segment: 'D', code: 'WHARFAGE', label: '부두 사용료 (Wharfage)', unit: 'PER_RT', amount: 323, currency: 'KRW', verified: true, source: LCL_DO_SOURCE },
   { mode: 'SEA_LCL', segment: 'D', code: 'THC', label: '터미널 작업비 (THC)', unit: 'PER_RT', amount: 6500, currency: 'KRW', verified: true, source: LCL_DO_SOURCE },
   { mode: 'SEA_LCL', segment: 'D', code: 'DOC_FEE', label: 'D/O 서류비', unit: 'PER_SHIPMENT', amount: 40000, currency: 'KRW', verified: true, source: LCL_DO_SOURCE },
-  { mode: 'SEA_LCL', segment: 'D', code: 'BAF_CAF', label: '유류·환율 할증료 (BAF·CAF)', unit: 'PER_RT', amount: 10, currency: 'USD', verified: true, source: LCL_DO_SOURCE, note: '한중 LCL 은 할증료를 한국 도착지에서 받는 경우가 많음' },
+  { mode: 'SEA_LCL', segment: 'D', code: 'BAF_CAF', label: '유류·환율 할증료 (BAF·CAF)', unit: 'PER_RT', amount: 10, currency: 'USD', fx_krw: 1200, verified: true, source: LCL_DO_SOURCE, note: '한중 LCL 은 할증료를 한국 도착지에서 받는 경우가 많음. 포워더 자체 기준환율로 청구' },
   { mode: 'SEA_LCL', segment: 'D', code: 'CNTR_CLEANING', label: '컨테이너 청소비', unit: 'PER_RT', amount: 800, currency: 'KRW', verified: true, source: LCL_DO_SOURCE },
   { mode: 'SEA_LCL', segment: 'D', code: 'DRAYAGE', label: '부두 → 보세창고 운송', unit: 'PER_RT', amount: 7000, currency: 'KRW', verified: true, source: LCL_DO_SOURCE },
   { mode: 'SEA_LCL', segment: 'D', code: 'CFS', label: '보세창고 작업비 (CFS)', unit: 'PER_RT', amount: 18000, currency: 'KRW', verified: true, source: LCL_DO_SOURCE },
@@ -111,7 +111,7 @@ export const DEFAULT_RATES = [
   { mode: 'EXPRESS', segment: 'C', code: 'EXPRESS_FREIGHT', label: '특송 운임 (유류할증·문 앞 배송 포함)', unit: 'PER_KG', amount: 8, currency: 'USD', min: 60 },
 
   // ── 공통: 한국 내륙 운송 (LCL·항공) ───────────────────────
-  { mode: 'ALL', segment: 'F', code: 'TRUCK', label: '창고 → 고객사 트럭', unit: 'TIER', max_cbm: 4, amount: 130000, currency: 'KRW', note: '인천항 → 서울, 팔레트 2~3개 기준 실제 운임 (고객사 제공)', verified: true, source: '고객사 실제 운임 (2026-10)' },
+  { mode: 'ALL', segment: 'F', code: 'TRUCK', label: '창고 → 고객사 트럭', unit: 'TIER', max_cbm: 4, amount: 130000, currency: 'KRW', note: '인천항 → 서울, 팔레트 2~3개에 13만원 (고객사 통화 중 언급, 청구서 미확인)', source: '고객사 통화 (2026-10)' },
   { mode: 'ALL', segment: 'F', code: 'TRUCK', label: '창고 → 고객사 트럭', unit: 'TIER', max_cbm: 12, amount: 220000, currency: 'KRW' },
   { mode: 'ALL', segment: 'F', code: 'TRUCK_OVER', label: '창고 → 고객사 트럭 (12CBM 초과분)', unit: 'PER_RT_OVER', over_cbm: 12, amount: 15000, currency: 'KRW' },
   { mode: 'ALL', segment: 'F', code: 'DEST_AREA_FACTOR', label: '수도권 외 지역 배수', unit: 'FACTOR', amount: 1.4, currency: 'KRW' },
@@ -184,9 +184,11 @@ const pickRates = (rates, mode, segment, region) => {
 
 // 한 요율을 금액(원)으로. 반환: { amount, basis } 또는 null(해당 없음)
 function applyRate(r, ctx) {
-  const fx = r.currency === 'USD' ? ctx.usdKrw : 1;
+  // 포워더는 시장 환율이 아니라 자체 기준환율로 청구하는 경우가 많아, 요율에 청구 환율(fx_krw)이 있으면 그것을 쓴다
+  const billFx = n(r.fx_krw) > 0 ? n(r.fx_krw) : ctx.usdKrw;
+  const fx = r.currency === 'USD' ? billFx : 1;
   const money = (v) => (r.currency === 'USD' ? `$${fmtNum(v)}` : `${Math.round(v).toLocaleString('ko-KR')}원`);
-  const fxNote = r.currency === 'USD' ? ` × 환율 ${ctx.usdKrw.toLocaleString('ko-KR')}` : '';
+  const fxNote = r.currency === 'USD' ? ` × ${n(r.fx_krw) > 0 ? '포워더 청구 환율' : '환율'} ${billFx.toLocaleString('ko-KR')}` : '';
   const withMin = (raw, basis) => {
     const min = n(r.min);
     if (min > 0 && raw < min) return { amount: min * fx, basis: `최소 ${money(min)}${fxNote} 적용 (${basis})` };
@@ -238,6 +240,7 @@ export function calcLandedCost(input, rates = mergeRates()) {
     dutyRate = 8, fta = false, ftaRate = 0, insure = false, battery = 'NONE', storageDays = 0,
   } = input;
   const { cbm, kg } = cargoMetrics(input);
+  const needsCargo = !(cbm > 0) && !(kg > 0);
   const basis = chargeBasis(mode, cbm, kg);
   const t = TERMS.find((x) => x.value === term) || TERMS[2];
   const fx = n(usdKrw) || 1400;
@@ -331,10 +334,13 @@ export function calcLandedCost(input, rates = mergeRates()) {
   // 경고
   if (battery !== 'NONE' && (mode === 'AIR' || mode === 'EXPRESS')) warnings.push(battery === 'STANDALONE' ? '배터리 단독 운송은 항공·특송에서 대부분 거절됩니다. 해상 또는 전용 라인으로 상담이 필요합니다.' : '배터리 내장 제품은 항공·특송에서 위험물 서류(UN38.3·MSDS)와 추가 요금이 붙거나 거절될 수 있습니다.');
   if (battery !== 'NONE' && mode.startsWith('SEA')) warnings.push('배터리 제품은 위험물 서류(UN38.3·MSDS)가 필요하고 선사별 할증이 붙을 수 있습니다.');
+  if (['FOB', 'CFR', 'CIF'].includes(term) && (mode === 'AIR' || mode === 'EXPRESS')) warnings.push(`${term} 는 해상 전용 조건입니다. 항공·특송은 FCA·CPT·CIP 로 계약하는 것이 맞습니다. 계산은 같은 구간 기준으로 했습니다.`);
   if (mode === 'SEA_LCL' && cbm > 0 && cbm < 1) warnings.push(`LCL 은 최소 1 R/T 로 청구됩니다. ${fmtNum(cbm)}CBM 도 1CBM 으로 계산했습니다.`);
   if (mode === 'SEA_LCL' && cbm >= 15) warnings.push('15CBM 이상이면 FCL 20ft 가 더 저렴할 수 있습니다. 비교 표를 확인하세요.');
   if (['CIF', 'CFR', 'FOB', 'FCA', 'EXW'].includes(term) && mode !== 'EXPRESS') warnings.push(`${term} 조건에서는 한국 도착지 비용(D)이 별도로 청구됩니다. 출발 전에 고객에게 이 금액을 안내하세요.`);
   if (term === 'CIF' && mode === 'SEA_LCL' && lines.some((l) => l.code === 'BAF_CAF')) warnings.push('CIF 운임에 유류·환율 할증료가 포함됐는지 판매자에게 확인하세요. 포함됐다면 도착지 할증료는 이중 청구입니다.');
+
+  if (needsCargo) warnings.unshift('화물 부피나 무게를 넣어야 정확히 계산됩니다. 지금은 최소 청구 단위로만 계산했습니다.');
 
   // 합계와 범위: 확인된 요율 ±3%(달러 항목은 환율 ±5%), 추정 요율 ±25%
   const spread = (l) => (l.verified ? (l.currency === 'USD' ? 0.05 : 0.03) : 0.25);
@@ -346,6 +352,7 @@ export function calcLandedCost(input, rates = mergeRates()) {
   const range = (arr) => ({ low: won(arr.reduce((s, l) => s + l.amount * (1 - spread(l)), 0)), high: won(arr.reduce((s, l) => s + l.amount * (1 + spread(l)), 0)) });
   const landed = goodsKrw + buyerTotal;
   const vatBuyer = buyer.filter((l) => l.code === 'VAT').reduce((s, l) => s + l.amount, 0);
+  const buyerExVat = buyer.filter((l) => l.code !== 'VAT');
   const u = n(units);
 
   const bySegment = SEGMENTS.map((s) => {
@@ -355,12 +362,17 @@ export function calcLandedCost(input, rates = mergeRates()) {
 
   return {
     input: { mode, term, region, destArea, usdKrw: fx, goodsKrw, units: u },
+    needsCargo,
     cbm, kg, basis, customsValue: won(customsValue),
     lines, variables, warnings, bySegment,
     totals: {
       goods: won(goodsKrw),
       buyerExtra: buyerTotal,
       buyerExtraRange: range(buyer),
+      // 수입 부가세는 사업자가 매입세액으로 돌려받으므로 '실제 부담'은 부가세를 뺀 금액으로 본다
+      buyerVat: vatBuyer,
+      buyerExtraExVat: sum(buyerExVat),
+      buyerExtraExVatRange: range(buyerExVat),
       sellerIncluded: sum(seller),
       logisticsAll: sum(logistics),
       allCosts: sum(lines),
@@ -369,7 +381,7 @@ export function calcLandedCost(input, rates = mergeRates()) {
       verifiedShare: sum(logistics) > 0 ? sum(logistics.filter((l) => l.verified)) / sum(logistics) : 0,
       perUnitLanded: u > 0 ? won(landed / u) : 0,
       perUnitLogistics: u > 0 ? won(sum(logistics) / u) : 0,
-      perUnitBuyerExtra: u > 0 ? won(buyerTotal / u) : 0,
+      perUnitBuyerExtra: u > 0 ? won(sum(buyerExVat) / u) : 0,
     },
   };
 }
@@ -400,8 +412,9 @@ export function quoteNotice(result) {
     `운송 조건: ${t?.label} / ${m?.label} (${result.basis.text})`,
     `견적에 포함: ${incl.length ? incl.join(', ') : '없음 (운송비 전부 별도)'}`,
     `별도 청구 예상: ${extra.map((s) => `${s.short} 약 ${fmtWon(s.amount)}`).join(', ') || '없음'}`,
-    `별도 청구 예상 합계: 약 ${fmtWon(result.totals.buyerExtra)} (범위 ${fmtWon(result.totals.buyerExtraRange.low)} ~ ${fmtWon(result.totals.buyerExtraRange.high)})`,
+    `별도 청구 예상 합계: 약 ${fmtWon(result.totals.buyerExtraExVat)} (범위 ${fmtWon(result.totals.buyerExtraExVatRange.low)} ~ ${fmtWon(result.totals.buyerExtraExVatRange.high)}, 부가세 제외)`,
   ];
+  if (result.totals.buyerVat > 0) lines.push(`수입 부가세: 약 ${fmtWon(result.totals.buyerVat)} (통관 때 납부, 사업자는 매입세액 공제)`);
   if (result.variables.length) lines.push(`변동 가능: ${result.variables.map((v) => v.label).join(', ')}`);
   lines.push(`기준: 환율 ${result.input.usdKrw.toLocaleString('ko-KR')}원/$, 실제 금액은 도착 후 실측 부피·도착일 환율·세관 검사에 따라 달라질 수 있습니다.`);
   return lines.join('\n');

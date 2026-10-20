@@ -71,6 +71,7 @@ export default function LogisticsEstimator({ cargo, onCargoChange, cargoValueUsd
           <span className="text-xs text-muted-foreground">{result.basis.text}</span>
           <span className="text-base font-extrabold text-primary">${usdTotal.toLocaleString()} <span className="text-xs font-semibold text-muted-foreground">({fmtWon(appliedKrw)})</span></span>
         </div>
+        {result.needsCargo && <p className="mt-1 text-[11px] font-semibold text-destructive">박스 치수와 박스 수(또는 무게)를 넣어야 계산됩니다.</p>}
         <p className="mt-1 text-[10px] text-muted-foreground">
           {result.input.term} 조건에서 구매자가 따로 내는 물류비{includeDutyVat ? '·세금' : ''} · 환율 {fx.toLocaleString('ko-KR')}원/$ · 실제 청구서 기준 요율 {Math.round(result.totals.verifiedShare * 100)}%
         </p>
@@ -80,7 +81,7 @@ export default function LogisticsEstimator({ cargo, onCargoChange, cargoValueUsd
 
       {onApply && (
         <div className="flex justify-end">
-          <Button type="button" size="sm" className="h-7 gap-1 text-xs" onClick={() => onApply(usdTotal, {
+          <Button type="button" size="sm" className="h-7 gap-1 text-xs" disabled={result.needsCargo} onClick={() => onApply(usdTotal, {
             ...result,
             cbm: result.cbm,
             chargeableKg: Math.round(result.basis.kg ?? result.kg),

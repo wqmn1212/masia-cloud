@@ -70,23 +70,24 @@ function Compare({ rows, current }) {
   const best = Math.min(...rows.filter((r) => !r.blocked).map((r) => r.allCosts));
   return (
     <div className="overflow-x-auto rounded-xl border">
-      <table className="w-full min-w-[520px] text-xs">
+      <table className="w-full text-xs [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
         <thead className="bg-muted/50 text-muted-foreground">
-          <tr><th className="px-3 py-2 text-left font-semibold">운송 방식</th><th className="px-3 py-2 text-right font-semibold">물류비</th><th className="px-3 py-2 text-right font-semibold">물류비+세금</th><th className="px-3 py-2 text-right font-semibold">개당</th><th className="px-3 py-2 text-left font-semibold">소요</th></tr>
+          <tr><th className="px-2 py-2 text-left font-semibold">운송 방식</th><th className="px-2 py-2 text-right font-semibold">물류비</th><th className="px-2 py-2 text-right font-semibold">물류비+세금</th><th className="px-2 py-2 text-right font-semibold">개당</th><th className="px-2 py-2 text-left font-semibold">소요</th><th className="px-2 py-2 text-right font-semibold">확인</th></tr>
         </thead>
         <tbody className="divide-y">
           {rows.map((r) => (
             <tr key={r.mode} className={r.mode === current ? 'bg-primary/5' : ''}>
-              <td className="px-3 py-2 font-medium">{r.label}{r.allCosts === best && !r.blocked && <Badge className="ml-1.5 border-0 bg-primary/15 text-[10px] text-primary">최저</Badge>}{r.blocked && <Badge className="ml-1.5 border-0 bg-destructive/15 text-[10px] text-destructive">배터리 제한</Badge>}</td>
-              <td className="px-3 py-2 text-right tabular-nums">{fmtWon(r.logisticsAll)}</td>
-              <td className="px-3 py-2 text-right font-semibold tabular-nums">{fmtWon(r.allCosts)}</td>
-              <td className="px-3 py-2 text-right tabular-nums">{r.perUnitAll ? fmtWon(r.perUnitAll) : '-'}</td>
-              <td className="px-3 py-2 text-muted-foreground">{r.transit}</td>
+              <td className="px-2 py-2 font-medium">{r.label}{r.allCosts === best && !r.blocked && <Badge className="ml-1.5 border-0 bg-primary/15 text-[10px] text-primary">{r.verifiedShare < 0.5 ? '최저 (추정)' : '최저'}</Badge>}{r.blocked && <Badge className="ml-1.5 border-0 bg-destructive/15 text-[10px] text-destructive">배터리 제한</Badge>}</td>
+              <td className="px-2 py-2 text-right tabular-nums">{fmtWon(r.logisticsAll)}</td>
+              <td className="px-2 py-2 text-right font-semibold tabular-nums">{fmtWon(r.allCosts)}</td>
+              <td className="px-2 py-2 text-right tabular-nums">{r.perUnitAll ? fmtWon(r.perUnitAll) : '-'}</td>
+              <td className="px-2 py-2 text-muted-foreground">{r.transit}</td>
+              <td className={`px-2 py-2 text-right tabular-nums ${r.verifiedShare < 0.5 ? 'text-muted-foreground' : 'text-primary'}`}>{Math.round(r.verifiedShare * 100)}%</td>
             </tr>
           ))}
         </tbody>
       </table>
-      <p className="px-3 py-2 text-[11px] text-muted-foreground">누가 내든 상관없이 전체 비용으로 비교했습니다. 운송 방식이 바뀌면 공장 견적가도 바뀝니다.</p>
+      <p className="px-2 py-2 text-[11px] text-muted-foreground">누가 내든 상관없이 전체 비용으로 비교했습니다. 운송 방식이 바뀌면 공장 견적가도 바뀝니다. ‘확인’은 물류비 중 실제 청구서로 확인한 요율의 비율이고, 낮은 방식은 추정 요율 위주라 실제 견적으로 확인해야 합니다.</p>
     </div>
   );
 }
@@ -94,6 +95,9 @@ function Compare({ rows, current }) {
 export default function LandedCostResult({ result, compare, showNotice = true }) {
   const [copied, setCopied] = useState(false);
   const t = result.totals;
+  if (result.needsCargo) {
+    return <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">화물의 부피(박스 치수·박스 수 또는 총 CBM)나 무게를 넣으면 계산 결과가 나옵니다.</div>;
+  }
   const copy = async () => {
     await navigator.clipboard.writeText(quoteNotice(result));
     setCopied(true);
@@ -104,9 +108,10 @@ export default function LandedCostResult({ result, compare, showNotice = true })
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border bg-primary/5 p-4 sm:col-span-2">
-          <p className="text-xs text-muted-foreground">공장 견적 외에 별도로 낼 돈 (예상)</p>
-          <p className="mt-1 text-3xl font-extrabold tabular-nums text-primary">{fmtWon(t.buyerExtra)}</p>
-          <p className="mt-1 text-xs text-muted-foreground">범위 {fmtWon(t.buyerExtraRange.low)} ~ {fmtWon(t.buyerExtraRange.high)}{t.perUnitBuyerExtra ? ` · 개당 ${fmtWon(t.perUnitBuyerExtra)}` : ''}</p>
+          <p className="text-xs text-muted-foreground">공장 견적 외에 별도로 낼 돈 (예상, 부가세 제외)</p>
+          <p className="mt-1 text-3xl font-extrabold tabular-nums text-primary">{fmtWon(t.buyerExtraExVat)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">범위 {fmtWon(t.buyerExtraExVatRange.low)} ~ {fmtWon(t.buyerExtraExVatRange.high)}{t.perUnitBuyerExtra ? ` · 개당 ${fmtWon(t.perUnitBuyerExtra)}` : ''}</p>
+          {t.buyerVat > 0 && <p className="mt-1 text-xs text-muted-foreground">+ 수입 부가세 {fmtWon(t.buyerVat)} (통관 때 납부, 사업자는 매입세액 공제로 돌려받음)</p>}
         </div>
         <div className="rounded-xl border p-4">
           <p className="text-xs text-muted-foreground">고객사 도착 원가 (물품 + 별도 비용)</p>
