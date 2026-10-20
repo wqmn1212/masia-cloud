@@ -2,6 +2,7 @@
 // 실행: npm run check:landed-cost
 import assert from 'node:assert/strict';
 import { calcLandedCost, mergeRates } from '../src/lib/landedCost.js';
+import { destCostDiff, destCostSnapshot, destCostState } from '../src/lib/destCost.js';
 const D = (r) => r.lines.filter((l) => l.segment === 'D').reduce((s, l) => s + l.amount, 0);
 const base = { mode: 'SEA_LCL', term: 'CIF', region: 'SOUTH', usdKrw: 1385 }; // 시장 환율이 달라도 D/O 는 포워더 청구 환율(1,200)로 맞아야 한다
 // 1) 포워더 D/O 산정표 그대로 재현
@@ -39,4 +40,25 @@ const v = calcLandedCost({ ...base, totalCbm: 9.5, goodsValue: 10000 });
 assert.equal(v.totals.buyerExtraExVat + v.totals.buyerVat, v.totals.buyerExtra);
 // 해상 전용 조건 경고
 assert.ok(calcLandedCost({ ...base, mode: 'AIR', totalCbm: 1 }).warnings.some((w) => w.includes('해상 전용')));
+// 7) 선적 건별 도착지 비용 고정본: 고객 부담 항목만, 부가세는 따로, 합계는 계산 결과와 같아야 한다
+const snap = destCostSnapshot(v);
+assert.equal(snap.buyer_ex_vat, v.totals.buyerExtraExVat);
+assert.equal(snap.buyer_vat, v.totals.buyerVat);
+assert.equal(snap.lines.reduce((s, l) => s + l.amount, 0), snap.buyer_ex_vat);
+assert.equal(snap.segments.reduce((s, g) => s + g.amount, 0), snap.buyer_ex_vat);
+assert.deepEqual(snap.segments.map((g) => g.key), ['D', 'E', 'F']);
+assert.ok(!snap.lines.some((l) => 'ABC'.includes(l.segment)), 'CIF 면 A~C 는 견적에 포함');
+assert.deepEqual(snap.included, ['중국 내륙', '출발지', '국제 운송']);
+assert.ok(snap.notice.includes('별도 청구 예상 합계'));
+assert.ok(!('source' in snap.lines[0]), '요율 근거는 고정본에 넣지 않는다');
+// 상태: 계산 → 보내기 전 → 확인 대기 → 확인/문의
+assert.equal(destCostState({}), 'NONE');
+assert.equal(destCostState({ dest_cost_estimate: snap }), 'DRAFT');
+assert.equal(destCostState({ dest_cost_estimate: snap, dest_cost_sent_at: '2026-10-20T00:00:00Z' }), 'SENT');
+assert.equal(destCostState({ dest_cost_estimate: snap, dest_cost_sent_at: '2026-10-20T00:00:00Z', dest_cost_decision: 'QUESTION' }), 'QUESTION');
+// 실제 청구와 비교
+assert.equal(destCostDiff(snap, null), null);
+assert.equal(destCostDiff(snap, snap.buyer_ex_vat).diff, 0);
+assert.equal(destCostDiff(snap, snap.buyer_ex_vat).inRange, true);
+assert.equal(destCostDiff(snap, snap.range_high * 2).inRange, false);
 console.log("landed cost: all checks passed");

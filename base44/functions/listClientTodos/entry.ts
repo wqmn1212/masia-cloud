@@ -1,8 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { requireClient } from '../../shared/clientAccess.ts';
 import { clientQcReport, latestSentSpecs } from '../../shared/clientQc.ts';
+import { destCostState } from '../../shared/destCost.ts';
 
-// 고객 대시보드 '하실 일': 승인을 기다리는 품질 기준서·검수 결과 + 앞으로 14일 안의 공개 일정.
+// 고객 대시보드 '하실 일': 승인을 기다리는 품질 기준서·검수 결과·도착지 비용 + 앞으로 14일 안의 공개 일정.
 // 공개 카드(client_visible)·공개 검수·공개 단계만 다루며 내부 필드는 응답에 넣지 않는다.
 const UPCOMING_DAYS = 14;
 const kstDate = (ms) => new Date(ms + 9 * 3600 * 1000).toISOString().slice(0, 10);
@@ -16,7 +17,7 @@ export default async function (req) {
     const svc = base44.asServiceRole;
     const cards = (await svc.entities.TaskCard.filter({ client_id: auth.companyId, client_visible: true }, '-updated_date', 200))
       .filter((c) => !['DONE', 'CANCELLED'].includes(c.status));
-    if (!cards.length) return Response.json({ spec_pending: [], qc_pending: [], upcoming: [] });
+    if (!cards.length) return Response.json({ spec_pending: [], qc_pending: [], dest_cost_pending: [], upcoming: [] });
     const titles = new Map(cards.map((c) => [c.id, c.title]));
 
     const reports = await svc.entities.QCReport.filter({ card_id: { $in: cards.map((c) => c.id) }, client_visible: true }, '-created_date', 200);
@@ -38,6 +39,10 @@ export default async function (req) {
     const milestones = planned.length ? await svc.entities.CardMilestone.filter({ card_id: { $in: planned } }, 'planned_date', 1000) : [];
     // 공개된 선적 중 아직 도착 전인 것의 도착 예정일도 함께 보여 준다
     const shipments = await svc.entities.Shipment.filter({ card_id: { $in: cards.map((c) => c.id) }, client_visible: true }, 'eta', 200);
+    // 담당자가 보낸 도착지 비용 예상액 중 고객이 아직 확인하지 않은 것 (문의는 담당자 차례)
+    const destCostPending = shipments
+      .filter((s) => titles.has(s.card_id) && destCostState(s) === 'SENT')
+      .map((s) => ({ shipment_id: s.id, card_id: s.card_id, card_title: titles.get(s.card_id), label: s.label || '선적', amount: Math.round(Number(s.dest_cost_estimate?.buyer_ex_vat) || 0), etd: s.etd || '' }));
     const arrivals = shipments
       .filter((s) => titles.has(s.card_id) && ['BOOKED', 'DEPARTED'].includes(s.status) && s.eta >= today && s.eta <= until)
       .map((s) => ({ id: `ship-${s.id}`, card_id: s.card_id, card_title: titles.get(s.card_id), label: `${s.label || '선적'} 도착 예정`, planned_date: s.eta }));
@@ -48,7 +53,7 @@ export default async function (req) {
       .sort((a, b) => a.planned_date.localeCompare(b.planned_date))
       .slice(0, 12);
 
-    return Response.json({ spec_pending: specPending, qc_pending: qcPending, upcoming });
+    return Response.json({ spec_pending: specPending, qc_pending: qcPending, dest_cost_pending: destCostPending, upcoming });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

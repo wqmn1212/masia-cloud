@@ -22,7 +22,8 @@
         "QC_PUBLISHED",
         "QC_CLIENT_DECISION",
         "SPEC_SENT",
-        "SPEC_CLIENT_DECISION"
+        "SPEC_CLIENT_DECISION",
+        "DEST_COST_CLIENT_DECISION"
       ]
     },
     "actor_id": {
