@@ -1,0 +1,179 @@
+{
+  "name": "LogisticsRate",
+  "type": "object",
+  "description": "\uc218\uc785 \ubb3c\ub958\ube44 \uacc4\uc0b0\uae30 \uc694\uc728. \uacc4\uc0b0 \uc5d4\uc9c4(src/lib/landedCost.js)\uc758 \uae30\ubcf8\uac12\uc744 \ub36e\uc5b4\uc4f4\ub2e4.",
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": [
+        "SEA_LCL",
+        "SEA_FCL20",
+        "SEA_FCL40",
+        "AIR",
+        "EXPRESS",
+        "ALL"
+      ],
+      "description": "\uc6b4\uc1a1 \ubc29\uc2dd (ALL = \uacf5\ud1b5)"
+    },
+    "segment": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F"
+      ],
+      "description": "\ube44\uc6a9 \uad6c\uac04: A \uc911\uad6d \ub0b4\ub959, B \ucd9c\ubc1c\uc9c0, C \uad6d\uc81c \uc6b4\uc1a1, D \ud55c\uad6d \ub3c4\ucc29\uc9c0, E \ud1b5\uad00, F \uad6d\ub0b4 \uc6b4\uc1a1"
+    },
+    "code": {
+      "type": "string",
+      "description": "\ud56d\ubaa9 \ucf54\ub4dc (\uc608: CFS, BAF_CAF, TRUCK)"
+    },
+    "label": {
+      "type": "string",
+      "description": "\ud654\uba74\uc5d0 \ubcf4\uc774\ub294 \ud56d\ubaa9 \uc774\ub984"
+    },
+    "unit": {
+      "type": "string",
+      "enum": [
+        "PER_RT",
+        "PER_SHIPMENT",
+        "PER_KG",
+        "PER_CNTR",
+        "PER_DAY_RT",
+        "PER_DAY_CNTR",
+        "TIER",
+        "PER_RT_OVER",
+        "PCT_GOODS",
+        "FACTOR"
+      ],
+      "description": "\uccad\uad6c \ub2e8\uc704"
+    },
+    "amount": {
+      "type": "number",
+      "description": "\ub2e8\uac00"
+    },
+    "currency": {
+      "type": "string",
+      "enum": [
+        "KRW",
+        "USD"
+      ],
+      "default": "KRW",
+      "description": "\ub2e8\uac00 \ud1b5\ud654 (USD \ub294 \ud658\uc728\uc744 \uacf1\ud574 \uc6d0\ud654\ub85c \uacc4\uc0b0)"
+    },
+    "region": {
+      "type": "string",
+      "enum": [
+        "SOUTH",
+        "EAST",
+        "NORTH"
+      ],
+      "description": "\ucd9c\ubc1c \uc9c0\uc5ed (\uc9c0\uc5ed\ub9c8\ub2e4 \ub2e4\ub978 \uc694\uc728\uc77c \ub54c\ub9cc)"
+    },
+    "max_cbm": {
+      "type": "number",
+      "description": "TIER \ub2e8\uc704: \uc774 \ubd80\ud53c \uc774\ud558\uc5d0 \uc801\uc6a9"
+    },
+    "over_cbm": {
+      "type": "number",
+      "description": "PER_RT_OVER \ub2e8\uc704: \uc774 \ubd80\ud53c \ucd08\uacfc\ubd84\uc5d0 \uc801\uc6a9"
+    },
+    "min": {
+      "type": "number",
+      "description": "\ucd5c\uc18c \uccad\uad6c\uc561 (\ub2e8\uac00\uc640 \uac19\uc740 \ud1b5\ud654)"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uc2e4\uc81c \uccad\uad6c\uc11c\ub85c \ud655\uc778\ud55c \uc694\uc728"
+    },
+    "variable": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uc0c1\ud669\uc5d0 \ub530\ub77c \uc0dd\uae30\ub294 \ube44\uc6a9 (\ud569\uacc4\uc5d0\uc11c \ube7c\uace0 \ub530\ub85c \ud45c\uc2dc)"
+    },
+    "source": {
+      "type": "string",
+      "description": "\uadfc\uac70 (\uc608: \ud3ec\uc6cc\ub354 D/O \uc0b0\uc815\ud45c 2026-10). \uacf5\uac1c \uacc4\uc0b0\uae30\uc5d0\ub294 \ub178\ucd9c\ud558\uc9c0 \uc54a\uc74c"
+    },
+    "note": {
+      "type": "string",
+      "description": "\uc124\uba85"
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc694\uc728 \uae30\uc900\uc77c"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "\uc0ac\uc6a9 \uc5ec\ubd80"
+    }
+  },
+  "required": [
+    "mode",
+    "segment",
+    "code",
+    "unit",
+    "amount",
+    "currency"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "service"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "service"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "sub"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "user_condition": {
+            "data.account_tier": "service"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

@@ -32,7 +32,7 @@ const matchesPath = (allowedPath, pathname) => {
 };
 
 // 대표·팀 관리자 전용 (팀원 권한으로는 열 수 없음). 월 계약은 계약료·페이백 등 민감 금액을 다룬다
-const SERVICE_ADMIN_PATHS = ['/team', '/user-permissions', '/marketing', '/agreements'];
+const SERVICE_ADMIN_PATHS = ['/team', '/user-permissions', '/marketing', '/agreements', '/logistics-rates'];
 
 // 고객사(client) 등급 전용 메뉴 — 대시보드 · 소싱 칸반보드 읽기 전용 · 금형 사전 검토(브라우저 안 계산)
 export const CLIENT_MENU_OPTIONS = [

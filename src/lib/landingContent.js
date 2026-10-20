@@ -50,6 +50,7 @@ export const nav = [
   { href: '/portfolio', label: ['포트폴리오', 'Portfolio', '案例'] },
   { href: '/cloud', label: ['AEGIS Cloud', 'AEGIS Cloud', 'AEGIS Cloud'] },
   { href: '/pricing', label: ['비용', 'Pricing', '费用'] },
+  { href: '/tools/landed-cost', label: ['물류비 계산기', 'Landed cost', '物流费计算'] },
 ];
 
 export const header = {
