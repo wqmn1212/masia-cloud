@@ -101,6 +101,7 @@ export default function ClientQCPanel({ cardId, reports = [], spec = null }) {
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm font-semibold">{r.inspection_type === 'SAMPLE' ? '샘플 검수' : '양산품 출고 전 검수'}</p>
               <Badge className={`${result.cls} border-0`}>{result.label}</Badge>
+              {r.golden_compared && <Badge variant="outline" className="text-[10px]">기준 샘플과 비교함</Badge>}
               <span className="ml-auto text-[11px] text-muted-foreground">{r.inspector_name ? `${r.inspector_name} · ` : ''}{when(r.published_at)}</span>
             </div>
             {!!r.checklist.length && (

@@ -45,6 +45,19 @@
     },
     "approved_by_name": {
       "type": "string"
+    },
+    "amount": {
+      "type": "number",
+      "description": "\uc774 \ub2e8\uacc4 \uae08\uc561 (\uc120\ud0dd)"
+    },
+    "currency": {
+      "type": "string",
+      "enum": [
+        "KRW",
+        "USD",
+        "CNY"
+      ],
+      "description": "\uae08\uc561 \ud1b5\ud654"
     }
   },
   "required": [

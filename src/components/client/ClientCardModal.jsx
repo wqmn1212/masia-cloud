@@ -17,6 +17,10 @@ import ClientChatPanel from './ClientChatPanel';
 import ClientSettlementPanel from './ClientSettlementPanel';
 import ClientQCPanel from './ClientQCPanel';
 import ClientShipmentPanel from './ClientShipmentPanel';
+import ClientFactoryCheck from './ClientFactoryCheck';
+import ClientClaimPanel from './ClientClaimPanel';
+import ClientGoldenSample from './ClientGoldenSample';
+import ClientImportRequirements from './ClientImportRequirements';
 import ClientSharedFiles from '@/components/client/ClientSharedFiles';
 
 const TABS = ['overview', 'quotation', 'qc', 'chat', 'settlement', 'files'];
@@ -37,7 +41,7 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl w-[95vw] max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl w-[95vw] max-h-[92vh] overflow-y-auto grid-cols-[minmax(0,1fr)]">
         {isError ? <div className="py-8 space-y-3"><p role="alert" className="text-sm text-destructive">카드 정보를 불러오지 못했습니다.</p><button type="button" onClick={() => refetch()} disabled={isFetching} className="text-sm text-primary">다시 불러오기</button></div> : isLoading || !data?.card ? (
           <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
         ) : (
@@ -54,7 +58,7 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
             </DialogHeader>
             <ClientReorderDialog open={reorderOpen} onOpenChange={setReorderOpen} card={data.card} onOpenCard={onOpenCard} />
             <Tabs key={`${cardId}-${initialTab || ''}`} defaultValue={TABS.includes(initialTab) ? initialTab : 'overview'} className="mt-3">
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="flex w-full justify-start overflow-x-auto sm:grid sm:grid-cols-6">
                 <TabsTrigger value="overview" className="text-xs sm:text-sm">진행 정보</TabsTrigger>
                 <TabsTrigger value="quotation" className="text-xs sm:text-sm">견적서</TabsTrigger>
                 <TabsTrigger value="qc" className="relative text-xs sm:text-sm">
@@ -66,22 +70,26 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
                 <TabsTrigger value="files" className="text-xs sm:text-sm">파일</TabsTrigger>
               </TabsList>
               <TabsContent value="overview" className="mt-4">
-                <ClientShipmentPanel shipments={data.shipments || []} />
+                <ClientShipmentPanel cardId={data.card.id} shipments={data.shipments || []} onChanged={refetch} />
                 <ClientMilestonePanel milestones={data.milestones} />
+                <ClientFactoryCheck check={data.factory_check || null} />
+                <ClientImportRequirements list={data.import_requirements || []} />
                 <ClientOverviewPanel card={data.card} />
               </TabsContent>
               <TabsContent value="quotation" className="mt-4">
                 <ClientQuotationTab cardId={data.card.id} />
               </TabsContent>
               <TabsContent value="qc" className="mt-4">
+                <ClientGoldenSample sample={data.card.golden_sample || null} />
                 <ClientQCPanel cardId={data.card.id} reports={data.qc_reports || []} spec={data.quality_spec || null} />
+                <ClientClaimPanel cardId={data.card.id} claims={data.claims || []} onChanged={refetch} />
               </TabsContent>
               <TabsContent value="chat" className="mt-4">
                 <ClientChatPanel cardId={data.card.id} chats={data.chats || []} />
               </TabsContent>
               <TabsContent value="files" className="mt-4"><ClientSharedFiles cardId={data.card.id} /></TabsContent>
               <TabsContent value="settlement" className="mt-4">
-                <ClientSettlementPanel stages={data.payment_stages || []} />
+                <ClientSettlementPanel stages={data.payment_stages || []} factoryPayment={data.factory_payment || null} />
               </TabsContent>
             </Tabs>
           </>

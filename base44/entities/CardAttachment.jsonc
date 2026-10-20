@@ -60,11 +60,45 @@
         "UN38_3",
         "MSDS",
         "BATTERY_SPEC",
-        "DG_DECLARATION"
+        "DG_DECLARATION",
+        "CLAIM_PHOTO",
+        "MOLD_OWNERSHIP"
       ],
       "default": "GENERAL"
     },
     "source_bank_document_id": {
+      "type": "string"
+    },
+    "factory_approved": {
+      "type": "boolean",
+      "description": "\uacf5\uc7a5 \uc804\ub2ec \uc2b9\uc778\ubcf8 (\uacf5\uc7a5\uc740 \uc2b9\uc778\ubcf8\uc73c\ub85c\ub9cc \ub9cc\ub4e0\ub2e4)"
+    },
+    "revision": {
+      "type": "number",
+      "description": "\uc2b9\uc778\ubcf8 \ud310 \ubc88\ud638 (\ub300\uccb4\ud560 \ub54c\ub9c8\ub2e4 1\uc529 \uc62c\ub77c\uac10)"
+    },
+    "approved_at": {
+      "type": "string"
+    },
+    "approved_by_name": {
+      "type": "string"
+    },
+    "supersedes_id": {
+      "type": "string",
+      "description": "\uc774 \uc2b9\uc778\ubcf8\uc774 \ub300\uccb4\ud55c \uc774\uc804 \uc2b9\uc778\ubcf8 ID"
+    },
+    "superseded_by_id": {
+      "type": "string",
+      "description": "\uc774 \ud30c\uc77c\uc744 \ub300\uccb4\ud55c \uc0c8 \uc2b9\uc778\ubcf8 ID. \uc788\uc73c\uba74 '\uc0ac\uc6a9 \uc548 \ud568'"
+    },
+    "superseded_at": {
+      "type": "string"
+    },
+    "sent_to_factory_at": {
+      "type": "string",
+      "description": "\uacf5\uc7a5\uc5d0 \ubcf4\ub0b8 \uc2dc\uac01 (\uae30\ub85d)"
+    },
+    "sent_to_factory_by_name": {
       "type": "string"
     }
   },

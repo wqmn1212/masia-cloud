@@ -25,6 +25,13 @@ export const NOTIFICATION_META = {
   shipment_updated: { label: '선적 상태 변경', icon: '🚢' },
   shipment_docs_missing: { label: '선적 서류 미비', icon: '⚠️' },
   reorder_requested: { label: '재주문 요청', icon: '🔁' },
+  dest_cost_sent: { label: '도착지 비용 확인 요청', icon: '🧾' },
+  dest_cost_decision: { label: '도착지 비용 고객 응답', icon: '🧾' },
+  dest_cost_unconfirmed: { label: '도착지 비용 미확인', icon: '⚠️' },
+  factory_account_changed: { label: '공장 계좌 변경 요청', icon: '🏦' },
+  factory_account_verified: { label: '공장 계좌 확인', icon: '🏦' },
+  claim_submitted: { label: '고객 불량 신고', icon: '🚨' },
+  claim_updated: { label: '불량 신고 처리', icon: '🛠️' },
 };
 
 export const notificationMeta = (type) => NOTIFICATION_META[type] || { label: '알림', icon: '🔔' };

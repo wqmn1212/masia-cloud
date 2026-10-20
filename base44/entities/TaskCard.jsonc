@@ -269,6 +269,52 @@
           }
         }
       }
+    },
+    "client_pays_factory": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uace0\uac1d\uc0ac\uac00 \uacf5\uc7a5\uc5d0 \uc9c1\uc811 \uc1a1\uae08 (\uc6d4\uc815\uc561 \uad00\ub9ac\ud615). \ucf1c\uba74 \uace0\uac1d \ud3ec\ud138 \uacb0\uc81c \ud0ed\uc5d0 \uc774\uc9c0\uc2a4\uac00 \ud655\uc778\ud55c \uacf5\uc7a5 \uacc4\uc88c\uac00 \ubcf4\uc778\ub2e4"
+    },
+    "golden_sample": {
+      "type": "object",
+      "description": "\uae30\uc900 \uc0d8\ud50c(\uace8\ub4e0 \uc0d8\ud50c): photos[{url,name}], approved_at, approved_by, locations{CLIENT,FACTORY,AEGIS: \uc218\ub7c9}, seal_no, note, updated_at, updated_by_name"
+    },
+    "import_requirements": {
+      "type": "array",
+      "description": "\uc218\uc785 \uc694\uac74 \uccb4\ud06c\ub9ac\uc2a4\ud2b8 (KC\u00b7\uc804\ud30c\u00b7\uc2dd\ud488 \ub4f1)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "REQUIRED",
+              "IN_PROGRESS",
+              "DONE",
+              "NA"
+            ]
+          },
+          "cert_no": {
+            "type": "string",
+            "description": "\uc778\uc99d\u00b7\uc2e0\uace0 \ubc88\ud638"
+          },
+          "due_date": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "import_req_updated_at": {
+      "type": "string"
     }
   },
   "required": [

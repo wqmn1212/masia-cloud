@@ -23,7 +23,7 @@ function Row({ onClick, children }) {
   );
 }
 
-// 고객 대시보드 맨 위: 고객이 직접 해야 할 일(출고 판단)과 앞으로 2주 일정.
+// 고객 대시보드 맨 위: 고객이 직접 해야 할 일(기준서·출고 판단, 도착지 비용 확인)과 앞으로 2주 일정.
 export default function ClientTodoCard({ onOpen }) {
   const { data } = useQuery({
     queryKey: ['client-todos'],
@@ -32,8 +32,9 @@ export default function ClientTodoCard({ onOpen }) {
   });
   const specs = data?.spec_pending || [];
   const qc = data?.qc_pending || [];
+  const destCosts = data?.dest_cost_pending || [];
   const upcoming = data?.upcoming || [];
-  const count = specs.length + qc.length;
+  const count = specs.length + qc.length + destCosts.length;
 
   return (
     <Card className="grid gap-5 p-5 md:grid-cols-2">
@@ -51,6 +52,13 @@ export default function ClientTodoCard({ onOpen }) {
                 <Badge variant="outline" className="shrink-0 text-[10px]">기준서 승인 대기</Badge>
                 <span className="min-w-0 truncate">{s.card_title}</span>
                 <span className="shrink-0 text-xs text-muted-foreground">품질 기준서 v{s.version}</span>
+              </Row>
+            ))}
+            {destCosts.map((d) => (
+              <Row key={d.shipment_id} onClick={() => onOpen(d.card_id, 'overview')}>
+                <Badge variant="outline" className="shrink-0 text-[10px]">도착지 비용 확인</Badge>
+                <span className="min-w-0 truncate">{d.card_title}</span>
+                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{d.label} · 약 {d.amount.toLocaleString('ko-KR')}원</span>
               </Row>
             ))}
             {qc.map((q) => (

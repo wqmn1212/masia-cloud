@@ -1,0 +1,147 @@
+{
+  "name": "FactoryAccount",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID"
+    },
+    "factory_id": {
+      "type": "string",
+      "description": "\uacf5\uc7a5(Company FACTORY) ID"
+    },
+    "factory_name": {
+      "type": "string"
+    },
+    "beneficiary_name": {
+      "type": "string",
+      "description": "\uc608\uae08\uc8fc (\uc601\ubb38\u00b7\uc911\ubb38 \ubc95\uc778\uba85)"
+    },
+    "bank_name": {
+      "type": "string",
+      "description": "\uc740\ud589\u00b7\uc9c0\uc810"
+    },
+    "account_no": {
+      "type": "string",
+      "description": "\uacc4\uc88c \ubc88\ud638"
+    },
+    "swift_code": {
+      "type": "string",
+      "description": "SWIFT"
+    },
+    "bank_address": {
+      "type": "string",
+      "description": "\uc740\ud589 \uc8fc\uc18c"
+    },
+    "currency": {
+      "type": "string",
+      "description": "\ubc1b\ub294 \ud1b5\ud654",
+      "enum": [
+        "CNY",
+        "USD",
+        "KRW"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "description": "PENDING \ud655\uc778 \ub300\uae30 / VERIFIED \ud655\uc778\ub428 / REJECTED \uac70\uc808 / WITHDRAWN \uc0c8 \uc694\uccad\uc73c\ub85c \ub300\uccb4 / RETIRED \ub2e4\ub978 \uacc4\uc88c\ub85c \ubc14\ub01c",
+      "enum": [
+        "PENDING",
+        "VERIFIED",
+        "REJECTED",
+        "WITHDRAWN",
+        "RETIRED"
+      ],
+      "default": "PENDING"
+    },
+    "change_reason": {
+      "type": "string",
+      "description": "\ub4f1\ub85d\u00b7\ubcc0\uacbd \uc0ac\uc720 (\uc608: \uacf5\uc7a5 \uc694\uccad\uc73c\ub85c \uc740\ud589 \ubcc0\uacbd)"
+    },
+    "proposed_by_name": {
+      "type": "string"
+    },
+    "proposed_at": {
+      "type": "string"
+    },
+    "verify_method": {
+      "type": "string",
+      "description": "\ud655\uc778 \ubc29\ubc95",
+      "enum": [
+        "VISIT",
+        "VIDEO_CALL",
+        "PHONE",
+        "DOCUMENT"
+      ]
+    },
+    "name_matches_license": {
+      "type": "boolean",
+      "description": "\uc608\uae08\uc8fc\uac00 \uc0ac\uc5c5\uc790\ub4f1\ub85d\uc99d \ud68c\uc0ac\uba85\uacfc \uac19\uc740\uc9c0"
+    },
+    "verify_note": {
+      "type": "string",
+      "description": "\ud655\uc778\u00b7\uac70\uc808 \uba54\ubaa8"
+    },
+    "verified_by_name": {
+      "type": "string"
+    },
+    "verified_at": {
+      "type": "string"
+    },
+    "retired_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "factory_id",
+    "beneficiary_name",
+    "account_no"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

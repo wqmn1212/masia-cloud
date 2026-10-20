@@ -10,6 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { MODES, SHIPMENT_STATUS, daysUntil, docStatus, missingBeforeDeparture } from '@/lib/shipments';
+import DestCostSection from './DestCostSection';
+import { pendingReqs } from '@/lib/importRequirements';
 
 const FIELDS = ['label', 'mode', 'status', 'forwarder', 'carrier', 'tracking_no', 'port_from', 'port_to', 'etd', 'eta', 'atd', 'ata', 'dangerous_goods', 'docs', 'package_note', 'client_note', 'note', 'client_visible'];
 const pick = (s) => Object.fromEntries(FIELDS.map((k) => [k, s[k] ?? (k === 'docs' ? [] : k === 'dangerous_goods' ? false : k === 'client_visible' ? true : '')]));
@@ -19,15 +21,18 @@ const DOC_CHOICES = [['MISSING', '미비'], ['READY', '준비됨'], ['NA', '해�
 function ShipmentEditor({ shipment, card, attachmentTypes, onSaved }) {
   const [f, setF] = useState(() => pick(shipment));
   const [saving, setSaving] = useState(false);
-  useEffect(() => { setF(pick(shipment)); }, [shipment.id, shipment.updated_date]);
+  // 이 폼의 필드가 바뀔 때만 다시 채운다 (도착지 비용처럼 따로 저장하는 값 때문에 입력 중인 내용이 지워지지 않게)
+  const saved = JSON.stringify(pick(shipment));
+  useEffect(() => { setF(pick(shipment)); }, [shipment.id, saved]);
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
   const docs = docStatus(f, attachmentTypes);
   const missing = missingBeforeDeparture(f, attachmentTypes);
   const toEtd = daysUntil(f.etd);
   const warn = missing.length > 0 && ['PREPARING', 'BOOKED'].includes(f.status) && toEtd != null && toEtd <= 30;
+  const reqWarn = ['PREPARING', 'BOOKED'].includes(f.status) && toEtd != null && toEtd <= 30 ? pendingReqs(card.import_requirements) : [];
   // '미비'는 직접 표시를 지우는 것 (보관함에 파일이 있으면 계속 준비됨으로 본다)
   const setDoc = (key, status) => set('docs', [...(f.docs || []).filter((d) => d.key !== key), ...(status === 'MISSING' ? [] : [{ key, status, note: '' }])]);
-  const dirty = JSON.stringify(f) !== JSON.stringify(pick(shipment));
+  const dirty = JSON.stringify(f) !== saved;
 
   const save = async () => {
     setSaving(true);
@@ -60,6 +65,11 @@ function ShipmentEditor({ shipment, card, attachmentTypes, onSaved }) {
       {warn && (
         <p className="flex gap-1.5 rounded-md bg-destructive/10 p-2 text-xs text-destructive">
           <AlertTriangle className="h-4 w-4 shrink-0" />출항 {toEtd}일 전인데 서류 {missing.length}건이 없습니다: {missing.map((d) => d.label).join(', ')}
+        </p>
+      )}
+      {reqWarn.length > 0 && (
+        <p className="flex gap-1.5 rounded-md bg-destructive/10 p-2 text-xs text-destructive">
+          <AlertTriangle className="h-4 w-4 shrink-0" />수입 요건 {reqWarn.length}건이 끝나지 않았습니다: {reqWarn.map((r) => r.label).join(', ')}. 인증 없이 도착하면 통관이 보류될 수 있습니다 (무역서류 탭).
         </p>
       )}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -95,6 +105,7 @@ function ShipmentEditor({ shipment, card, attachmentTypes, onSaved }) {
           ))}
         </ul>
       </div>
+      <DestCostSection shipment={shipment} card={card} onSaved={onSaved} />
       <div className="grid gap-2 sm:grid-cols-2">
         <div><Label className="text-[11px]">고객 안내 메모 (고객에게 보임)</Label><Textarea rows={2} className="text-xs" value={f.client_note} placeholder="예: 부산항 도착 후 통관까지 2~3일 걸립니다." onChange={(e) => set('client_note', e.target.value)} /></div>
         <div><Label className="text-[11px]">내부 메모</Label><Textarea rows={2} className="text-xs" value={f.note} onChange={(e) => set('note', e.target.value)} /></div>
@@ -107,7 +118,7 @@ function ShipmentEditor({ shipment, card, attachmentTypes, onSaved }) {
   );
 }
 
-// 선적·통관 추적: 운송 정보, 서류 체크리스트(위험물 포함), 출항 전 서류 미비 경고
+// 선적·통관 추적: 운송 정보, 서류 체크리스트(위험물 포함), 출항 전 서류 미비 경고, 도착지 비용 고객 사전 확인
 export default function ShipmentPanel({ card }) {
   const qc = useQueryClient();
   const key = ['shipments', card.id];

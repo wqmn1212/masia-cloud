@@ -142,6 +142,56 @@
     "docs_warned_for": {
       "type": "string",
       "description": "\uc11c\ub958 \ubbf8\ube44 \uacbd\uace0\ub97c \ubcf4\ub0b8 \uae30\uc900 (etd:\ub2e8\uacc4). \uac19\uc740 \ucd9c\ud56d\uc77c\ub85c \ubc18\ubcf5 \uacbd\uace0\ud558\uc9c0 \uc54a\ub294\ub2e4"
+    },
+    "dest_cost_input": {
+      "type": "object",
+      "description": "\ub3c4\ucc29\uc9c0 \ube44\uc6a9 \uacc4\uc0b0\uc5d0 \ub123\uc740 \uac12 (\ub0b4\ubd80\uc6a9, \ub2e4\uc2dc \uacc4\uc0b0\ud560 \ub54c \ubd88\ub7ec\uc634)"
+    },
+    "dest_cost_estimate": {
+      "type": "object",
+      "description": "\ud55c\uad6d\uc5d0\uc11c \ub530\ub85c \ub0bc \ub3c8 \uc608\uc0c1 (\uacc4\uc0b0 \uc2dc\uc810 \uace0\uc815\ubcf8). \uace0\uac1d\uc774 \ud655\uc778\ud55c \uae08\uc561\uc774 \uc694\uc728\uc774 \ubc14\ub00c\uc5b4\ub3c4 \uadf8\ub300\ub85c \ub0a8\ub294\ub2e4"
+    },
+    "dest_cost_sent_at": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc5d0\uac8c \ud655\uc778\uc744 \uc694\uccad\ud55c \uc2dc\uac01. \ube44\uc5b4 \uc788\uc73c\uba74 \uace0\uac1d\uc5d0\uac8c \ubcf4\uc774\uc9c0 \uc54a\ub294\ub2e4"
+    },
+    "dest_cost_sent_by_name": {
+      "type": "string"
+    },
+    "dest_cost_decision": {
+      "type": "string",
+      "enum": [
+        "ACKNOWLEDGED",
+        "QUESTION",
+        "PENDING"
+      ],
+      "description": "\uace0\uac1d \uc751\ub2f5: \ud655\uc778\ud568 \ub610\ub294 \ubb38\uc758. \ub2e4\uc2dc \ubcf4\ub0b4\uba74 \ube44\uc6b4\ub2e4"
+    },
+    "dest_cost_decided_at": {
+      "type": "string"
+    },
+    "dest_cost_decided_by_name": {
+      "type": "string"
+    },
+    "dest_cost_client_note": {
+      "type": "string",
+      "description": "\uace0\uac1d \ubb38\uc758 \ub0b4\uc6a9"
+    },
+    "dest_cost_actual": {
+      "type": "number",
+      "description": "\ub3c4\ucc29 \ud6c4 \uc2e4\uc81c \uccad\uad6c\ub41c \ubcc4\ub3c4 \ube44\uc6a9 (\uc6d0, \ubd80\uac00\uc138 \uc81c\uc678)"
+    },
+    "dest_cost_actual_vat": {
+      "type": "number",
+      "description": "\uc2e4\uc81c \ub0a9\ubd80\ud55c \uc218\uc785 \ubd80\uac00\uc138 (\uc6d0)"
+    },
+    "dest_cost_actual_note": {
+      "type": "string",
+      "description": "\uc608\uc0c1\uacfc \ub2e4\ub978 \uc774\uc720 (\uace0\uac1d\uc5d0\uac8c \ubcf4\uc784)"
+    },
+    "dest_cost_warned_for": {
+      "type": "string",
+      "description": "\ub3c4\ucc29\uc9c0 \ube44\uc6a9 \ubbf8\ud655\uc778 \uacbd\uace0\ub97c \ubcf4\ub0b8 \uae30\uc900 (etd:\ub2e8\uacc4)"
     }
   },
   "required": [

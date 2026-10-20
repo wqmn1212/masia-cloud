@@ -11,6 +11,10 @@ import QuotationTab from './QuotationTab';
 import SettlementTab from './SettlementTab';
 import TaskItemsTab from './TaskItemsTab';
 import QCReportPanel from './QCReportPanel';
+import ClaimPanel from './ClaimPanel';
+import GoldenSamplePanel from './GoldenSamplePanel';
+import MoldRegistryPanel from './MoldRegistryPanel';
+import ImportRequirementsPanel from './ImportRequirementsPanel';
 import QualitySpecPanel from './QualitySpecPanel';
 import PaymentGatePanel from './PaymentGatePanel';
 import ProcessControlPanel from './ProcessControlPanel';
@@ -120,7 +124,9 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
             <AIProposalPanel card={card} user={user} />
             <TaskItemsTab card={card} viewLang={viewLang} />
             <QualitySpecPanel card={card} user={user} />
+            <GoldenSamplePanel card={card} user={user} />
             <QCReportPanel card={card} user={user} />
+            <ClaimPanel card={card} user={user} />
           </TabsContent>
           <TabsContent value="overview" className="mt-4">
             <OverviewTab card={card} kbAlerts={kbAlerts} viewLang={viewLang} user={user} />
@@ -140,8 +146,9 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
           </TabsContent>
           <TabsContent value="bom" className="mt-4">
             <BomTab card={card} />
+            <MoldRegistryPanel card={card} />
           </TabsContent>
-          <TabsContent value="trade" className="mt-4"><TradeDocumentsTab card={card} user={user} /></TabsContent>
+          <TabsContent value="trade" className="mt-4"><TradeDocumentsTab card={card} user={user} /><ImportRequirementsPanel card={card} user={user} /></TabsContent>
           <TabsContent value="files" className="mt-4">
             <FilesTab card={card} user={user} />
           </TabsContent>

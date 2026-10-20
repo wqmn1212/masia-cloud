@@ -2,9 +2,10 @@ import React from 'react';
 import { Ship, BatteryCharging, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { MODES, SHIPMENT_STATUS, STATUS_FLOW } from '@/lib/shipments';
+import ClientDestCost from './ClientDestCost';
 
-// 고객 포털 진행 정보: 선적 상태 단계, 출항·도착일, 서류 준비 여부 (파일·포워더·내부 메모는 보이지 않음)
-export default function ClientShipmentPanel({ shipments = [] }) {
+// 고객 포털 진행 정보: 선적 상태 단계, 출항·도착일, 서류 준비 여부, 도착지 비용 예상액 (파일·포워더·내부 메모는 보이지 않음)
+export default function ClientShipmentPanel({ cardId, shipments = [], onChanged }) {
   if (!shipments.length) return null;
   return (
     <div className="mb-4 space-y-3">
@@ -51,6 +52,7 @@ export default function ClientShipmentPanel({ shipments = [] }) {
               </div>
             </div>
             {s.client_note && <p className="whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-xs">{s.client_note}</p>}
+            {s.dest_cost && <ClientDestCost cardId={cardId} shipment={s} onChanged={onChanged} />}
           </div>
         );
       })}

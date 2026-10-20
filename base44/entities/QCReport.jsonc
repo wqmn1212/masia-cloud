@@ -68,6 +68,10 @@
     "comments": {
       "type": "string"
     },
+    "golden_compared": {
+      "type": "boolean",
+      "description": "\uae30\uc900 \uc0d8\ud50c\uacfc \ub098\ub780\ud788 \ube44\uad50\ud55c \uc0ac\uc9c4 \ud3ec\ud568"
+    },
     "client_visible": {
       "type": "boolean",
       "default": false,
