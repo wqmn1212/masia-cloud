@@ -30,6 +30,8 @@ export default async function (req: Request) {
       const factory = typeof input.factory_id === 'string' ? await svc.entities.Company.get(input.factory_id).catch(() => null) : null;
       if (!factory || factory.company_type !== 'FACTORY') return Response.json({ error: '공장을 찾을 수 없습니다' }, { status: 404 });
       if (user.account_tier !== 'master' && factory.tenant_id !== user.tenant_id) return Response.json({ error: '이 공장에 대한 권한이 없습니다' }, { status: 403 });
+      // 팀 없이 만든 예전 공장은 요청한 직원의 팀으로 기록한다 (그래야 같은 팀 담당자가 계좌를 본다)
+      const tenantId = factory.tenant_id || user.tenant_id;
       const data: any = Object.fromEntries(FIELDS.map((k) => [k, clean(input[k])]));
       data.account_no = data.account_no.replace(/\s/g, '');
       if (!data.beneficiary_name || !data.bank_name || !data.account_no) return Response.json({ error: '예금주·은행·계좌 번호를 입력하세요' }, { status: 400 });
@@ -38,7 +40,7 @@ export default async function (req: Request) {
       if (sameAccount(verified, data)) return Response.json({ error: '이미 확인된 계좌와 같습니다' }, { status: 409 });
       for (const p of pending) await svc.entities.FactoryAccount.update(p.id, { status: 'WITHDRAWN', verify_note: '새 요청으로 대체' });
       const row = await svc.entities.FactoryAccount.create({
-        ...data, tenant_id: factory.tenant_id, factory_id: factory.id, factory_name: factory.company_name,
+        ...data, tenant_id: tenantId, factory_id: factory.id, factory_name: factory.company_name,
         status: 'PENDING', change_reason: clean(input.change_reason, 500), proposed_by_name: me, proposed_at: new Date().toISOString(),
       });
       const isChange = !!verified;
