@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { FolderPlus, FolderUp, Upload, Loader2, FolderOpen } from 'lucide-react';
 import Breadcrumbs from './files/Breadcrumbs';
 import FolderRow from './files/FolderRow';
+import FileApprovalDialog from '@/components/taskcard/files/FileApprovalDialog';
+import { approvalPatches } from '@/lib/fileApproval';
 import FileRow from './files/FileRow';
 import NewFolderDialog from './files/NewFolderDialog';
 import useAttachmentVisibility from '@/components/files/useAttachmentVisibility';
@@ -42,6 +44,23 @@ export default function FilesTab({ card, tradeOnly = false }) {
   useEffect(() => base44.entities.CardAttachment.subscribe((ev) => {
     if (ev.data?.card_id === card.id || ev.type === 'delete') qc.invalidateQueries({ queryKey: ['card_attachments', card.id] });
   }), [card.id, qc]);
+
+  // 공장 전달 승인본: 지정(이전 승인본 대체) · 승인 취소 · 공장에 보낸 기록
+  const [approving, setApproving] = useState(null);
+  const approval = useMutation({
+    mutationFn: async ({ kind, file, replaced }) => {
+      const me = await base44.auth.me().catch(() => null);
+      const by = me?.full_name || me?.email || '';
+      if (kind === 'approve') return base44.entities.CardAttachment.bulkUpdate(approvalPatches(file, replaced, by));
+      if (kind === 'sent') return base44.entities.CardAttachment.update(file.id, { sent_to_factory_at: new Date().toISOString(), sent_to_factory_by_name: by });
+      // 승인 취소: 이 파일이 대체했던 이전 승인본을 되살린다
+      const restore = file.supersedes_id ? [{ id: file.supersedes_id, superseded_by_id: '', superseded_at: '' }] : [];
+      return base44.entities.CardAttachment.bulkUpdate([{ id: file.id, factory_approved: false, supersedes_id: '' }, ...restore]);
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: filesKey }); setApproving(null); },
+    onError: (e) => setUploadError(e.message || '승인본을 저장하지 못했습니다'),
+  });
+  const nameOf = (id) => files.find((f) => f.id === id)?.file_name || '';
 
   const currentFolders = useMemo(
     () => folders.filter(f => (f.parent_folder_id || null) === currentFolderId),
@@ -388,6 +407,12 @@ export default function FilesTab({ card, tradeOnly = false }) {
                   onSuccess: () => visible && base44.functions.invoke('notifyCardEvent', { card_id: card.id, type: 'file_shared', message: file.file_name }).catch(() => {}),
                 })}
                 visibilityPending={visibility.isPending}
+                approval={tradeOnly || file.document_type === 'CLAIM_PHOTO' ? undefined : {
+                  replacedName: nameOf(file.superseded_by_id),
+                  onApprove: () => setApproving(file),
+                  onUnapprove: () => approval.mutate({ kind: 'unapprove', file }),
+                  onMarkSent: () => approval.mutate({ kind: 'sent', file }),
+                }}
                 onDelete={() => deleteFileMutation.mutate(file.id)}
               />
             ))}
@@ -403,6 +428,7 @@ export default function FilesTab({ card, tradeOnly = false }) {
       )}
 
       {!tradeOnly && <CardFactoryDocuments card={card} />}
+      <FileApprovalDialog key={approving?.id || 'none'} file={approving} files={files} open={!!approving} pending={approval.isPending} onClose={() => setApproving(null)} onConfirm={(replaced) => approval.mutate({ kind: 'approve', file: approving, replaced })} />
       <NewFolderDialog
         open={showNewFolder}
         onClose={() => setShowNewFolder(false)}

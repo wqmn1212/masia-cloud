@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { MODES, SHIPMENT_STATUS, daysUntil, docStatus, missingBeforeDeparture } from '@/lib/shipments';
 import DestCostSection from './DestCostSection';
+import { pendingReqs } from '@/lib/importRequirements';
 
 const FIELDS = ['label', 'mode', 'status', 'forwarder', 'carrier', 'tracking_no', 'port_from', 'port_to', 'etd', 'eta', 'atd', 'ata', 'dangerous_goods', 'docs', 'package_note', 'client_note', 'note', 'client_visible'];
 const pick = (s) => Object.fromEntries(FIELDS.map((k) => [k, s[k] ?? (k === 'docs' ? [] : k === 'dangerous_goods' ? false : k === 'client_visible' ? true : '')]));
@@ -28,6 +29,7 @@ function ShipmentEditor({ shipment, card, attachmentTypes, onSaved }) {
   const missing = missingBeforeDeparture(f, attachmentTypes);
   const toEtd = daysUntil(f.etd);
   const warn = missing.length > 0 && ['PREPARING', 'BOOKED'].includes(f.status) && toEtd != null && toEtd <= 30;
+  const reqWarn = ['PREPARING', 'BOOKED'].includes(f.status) && toEtd != null && toEtd <= 30 ? pendingReqs(card.import_requirements) : [];
   // '미비'는 직접 표시를 지우는 것 (보관함에 파일이 있으면 계속 준비됨으로 본다)
   const setDoc = (key, status) => set('docs', [...(f.docs || []).filter((d) => d.key !== key), ...(status === 'MISSING' ? [] : [{ key, status, note: '' }])]);
   const dirty = JSON.stringify(f) !== saved;
@@ -63,6 +65,11 @@ function ShipmentEditor({ shipment, card, attachmentTypes, onSaved }) {
       {warn && (
         <p className="flex gap-1.5 rounded-md bg-destructive/10 p-2 text-xs text-destructive">
           <AlertTriangle className="h-4 w-4 shrink-0" />출항 {toEtd}일 전인데 서류 {missing.length}건이 없습니다: {missing.map((d) => d.label).join(', ')}
+        </p>
+      )}
+      {reqWarn.length > 0 && (
+        <p className="flex gap-1.5 rounded-md bg-destructive/10 p-2 text-xs text-destructive">
+          <AlertTriangle className="h-4 w-4 shrink-0" />수입 요건 {reqWarn.length}건이 끝나지 않았습니다: {reqWarn.map((r) => r.label).join(', ')}. 인증 없이 도착하면 통관이 보류될 수 있습니다 (무역서류 탭).
         </p>
       )}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

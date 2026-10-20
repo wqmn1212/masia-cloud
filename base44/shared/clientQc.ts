@@ -45,6 +45,7 @@ export function clientQcReport(r) {
     inspector_name: r.inspector_name || '',
     checklist: (r.checklist || []).map((i) => ({ label: i.label || '', status: i.status || 'PENDING', note: i.note || '' })),
     comments: r.comments || '',
+    golden_compared: !!r.golden_compared,
     media: (r.media_urls || []).map((url, i) => ({ url, name: r.media_names?.[i] || `사진 ${i + 1}` })),
     published_at: r.client_published_at || r.created_date,
     decision: r.client_decision || 'PENDING',

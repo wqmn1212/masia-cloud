@@ -101,6 +101,19 @@
     },
     "verification_updated_at": {
       "type": "string"
+    },
+    "cn_trademark_status": {
+      "type": "string",
+      "enum": [
+        "REGISTERED",
+        "APPLIED",
+        "NOT_FILED",
+        "UNKNOWN"
+      ],
+      "description": "\uace0\uac1d\uc0ac \ube0c\ub79c\ub4dc\uc758 \uc911\uad6d \uc0c1\ud45c \ub4f1\ub85d \uc0c1\ud0dc (\uacf5\uc7a5\uc758 \uc0c1\ud45c \uc120\uc810 \ubc29\uc9c0)"
+    },
+    "cn_trademark_note": {
+      "type": "string"
     }
   },
   "required": [

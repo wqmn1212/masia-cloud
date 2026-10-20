@@ -7,6 +7,7 @@ import { clientDestCost } from '../../shared/destCost.ts';
 import { clientFactoryPayment } from '../../shared/factoryAccount.ts';
 import { clientFactoryCheck } from '../../shared/factoryCheck.ts';
 import { clientClaim } from '../../shared/claims.ts';
+import { clientImportRequirements } from '../../shared/importRequirements.ts';
 
 // 고객 포털 카드 상세: 오버뷰 · 공개 채팅 · 정산 단계(읽기 전용) · 담당자가 공개한 검수 리포트.
 // 내부 전용 데이터(견적 원가, BOM, 결정, 내부 채팅)는 응답에 포함하지 않는다.
@@ -61,6 +62,12 @@ export default async function (req) {
         delivery_date_mode: card.delivery_date_mode || 'AUTO',
         hq_requirements: card.hq_requirements || '', hq_requirements_cn: card.hq_requirements_cn || '',
         target_machine_category: card.target_machine_category || '',
+        // 기준 샘플: 사진·승인일·보관 위치 (내부 메모 제외)
+        golden_sample: card.golden_sample ? {
+          photos: (card.golden_sample.photos || []).map((p) => ({ url: p.url, name: p.name || '' })),
+          approved_at: card.golden_sample.approved_at || '', approved_by: card.golden_sample.approved_by || '',
+          seal_no: card.golden_sample.seal_no || '', locations: card.golden_sample.locations || {},
+        } : null,
       },
       chats: chats
         .filter((c) => c.is_client_visible === true || c.sender_role === 'CLIENT')
@@ -92,6 +99,7 @@ export default async function (req) {
       // 거래 공장 확인 결과 (항목별 확인 여부만, 공장명·주소·메모 제외)
       factory_check: await clientFactoryCheck(svc, card),
       claims: claims.map((c) => clientClaim(c, claimPhotos)),
+      import_requirements: clientImportRequirements(card),
       qc_reports: qcReports.filter((r) => r.card_id === card.id && r.client_visible === true).map(clientQcReport),
       quality_spec: spec ? clientQualitySpec(spec) : null,
       shipments: shipments.map((s) => ({

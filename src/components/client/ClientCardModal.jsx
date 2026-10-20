@@ -19,6 +19,8 @@ import ClientQCPanel from './ClientQCPanel';
 import ClientShipmentPanel from './ClientShipmentPanel';
 import ClientFactoryCheck from './ClientFactoryCheck';
 import ClientClaimPanel from './ClientClaimPanel';
+import ClientGoldenSample from './ClientGoldenSample';
+import ClientImportRequirements from './ClientImportRequirements';
 import ClientSharedFiles from '@/components/client/ClientSharedFiles';
 
 const TABS = ['overview', 'quotation', 'qc', 'chat', 'settlement', 'files'];
@@ -71,12 +73,14 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
                 <ClientShipmentPanel cardId={data.card.id} shipments={data.shipments || []} onChanged={refetch} />
                 <ClientMilestonePanel milestones={data.milestones} />
                 <ClientFactoryCheck check={data.factory_check || null} />
+                <ClientImportRequirements list={data.import_requirements || []} />
                 <ClientOverviewPanel card={data.card} />
               </TabsContent>
               <TabsContent value="quotation" className="mt-4">
                 <ClientQuotationTab cardId={data.card.id} />
               </TabsContent>
               <TabsContent value="qc" className="mt-4">
+                <ClientGoldenSample sample={data.card.golden_sample || null} />
                 <ClientQCPanel cardId={data.card.id} reports={data.qc_reports || []} spec={data.quality_spec || null} />
                 <ClientClaimPanel cardId={data.card.id} claims={data.claims || []} onChanged={refetch} />
               </TabsContent>

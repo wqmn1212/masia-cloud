@@ -3,10 +3,12 @@ import { kstToday } from '../../shared/chinaHoliday.ts';
 import { notifyUsers } from '../../shared/notify.ts';
 import { missingBeforeDeparture } from '../../shared/shipments.ts';
 import { destCostState } from '../../shared/destCost.ts';
+import { pendingReqs } from '../../shared/importRequirements.ts';
 
 // 매일 08:20 KST: 출항 30일·7일 전인데 출항 전 서류(CI·PL, 위험물이면 UN38.3·MSDS 등)가 빠진 선적을 담당자에게 알린다.
 // 같은 출항일·단계로는 한 번만 (docs_warned_for). 수신: 카드 책임자 → 없으면 그 팀 service.
 // 출항 7일 전까지 고객이 도착지 비용 예상액을 확인하지 않은 공개 선적도 함께 알린다 (dest_cost_warned_for).
+// 카드의 수입 요건(인증·신고) 중 끝나지 않은 것도 서류 경고에 함께 넣는다.
 const THROTTLE_MS = 5 * 60 * 1000;
 const STEPS = [7, 30];
 let lastAnonRun = 0;
@@ -59,15 +61,21 @@ Deno.serve(async (req) => {
       if (s.docs_warned_for === key) continue;
       const types = (await db.CardAttachment.filter({ card_id: s.card_id }, '-created_date', 500)).map((a) => a.document_type).filter(Boolean);
       const missing = missingBeforeDeparture(s, types);
-      if (!missing.length) continue;
       const card = await db.TaskCard.get(s.card_id).catch(() => null);
       if (!card) continue;
+      // 끝나지 않은 수입 요건(KC·전파·식품 등)도 함께 알린다
+      const reqs = pendingReqs(card.import_requirements);
+      if (!missing.length && !reqs.length) continue;
       const recipients = await recipientsOf(card);
       if (recipients.length) {
+        const lines = [
+          missing.length ? `서류: ${missing.map((d) => d.label).join(', ')}` : '',
+          reqs.length ? `수입 요건: ${reqs.map((r: any) => r.label).join(', ')}` : '',
+        ].filter(Boolean).join('\n');
         await notifyUsers(svc, recipients, {
           type: 'shipment_docs_missing',
-          title: `[서류 미비 · 출항 D-${left}] ${card.title}`,
-          body: `${s.label || '선적'}${s.dangerous_goods ? ' (위험물 포함)' : ''}: ${missing.map((d) => d.label).join(', ')}\n출항 예정 ${s.etd}. 무역서류 탭에서 서류를 올리거나 '해당 없음'으로 표시해 주세요.`,
+          title: `[${missing.length ? '서류 미비' : '수입 요건 미완료'} · 출항 D-${left}] ${card.title}`,
+          body: `${s.label || '선적'}${s.dangerous_goods ? ' (위험물 포함)' : ''}\n${lines}\n출항 예정 ${s.etd}. 무역서류 탭에서 서류를 올리거나 '해당 없음'으로 표시하고, 수입 요건 진행 상태를 갱신해 주세요.`,
           link: `/task-board?card=${card.id}`,
           task_card_id: card.id,
           card_title: card.title,
