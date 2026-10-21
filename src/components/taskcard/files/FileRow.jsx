@@ -27,7 +27,7 @@ export default function FileRow({ file, onDelete, onVisibilityChange, visibility
   };
 
   return (
-    <div className="flex items-center justify-between px-3 py-2 hover:bg-accent/40 group">
+    <div className="flex items-center justify-between px-3 py-2 hover:bg-muted group">
       <div className="flex items-center gap-2.5 flex-1 min-w-0">
         <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         <span className={`text-sm truncate ${superseded ? 'text-muted-foreground line-through' : ''}`} title={file.file_name}>{file.file_name}</span>

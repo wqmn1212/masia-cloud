@@ -28,7 +28,7 @@ const PRIORITY_META = {
   URGENT: { label: '긴급',  className: 'bg-destructive text-destructive-foreground', borderColor: '#ef4444' },
 };
 
-const STATUS_BORDER = { TODO: '#9ca3af', IN_PROGRESS: '#fbbf24', DONE: '#60a5fa' };
+const STATUS_BORDER = { TODO: '#9ca3af', IN_PROGRESS: '#fbbf24', DONE: '#0066FF' };
 
 const emptyForm = { title: '', description: '', status: 'TODO', due_date: '', assignee_name: '', priority: 'MEDIUM' };
 

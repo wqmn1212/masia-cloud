@@ -4,16 +4,16 @@ import { ListChecks, Calendar, User, AlertCircle, Inbox } from 'lucide-react';
 import { format } from 'date-fns';
 
 const STATUS_META = {
-  TODO:        { label: '대기',   color: 'bg-slate-100 text-slate-700 border-slate-200' },
-  IN_PROGRESS: { label: '진행중', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  TODO:        { label: '대기',   color: 'bg-muted text-foreground/80 border-border' },
+  IN_PROGRESS: { label: '진행중', color: 'bg-primary/10 text-primary border-primary/20' },
   DONE:        { label: '완료',   color: 'bg-green-100 text-green-700 border-green-200' },
 };
 
 const PRIORITY_META = {
   URGENT: { label: '긴급', color: 'text-red-600' },
   HIGH:   { label: '높음', color: 'text-orange-600' },
-  MEDIUM: { label: '보통', color: 'text-blue-600' },
-  LOW:    { label: '낮음', color: 'text-slate-500' },
+  MEDIUM: { label: '보통', color: 'text-primary' },
+  LOW:    { label: '낮음', color: 'text-muted-foreground' },
 };
 
 export default function ClientTasksPanel({ taskItems, cardsById, onCardClick }) {

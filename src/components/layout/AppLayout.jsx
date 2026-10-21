@@ -74,7 +74,7 @@ export default function AppLayout() {
           <TopBar onMenuClick={() => setMobileOpen(true)} user={user} />
           <main className="p-3 md:p-6">
             {canAccessPath(user, location.pathname) ? (
-              <Suspense fallback={<div className="flex justify-center py-20"><div className="w-6 h-6 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" /></div>}>
+              <Suspense fallback={<div className="flex justify-center py-20"><div className="w-6 h-6 border-4 border-border border-t-foreground rounded-full animate-spin" /></div>}>
                 <Outlet />
               </Suspense>
             ) : <AccessDenied />}
