@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, BatteryCharging, Plus, Ship, Loader2 } from 'lucide-react';
+import { AlertTriangle, BatteryCharging, Plus, Loader2, Pencil } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { MODES, SHIPMENT_STATUS, daysUntil, docStatus, missingBeforeDeparture } from '@/lib/shipments';
-import DestCostSection from './DestCostSection';
+import DestCostSection, { destCostWarning } from './DestCostSection';
+import ShipmentSteps from '@/components/shipments/ShipmentSteps';
 import { pendingReqs } from '@/lib/importRequirements';
 
 const FIELDS = ['label', 'mode', 'status', 'forwarder', 'carrier', 'tracking_no', 'port_from', 'port_to', 'etd', 'eta', 'atd', 'ata', 'dangerous_goods', 'docs', 'package_note', 'client_note', 'note', 'client_visible'];
@@ -18,7 +19,7 @@ const pick = (s) => Object.fromEntries(FIELDS.map((k) => [k, s[k] ?? (k === 'doc
 const sel = 'mt-1 h-8 w-full rounded-md border bg-background px-2 text-xs';
 const DOC_CHOICES = [['MISSING', '미비'], ['READY', '준비됨'], ['NA', '해당 없음']];
 
-function ShipmentEditor({ shipment, card, attachmentTypes, onSaved }) {
+function ShipmentEditor({ shipment, card, attachmentTypes, onSaved, onClose }) {
   const [f, setF] = useState(() => pick(shipment));
   const [saving, setSaving] = useState(false);
   // 이 폼의 필드가 바뀔 때만 다시 채운다 (도착지 비용처럼 따로 저장하는 값 때문에 입력 중인 내용이 지워지지 않게)
@@ -26,10 +27,6 @@ function ShipmentEditor({ shipment, card, attachmentTypes, onSaved }) {
   useEffect(() => { setF(pick(shipment)); }, [shipment.id, saved]);
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
   const docs = docStatus(f, attachmentTypes);
-  const missing = missingBeforeDeparture(f, attachmentTypes);
-  const toEtd = daysUntil(f.etd);
-  const warn = missing.length > 0 && ['PREPARING', 'BOOKED'].includes(f.status) && toEtd != null && toEtd <= 30;
-  const reqWarn = ['PREPARING', 'BOOKED'].includes(f.status) && toEtd != null && toEtd <= 30 ? pendingReqs(card.import_requirements) : [];
   // '미비'는 직접 표시를 지우는 것 (보관함에 파일이 있으면 계속 준비됨으로 본다)
   const setDoc = (key, status) => set('docs', [...(f.docs || []).filter((d) => d.key !== key), ...(status === 'MISSING' ? [] : [{ key, status, note: '' }])]);
   const dirty = JSON.stringify(f) !== saved;
@@ -47,6 +44,7 @@ function ShipmentEditor({ shipment, card, attachmentTypes, onSaved }) {
       }
       toast({ title: '선적 정보를 저장했습니다', description: statusChanged && f.client_visible ? '고객에게 상태 변경 알림을 보냈습니다.' : undefined });
       onSaved();
+      onClose();
     } catch (e) {
       toast({ title: '저장하지 못했습니다', description: e.message, variant: 'destructive' });
     } finally {
@@ -55,23 +53,11 @@ function ShipmentEditor({ shipment, card, attachmentTypes, onSaved }) {
   };
 
   return (
-    <div className="space-y-3 rounded-xl border p-3">
+    <div className="space-y-3 rounded-lg border p-3">
       <div className="flex flex-wrap items-center gap-2">
         <Input className="h-8 w-40 text-sm font-semibold" value={f.label} placeholder="1차 선적" onChange={(e) => set('label', e.target.value)} />
-        <Badge variant="outline">{SHIPMENT_STATUS[f.status]}</Badge>
-        {f.dangerous_goods && <Badge className="gap-1 border-0 bg-chart-3/15 text-chart-3"><BatteryCharging className="h-3 w-3" />위험물</Badge>}
-        {toEtd != null && ['PREPARING', 'BOOKED'].includes(f.status) && <span className="text-xs text-muted-foreground">출항 {toEtd >= 0 ? `D-${toEtd}` : `${-toEtd}일 지남`}</span>}
+        <span className="text-xs text-muted-foreground">선적 정보 수정</span>
       </div>
-      {warn && (
-        <p className="flex gap-1.5 rounded-md bg-destructive/10 p-2 text-xs text-destructive">
-          <AlertTriangle className="h-4 w-4 shrink-0" />출항 {toEtd}일 전인데 서류 {missing.length}건이 없습니다: {missing.map((d) => d.label).join(', ')}
-        </p>
-      )}
-      {reqWarn.length > 0 && (
-        <p className="flex gap-1.5 rounded-md bg-destructive/10 p-2 text-xs text-destructive">
-          <AlertTriangle className="h-4 w-4 shrink-0" />수입 요건 {reqWarn.length}건이 끝나지 않았습니다: {reqWarn.map((r) => r.label).join(', ')}. 인증 없이 도착하면 통관이 보류될 수 있습니다 (무역서류 탭).
-        </p>
-      )}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <label className="text-[11px]">상태<select className={sel} value={f.status} onChange={(e) => set('status', e.target.value)}>{Object.entries(SHIPMENT_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
         <label className="text-[11px]">운송 방식<select className={sel} value={f.mode || ''} onChange={(e) => set('mode', e.target.value)}><option value="">선택</option>{Object.entries(MODES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
@@ -105,15 +91,70 @@ function ShipmentEditor({ shipment, card, attachmentTypes, onSaved }) {
           ))}
         </ul>
       </div>
-      <DestCostSection shipment={shipment} card={card} onSaved={onSaved} />
       <div className="grid gap-2 sm:grid-cols-2">
         <div><Label className="text-[11px]">고객 안내 메모 (고객에게 보임)</Label><Textarea rows={2} className="text-xs" value={f.client_note} placeholder="예: 부산항 도착 후 통관까지 2~3일 걸립니다." onChange={(e) => set('client_note', e.target.value)} /></div>
         <div><Label className="text-[11px]">내부 메모</Label><Textarea rows={2} className="text-xs" value={f.note} onChange={(e) => set('note', e.target.value)} /></div>
       </div>
       <div className="flex items-center justify-between">
         <label className="flex items-center gap-2 text-xs"><Switch checked={!!f.client_visible} onCheckedChange={(v) => set('client_visible', v)} />고객 포털에 보이기</label>
-        <Button size="sm" disabled={saving || !dirty} onClick={save}>{saving ? '저장 중…' : '저장'}</Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="ghost" onClick={onClose}>닫기</Button>
+          <Button size="sm" disabled={saving || !dirty} onClick={save}>{saving ? '저장 중…' : '저장'}</Button>
+        </div>
       </div>
+    </div>
+  );
+}
+
+const fmtDay = (d) => (d ? d.slice(5).replace('-', '/') : '미정');
+
+// 선적 요약 카드: 진행 단계·일정·서류·확인할 일·도착지 비용. '수정'을 눌러야 입력 화면이 열린다
+function ShipmentCard({ shipment, card, attachmentTypes, onSaved }) {
+  const [editing, setEditing] = useState(false);
+  if (editing) return <ShipmentEditor shipment={shipment} card={card} attachmentTypes={attachmentTypes} onSaved={onSaved} onClose={() => setEditing(false)} />;
+  const s = shipment;
+  const docs = docStatus(s, attachmentTypes);
+  const ready = docs.filter((d) => d.status !== 'MISSING').length;
+  const toEtd = daysUntil(s.etd);
+  const beforeDeparture = ['PREPARING', 'BOOKED'].includes(s.status);
+  const soon = beforeDeparture && toEtd != null && toEtd <= 30;
+  const missing = soon ? missingBeforeDeparture(s, attachmentTypes) : [];
+  const reqs = soon ? pendingReqs(card.import_requirements) : [];
+  const destWarn = destCostWarning(s);
+  const todos = [
+    missing.length && `선적 서류 ${missing.length}건 없음 · ${missing.map((d) => d.label).join(', ')}`,
+    reqs.length && `수입 요건 ${reqs.length}건 미완료 · ${reqs.map((r) => r.label).join(', ')} (아래 수입 요건)`,
+    destWarn,
+  ].filter(Boolean);
+  return (
+    <div className="space-y-3 rounded-lg border p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-sm font-semibold">{s.label || '선적'}</p>
+        <Badge variant="outline">{SHIPMENT_STATUS[s.status]}</Badge>
+        {s.dangerous_goods && <Badge className="gap-1 border-0 bg-chart-3/15 text-chart-3"><BatteryCharging className="h-3 w-3" />위험물</Badge>}
+        {!s.client_visible && <Badge variant="outline" className="text-[10px] text-muted-foreground">고객 비공개</Badge>}
+        <span className="text-xs text-muted-foreground">{[MODES[s.mode], s.carrier].filter(Boolean).join(' · ')}</span>
+        <Button size="sm" variant="ghost" className="ml-auto h-7 gap-1 text-xs" onClick={() => setEditing(true)}><Pencil className="h-3 w-3" />수정</Button>
+      </div>
+      <ShipmentSteps status={s.status} />
+      <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-4">
+        <div><dt className="text-muted-foreground">구간</dt><dd>{s.port_from || '-'} → {s.port_to || '-'}</dd></div>
+        <div><dt className="text-muted-foreground">{s.atd ? '출항' : '출항 예정'}</dt><dd className="tabular-nums">{fmtDay(s.atd || s.etd)}{beforeDeparture && toEtd != null ? <span className="ml-1 text-muted-foreground">{toEtd >= 0 ? `D-${toEtd}` : `${-toEtd}일 지남`}</span> : null}</dd></div>
+        <div><dt className="text-muted-foreground">{s.ata ? '도착' : '도착 예정'}</dt><dd className="tabular-nums">{fmtDay(s.ata || s.eta)}</dd></div>
+        <div><dt className="text-muted-foreground">B/L · 운송장</dt><dd className="truncate font-mono">{s.tracking_no || '-'}</dd></div>
+      </dl>
+      {todos.length > 0 && (
+        <ul className="space-y-1 rounded-md bg-chart-3/10 p-2 text-xs text-chart-3">
+          {todos.map((t) => <li key={t} className="flex gap-1.5"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{t}</li>)}
+        </ul>
+      )}
+      <div>
+        <p className="text-[11px] text-muted-foreground">선적 서류 {ready}/{docs.length} 준비 · 무역서류 보관함에 유형을 맞춰 올리면 자동으로 준비됨</p>
+        <div className="mt-1 flex flex-wrap gap-1">
+          {docs.map((d) => <span key={d.key} className={`rounded px-1.5 py-0.5 text-[10px] ${d.status === 'MISSING' ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'}`}>{d.status === 'MISSING' ? '' : '✓ '}{d.label}{d.status === 'NA' ? ' (해당 없음)' : ''}</span>)}
+        </div>
+      </div>
+      <DestCostSection shipment={s} card={card} onSaved={onSaved} />
     </div>
   );
 }
@@ -139,14 +180,16 @@ export default function ShipmentPanel({ card }) {
   };
   return (
     <section className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Ship className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-semibold">선적·통관</h3>
-        <Button size="sm" variant="outline" className="ml-auto h-7 gap-1 text-xs" disabled={adding} onClick={add}>{adding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}선적 추가</Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-semibold">선적·통관</h3>
+          <p className="text-xs text-muted-foreground">출항 전에 서류·수입 요건·도착 후 비용을 확인하고, 진행 단계는 고객 포털에도 보입니다.</p>
+        </div>
+        <Button size="sm" variant="outline" className="gap-1" disabled={adding} onClick={add}>{adding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}선적 추가</Button>
       </div>
       {isLoading ? null : shipments.length === 0 ? (
         <p className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">출고가 가까워지면 선적을 추가하세요. 배터리가 들어간 제품은 위험물 서류를 미리 챙기도록 경고해 드립니다.</p>
-      ) : shipments.map((s) => <ShipmentEditor key={s.id} shipment={s} card={card} attachmentTypes={types} onSaved={() => qc.invalidateQueries({ queryKey: key })} />)}
+      ) : shipments.map((s) => <ShipmentCard key={s.id} shipment={s} card={card} attachmentTypes={types} onSaved={() => qc.invalidateQueries({ queryKey: key })} />)}
     </section>
   );
 }
