@@ -69,7 +69,7 @@ export default function DayDetailDialog({ open, onClose, dateKey, cards = [], ta
                   <button
                     key={card.id}
                     onClick={() => onSelectCard?.(card)}
-                    className="w-full text-left rounded-xl border bg-card hover:bg-accent/5 p-3 transition-colors"
+                    className="w-full text-left rounded-xl border bg-card hover:bg-muted p-3 transition-colors"
                   >
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       {p && <Badge className={`${p.className} border-0 text-[10px] h-4 px-1.5`}>{t(`priority.${card.priority}`, p.label)}</Badge>}
@@ -98,7 +98,7 @@ export default function DayDetailDialog({ open, onClose, dateKey, cards = [], ta
                     key={item.id}
                     onClick={() => handleItemClick(item)}
                     disabled={!parent}
-                    className="w-full text-left rounded-xl border bg-muted/20 hover:bg-accent/10 p-3 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full text-left rounded-xl border bg-muted/20 hover:bg-muted p-3 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       {p && <Badge className={`${p.className} border-0 text-[10px] h-4 px-1.5`}>{t(`priority.${item.priority}`, p.label)}</Badge>}

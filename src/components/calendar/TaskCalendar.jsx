@@ -6,11 +6,11 @@ import { useLanguage } from '@/lib/LanguageContext';
 
 // 인라인 스타일 기반 색상 (Tailwind 퍼지 문제 방지)
 const STATUS_BG = {
-  TODO:        '#6b7280',
+  TODO:        '#70737C',
   IN_PROGRESS: '#f59e0b',
-  REVIEW:      '#14b8a6',
-  PRODUCTION:  '#a855f7',
-  DONE:        '#3b82f6',
+  REVIEW:      '#0F9F8F',
+  PRODUCTION:  '#6A4CE0',
+  DONE:        '#0066FF',
 };
 
 const PRIORITY_BG = {
@@ -22,7 +22,7 @@ const PRIORITY_BG = {
 
 function getCardBg(priority, status) {
   if (priority && PRIORITY_BG[priority]) return PRIORITY_BG[priority];
-  return STATUS_BG[status] || '#6b7280';
+  return STATUS_BG[status] || '#70737C';
 }
 
 const PRIORITY_EMOJI = { URGENT: '🔴', HIGH: '🟠', LOW: '⚪' };
@@ -171,7 +171,7 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
               key={idx}
               onClick={() => onDateClick && onDateClick(key)}
               className={`border-r border-b p-0.5 sm:p-1 min-h-[68px] sm:min-h-[100px] cursor-pointer group transition-colors
-                ${!dayObj.isCurrentMonth ? 'bg-muted/20' : 'hover:bg-accent/5'}
+                ${!dayObj.isCurrentMonth ? 'bg-muted/20' : 'hover:bg-muted'}
                 ${idx % 7 === 6 ? 'border-r-0' : ''}
               `}
             >

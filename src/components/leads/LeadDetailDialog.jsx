@@ -59,7 +59,7 @@ export default function LeadDetailDialog({ lead, open, onClose, onSave, saving }
           <Field label="희망 단가">{lead.target_price}</Field>
           <Field label="관심 플랜">
             {lead.interest === 'ENTERPRISE'
-              ? <Badge className="bg-slate-900 text-white hover:bg-slate-900">엔터프라이즈</Badge>
+              ? <Badge className="bg-foreground text-white hover:bg-foreground">엔터프라이즈</Badge>
               : (lead.interest || '-')}
           </Field>
           {lead.interest === 'ENTERPRISE' && <Field label="예상 월 발주 규모">{lead.expected_volume || '-'}</Field>}

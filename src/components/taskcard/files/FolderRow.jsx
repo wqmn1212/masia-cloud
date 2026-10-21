@@ -11,13 +11,13 @@ export default function FolderRow({ folder, onOpen, onDelete }) {
   return (
     <div
       onDoubleClick={() => onOpen(folder)}
-      className="flex items-center justify-between px-3 py-2 hover:bg-accent/40 group cursor-pointer"
+      className="flex items-center justify-between px-3 py-2 hover:bg-muted group cursor-pointer"
     >
       <button
         onClick={() => onOpen(folder)}
         className="flex items-center gap-2.5 flex-1 min-w-0 text-left"
       >
-        <Folder className="w-4 h-4 text-blue-500 flex-shrink-0 fill-blue-100" />
+        <Folder className="w-4 h-4 text-primary flex-shrink-0 fill-primary/10" />
         <span className="text-sm truncate font-medium">{folder.folder_name}</span>
       </button>
       <button

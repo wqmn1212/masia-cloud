@@ -179,7 +179,7 @@ export default function FactoryDashboard() {
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
               statusFilter === f.key
                 ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-card hover:bg-accent text-muted-foreground border-border'
+                : 'bg-card hover:bg-muted text-muted-foreground border-border'
             }`}
           >
             {f.label}

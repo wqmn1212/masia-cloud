@@ -5,9 +5,9 @@ import { format } from 'date-fns';
 import { quotePriceLabel } from '@/components/quotation/quoteCurrency';
 
 const STATUS_META = {
-  DRAFT:    { label: '초안',   color: 'bg-slate-100 text-slate-700 border-slate-200' },
+  DRAFT:    { label: '초안',   color: 'bg-muted text-foreground/80 border-border' },
   REVIEW:   { label: '검토',   color: 'bg-amber-100 text-amber-700 border-amber-200' },
-  APPROVED: { label: '승인',   color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  APPROVED: { label: '승인',   color: 'bg-primary/10 text-primary border-primary/20' },
   SENT:     { label: '발송',   color: 'bg-purple-100 text-purple-700 border-purple-200' },
   ACCEPTED: { label: '수락',   color: 'bg-green-100 text-green-700 border-green-200' },
   REJECTED: { label: '거절',   color: 'bg-red-100 text-red-700 border-red-200' },

@@ -52,7 +52,7 @@ export default function Leads() {
             key={f.key}
             onClick={() => setFilter(f.key)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-              filter === f.key ? 'bg-primary text-primary-foreground border-primary' : 'bg-card hover:bg-accent text-muted-foreground border-border'
+              filter === f.key ? 'bg-primary text-primary-foreground border-primary' : 'bg-card hover:bg-muted text-muted-foreground border-border'
             }`}
           >
             {f.label}<span className="ml-1 opacity-70">({counts[f.key] || 0})</span>
