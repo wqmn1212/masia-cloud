@@ -1,7 +1,8 @@
 import React from 'react';
-import { Ship, BatteryCharging, Check } from 'lucide-react';
+import { Ship, BatteryCharging } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { MODES, SHIPMENT_STATUS, STATUS_FLOW } from '@/lib/shipments';
+import { MODES, SHIPMENT_STATUS } from '@/lib/shipments';
+import ShipmentSteps from '@/components/shipments/ShipmentSteps';
 import ClientDestCost from './ClientDestCost';
 
 // 고객 포털 진행 정보: 선적 상태 단계, 출항·도착일, 서류 준비 여부, 도착지 비용 예상액 (파일·포워더·내부 메모는 보이지 않음)
@@ -10,7 +11,6 @@ export default function ClientShipmentPanel({ cardId, shipments = [], onChanged 
   return (
     <div className="mb-4 space-y-3">
       {shipments.map((s) => {
-        const at = STATUS_FLOW.indexOf(s.status);
         const ready = s.docs.filter((d) => d.status !== 'MISSING').length;
         return (
           <div key={s.id} className="space-y-2.5 rounded-lg border p-3">
@@ -21,18 +21,7 @@ export default function ClientShipmentPanel({ cardId, shipments = [], onChanged 
               {s.dangerous_goods && <Badge className="gap-1 border-0 bg-chart-3/15 text-chart-3"><BatteryCharging className="h-3 w-3" />배터리 포함</Badge>}
               <span className="ml-auto text-xs text-muted-foreground">{[MODES[s.mode], s.carrier].filter(Boolean).join(' · ')}</span>
             </div>
-            {s.status !== 'ON_HOLD' && at >= 0 && (
-              <ol className="flex items-center gap-1" aria-label="선적 단계">
-                {STATUS_FLOW.map((k, i) => (
-                  <li key={k} className="flex flex-1 flex-col items-center gap-1">
-                    <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${i < at ? 'bg-primary text-primary-foreground' : i === at ? 'border-2 border-primary text-primary' : 'border text-muted-foreground'}`}>
-                      {i < at ? <Check className="h-3 w-3" /> : i + 1}
-                    </span>
-                    <span className={`text-center text-[10px] leading-tight ${i === at ? 'font-semibold' : 'text-muted-foreground'}`}>{SHIPMENT_STATUS[k]}</span>
-                  </li>
-                ))}
-              </ol>
-            )}
+            <ShipmentSteps status={s.status} />
             <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-4">
               <div><dt className="text-muted-foreground">출발</dt><dd>{s.port_from || '-'}</dd></div>
               <div><dt className="text-muted-foreground">도착</dt><dd>{s.port_to || '-'}</dd></div>

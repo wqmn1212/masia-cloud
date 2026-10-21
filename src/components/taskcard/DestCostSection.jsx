@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Calculator, CheckCircle2, MessageCircleQuestion, Send } from 'lucide-react';
+import { Calculator, CheckCircle2, MessageCircleQuestion, Receipt, Send } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/use-toast';
 import LandedCostForm, { EMPTY_LANDED_INPUT, toEngineInput } from '@/components/landedcost/LandedCostForm';
@@ -28,6 +27,16 @@ const STATE_STYLE = {
 const CLEAR_DECISION = { dest_cost_decision: 'PENDING', dest_cost_decided_at: '', dest_cost_decided_by_name: '', dest_cost_client_note: '' };
 const fmtAt = (iso) => (iso ? new Date(iso).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '');
 const pct = (v) => `${v > 0 ? '+' : ''}${Math.round(v * 100)}%`;
+
+// 선적 요약 카드의 '확인할 일'에 넣을 문장 (출항 14일 안인데 고객 확인이 없을 때)
+export function destCostWarning(shipment) {
+  const toEtd = daysUntil(shipment.etd);
+  const state = destCostState(shipment);
+  if (!['PREPARING', 'BOOKED'].includes(shipment.status) || toEtd == null || toEtd > WARN_DAYS || state === 'ACKNOWLEDGED') return '';
+  if (state === 'NONE' || state === 'DRAFT') return '도착 후 따로 낼 돈을 아직 고객에게 보내지 않았습니다';
+  if (state === 'QUESTION') return '도착 후 비용에 고객 문의가 있습니다';
+  return '도착 후 따로 낼 돈을 고객이 아직 확인하지 않았습니다';
+}
 
 // 계산 창을 열 때의 첫 값: 저장해 둔 입력, 없으면 선적 정보에서 운송 방식·배터리만 가져온다
 const initialInput = (s) => (s.dest_cost_input
@@ -86,9 +95,9 @@ export default function DestCostSection({ shipment, card, onSaved }) {
   const diff = destCostDiff(est, actual.amount === '' ? null : actual.amount);
   const { data: attachments = [] } = useCardAttachments(card.id);
   const invoices = attachments.filter((a) => a.document_type === 'LOGISTICS_INVOICE');
-  const toEtd = daysUntil(shipment.etd);
-  const beforeDeparture = ['PREPARING', 'BOOKED'].includes(shipment.status);
-  const warn = beforeDeparture && toEtd != null && toEtd <= WARN_DAYS && state !== 'ACKNOWLEDGED';
+  // 실제 청구는 배가 떠난 뒤(또는 이미 넣었을 때)만 입력칸을 연다
+  const [actualOpen, setActualOpen] = useState(false);
+  const showActual = actualOpen || shipment.dest_cost_actual != null || !['PREPARING', 'BOOKED'].includes(shipment.status);
   const me = user?.full_name || user?.email || '';
 
   const update = async (data, done) => {
@@ -129,62 +138,63 @@ export default function DestCostSection({ shipment, card, onSaved }) {
   }, '실제 청구 금액을 저장했습니다');
   const actualDirty = String(actual.amount) !== String(shipment.dest_cost_actual ?? '') || String(actual.vat) !== String(shipment.dest_cost_actual_vat ?? '') || actual.note !== (shipment.dest_cost_actual_note || '');
 
+  const canSend = shipment.client_visible && card.client_visible;
   return (
-    <div className="space-y-2.5 rounded-lg border p-3">
+    <div className="space-y-2 border-t pt-3">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="text-xs font-semibold">한국 도착 후 따로 낼 돈 · 고객 사전 확인</p>
-        <Badge className={`border-0 ${STATE_STYLE[state]}`}>{DEST_COST_STATE[state]}</Badge>
-        <Button size="sm" variant="outline" className="ml-auto h-7 gap-1 text-xs" onClick={() => setCalcOpen(true)}><Calculator className="h-3 w-3" />{est ? '다시 계산' : '계산하기'}</Button>
+        <Receipt className="h-4 w-4 text-primary" />
+        <p className="text-xs font-semibold">도착 후 따로 낼 돈</p>
+        <Badge className={`border-0 text-[10px] ${STATE_STYLE[state]}`}>{DEST_COST_STATE[state]}</Badge>
+        <div className="ml-auto flex flex-wrap gap-1.5">
+          <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => setCalcOpen(true)}><Calculator className="h-3 w-3" />{est ? '다시 계산' : '계산하기'}</Button>
+          {est && state !== 'ACKNOWLEDGED' && (
+            <Button size="sm" className="h-7 gap-1 text-xs" disabled={busy || !canSend} title={canSend ? '' : (!card.client_visible ? '고객에게 공개된 카드에서만 보낼 수 있습니다' : "'고객 포털에 보이기'를 켜고 저장한 뒤 보낼 수 있습니다")} onClick={send}>
+              <Send className="h-3 w-3" />{state === 'DRAFT' ? '고객에게 확인 요청' : '다시 보내기'}
+            </Button>
+          )}
+        </div>
       </div>
 
-      {warn && (
-        <p className="flex gap-1.5 rounded-md bg-destructive/10 p-2 text-xs text-destructive">
-          <AlertTriangle className="h-4 w-4 shrink-0" />출항 {toEtd >= 0 ? `${toEtd}일 전` : `예정일이 ${-toEtd}일 지났`}인데 고객이 도착지 비용을 확인하지 않았습니다.{state === 'NONE' || state === 'DRAFT' ? ' 계산해서 고객에게 보내 주세요.' : ''}
-        </p>
-      )}
-
       {!est ? (
-        <p className="text-xs text-muted-foreground">공장과의 거래 조건(CIF·FOB·EXW 등)과 화물을 넣어 고객이 한국에서 따로 낼 돈을 계산하고, 출항 전에 고객 확인을 받으세요.</p>
+        <p className="text-xs text-muted-foreground">거래 조건(CIF·FOB·EXW 등)과 화물로 고객이 한국에서 따로 낼 돈을 계산해 출항 전에 확인받습니다.</p>
       ) : (
         <>
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <p className="text-lg font-bold tabular-nums text-primary">{fmtWon(est.buyer_ex_vat)}</p>
-            <p className="text-xs text-muted-foreground">범위 {fmtWon(est.range_low)} ~ {fmtWon(est.range_high)} · 부가세 제외{est.buyer_vat > 0 ? ` · 수입 부가세 ${fmtWon(est.buyer_vat)} 별도` : ''}</p>
-          </div>
-          {!!est.segments?.length && <p className="text-xs">{est.segments.map((g) => `${g.short || g.label} ${fmtWon(g.amount)}`).join(' · ')}</p>}
-          <p className="text-[11px] text-muted-foreground">{est.term_label} · {est.mode_label} · {est.basis_text} · 환율 {Number(est.usd_krw).toLocaleString('ko-KR')}원 · 계산 {fmtAt(est.computed_at)}{est.computed_by_name ? ` ${est.computed_by_name}` : ''}</p>
-          {state === 'SENT' && <p className="text-[11px] text-muted-foreground">{fmtAt(shipment.dest_cost_sent_at)} {shipment.dest_cost_sent_by_name} 님이 보냄 · 고객 확인을 기다리는 중</p>}
-          {state === 'ACKNOWLEDGED' && <p className="flex items-center gap-1 text-xs text-primary"><CheckCircle2 className="h-3.5 w-3.5" />{shipment.dest_cost_decided_by_name} 님이 {fmtAt(shipment.dest_cost_decided_at)}에 확인했습니다</p>}
+          <p className="text-xs"><b className="text-sm tabular-nums">{fmtWon(est.buyer_ex_vat)}</b> <span className="text-muted-foreground">부가세 제외 · 범위 {fmtWon(est.range_low)} ~ {fmtWon(est.range_high)}{est.buyer_vat > 0 ? ` · 수입 부가세 ${fmtWon(est.buyer_vat)} 별도` : ''}</span></p>
+          {!!est.segments?.length && <p className="text-xs text-muted-foreground">{est.segments.map((g) => `${g.short || g.label} ${fmtWon(g.amount)}`).join(' · ')}</p>}
+          <p className="text-[11px] text-muted-foreground">
+            {est.term_label} · {est.mode_label} · 환율 {Number(est.usd_krw).toLocaleString('ko-KR')}원 · {fmtAt(est.computed_at)} 계산
+            {state === 'SENT' && ` · ${fmtAt(shipment.dest_cost_sent_at)} 고객에게 보냄`}
+            {!canSend && state === 'DRAFT' && ` · ${!card.client_visible ? '카드를 고객에게 공개해야 보낼 수 있습니다' : "'고객 포털에 보이기'를 켜야 보낼 수 있습니다"}`}
+          </p>
+          {state === 'ACKNOWLEDGED' && <p className="flex items-center gap-1 text-xs text-primary"><CheckCircle2 className="h-3.5 w-3.5" />{shipment.dest_cost_decided_by_name} 님이 {fmtAt(shipment.dest_cost_decided_at)}에 확인</p>}
           {state === 'QUESTION' && (
-            <div className="rounded-md bg-destructive/5 p-2 text-xs">
-              <p className="flex items-center gap-1 font-semibold text-destructive"><MessageCircleQuestion className="h-3.5 w-3.5" />{shipment.dest_cost_decided_by_name} 님 문의 · {fmtAt(shipment.dest_cost_decided_at)}</p>
+            <div className="rounded-md bg-muted/50 p-2 text-xs">
+              <p className="flex items-center gap-1 font-semibold"><MessageCircleQuestion className="h-3.5 w-3.5 text-destructive" />{shipment.dest_cost_decided_by_name} 님 문의 · {fmtAt(shipment.dest_cost_decided_at)}</p>
               <p className="mt-1 whitespace-pre-wrap">{shipment.dest_cost_client_note}</p>
               <p className="mt-1 text-muted-foreground">답변은 문의 탭에 남기고, 금액을 고쳤다면 다시 계산해서 보내 주세요.</p>
             </div>
           )}
-          {state !== 'ACKNOWLEDGED' && (
-            <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" className="h-7 gap-1 text-xs" disabled={busy || !shipment.client_visible || !card.client_visible} onClick={send}>
-                <Send className="h-3 w-3" />{state === 'DRAFT' ? '고객에게 확인 요청' : '다시 보내기'}
-              </Button>
-              {(!shipment.client_visible || !card.client_visible) && <span className="text-[11px] text-muted-foreground">{!card.client_visible ? '고객에게 공개된 카드에서만 보낼 수 있습니다.' : '\'고객 포털에 보이기\'를 켜고 저장한 뒤 보낼 수 있습니다.'}</span>}
+
+          {!showActual ? (
+            <button type="button" className="text-xs text-primary hover:underline" onClick={() => setActualOpen(true)}>실제 청구 금액 입력</button>
+          ) : (
+            <div className="space-y-2 rounded-md bg-muted/40 p-2.5">
+              <div className="grid gap-2 sm:grid-cols-[1fr_1fr_2fr]">
+                <label className="space-y-1 text-[11px]"><span>실제 청구 (부가세 제외, 원)</span><Input type="number" min="0" className="h-8 bg-background text-xs" value={actual.amount} onChange={(e) => setActual((a) => ({ ...a, amount: e.target.value }))} /></label>
+                <label className="space-y-1 text-[11px]"><span>실제 수입 부가세 (원)</span><Input type="number" min="0" className="h-8 bg-background text-xs" value={actual.vat} onChange={(e) => setActual((a) => ({ ...a, vat: e.target.value }))} /></label>
+                <label className="space-y-1 text-[11px]"><span>예상과 다른 이유 (고객에게 보임)</span><Input className="h-8 bg-background text-xs" value={actual.note} placeholder="예: 실측 부피 10.2CBM, 세관 검사 지정" onChange={(e) => setActual((a) => ({ ...a, note: e.target.value }))} /></label>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {diff && (
+                  <span className={`text-xs ${diff.inRange ? 'text-muted-foreground' : 'font-semibold text-destructive'}`}>
+                    예상 대비 {diff.diff >= 0 ? '+' : ''}{fmtWon(diff.diff)}{diff.pct != null ? ` (${pct(diff.pct)})` : ''}{diff.inRange ? ' · 안내한 범위 안' : ' · 안내한 범위 밖, 이유를 적어 주세요'}
+                  </span>
+                )}
+                {invoices.length ? <DocChips docs={invoices} max={2} /> : <span className="text-[11px] text-muted-foreground">청구서는 무역서류에 &lsquo;물류비 청구서&rsquo;로 올려 주세요</span>}
+                <Button size="sm" variant="outline" className="ml-auto h-7 text-xs" disabled={busy || !actualDirty} onClick={saveActual}>실제 금액 저장</Button>
+              </div>
             </div>
           )}
-
-          <div className="grid gap-2 border-t pt-2.5 sm:grid-cols-[1fr_1fr_2fr]">
-            <label className="space-y-1 text-[11px]"><span>실제 청구 (부가세 제외, 원)</span><Input type="number" min="0" className="h-8 text-xs" value={actual.amount} onChange={(e) => setActual((a) => ({ ...a, amount: e.target.value }))} /></label>
-            <label className="space-y-1 text-[11px]"><span>실제 수입 부가세 (원)</span><Input type="number" min="0" className="h-8 text-xs" value={actual.vat} onChange={(e) => setActual((a) => ({ ...a, vat: e.target.value }))} /></label>
-            <label className="space-y-1 text-[11px]"><span>예상과 다른 이유 (고객에게 보임)</span><Textarea rows={1} className="min-h-8 text-xs" value={actual.note} placeholder="예: 실측 부피 10.2CBM, 세관 검사 지정" onChange={(e) => setActual((a) => ({ ...a, note: e.target.value }))} /></label>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {diff && (
-              <span className={`text-xs ${diff.inRange ? 'text-muted-foreground' : 'font-semibold text-destructive'}`}>
-                예상 대비 {diff.diff >= 0 ? '+' : ''}{fmtWon(diff.diff)}{diff.pct != null ? ` (${pct(diff.pct)})` : ''}{diff.inRange ? ' · 안내한 범위 안' : ' · 안내한 범위 밖 — 이유를 적어 주세요'}
-              </span>
-            )}
-            {invoices.length ? <DocChips docs={invoices} max={2} /> : <span className="text-[11px] text-muted-foreground">청구서는 무역서류에 &lsquo;물류비 청구서&rsquo;로 올려 주세요</span>}
-            <Button size="sm" variant="outline" className="ml-auto h-7 text-xs" disabled={busy || !actualDirty} onClick={saveActual}>실제 금액 저장</Button>
-          </div>
         </>
       )}
       <CalcDialog shipment={shipment} open={calcOpen} onClose={() => setCalcOpen(false)} onSave={saveEstimate} />
