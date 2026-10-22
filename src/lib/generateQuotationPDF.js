@@ -141,7 +141,7 @@ export async function generateQuotationPDF(quotation) {
     const route = [sl.origin, sl.destination].filter(Boolean).join(' → ');
     ensure(10);
     font(9, true); color([23, 23, 25]);
-    pdf.text(`별도 물류비 (합계 미포함)${route ? ` · ${route}` : ''}:  ${money(sl.amount, cur)}`, W - M, y + 2, { align: 'right' });
+    pdf.text(`별도 물류비 (합계 미포함)${route ? ` · ${route}` : ''}:  ${formatMoney(sl.amount, sl.currency || cur)}`, W - M, y + 2, { align: 'right' });
     y += 6;
   }
   y += 6;

@@ -25,7 +25,7 @@ export default function LogisticsSeparateFields({ form, setForm, logisticsTotal,
             </div>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            금액은 위 '물류비' 칸에 직접 입력하거나 아래 자동 추정으로 적용하세요. 별도 물류비:{' '}
+            견적서에는 위 '물류비' 칸에 입력한 금액이 그대로 표시됩니다. 아래 자동 추정은 참고용입니다. 별도 물류비:{' '}
             <strong className="text-foreground">{logisticsTotal ? formatMoney(logisticsTotal, currency) : '-'}</strong>
           </p>
         </>
