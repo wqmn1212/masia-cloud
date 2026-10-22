@@ -55,7 +55,11 @@ export function calculateQuote(form) {
   const optionBaseUSD = options.reduce((s, o) => s + (Number(o.quantity) || 0) * toUSD(o.unit_price, o.currency || 'CNY', usdToKrw, usdToCny), 0);
   const optionMarginUSD = options.reduce((s, o) => s + (Number(o.quantity) || 0) * toUSD(o.unit_price, o.currency || 'CNY', usdToKrw, usdToCny) * (Number(o.margin_percent) || 0) / 100, 0);
   const factoryUSD = options.length ? optionBaseUSD : toUSD(form.factory_total_cost, form.factory_cost_currency || 'CNY', usdToKrw, usdToCny);
-  const logisticsUSD = toUSD(form.logistics_cost, form.logistics_cost_currency || 'CNY', usdToKrw, usdToCny);
+  const rawLogisticsUSD = toUSD(form.logistics_cost, form.logistics_cost_currency || 'CNY', usdToKrw, usdToCny);
+  // 물류비 별도 표시: 제품 금액·수수료 계산에서 빼고 따로 보여 준다
+  const separate = !!form.logistics_separate;
+  const logisticsUSD = separate ? 0 : rawLogisticsUSD;
+  const logisticsTotal = separate && rawLogisticsUSD > 0 ? ceilToUnit(fromUSD(rawLogisticsUSD, cur, usdToKrw, usdToCny), cur) : null;
   const baseUSD = factoryUSD + logisticsUSD;
   const feeUSD = form.masir_fee_type === 'PERCENT' ? baseUSD * (Number(form.masir_fee_value) || 0) / 100 : Number(form.masir_fee_value) || 0;
 
@@ -94,7 +98,7 @@ export function calculateQuote(form) {
   return {
     currency: cur, lines, autoTotal, total, manual, impliedMargin,
     optionBaseUSD, optionMarginUSD, factoryUSD, logisticsUSD, baseUSD, feeUSD, totalUSD,
-    factoryCNY: factoryUSD * usdToCny, logisticsCNY: logisticsUSD * usdToCny,
+    factoryCNY: factoryUSD * usdToCny, logisticsCNY: rawLogisticsUSD * usdToCny, logisticsTotal,
   };
 }
 
