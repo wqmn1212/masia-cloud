@@ -1,0 +1,303 @@
+{
+  "name": "QCPrecheck",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "card_id": {
+      "type": "string",
+      "description": "\ub300\uc0c1 \ud0dc\uc2a4\ud06c \uce74\ub4dc ID"
+    },
+    "quotation_id": {
+      "type": "string",
+      "description": "\uc810\uac80 \uae30\uc900 \uacac\uc801\uc11c ID"
+    },
+    "quotation_hash": {
+      "type": "string",
+      "description": "\uacac\uc801 \ud488\ubaa9\u00b7\uc0ac\uc591\u00b7\ube44\uace0 \ud574\uc2dc. \ud604\uc7ac \uacac\uc801\uacfc \ub2e4\ub974\uba74 '\uacac\uc801\uc774 \ubc14\ub01c' \ud45c\uc2dc"
+    },
+    "version": {
+      "type": "number",
+      "default": 1,
+      "description": "\uac19\uc740 \uce74\ub4dc\uc758 \uba87 \ubc88\uc9f8 \uc810\uac80\uc778\uc9c0"
+    },
+    "components": {
+      "type": "array",
+      "description": "\uad6c\uc131\ud488: \uc720\ud615\u00b7\uc774\ub984\u00b7\uacac\uc801 \ud488\ubaa9\uba85\u00b7\uc0ac\uc591 \uac12",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "PAPER_BOX",
+              "PRINTED",
+              "PLASTIC_PACK",
+              "CARTON",
+              "INJECTION",
+              "ELECTRONICS",
+              "TEXTILE",
+              "EQUIPMENT"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "source_line": {
+            "type": "string",
+            "description": "\uacac\uc801 \ud488\ubaa9\uba85"
+          },
+          "specs": {
+            "type": "object",
+            "description": "\uc0ac\uc591 \uce78\ubcc4 \uac12. UNKNOWN = \ubaa8\ub984\u00b7\uacf5\uc7a5 \ud655\uc778"
+          }
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "description": "\uc810\uac80 \ud56d\ubaa9",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "\uaddc\uce59 ID + \uad6c\uc131\ud488 + \uad00\ub828 \uc0ac\uc591 \uac12. \ub2e4\uc2dc \uc810\uac80\ud574\ub3c4 \uac19\uc73c\uba74 \uc774\uc804 \uacb0\uc815\uc744 \uc774\uc5b4\ubc1b\ub294\ub2e4"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "RULE",
+              "CASE",
+              "AI"
+            ],
+            "description": "\uadfc\uac70: \uaddc\uce59 / \uc6b0\ub9ac \uc0ac\ub840 / AI \ubcf4\uac15"
+          },
+          "rule_id": {
+            "type": "string"
+          },
+          "case_id": {
+            "type": "string",
+            "description": "\uadfc\uac70 QC \uc0ac\ub840 ID"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "MISSING_SPEC",
+              "QUESTION",
+              "RISK"
+            ],
+            "description": "\uc815\ud558\uc9c0 \uc54a\uc740 \uc0ac\uc591 / \uacf5\uc7a5 \uc9c8\ubb38 / \uc704\ud5d8"
+          },
+          "component_key": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "SPEC",
+              "MATERIAL",
+              "SAMPLE",
+              "PRODUCTION",
+              "PRESHIP",
+              "PACKING"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "CRITICAL",
+              "MAJOR",
+              "MINOR"
+            ],
+            "description": "\ud488\uc9c8 \uae30\uc900\uc11c \uacb0\ud568 \ub4f1\uae09\uacfc \uac19\uc740 \uac12"
+          },
+          "title": {
+            "type": "string"
+          },
+          "title_cn": {
+            "type": "string"
+          },
+          "how": {
+            "type": "string",
+            "description": "\ud655\uc778\u00b7\uc608\ubc29 \ubc29\ubc95"
+          },
+          "how_cn": {
+            "type": "string"
+          },
+          "criteria": {
+            "type": "string",
+            "description": "\ud569\uaca9 \uae30\uc900"
+          },
+          "criteria_cn": {
+            "type": "string"
+          },
+          "question_ko": {
+            "type": "string"
+          },
+          "question_cn": {
+            "type": "string",
+            "description": "\uacf5\uc7a5\uc5d0 \ubcf4\ub0bc \uc9c8\ubb38 (\uc911\uad6d\uc5b4)"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "\uad00\ub828 \uc0ac\uc591 \uce78"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "TASK",
+              "SPEC",
+              "QUESTION",
+              "DISMISSED"
+            ],
+            "description": "\uc5c5\ubb34 \ub4f1\ub85d / \uae30\uc900\uc11c \ucd94\uac00 / \uacf5\uc7a5 \uc9c8\ubb38 / \uc81c\uc678"
+          },
+          "linked_id": {
+            "type": "string",
+            "description": "\ub9cc\ub4e4\uc5b4\uc9c4 \uc5c5\ubb34\u00b7\uae30\uc900\uc11c ID"
+          },
+          "dismiss_reason": {
+            "type": "string"
+          },
+          "decided_by_name": {
+            "type": "string"
+          },
+          "decided_at": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ai_status": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "RUNNING",
+        "DONE",
+        "FAILED"
+      ],
+      "default": "NONE",
+      "description": "AI \ubcf4\uac15 \uc0c1\ud0dc"
+    },
+    "ai_error": {
+      "type": "string"
+    },
+    "ai_ran_at": {
+      "type": "string"
+    },
+    "ai_input_hash": {
+      "type": "string",
+      "description": "AI \ubcf4\uac15\uc5d0 \uc4f4 \uc785\ub825\uc758 \ud574\uc2dc (\uac19\uc73c\uba74 \ub2e4\uc2dc \ud638\ucd9c\ud558\uc9c0 \uc54a\uc74c)"
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "\uc810\uac80\ud55c \ub2f4\ub2f9\uc790"
+    }
+  },
+  "required": [
+    "card_id"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

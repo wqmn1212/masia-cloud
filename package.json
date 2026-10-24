@@ -10,7 +10,8 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview",
-    "check:landed-cost": "node scripts/check-landed-cost.mjs"
+    "check:landed-cost": "node scripts/check-landed-cost.mjs",
+    "check:qc-precheck": "node scripts/check-qc-precheck.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.54",

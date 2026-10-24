@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertOctagon, Copy } from 'lucide-react';
+import { AlertOctagon, Copy, BookmarkPlus } from 'lucide-react';
+import CaseLogDialog from '@/components/knowledge/CaseLogDialog';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ const fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString('ko-KR', { time
 function ClaimEditor({ claim, card, user, photos, spec, qc, onSaved }) {
   const pick = (c) => ({ status: c.status || 'SUBMITTED', resolution: c.resolution && c.resolution !== 'PENDING' ? c.resolution : '', client_message: c.client_message || '', factory_response: c.factory_response || '' });
   const [f, setF] = useState(() => pick(claim));
+  const [caseOpen, setCaseOpen] = useState(false);
   useEffect(() => { setF(pick(claim)); }, [claim.id, claim.updated_date]);
   const set = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }));
   const dirty = JSON.stringify(f) !== JSON.stringify(pick(claim));
@@ -50,7 +52,10 @@ function ClaimEditor({ claim, card, user, photos, spec, qc, onSaved }) {
         <p className="min-w-0 flex-1 text-sm font-semibold">{claim.title}</p>
         <Badge variant="outline">{CLAIM_STATUS[claim.status || 'SUBMITTED']}</Badge>
         <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={copyCn}><Copy className="h-3 w-3" />중국어 클레임 문서</Button>
+        <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={() => setCaseOpen(true)}><BookmarkPlus className="h-3 w-3" />사례로 남기기</Button>
       </div>
+      <CaseLogDialog open={caseOpen} onOpenChange={setCaseOpen} tenantId={card.tenant_id} cardId={card.id}
+        initial={{ issue_case: claim.title, root_cause: [claim.description, f.factory_response].filter(Boolean).join('\n'), solution_parameter: f.resolution ? CLAIM_RESOLUTION[f.resolution] : '', severity: 'HIGH' }} />
       <p className="whitespace-pre-wrap text-xs">{claim.description}</p>
       {claim.description_cn && <p className="whitespace-pre-wrap text-xs text-muted-foreground">{claim.description_cn}</p>}
       <p className="text-[11px] text-muted-foreground">{fmtDate(claim.submitted_at || claim.created_date)} {claim.submitted_by_name} 접수{claim.defect_qty != null ? ` · 불량 ${claim.defect_qty}개${claim.received_qty ? ` / ${claim.received_qty}개` : ''}` : ''}{claim.lot_note ? ` · ${claim.lot_note}` : ''}</p>
