@@ -17,6 +17,7 @@ import QuoteOptionsEditor, { optionToUSD } from '@/components/quotation/QuoteOpt
 import SettlementFields from '@/components/quotation/SettlementFields';
 import { INCOTERMS_2020, LEGACY_INCOTERMS } from '@/lib/incoterms';
 import LogisticsEstimator from '@/components/quotation/LogisticsEstimator';
+import LogisticsSeparateFields from '@/components/quotation/LogisticsSeparateFields';
 import { calcCbm } from '@/lib/landedCost';
 import QuotationHistoryButton from '@/components/quotation/QuotationHistoryButton';
 import ManualExchangeRates from '@/components/quotation/ManualExchangeRates';
@@ -72,6 +73,9 @@ const emptyForm = {
   shipping_term: 'FOB',
   logistics_estimated_usd: '',
   logistics_estimate_lines: [],
+  logistics_separate: true,
+  logistics_origin: '',
+  logistics_destination: '',
 };
 
 export default function QuotationTab({ card, user }) {
@@ -321,6 +325,10 @@ export default function QuotationTab({ card, user }) {
       shipping_term: form.shipping_term || 'FOB',
       logistics_estimated_usd: Number(form.logistics_estimated_usd) || 0,
       logistics_estimate_lines: form.logistics_estimate_lines || [],
+      logistics_separate: !!form.logistics_separate,
+      logistics_origin: form.logistics_origin || '',
+      logistics_destination: form.logistics_destination || '',
+      logistics_total: quoteCalc.logisticsTotal,
     };
     if (editingId) {
       updateMutation.mutate({ quote: editingQuote, data: payload });
@@ -379,6 +387,9 @@ export default function QuotationTab({ card, user }) {
       shipping_term: q.shipping_term || 'FOB',
       logistics_estimated_usd: q.logistics_estimated_usd || '',
       logistics_estimate_lines: q.logistics_estimate_lines || [],
+      logistics_separate: !!q.logistics_separate,
+      logistics_origin: q.logistics_origin || '',
+      logistics_destination: q.logistics_destination || '',
       manual_total: q.manual_total ?? '',
       manual_reason: q.manual_reason || '',
     });
@@ -537,6 +548,8 @@ export default function QuotationTab({ card, user }) {
             </div>
           </div>
 
+          <LogisticsSeparateFields form={form} setForm={setForm} logisticsTotal={quoteCalc.logisticsTotal} currency={quoteCalc.logisticsCurrency} />
+
           {/* 부피·중량 기반 물류비 자동 추정 */}
           <LogisticsEstimator
             cargo={form}
@@ -693,7 +706,7 @@ export default function QuotationTab({ card, user }) {
                       {q.exchange_rate_usd > 0 && <span className="opacity-70"> (≈₩{Math.round(q.options_total_usd * q.exchange_rate_usd).toLocaleString()})</span>}</span>
                     )}
                     {q.factory_total_cost > 0 && <span>원가: <strong className="text-foreground">¥{q.factory_total_cost?.toLocaleString()}</strong></span>}
-                    {q.logistics_cost > 0 && <span>물류비: <strong className="text-foreground">¥{q.logistics_cost?.toLocaleString()}</strong></span>}
+                    {q.logistics_cost > 0 && <span>물류비{q.logistics_separate ? ' (별도)' : ''}: <strong className="text-foreground">{q.logistics_separate && q.logistics_total ? formatMoney(q.logistics_total, q.logistics_cost_currency || 'CNY') : `¥${q.logistics_cost?.toLocaleString()}`}</strong>{q.logistics_separate && (q.logistics_origin || q.logistics_destination) ? ` · ${[q.logistics_origin, q.logistics_destination].filter(Boolean).join(' → ')}` : ''}</span>}
                     {q.masir_fee_amount_cny > 0 && <span>수수료: <strong className="text-accent">¥{q.masir_fee_amount_cny?.toLocaleString()} {q.masir_fee_type === 'PERCENT' ? `(${q.masir_fee_value}%)` : '(고정)'}</strong></span>}
                   </div>
                   {q.manual_total > 0 && (

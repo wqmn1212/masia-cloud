@@ -131,6 +131,9 @@ export default async function (req) {
       total_display: totalDisplay,
       total_usd: v2 ? null : totalUsd,
       rounding_version: v2 ? 2 : 1,
+      separate_logistics: v2 && q.logistics_separate && Number(q.logistics_total) > 0
+        ? { amount: Number(q.logistics_total), currency: q.logistics_cost_currency || 'CNY', origin: q.logistics_origin || '', destination: q.logistics_destination || '' }
+        : null,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

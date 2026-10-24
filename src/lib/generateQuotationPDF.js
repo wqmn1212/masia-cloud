@@ -136,6 +136,14 @@ export async function generateQuotationPDF(quotation) {
   font(7.5); color(MUTED);
   if (refs.length) { pdf.text(`참고 환산: ${refs.join(' · ')}`, W - M, y, { align: 'right' }); y += 4.5; }
   if (rates.length) { pdf.text(`적용 환율: ${rates.join(' · ')}${p.exchange_rate_date ? ` (기준일: ${p.exchange_rate_date})` : ''}`, W - M, y, { align: 'right' }); y += 4.5; }
+  if (p.separate_logistics) {
+    const sl = p.separate_logistics;
+    const route = [sl.origin, sl.destination].filter(Boolean).join(' → ');
+    ensure(10);
+    font(9, true); color([23, 23, 25]);
+    pdf.text(`별도 물류비 (합계 미포함)${route ? ` · ${route}` : ''}:  ${formatMoney(sl.amount, sl.currency || cur)}`, W - M, y + 2, { align: 'right' });
+    y += 6;
+  }
   y += 6;
 
   // 박스 섹션 (계약 조건 / 비고)
