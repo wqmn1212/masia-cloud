@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, BookmarkPlus } from 'lucide-react';
+import CaseLogDialog from '@/components/knowledge/CaseLogDialog';
 import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,8 @@ export default function QCReportHistory({ card, user, reports }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const canShare = card?.client_visible === true && !!card?.client_id;
+  // 불합격·조건부 합격은 '사례로 남기기'로 QC 사례에 쌓는다 (다음 프로젝트 사전 점검의 근거)
+  const [caseFrom, setCaseFrom] = useState(null);
 
   const publish = useMutation({
     mutationFn: async ({ report, visible }) => {
@@ -46,11 +49,16 @@ export default function QCReportHistory({ card, user, reports }) {
   };
 
   if (!reports.length) return <p className="py-4 text-center text-xs text-muted-foreground">등록된 검수 이력이 없습니다</p>;
-  return <div className="space-y-2">{reports.map(report => {
+  const caseInitial = (r) => {
+    const failed = (r.checklist || []).filter((c) => c.status === 'FAIL');
+    return { issue_case: failed.map((c) => c.label).join(', ') || (r.inspection_type === 'SAMPLE' ? '샘플 검수 불합격' : '양산 검수 불합격'), root_cause: [r.comments, ...failed.map((c) => c.note)].filter(Boolean).join('\n'), severity: r.qc_result === 'FAIL' ? 'HIGH' : 'MEDIUM', preventable_stage: '' };
+  };
+  return <div className="space-y-2"><CaseLogDialog open={!!caseFrom} onOpenChange={(v) => !v && setCaseFrom(null)} initial={caseFrom || {}} tenantId={card?.tenant_id} cardId={card?.id} />{reports.map(report => {
     const decision = DECISION[report.client_decision];
     return <div key={report.id} className="rounded-lg border p-3 text-xs">
       <div className="flex items-center gap-2"><span className="font-medium">{report.inspection_type === 'SAMPLE' ? '샘플 검수' : '양산품 검수'}</span><Badge className={`${META[report.qc_result]?.className} border-0`}>{META[report.qc_result]?.label}</Badge>
         {report.client_visible && <Badge variant="outline" className="text-[10px]">고객 공개 중</Badge>}
+        {report.qc_result !== 'PASS' && <Button type="button" size="sm" variant="ghost" className={`${canShare ? '' : 'ml-auto '}h-7 gap-1 text-[11px]`} onClick={() => setCaseFrom(caseInitial(report))}><BookmarkPlus className="h-3 w-3" />사례로 남기기</Button>}
         {canShare && <Button type="button" size="sm" variant={report.client_visible ? 'ghost' : 'outline'} className="ml-auto h-7 gap-1 text-[11px]" disabled={publish.isPending} onClick={() => toggle(report)}>
           {report.client_visible ? <><EyeOff className="h-3 w-3" />공개 취소</> : <><Eye className="h-3 w-3" />고객에게 공개</>}
         </Button>}

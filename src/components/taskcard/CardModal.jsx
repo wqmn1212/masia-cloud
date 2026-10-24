@@ -16,6 +16,8 @@ import GoldenSamplePanel from './GoldenSamplePanel';
 import MoldRegistryPanel from './MoldRegistryPanel';
 import ImportRequirementsPanel from './ImportRequirementsPanel';
 import QualitySpecPanel from './QualitySpecPanel';
+import QCPrecheckPanel from './qcprecheck/QCPrecheckPanel';
+import QCPrecheckSummary from './QCPrecheckSummary';
 import PaymentGatePanel from './PaymentGatePanel';
 import ProcessControlPanel from './ProcessControlPanel';
 import AIProposalPanel from './AIProposalPanel';
@@ -54,17 +56,14 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
   const [recordingBusy, setRecordingBusy] = useState(false);
   const [reorderOpen, setReorderOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(initialTab);
+  // 요약 줄을 누르면 업무 탭의 사전 QC 점검 패널로 이동
+  const openPrecheck = () => { setActiveTab('tasks'); setTimeout(() => document.getElementById('qc-precheck')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120); };
   useEffect(() => { if (open) setActiveTab(initialTab); }, [open, card?.id, initialTab]);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  const { data: kbAlerts = [] } = useQuery({
-    queryKey: ['kb-alerts', card?.target_machine_category],
-    queryFn: () => base44.entities.QCKnowledgeLog.filter({ target_category: card.target_machine_category }),
-    enabled: !!card?.target_machine_category,
-  });
 
   if (!card) return null;
   const st = STATUS_META[card.status] || STATUS_META.TODO;
@@ -123,13 +122,14 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
           <TabsContent value="tasks" className="mt-4">
             <AIProposalPanel card={card} user={user} />
             <TaskItemsTab card={card} viewLang={viewLang} />
+            <QCPrecheckPanel card={card} user={user} />
             <QualitySpecPanel card={card} user={user} />
             <GoldenSamplePanel card={card} user={user} />
             <QCReportPanel card={card} user={user} />
             <ClaimPanel card={card} user={user} />
           </TabsContent>
           <TabsContent value="overview" className="mt-4">
-            <OverviewTab card={card} kbAlerts={kbAlerts} viewLang={viewLang} user={user} />
+            <OverviewTab card={card} viewLang={viewLang} user={user} onOpenTab={openPrecheck} />
             <div className="mt-4"><ClientVisibilityToggle card={card} /></div>
             <div className="mt-5"><CardSchedulePanel key={card.id} card={card} user={user} /></div>
             <ProcessControlPanel card={card} user={user} />
@@ -141,6 +141,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
             </div>
           </TabsContent>
           <TabsContent value="quotation" className="mt-4">
+            <div className="mb-4"><QCPrecheckSummary card={card} onOpen={openPrecheck} /></div>
             <QuotationPublishPanel card={card} />
             <QuotationTab card={card} user={user} />
           </TabsContent>

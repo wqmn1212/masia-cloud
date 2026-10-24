@@ -3,12 +3,12 @@ import useDeferredBilingualSave from '@/components/language/useDeferredBilingual
 import DeferredSaveStatus from '@/components/language/DeferredSaveStatus';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, Lightbulb, Plus, CheckCircle2, CalendarDays, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, CalendarDays, Loader2 } from 'lucide-react';
+import QCPrecheckSummary from './QCPrecheckSummary';
 import CategorySelect from './CategorySelect';
 import ClientSelect from './ClientSelect';
 import FactoryMultiSelect from './FactoryMultiSelect';
@@ -23,7 +23,7 @@ const CATEGORY_LABELS = {
   TUBE_SEALER: '튜브 실링기',
 };
 
-export default function OverviewTab({ card, kbAlerts, viewLang = 'KR', user }) {
+export default function OverviewTab({ card, viewLang = 'KR', user, onOpenTab }) {
   const [form, setForm] = useState({
     __bilingualDirty: {}, title: card.title || '', title_cn: card.title_cn || '',
     hq_requirements_cn: card.hq_requirements_cn || '', agent_meeting_notes_cn: card.agent_meeting_notes_cn || '',
@@ -61,35 +61,9 @@ export default function OverviewTab({ card, kbAlerts, viewLang = 'KR', user }) {
     },
   });
 
-  const addKbAlert = (suggestion) => {
-    setForm(p => ({
-      ...p,
-      __bilingualDirty: { ...p.__bilingualDirty, hq_requirements: true },
-      hq_requirements: p.hq_requirements
-        ? `${p.hq_requirements}\n\n⚠️ [권장] ${suggestion}`
-        : `⚠️ [권장] ${suggestion}`,
-    }));
-  };
-
   return (
     <div className="space-y-5">
-      {/* KB Alerts */}
-      {kbAlerts?.length > 0 && (
-        <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-3 space-y-2">
-          <p className="text-xs font-bold text-yellow-700 flex items-center gap-1.5">
-            <Lightbulb className="w-3.5 h-3.5" /> 과거 노하우 자동 추천
-          </p>
-          {kbAlerts.map((a, i) => (
-            <div key={i} className="flex items-start justify-between gap-2">
-              <p className="text-xs text-yellow-800 flex-1">{a.issue_case}: {a.solution_parameter?.slice(0, 80)}...</p>
-              <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 shrink-0 border-yellow-400 text-yellow-700"
-                onClick={() => addKbAlert(`${a.issue_case} — ${a.solution_parameter}`)}>
-                <Plus className="w-2.5 h-2.5 mr-1" />추가
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
+      <QCPrecheckSummary card={card} onOpen={() => onOpenTab?.('tasks')} />
 
       <div className="grid grid-cols-2 gap-3">
       <div>
