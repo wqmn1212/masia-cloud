@@ -3,7 +3,7 @@ import { requireClient } from '../../shared/clientAccess.ts';
 import { clientQcReport, latestSentSpecs } from '../../shared/clientQc.ts';
 import { destCostState } from '../../shared/destCost.ts';
 
-// 고객 대시보드 '하실 일': 승인을 기다리는 품질 기준서·검수 결과·도착지 비용 + 앞으로 14일 안의 공개 일정.
+// 고객 대시보드 '하실 일': 승인을 기다리는 품질 기준서·검수 결과·도착지 비용·견적 비교표 + 앞으로 14일 안의 공개 일정.
 // 공개 카드(client_visible)·공개 검수·공개 단계만 다루며 내부 필드는 응답에 넣지 않는다.
 const UPCOMING_DAYS = 14;
 const kstDate = (ms) => new Date(ms + 9 * 3600 * 1000).toISOString().slice(0, 10);
@@ -17,7 +17,7 @@ export default async function (req) {
     const svc = base44.asServiceRole;
     const cards = (await svc.entities.TaskCard.filter({ client_id: auth.companyId, client_visible: true }, '-updated_date', 200))
       .filter((c) => !['DONE', 'CANCELLED'].includes(c.status));
-    if (!cards.length) return Response.json({ spec_pending: [], qc_pending: [], dest_cost_pending: [], upcoming: [] });
+    if (!cards.length) return Response.json({ spec_pending: [], qc_pending: [], dest_cost_pending: [], comparison_pending: [], upcoming: [] });
     const titles = new Map(cards.map((c) => [c.id, c.title]));
 
     const reports = await svc.entities.QCReport.filter({ card_id: { $in: cards.map((c) => c.id) }, client_visible: true }, '-created_date', 200);
@@ -43,6 +43,13 @@ export default async function (req) {
     const destCostPending = shipments
       .filter((s) => titles.has(s.card_id) && destCostState(s) === 'SENT')
       .map((s) => ({ shipment_id: s.id, card_id: s.card_id, card_title: titles.get(s.card_id), label: s.label || '선적', amount: Math.round(Number(s.dest_cost_estimate?.buyer_ex_vat) || 0), etd: s.etd || '' }));
+    // 공개됐지만 고객이 아직 안을 고르지 않은 견적 비교표 (카드별 최신 1건)
+    const comparisons = await svc.entities.QuoteComparison.filter({ card_id: { $in: cards.map((c) => c.id) } }, '-created_date', 200);
+    const seenCmp = new Set();
+    const comparisonPending = comparisons
+      .filter((r) => { if (seenCmp.has(r.card_id) || r.status === 'CLOSED') return false; seenCmp.add(r.card_id); return true; })
+      .filter((r) => titles.has(r.card_id) && r.status === 'PUBLISHED' && r.client_snapshot)
+      .map((r) => ({ comparison_id: r.id, card_id: r.card_id, card_title: titles.get(r.card_id), options: (r.client_snapshot.options || []).length, published_at: r.published_at || '' }));
     const arrivals = shipments
       .filter((s) => titles.has(s.card_id) && ['BOOKED', 'DEPARTED'].includes(s.status) && s.eta >= today && s.eta <= until)
       .map((s) => ({ id: `ship-${s.id}`, card_id: s.card_id, card_title: titles.get(s.card_id), label: `${s.label || '선적'} 도착 예정`, planned_date: s.eta }));
@@ -53,7 +60,7 @@ export default async function (req) {
       .sort((a, b) => a.planned_date.localeCompare(b.planned_date))
       .slice(0, 12);
 
-    return Response.json({ spec_pending: specPending, qc_pending: qcPending, dest_cost_pending: destCostPending, upcoming });
+    return Response.json({ spec_pending: specPending, qc_pending: qcPending, dest_cost_pending: destCostPending, comparison_pending: comparisonPending, upcoming });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

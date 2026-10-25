@@ -77,7 +77,7 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
                 <ClientOverviewPanel card={data.card} />
               </TabsContent>
               <TabsContent value="quotation" className="mt-4">
-                <ClientQuotationTab cardId={data.card.id} />
+                <ClientQuotationTab cardId={data.card.id} cardTitle={data.card.title} clientName={data.card.client_name || ''} />
               </TabsContent>
               <TabsContent value="qc" className="mt-4">
                 <ClientGoldenSample sample={data.card.golden_sample || null} />

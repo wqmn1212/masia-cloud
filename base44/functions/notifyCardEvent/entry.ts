@@ -12,7 +12,7 @@ const STATUS_LABEL = {
 };
 
 // 카드 이벤트 알림 라우터.
-// 내부 팀(master/service/sub) → 고객: card_moved · card_shared · quote_published · qc_published · spec_sent · shipment_updated · dest_cost_sent · claim_updated
+// 내부 팀(master/service/sub) → 고객: card_moved · card_shared · quote_published · qc_published · spec_sent · shipment_updated · dest_cost_sent · claim_updated · comparison_published
 // 고객(client) → 내부 팀: chat_message
 export default async function (req) {
   try {
@@ -52,7 +52,7 @@ export default async function (req) {
     if (user.account_tier !== 'master' && card.tenant_id !== user.tenant_id) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
-    if (!['card_moved', 'card_shared', 'chat_message', 'quote_published', 'file_shared', 'qc_published', 'spec_sent', 'shipment_updated', 'dest_cost_sent', 'claim_updated'].includes(type)) {
+    if (!['card_moved', 'card_shared', 'chat_message', 'quote_published', 'file_shared', 'qc_published', 'spec_sent', 'shipment_updated', 'dest_cost_sent', 'claim_updated', 'comparison_published'].includes(type)) {
       return Response.json({ error: '지원하지 않는 알림 유형입니다' }, { status: 400 });
     }
     // 공개되지 않은 카드는 고객에게 알리지 않는다
@@ -78,7 +78,9 @@ export default async function (req) {
                       ? `[도착지 비용 확인 요청] ${card.title}`
                       : type === 'claim_updated'
                         ? `[불량 신고 처리] ${card.title}`
-                        : `[답변] ${card.title}`;
+                        : type === 'comparison_published'
+                          ? `[견적 비교표] ${card.title}`
+                          : `[답변] ${card.title}`;
     const body =
       type === 'card_moved'
         ? `프로젝트 단계가 "${STATUS_LABEL[card.status] || card.status}" 로 변경되었습니다.`
@@ -98,13 +100,15 @@ export default async function (req) {
                       ? `${String(message || '').slice(0, 200)}\n공장 견적과 별도로 한국 도착 후 내실 비용입니다. 출항 전에 진행 정보 탭에서 금액을 확인하고 '확인했습니다' 또는 '문의하기'를 눌러 주세요.`
                       : type === 'claim_updated'
                         ? `${String(message || '').slice(0, 300)}\n검수 탭의 '불량 신고'에서 처리 상황을 확인하실 수 있습니다.`
-                        : String(message || '').slice(0, 300);
+                        : type === 'comparison_published'
+                          ? '공장 견적을 같은 기준(한국 도착 원가)으로 비교한 표가 올라왔습니다. 견적 탭에서 안을 고르거나 질문을 남겨 주세요.'
+                          : String(message || '').slice(0, 300);
 
     const sent = await notifyUsers(svc, clients, {
       type,
       title,
       body,
-      link: `/client/board?card=${card.id}${['qc_published', 'spec_sent', 'shipment_updated', 'claim_updated'].includes(type) ? '&tab=qc' : ''}`,
+      link: `/client/board?card=${card.id}${['qc_published', 'spec_sent', 'shipment_updated', 'claim_updated'].includes(type) ? '&tab=qc' : type === 'comparison_published' ? '&tab=quotation' : ''}`,
       task_card_id: card.id,
       card_title: card.title,
     });

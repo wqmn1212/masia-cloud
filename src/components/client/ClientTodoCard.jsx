@@ -23,7 +23,7 @@ function Row({ onClick, children }) {
   );
 }
 
-// 고객 대시보드 맨 위: 고객이 직접 해야 할 일(기준서·출고 판단, 도착지 비용 확인)과 앞으로 2주 일정.
+// 고객 대시보드 맨 위: 고객이 직접 해야 할 일(기준서·출고 판단, 도착지 비용 확인, 견적 비교표)과 앞으로 2주 일정.
 export default function ClientTodoCard({ onOpen }) {
   const { data } = useQuery({
     queryKey: ['client-todos'],
@@ -33,8 +33,9 @@ export default function ClientTodoCard({ onOpen }) {
   const specs = data?.spec_pending || [];
   const qc = data?.qc_pending || [];
   const destCosts = data?.dest_cost_pending || [];
+  const comparisons = data?.comparison_pending || [];
   const upcoming = data?.upcoming || [];
-  const count = specs.length + qc.length + destCosts.length;
+  const count = specs.length + qc.length + destCosts.length + comparisons.length;
 
   return (
     <Card className="grid gap-5 p-5 md:grid-cols-2">
@@ -47,6 +48,13 @@ export default function ClientTodoCard({ onOpen }) {
           <p className="py-4 text-sm text-muted-foreground">지금 확인하실 일은 없습니다.</p>
         ) : (
           <ul className="mt-2 space-y-0.5">
+            {comparisons.map((c) => (
+              <Row key={c.comparison_id} onClick={() => onOpen(c.card_id, 'quotation')}>
+                <Badge variant="outline" className="shrink-0 text-[10px]">견적 비교표 확인</Badge>
+                <span className="min-w-0 truncate">{c.card_title}</span>
+                <span className="shrink-0 text-xs text-muted-foreground">{c.options}개 안</span>
+              </Row>
+            ))}
             {specs.map((s) => (
               <Row key={s.spec_id} onClick={() => onOpen(s.card_id, 'qc')}>
                 <Badge variant="outline" className="shrink-0 text-[10px]">기준서 승인 대기</Badge>

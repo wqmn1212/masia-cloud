@@ -25,6 +25,7 @@ import CurrencyPanel from '@/components/quotation/CurrencyPanel';
 import { calculateQuote, fromUSD, isUsdQuote, formatMoney } from '@/components/quotation/quoteCurrency';
 import ManualTotalField from '@/components/quotation/ManualTotalField';
 import { findDailyQuotationRates, getKstDate } from '@/lib/quotationRates';
+import QuoteComparisonPanel from '@/components/taskcard/quotecompare/QuoteComparisonPanel';
 
 const STATUS_META = {
   DRAFT:    { label: '초안',     color: 'bg-muted text-muted-foreground' },
@@ -647,6 +648,8 @@ export default function QuotationTab({ card, user }) {
           </div>
         </form>
       )}
+
+      {canEditIssuer && <QuoteComparisonPanel card={card} user={user} />}
 
       {/* 견적 리스트 */}
       {isLoading ? (
