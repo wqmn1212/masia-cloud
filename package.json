@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "check:landed-cost": "node scripts/check-landed-cost.mjs",
     "check:qc-precheck": "node scripts/check-qc-precheck.mjs",
-    "check:quote-compare": "node scripts/check-quote-compare.mjs"
+    "check:quote-compare": "node scripts/check-quote-compare.mjs",
+    "check:order-cost": "node scripts/check-order-cost.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.57",

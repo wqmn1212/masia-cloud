@@ -25,7 +25,9 @@
         "SPEC_CLIENT_DECISION",
         "DEST_COST_CLIENT_DECISION",
         "CLAIM_SUBMITTED",
-        "CLAIM_UPDATED"
+        "CLAIM_UPDATED",
+        "COMPARISON_CLIENT_CHOICE",
+        "LANDED_COST_CONFIRMED"
       ]
     },
     "actor_id": {

@@ -1,0 +1,319 @@
+{
+  "name": "LandedCostRecord",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "card_id": {
+      "type": "string",
+      "description": "\uc8fc\ubb38(TaskCard) ID. \uce74\ub4dc\ub2f9 \uae30\ub85d \ud558\ub098"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac Company ID"
+    },
+    "product_key": {
+      "type": "string",
+      "description": "\uc0c1\ud488 \ubb36\uc74c \ud0a4. \uae30\ubcf8\uc740 \uc7ac\uc8fc\ubb38 \uccb4\uc778\uc758 \ucc98\uc74c \uce74\ub4dc ID"
+    },
+    "product_name": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc5d0\uac8c \ubcf4\uc774\ub294 \uc0c1\ud488 \uc774\ub984"
+    },
+    "quotation_id": {
+      "type": "string",
+      "description": "\uae30\uc900 \uacac\uc801 ID"
+    },
+    "order_date": {
+      "type": "string",
+      "description": "\uc8fc\ubb38\uc77c YYYY-MM-DD (\uccab \uc785\uae08\uc77c). \ucd94\uc774 \uc815\ub82c \uae30\uc900"
+    },
+    "units": {
+      "type": "number",
+      "description": "\uc218\ub7c9"
+    },
+    "unit_label": {
+      "type": "string",
+      "description": "\uc218\ub7c9 \ub2e8\uc704 (\uac1c\u00b7\ub300\u00b7\uc138\ud2b8\u00b7\ub864)"
+    },
+    "lines": {
+      "type": "array",
+      "description": "\uc6d0\uac00 \uc904",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "\uc904 \ud0a4"
+          },
+          "kind": {
+            "type": "string",
+            "description": "GOODS \uc0c1\ud488 \ub300\uae08 \u00b7 LOGISTICS \ubcc4\ub3c4 \ubb3c\ub958\ube44 \u00b7 DEST \ud55c\uad6d \ub3c4\ucc29 \ube44\uc6a9 \u00b7 OTHER \uae30\ud0c0",
+            "enum": [
+              "GOODS",
+              "LOGISTICS",
+              "DEST",
+              "OTHER"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "description": "\uace0\uac1d\uc5d0\uac8c \ubcf4\uc774\ub294 \ud56d\ubaa9 \uc774\ub984 (\uacf5\uc7a5\uba85 \uc4f0\uc9c0 \ub9d0 \uac83)"
+          },
+          "amount": {
+            "type": "number",
+            "description": "\uc6d0\ub798 \ud1b5\ud654 \uae08\uc561"
+          },
+          "currency": {
+            "type": "string",
+            "description": "\ud1b5\ud654",
+            "enum": [
+              "KRW",
+              "USD",
+              "CNY"
+            ]
+          },
+          "fx": {
+            "type": "number",
+            "description": "1 \ub2e8\uc704 = ? \uc6d0"
+          },
+          "fx_basis": {
+            "type": "string",
+            "description": "\ud658\uc728 \uae30\uc900\uc77c \ub610\ub294 \ucd9c\ucc98"
+          },
+          "amount_krw": {
+            "type": "number",
+            "description": "\uc6d0\ud654 \ud658\uc0b0 (\ubd80\uac00\uc138 \uc81c\uc678)"
+          },
+          "source": {
+            "type": "string",
+            "description": "PAYMENT \uacb0\uc81c \ub2e8\uacc4 \u00b7 QUOTE \uacac\uc801\uac00 \u00b7 SHIPMENT_ACTUAL \uc2e4\uc81c \uccad\uad6c \u00b7 SHIPMENT_ESTIMATE \uc608\uc0c1\uc561 \u00b7 MANUAL \uc9c1\uc811 \uc785\ub825",
+            "enum": [
+              "PAYMENT",
+              "QUOTE",
+              "SHIPMENT_ACTUAL",
+              "SHIPMENT_ESTIMATE",
+              "MANUAL"
+            ]
+          },
+          "estimated": {
+            "type": "boolean",
+            "description": "\uc608\uc0c1\uac12 (\uc785\uae08 \uc804\u00b7\uc2e4\uc81c \uccad\uad6c \uc804)"
+          },
+          "one_time": {
+            "type": "boolean",
+            "description": "\uc77c\ud68c\uc131 \ube44\uc6a9 (\uae08\ud615\u00b7\uc778\uc99d \ub4f1). \uac1c\ub2f9 \uc6d0\uac00\uc5d0\uc11c \ube80\ub2e4"
+          },
+          "ref_id": {
+            "type": "string",
+            "description": "PaymentStage\u00b7Shipment\u00b7Quotation ID (\ub0b4\ubd80\uc6a9)"
+          }
+        }
+      }
+    },
+    "goods_krw": {
+      "type": "number",
+      "description": "\uc0c1\ud488 \ub300\uae08 \ud569\uacc4 (\uc6d0)"
+    },
+    "logistics_krw": {
+      "type": "number",
+      "description": "\ubb3c\ub958\u00b7\ud55c\uad6d \ub3c4\ucc29 \ube44\uc6a9 \ud569\uacc4 (\uc6d0)"
+    },
+    "other_krw": {
+      "type": "number",
+      "description": "\uae30\ud0c0 \ubc18\ubcf5 \ube44\uc6a9 \ud569\uacc4 (\uc6d0)"
+    },
+    "one_time_krw": {
+      "type": "number",
+      "description": "\uc77c\ud68c\uc131 \ube44\uc6a9 \ud569\uacc4 (\uc6d0, \uac1c\ub2f9 \uc6d0\uac00 \uc81c\uc678)"
+    },
+    "total_krw": {
+      "type": "number",
+      "description": "\ub3c4\ucc29 \uc6d0\uac00 \ud569\uacc4 (\uc6d0, \ubd80\uac00\uc138\u00b7\uc77c\ud68c\uc131 \uc81c\uc678)"
+    },
+    "per_unit_krw": {
+      "type": "number",
+      "description": "\uac1c\ub2f9 \ub3c4\ucc29 \uc6d0\uac00 (\uc6d0)"
+    },
+    "goods_foreign": {
+      "type": "object",
+      "description": "\uc0c1\ud488 \ub300\uae08\uc774 \ud55c \uc678\ud654\ub85c\ub9cc \ub098\uac14\uc744 \ub54c {currency, amount}. \ud658\uc728 \uc601\ud5a5 \uacc4\uc0b0\uc6a9",
+      "properties": {
+        "currency": {
+          "type": "string",
+          "description": "\ud1b5\ud654"
+        },
+        "amount": {
+          "type": "number",
+          "description": "\uae08\uc561"
+        }
+      }
+    },
+    "estimated": {
+      "type": "boolean",
+      "description": "\uc608\uc0c1\uac12\uc774 \uc11e\uc5ec \uc788\uc74c"
+    },
+    "vat_krw": {
+      "type": "number",
+      "description": "\uc218\uc785 \ubd80\uac00\uc138 (\ucc38\uace0, \ud569\uacc4 \uc81c\uc678)"
+    },
+    "client_note": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc5d0\uac8c \ubcf4\uc774\ub294 \uba54\ubaa8"
+    },
+    "staff_note": {
+      "type": "string",
+      "description": "\ub0b4\ubd80 \uba54\ubaa8 (\uace0\uac1d \ube44\uacf5\uac1c)"
+    },
+    "status": {
+      "type": "string",
+      "description": "CONFIRMED \uace0\uac1d \uacf5\uac1c \u00b7 WITHDRAWN \uacf5\uac1c \ucde8\uc18c",
+      "enum": [
+        "CONFIRMED",
+        "WITHDRAWN"
+      ]
+    },
+    "revision": {
+      "type": "integer",
+      "description": "\ud655\uc815 \ud69f\uc218"
+    },
+    "confirmed_at": {
+      "type": "string",
+      "description": "\ub9c8\uc9c0\ub9c9 \ud655\uc815 \uc2dc\uac01"
+    },
+    "confirmed_by_name": {
+      "type": "string",
+      "description": "\ud655\uc815\ud55c \uc9c1\uc6d0"
+    },
+    "history": {
+      "type": "array",
+      "description": "\uc774\uc804 \ud655\uc815 \uac12",
+      "items": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer"
+          },
+          "at": {
+            "type": "string",
+            "description": "\uc2dc\uac01"
+          },
+          "by": {
+            "type": "string",
+            "description": "\uc9c1\uc6d0"
+          },
+          "per_unit_krw": {
+            "type": "number",
+            "description": "\uac1c\ub2f9"
+          },
+          "total_krw": {
+            "type": "number",
+            "description": "\ud569\uacc4"
+          },
+          "reason": {
+            "type": "string",
+            "description": "\uc218\uc815 \uc774\uc720"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "card_id"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

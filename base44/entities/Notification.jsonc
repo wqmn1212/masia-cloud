@@ -49,7 +49,10 @@
         "factory_account_changed",
         "factory_account_verified",
         "claim_submitted",
-        "claim_updated"
+        "claim_updated",
+        "comparison_published",
+        "comparison_choice",
+        "landed_cost_confirmed"
       ],
       "description": "\uc54c\ub9bc \uc720\ud615"
     },

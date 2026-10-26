@@ -9,6 +9,7 @@ import FilesTab from './FilesTab';
 import ChatTab from './ChatTab';
 import QuotationTab from './QuotationTab';
 import SettlementTab from './SettlementTab';
+import LandedCostSection from './landedcost/LandedCostSection';
 import TaskItemsTab from './TaskItemsTab';
 import QCReportPanel from './QCReportPanel';
 import ClaimPanel from './ClaimPanel';
@@ -158,6 +159,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
           </TabsContent>
           <TabsContent value="settlement" className="mt-4">
             <PaymentGatePanel card={card} user={user} />
+            <LandedCostSection card={card} user={user} />
             <SettlementTab card={card} user={user} />
           </TabsContent>
           <TabsContent value="decisions" className="mt-4">
