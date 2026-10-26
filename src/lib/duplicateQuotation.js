@@ -1,4 +1,4 @@
-import { base44 } from '@/api/base44Client';
+import createQuotation from '@/lib/createQuotation';
 
 const SYSTEM_FIELDS = ['id', 'created_date', 'updated_date', 'created_by_id', 'created_by', 'client_published_at', 'ai_status'];
 
@@ -6,5 +6,5 @@ const SYSTEM_FIELDS = ['id', 'created_date', 'updated_date', 'created_by_id', 'c
 export default async function duplicateQuotation(quote) {
   const copy = Object.fromEntries(Object.entries(quote).filter(([k]) => !SYSTEM_FIELDS.includes(k) && !k.startsWith('__')));
   const baseTitle = quote.quote_title || quote.product_name || quote.factory_name || '견적서';
-  return base44.entities.Quotation.create({ ...copy, quote_title: `${baseTitle} (복사본)`, status: 'DRAFT' });
+  return createQuotation({ ...copy, quote_title: `${baseTitle} (복사본)`, status: 'DRAFT' });
 }

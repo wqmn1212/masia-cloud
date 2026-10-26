@@ -8,6 +8,20 @@ export default async function(req) {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     const { action, quotation_id, data, expected_updated_date, reason, revision_id, before_revision } = await req.json();
     if (!['master', 'service', 'sub'].includes(user.account_tier) || user.is_active === false) return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    if (action === 'create') {
+      // 새 견적 등록 — 수정용 원가 필드 제한은 적용하지 않고, 팀 범위만 서버에서 고정한다.
+      if (!data || typeof data !== 'object' || Array.isArray(data)) return Response.json({ error: '견적 내용이 필요합니다.' }, { status: 400 });
+      const blocked = new Set(['id', 'created_date', 'updated_date', 'created_by', 'created_by_id', 'client_published_at']);
+      const record = Object.fromEntries(Object.entries(data).filter(([k]) => !blocked.has(k)));
+      record.tenant_id = user.account_tier === 'master' && typeof data.tenant_id === 'string' && data.tenant_id ? data.tenant_id : user.tenant_id;
+      if (!record.tenant_id) return Response.json({ error: '소속 팀이 없습니다.' }, { status: 403 });
+      if (typeof record.card_id === 'string' && record.card_id) {
+        const card = await base44.asServiceRole.entities.TaskCard.get(record.card_id).catch(() => null);
+        if (!card || (user.account_tier !== 'master' && card.tenant_id !== user.tenant_id)) return Response.json({ error: '이 업무 카드에 견적을 등록할 권한이 없습니다.' }, { status: 403 });
+      }
+      const created = await base44.asServiceRole.entities.Quotation.create(record);
+      return Response.json(created);
+    }
     if (!['update', 'list', 'snapshot'].includes(action) || typeof quotation_id !== 'string' || !quotation_id) return Response.json({ error: '견적서와 작업을 지정해주세요.' }, { status: 400 });
     const q = await base44.entities.Quotation.get(quotation_id);
     if (!q) return Response.json({ error: '견적서를 찾을 수 없습니다.' }, { status: 404 });

@@ -26,6 +26,7 @@ import { calculateQuote, fromUSD, isUsdQuote, formatMoney } from '@/components/q
 import ManualTotalField from '@/components/quotation/ManualTotalField';
 import { findDailyQuotationRates, getKstDate } from '@/lib/quotationRates';
 import QuoteComparisonPanel from '@/components/taskcard/quotecompare/QuoteComparisonPanel';
+import createQuotation from '@/lib/createQuotation';
 
 const STATUS_META = {
   DRAFT:    { label: '초안',     color: 'bg-muted text-muted-foreground' },
@@ -119,7 +120,7 @@ export default function QuotationTab({ card, user }) {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Quotation.create(data),
+    mutationFn: (data) => createQuotation(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotations-by-card', card.id] });
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
