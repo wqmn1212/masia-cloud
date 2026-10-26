@@ -1,9 +1,10 @@
 import { base44 } from '@/api/base44Client';
 import { translateFieldsToCN, translateFieldsToKO } from '@/lib/translate';
 import { toast } from '@/components/ui/use-toast';
+import createQuotation from '@/lib/createQuotation';
 
 export default async function saveBilingualQuotation(data) {
-  const saved = await base44.entities.Quotation.create(data);
+  const saved = await createQuotation(data);
   const lines = saved.line_items || [];
   const koSource = {}, cnSource = {};
   lines.forEach((line, i) => {
