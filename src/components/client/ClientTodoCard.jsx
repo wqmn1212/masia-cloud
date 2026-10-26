@@ -23,8 +23,8 @@ function Row({ onClick, children }) {
   );
 }
 
-// 고객 대시보드 맨 위: 고객이 직접 해야 할 일(기준서·출고 판단, 도착지 비용 확인, 견적 비교표)과 앞으로 2주 일정.
-export default function ClientTodoCard({ onOpen }) {
+// 고객 대시보드 맨 위: 고객이 직접 해야 할 일(계약서 서명, 기준서·출고 판단, 도착지 비용 확인, 견적 비교표)과 앞으로 2주 일정.
+export default function ClientTodoCard({ onOpen, onSign }) {
   const { data } = useQuery({
     queryKey: ['client-todos'],
     queryFn: async () => (await base44.functions.invoke('listClientTodos', withClientView())).data,
@@ -34,8 +34,9 @@ export default function ClientTodoCard({ onOpen }) {
   const qc = data?.qc_pending || [];
   const destCosts = data?.dest_cost_pending || [];
   const comparisons = data?.comparison_pending || [];
+  const signatures = data?.signature_pending || [];
   const upcoming = data?.upcoming || [];
-  const count = specs.length + qc.length + destCosts.length + comparisons.length;
+  const count = specs.length + qc.length + destCosts.length + comparisons.length + signatures.length;
 
   return (
     <Card className="grid gap-5 p-5 md:grid-cols-2">
@@ -48,6 +49,13 @@ export default function ClientTodoCard({ onOpen }) {
           <p className="py-4 text-sm text-muted-foreground">지금 확인하실 일은 없습니다.</p>
         ) : (
           <ul className="mt-2 space-y-0.5">
+            {signatures.map((r) => (
+              <Row key={r.request_id} onClick={() => onSign?.(r.request_id)}>
+                <Badge className="shrink-0 border-0 bg-primary/10 text-[10px] text-primary">계약서 서명</Badge>
+                <span className="min-w-0 truncate">{r.document_title}</span>
+                <span className="shrink-0 text-xs text-muted-foreground">기한 {shortDate(new Date(Date.parse(r.due_at) + 9 * 3600000).toISOString().slice(0, 10))}</span>
+              </Row>
+            ))}
             {comparisons.map((c) => (
               <Row key={c.comparison_id} onClick={() => onOpen(c.card_id, 'quotation')}>
                 <Badge variant="outline" className="shrink-0 text-[10px]">견적 비교표 확인</Badge>

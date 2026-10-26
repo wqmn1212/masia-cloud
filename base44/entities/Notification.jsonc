@@ -52,7 +52,11 @@
         "claim_updated",
         "comparison_published",
         "comparison_choice",
-        "landed_cost_confirmed"
+        "landed_cost_confirmed",
+        "contract_sent",
+        "contract_signed",
+        "contract_declined",
+        "contract_expired"
       ],
       "description": "\uc54c\ub9bc \uc720\ud615"
     },

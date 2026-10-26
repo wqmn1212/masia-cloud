@@ -12,6 +12,8 @@ import CompanyFilesLibrary from '@/components/files/CompanyFilesLibrary';
 import ChinaHolidayNotice from '@/components/client/ChinaHolidayNotice';
 import ClientTodoCard from '@/components/client/ClientTodoCard';
 import ClientContractCard from '@/components/client/ClientContractCard';
+import ClientSignatureCard from '@/components/client/signature/ClientSignatureCard';
+import SignatureDialog from '@/components/client/signature/SignatureDialog';
 import ClientExportButton from '@/components/client/ClientExportButton';
 
 export default function ClientPortalDashboard() {
@@ -19,6 +21,8 @@ export default function ClientPortalDashboard() {
   const [selectedId, setSelectedId] = useState(null);
   const [initialTab, setInitialTab] = useState(null);
   const open = (id, tab = null) => { setInitialTab(tab); setSelectedId(id); };
+  // 알림 링크(/client/dashboard?sign=ID)로 들어오면 서명 창을 연다
+  const [signId, setSignId] = useState(() => new URLSearchParams(window.location.search).get('sign'));
 
   const active = cards.filter((c) => !['DONE', 'CANCELLED'].includes(c.status));
 
@@ -33,8 +37,9 @@ export default function ClientPortalDashboard() {
         <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
       ) : (
         <>
-          <ClientTodoCard onOpen={open} />
+          <ClientTodoCard onOpen={open} onSign={setSignId} />
           <ClientStatusSummary cards={cards} />
+          <ClientSignatureCard onOpen={setSignId} />
           <ClientContractCard />
           <ChinaHolidayNotice />
 
@@ -66,6 +71,7 @@ export default function ClientPortalDashboard() {
 
       <CompanyFilesLibrary onCardClick={card => open(card.id)} />
       <ClientCardModal cardId={selectedId} initialTab={initialTab} open={!!selectedId} onClose={() => setSelectedId(null)} onOpenCard={(id) => open(id)} />
+      {signId && <SignatureDialog requestId={signId} open={!!signId} onOpenChange={(o) => !o && setSignId(null)} />}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -24,6 +25,8 @@ export default function ConfirmComparisonDialog({ open, onOpenChange, cmp, card,
   const [reason, setReason] = useState(record.recommendation || '');
   const [ack, setAck] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [makeContract, setMakeContract] = useState(true);
+  const navigate = useNavigate();
   const chosen = computed.options.find((o) => o.key === key);
   const others = live.filter((o) => o.key !== key);
   const changed = chosen && record.source_hashes?.[key] && record.source_hashes[key] !== chosen.hash;
@@ -57,6 +60,8 @@ export default function ConfirmComparisonDialog({ open, onOpenChange, cmp, card,
       qc.invalidateQueries({ queryKey: ['decision-logs'] });
       toast({ title: t('cmp.confirmed') });
       onOpenChange(false);
+      // 확정한 견적으로 계약서 초안을 만들러 간다 (계약서 화면이 카드·고객사·금액을 채운다)
+      if (makeContract && q) navigate(`/contracts?quotation=${q.id}`);
     } catch (e) {
       toast({ title: e.message, variant: 'destructive' });
     } finally { setBusy(false); }
@@ -91,6 +96,7 @@ export default function ConfirmComparisonDialog({ open, onOpenChange, cmp, card,
             {box(acceptIt, setAcceptIt, t('cmp.cfAccept'))}
             {box(rejectOthers, setRejectOthers, t('cmp.cfReject').replace('{n}', others.length), others.length === 0)}
             {box(setFactory, setSetFactory, factoryOk ? t('cmp.cfFactory').replace('{name}', chosen.factory_name) : t('cmp.cfFactoryNone'), !factoryOk)}
+            {box(makeContract, setMakeContract, t('cmp.cfContract'))}
             <p className="text-[11px] text-muted-foreground">· {t('cmp.cfDecision')}</p>
           </div>
           <label className="block space-y-1 text-[11px] text-muted-foreground">{t('cmp.cfReason')}

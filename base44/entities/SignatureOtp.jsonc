@@ -1,0 +1,64 @@
+{
+  "name": "SignatureOtp",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "description": "SignatureRequest ID"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "\uc11c\uba85\uc790 User ID"
+    },
+    "code_hash": {
+      "type": "string",
+      "description": "\uc778\uc99d\ubc88\ud638 \ud574\uc2dc (\uc6d0\ubb38 \uc800\uc7a5 \uc548 \ud568)"
+    },
+    "sent_at": {
+      "type": "string",
+      "description": "\ubcf4\ub0b8 \uc2dc\uac01"
+    },
+    "expires_at": {
+      "type": "string",
+      "description": "\ub9cc\ub8cc \uc2dc\uac01 (10\ubd84)"
+    },
+    "attempts": {
+      "type": "integer",
+      "description": "\ud2c0\ub9b0 \ud69f\uc218"
+    },
+    "locked_until": {
+      "type": "string",
+      "description": "\uc7a0\uae08 \ud574\uc81c \uc2dc\uac01 (5\ud68c \uc2e4\ud328 \uc2dc 30\ubd84)"
+    },
+    "verified_at": {
+      "type": "string",
+      "description": "\uc778\uc99d \uc131\uacf5 \uc2dc\uac01"
+    }
+  },
+  "required": [
+    "request_id",
+    "user_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "system"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "data.account_tier": "system"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "system"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "system"
+      }
+    }
+  }
+}

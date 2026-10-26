@@ -48,6 +48,30 @@
     "updated_by": {
       "type": "string",
       "description": "\ucd5c\uc885 \uc218\uc815\uc790"
+    },
+    "signature_rep_name": {
+      "type": "string",
+      "description": "\uc804\uc790\uc11c\uba85 \uc774\uc9c0\uc2a4 \uc11c\uba85\uc790 \uc774\ub984 (\ub300\ud45c)"
+    },
+    "signature_rep_title": {
+      "type": "string",
+      "description": "\uc11c\uba85\uc790 \uc9c1\ucc45"
+    },
+    "signature_company": {
+      "type": "string",
+      "description": "\uc11c\uba85 \ud68c\uc0ac\uba85"
+    },
+    "signature_seal_uri": {
+      "type": "string",
+      "description": "\uc774\uc9c0\uc2a4 \uc9c1\uc778 \uc774\ubbf8\uc9c0 (\ube44\uacf5\uac1c, \ub9c8\uc2a4\ud130\ub9cc \ubcc0\uacbd)"
+    },
+    "signature_seal_updated_at": {
+      "type": "string",
+      "description": "\uc9c1\uc778 \ubcc0\uacbd \uc2dc\uac01"
+    },
+    "signature_seal_updated_by": {
+      "type": "string",
+      "description": "\uc9c1\uc778 \ubcc0\uacbd\uc790"
     }
   },
   "required": [

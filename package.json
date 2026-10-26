@@ -13,7 +13,8 @@
     "check:landed-cost": "node scripts/check-landed-cost.mjs",
     "check:qc-precheck": "node scripts/check-qc-precheck.mjs",
     "check:quote-compare": "node scripts/check-quote-compare.mjs",
-    "check:order-cost": "node scripts/check-order-cost.mjs"
+    "check:order-cost": "node scripts/check-order-cost.mjs",
+    "check:signature": "node scripts/check-signature.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.57",
@@ -60,6 +61,7 @@
     "lucide-react": "^0.475.0",
     "next-themes": "^0.4.4",
     "occt-import-js": "^0.0.23",
+    "pdfjs-dist": "^3.11.174",
     "react": "^18.2.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.2.0",
@@ -77,6 +79,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
+    "@pdf-lib/fontkit": "^1.1.1",
     "@types/node": "^22.13.5",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
@@ -89,6 +92,7 @@
     "eslint-plugin-react-refresh": "^0.4.18",
     "eslint-plugin-unused-imports": "^4.3.0",
     "globals": "^15.14.0",
+    "pdf-lib": "^1.17.1",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.2",

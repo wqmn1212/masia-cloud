@@ -15,9 +15,15 @@ export default async function (req) {
     if (auth.error) return auth.error;
 
     const svc = base44.asServiceRole;
+    // 서명할 계약서: 이 계정이 서명자로 지정된, 기한 안의 요청 (카드 없는 구독 계약서도 포함)
+    const signaturePending = auth.user.account_tier === 'client'
+      ? (await svc.entities.SignatureRequest.filter({ client_id: auth.companyId, status: 'OUT' }, 'due_at', 50))
+        .filter((r) => r.client_id === auth.companyId && Date.parse(r.due_at) >= Date.now() && (r.signers || []).some((x) => x.user_id === auth.user.id && x.status !== 'SIGNED'))
+        .map((r) => ({ request_id: r.id, document_title: r.document_title, document_no: r.document_no, due_at: r.due_at }))
+      : [];
     const cards = (await svc.entities.TaskCard.filter({ client_id: auth.companyId, client_visible: true }, '-updated_date', 200))
       .filter((c) => !['DONE', 'CANCELLED'].includes(c.status));
-    if (!cards.length) return Response.json({ spec_pending: [], qc_pending: [], dest_cost_pending: [], comparison_pending: [], upcoming: [] });
+    if (!cards.length) return Response.json({ spec_pending: [], qc_pending: [], dest_cost_pending: [], comparison_pending: [], signature_pending: signaturePending, upcoming: [] });
     const titles = new Map(cards.map((c) => [c.id, c.title]));
 
     const reports = await svc.entities.QCReport.filter({ card_id: { $in: cards.map((c) => c.id) }, client_visible: true }, '-created_date', 200);
@@ -60,7 +66,7 @@ export default async function (req) {
       .sort((a, b) => a.planned_date.localeCompare(b.planned_date))
       .slice(0, 12);
 
-    return Response.json({ spec_pending: specPending, qc_pending: qcPending, dest_cost_pending: destCostPending, comparison_pending: comparisonPending, upcoming });
+    return Response.json({ spec_pending: specPending, qc_pending: qcPending, dest_cost_pending: destCostPending, comparison_pending: comparisonPending, signature_pending: signaturePending, upcoming });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

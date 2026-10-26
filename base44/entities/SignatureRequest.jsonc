@@ -1,0 +1,257 @@
+{
+  "name": "SignatureRequest",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "contract_id": {
+      "type": "string",
+      "description": "\uacc4\uc57d\uc11c Contract ID"
+    },
+    "card_id": {
+      "type": "string",
+      "description": "\uce74\ub4dc TaskCard ID (\uc120\ud0dd)"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac Company ID"
+    },
+    "version": {
+      "type": "integer",
+      "description": "\uac19\uc740 \uacc4\uc57d\uc758 \uba87 \ubc88\uc9f8 \uc694\uccad"
+    },
+    "document_no": {
+      "type": "string",
+      "description": "\ubb38\uc11c \ubc88\ud638 SG-YYYY-NNNN"
+    },
+    "document_title": {
+      "type": "string",
+      "description": "\uacc4\uc57d\uc11c \uc81c\ubaa9"
+    },
+    "page_count": {
+      "type": "integer",
+      "description": "\uc6d0\ubcf8 \ucabd\uc218"
+    },
+    "original_file_uri": {
+      "type": "string",
+      "description": "\uace0\uc815\ud55c \uc6d0\ubcf8 PDF (\ube44\uacf5\uac1c)"
+    },
+    "original_sha256": {
+      "type": "string",
+      "description": "\uc6d0\ubcf8 \uc9c0\ubb38\uac12 (\uc11c\ubc84 \uacc4\uc0b0)"
+    },
+    "original_bytes": {
+      "type": "integer",
+      "description": "\uc6d0\ubcf8 \ud06c\uae30"
+    },
+    "signers": {
+      "type": "array",
+      "description": "\uc11c\uba85\uc790 (1\ucc28\ub294 \uace0\uac1d 1\uba85)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "integer",
+            "description": "\uc11c\uba85 \uc21c\uc11c"
+          },
+          "user_id": {
+            "type": "string",
+            "description": "\uc11c\uba85\uc790 User ID (\uace0\uac1d\uc0ac \uacc4\uc815)"
+          },
+          "email": {
+            "type": "string",
+            "description": "\uc11c\uba85\uc790 \uc774\uba54\uc77c"
+          },
+          "name": {
+            "type": "string",
+            "description": "\uacc4\uc815 \uc774\ub984"
+          },
+          "status": {
+            "type": "string",
+            "description": "\uc11c\uba85\uc790 \uc0c1\ud0dc",
+            "enum": [
+              "PENDING",
+              "VIEWED",
+              "SIGNED",
+              "DECLINED"
+            ]
+          },
+          "viewed_at": {
+            "type": "string",
+            "description": "\ucc98\uc74c \uc5f0 \uc2dc\uac01"
+          },
+          "signed_name": {
+            "type": "string",
+            "description": "\uc785\ub825\ud55c \uc774\ub984"
+          },
+          "signed_title": {
+            "type": "string",
+            "description": "\uc785\ub825\ud55c \uc9c1\ucc45"
+          },
+          "signed_company": {
+            "type": "string",
+            "description": "\uc785\ub825\ud55c \ud68c\uc0ac\uba85"
+          },
+          "method": {
+            "type": "string",
+            "description": "\uc11c\uba85 \ubc29\uc2dd",
+            "enum": [
+              "DRAW",
+              "TYPE",
+              "SEAL"
+            ]
+          },
+          "signature_file_uri": {
+            "type": "string",
+            "description": "\uc11c\uba85 \uc774\ubbf8\uc9c0 (\ube44\uacf5\uac1c)"
+          },
+          "signed_at": {
+            "type": "string",
+            "description": "\uc11c\uba85 \uc2dc\uac01 (\uc11c\ubc84)"
+          }
+        }
+      }
+    },
+    "aegis_signer": {
+      "type": "object",
+      "description": "\uc774\uc9c0\uc2a4 \uc11c\uba85 \uc815\ubcf4 (\ubcf4\ub0bc \ub54c \uace0\uc815)",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "\ub300\ud45c \uc774\ub984"
+        },
+        "title": {
+          "type": "string",
+          "description": "\uc9c1\ucc45"
+        },
+        "company": {
+          "type": "string",
+          "description": "\ud68c\uc0ac\uba85"
+        },
+        "seal_uri": {
+          "type": "string",
+          "description": "\uc9c1\uc778 \uc774\ubbf8\uc9c0 (\ube44\uacf5\uac1c)"
+        }
+      }
+    },
+    "consent_text": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc774 \ub3d9\uc758\ud55c \ubb38\uad6c \uc6d0\ubb38"
+    },
+    "due_at": {
+      "type": "string",
+      "description": "\uc11c\uba85 \uae30\ud55c"
+    },
+    "status": {
+      "type": "string",
+      "description": "OUT \uc11c\uba85 \ub300\uae30 \u00b7 COMPLETED \uccb4\uacb0 \u00b7 DECLINED \uc218\uc815 \uc694\uccad \u00b7 REVOKED \ud68c\uc218 \u00b7 EXPIRED \uae30\ud55c \uc9c0\ub0a8",
+      "enum": [
+        "OUT",
+        "COMPLETED",
+        "DECLINED",
+        "REVOKED",
+        "EXPIRED"
+      ]
+    },
+    "completed_file_uri": {
+      "type": "string",
+      "description": "\uc644\ub8cc\ubcf8 PDF (\ube44\uacf5\uac1c)"
+    },
+    "completed_sha256": {
+      "type": "string",
+      "description": "\uc644\ub8cc\ubcf8 \uc9c0\ubb38\uac12"
+    },
+    "completed_at": {
+      "type": "string",
+      "description": "\uccb4\uacb0 \uc2dc\uac01"
+    },
+    "decline_reason": {
+      "type": "string",
+      "description": "\uc218\uc815 \uc694\uccad \uc0ac\uc720"
+    },
+    "sent_by_id": {
+      "type": "string",
+      "description": "\ubcf4\ub0b8 \uc9c1\uc6d0 ID"
+    },
+    "sent_by_name": {
+      "type": "string",
+      "description": "\ubcf4\ub0b8 \uc9c1\uc6d0"
+    },
+    "revoked_by_name": {
+      "type": "string",
+      "description": "\ud68c\uc218\ud55c \uc9c1\uc6d0"
+    },
+    "last_event_seq": {
+      "type": "integer",
+      "description": "\ub9c8\uc9c0\ub9c9 \uac10\uc0ac \uae30\ub85d \ubc88\ud638"
+    },
+    "last_event_hash": {
+      "type": "string",
+      "description": "\ub9c8\uc9c0\ub9c9 \uac10\uc0ac \uae30\ub85d \uc9c0\ubb38\uac12 (\ub05d \uae30\ub85d \uc0ad\uc81c \uac10\uc9c0)"
+    },
+    "reminders_sent": {
+      "type": "array",
+      "description": "\ubcf4\ub0b8 \uae30\ud55c \uc54c\ub9bc (D-3, D-0)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "last_reminded_at": {
+      "type": "string",
+      "description": "\uc9c1\uc6d0\uc774 \ub2e4\uc2dc \uc54c\ub9bc\uc744 \ubcf4\ub0b8 \uc2dc\uac01"
+    }
+  },
+  "required": [
+    "contract_id",
+    "tenant_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "system"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "system"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "system"
+      }
+    }
+  }
+}
