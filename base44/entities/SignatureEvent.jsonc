@@ -1,0 +1,132 @@
+{
+  "name": "SignatureEvent",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID"
+    },
+    "request_id": {
+      "type": "string",
+      "description": "SignatureRequest ID"
+    },
+    "seq": {
+      "type": "integer",
+      "description": "\uc694\uccad\ubcc4 \uc77c\ub828\ubc88\ud638 (1\ubd80\ud130)"
+    },
+    "type": {
+      "type": "string",
+      "description": "\uae30\ub85d \uc720\ud615",
+      "enum": [
+        "SENT",
+        "VIEWED",
+        "READ_TO_END",
+        "OTP_SENT",
+        "OTP_VERIFIED",
+        "OTP_FAILED",
+        "SIGNED",
+        "DECLINED",
+        "REVOKED",
+        "EXPIRED",
+        "COMPLETED",
+        "DOWNLOADED",
+        "REMINDED",
+        "EXTENDED"
+      ]
+    },
+    "actor_type": {
+      "type": "string",
+      "description": "\ud589\uc704\uc790",
+      "enum": [
+        "STAFF",
+        "CLIENT",
+        "SYSTEM"
+      ]
+    },
+    "actor_id": {
+      "type": "string",
+      "description": "User ID"
+    },
+    "actor_label": {
+      "type": "string",
+      "description": "\uc774\ub984"
+    },
+    "at": {
+      "type": "string",
+      "description": "\uc11c\ubc84 \uc2dc\uac01"
+    },
+    "ip": {
+      "type": "string",
+      "description": "IP (\uc694\uccad \ud5e4\ub354)"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "\uae30\uae30 \uc815\ubcf4"
+    },
+    "data": {
+      "type": "object",
+      "description": "\uc720\ud615\ubcc4 \ucd94\uac00 \uc815\ubcf4"
+    },
+    "prev_hash": {
+      "type": "string",
+      "description": "\uc55e \uae30\ub85d \uc9c0\ubb38\uac12"
+    },
+    "hash": {
+      "type": "string",
+      "description": "\uc774 \uae30\ub85d \uc9c0\ubb38\uac12 = SHA-256(\uc55e \uae30\ub85d + \ub0b4\uc6a9)"
+    }
+  },
+  "required": [
+    "request_id",
+    "seq",
+    "type",
+    "hash"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "system"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "system"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "system"
+      }
+    }
+  }
+}

@@ -32,6 +32,13 @@ export const NOTIFICATION_META = {
   factory_account_verified: { label: '공장 계좌 확인', icon: '🏦' },
   claim_submitted: { label: '고객 불량 신고', icon: '🚨' },
   claim_updated: { label: '불량 신고 처리', icon: '🛠️' },
+  comparison_published: { label: '견적 비교표', icon: '📊' },
+  comparison_choice: { label: '비교표 고객 선택', icon: '✅' },
+  landed_cost_confirmed: { label: '도착 원가 확정', icon: '🧮' },
+  contract_sent: { label: '계약서 서명 요청', icon: '✍️' },
+  contract_signed: { label: '계약 체결', icon: '🤝' },
+  contract_declined: { label: '계약서 수정 요청', icon: '📝' },
+  contract_expired: { label: '서명 기한 지남', icon: '⌛' },
 };
 
 export const notificationMeta = (type) => NOTIFICATION_META[type] || { label: '알림', icon: '🔔' };

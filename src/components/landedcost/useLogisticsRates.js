@@ -17,6 +17,7 @@ export default function useLogisticsRates() {
     rates: mergeRates(data?.rates || []),
     dbCount: data?.rates?.length || 0,
     usdKrw: data?.usd_krw || null,
+    usdCny: data?.usd_cny || null,
     rateDate,
     fxStale,
     isLoading,

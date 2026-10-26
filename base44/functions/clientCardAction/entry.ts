@@ -5,9 +5,11 @@ import { fillMissingTranslation } from '../../shared/bilingualTranslation.ts';
 import { uploadPrivateAttachments, linkCardAttachments } from '../../shared/privateAttachments.ts';
 import { QC_DECISIONS, SPEC_DECISIONS, latestSentSpecs } from '../../shared/clientQc.ts';
 import { DEST_COST_DECISIONS, destCostState } from '../../shared/destCost.ts';
+import { latestClientComparison } from '../../shared/clientComparison.ts';
 
 // 고객이 수행 가능한 쓰기 동작: 채팅 작성 · 요구사항(hq_requirements) 수정 · 공개된 검수 결과의 출고 승인/보류
-// · 보낸 품질 기준서의 승인/수정 요청 · 선적 도착지 비용 예상액의 확인/문의 · 받은 물건의 불량 신고(클레임).
+// · 보낸 품질 기준서의 승인/수정 요청 · 선적 도착지 비용 예상액의 확인/문의 · 받은 물건의 불량 신고(클레임)
+// · 견적 비교표에서 진행할 안 고르기.
 // 그 외 필드는 서버에서 아예 받지 않으므로 프런트 우회로 변경할 수 없다.
 export default async function (req) {
   try {
@@ -15,7 +17,7 @@ export default async function (req) {
     const auth = await requireClient(base44);
     if (auth.error) return auth.error;
 
-    const { card_id, action, message, message_cn, hq_requirements, hq_requirements_cn, attachments, report_id, spec_id, shipment_id, sent_at, decision, note, claim, document_type } = await req.json();
+    const { card_id, action, message, message_cn, hq_requirements, hq_requirements_cn, attachments, report_id, spec_id, shipment_id, sent_at, decision, note, claim, document_type, option_key, version } = await req.json();
     if (!card_id || !action) return Response.json({ error: 'card_id, action 이 필요합니다' }, { status: 400 });
 
     const svc = base44.asServiceRole;
@@ -216,6 +218,37 @@ export default async function (req) {
         });
       } catch (_e) { /* 알림 실패가 고객 판단을 막지 않는다 */ }
       return Response.json({ ok: true, decision, decided_at: decidedAt });
+    }
+
+    if (action === 'comparison_choice') {
+      const rec = await latestClientComparison(svc, card.id);
+      if (!rec) return Response.json({ error: '고를 수 있는 비교표가 없습니다. 새로고침해 주세요' }, { status: 404 });
+      if (rec.status === 'CONFIRMED') return Response.json({ error: '이미 확정된 비교표입니다. 바꾸려면 담당자에게 문의해 주세요' }, { status: 409 });
+      // 고객이 본 비교표가 담당자가 마지막으로 공개한 것인지 확인한다
+      if (Number(version) !== Number(rec.version)) return Response.json({ error: '담당자가 비교표를 새로 공개했습니다. 새로고침 후 다시 골라 주세요' }, { status: 409 });
+      const opt = (rec.client_snapshot?.options || []).find((o) => o.key === option_key);
+      if (!opt) return Response.json({ error: '고른 안을 찾을 수 없습니다' }, { status: 400 });
+      const memo = String(note || '').trim().slice(0, 500);
+      const entry = { option_key: opt.key, note: memo, by_name: senderName, at: new Date().toISOString() };
+      await svc.entities.QuoteComparison.update(rec.id, { client_choice: entry, choice_history: [...(rec.choice_history || []), entry], status: 'CHOSEN' });
+      try {
+        await svc.entities.ProjectAuditLog.create({
+          tenant_id: card.tenant_id, card_id: card.id, event_type: 'COMPARISON_CLIENT_CHOICE',
+          actor_id: auth.user.id, actor_name: senderName, details: `견적 비교표 v${rec.version} ${opt.label} 진행 요청${memo ? `: ${memo}` : ''}`,
+        });
+      } catch (_e) { /* 기록 실패가 고객 선택을 막지 않는다 */ }
+      try {
+        const staff = await internalUsersOfTenant(svc, card.tenant_id);
+        await notifyUsers(svc, staff, {
+          type: 'comparison_choice',
+          title: `[고객 선택] ${card.title}`,
+          body: `${senderName}: 견적 비교표에서 ${opt.label}으로 진행을 요청했습니다.${memo ? `\n${memo.slice(0, 300)}` : ''}`,
+          link: `/task-board?card=${card.id}`,
+          task_card_id: card.id,
+          card_title: card.title,
+        });
+      } catch (_e) { /* 알림 실패가 고객 선택을 막지 않는다 */ }
+      return Response.json({ ok: true, client_choice: entry });
     }
 
     if (action === 'claim_create') {

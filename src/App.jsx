@@ -58,6 +58,7 @@ const ChinaHolidays = lazy(() => import('@/pages/ChinaHolidays'));
 const MyWork = lazy(() => import('@/pages/MyWork'));
 const UserGuide = lazy(() => import('@/pages/UserGuide'));
 const ClientLandedCost = lazy(() => import('@/pages/ClientLandedCost'));
+const ClientProductCosts = lazy(() => import('@/pages/ClientProductCosts'));
 const ClientMolds = lazy(() => import('@/pages/ClientMolds'));
 const LogisticsRates = lazy(() => import('@/pages/LogisticsRates'));
 
@@ -128,6 +129,7 @@ const AuthenticatedApp = () => {
         <Route path="/client/guide" element={<ClientGuide />} />
         <Route path="/client/mold-review" element={<MoldReview />} />
         <Route path="/client/landed-cost" element={<ClientLandedCost />} />
+        <Route path="/client/costs" element={<ClientProductCosts />} />
         <Route path="/client/molds" element={<ClientMolds />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/service-guide" element={<ServiceGuide />} />

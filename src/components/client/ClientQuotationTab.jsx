@@ -6,10 +6,11 @@ import { base44 } from '@/api/base44Client';
 import { withClientView } from '@/lib/clientView';
 import { Button } from '@/components/ui/button';
 import { generateQuotationPDF } from '@/lib/generateQuotationPDF';
+import ClientComparisonSection from './ClientComparisonSection';
 
 // 고객 전용 견적 탭 — 화면에 금액 내역을 그리지 않고 PDF 다운로드만 제공한다.
 // (원가·마진·수수료 분기를 어드민 탭에 흩어놓지 않기 위해 별도 컴포넌트로 분리)
-export default function ClientQuotationTab({ cardId }) {
+export default function ClientQuotationTab({ cardId, cardTitle = '', clientName = '' }) {
   const [busyId, setBusyId] = useState(null);
 
   const { data: quotations = [], isLoading } = useQuery({
@@ -33,17 +34,22 @@ export default function ClientQuotationTab({ cardId }) {
     return <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
   }
 
+  const comparison = <ClientComparisonSection cardId={cardId} cardTitle={cardTitle} clientName={clientName} />;
   if (quotations.length === 0) {
     return (
+      <div className="space-y-4">
+      {comparison}
       <div className="py-10 text-center">
         <FileText className="w-9 h-9 mx-auto text-muted-foreground/40" />
         <p className="mt-3 text-sm text-muted-foreground">아직 발행된 견적서가 없습니다</p>
+      </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-2">
+      {comparison}
       {quotations.map((q) => (
         <div key={q.id} className="flex items-center gap-3 border rounded-lg px-4 py-3">
           <FileText className="w-4 h-4 text-primary flex-shrink-0" />

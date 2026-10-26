@@ -25,6 +25,7 @@ export default async function (req) {
     return Response.json({
       rates,
       usd_krw: latest?.usd_krw || null,
+      usd_cny: latest?.usd_cny || null,
       rate_date: latest?.rate_date || null,
     });
   } catch (error) {

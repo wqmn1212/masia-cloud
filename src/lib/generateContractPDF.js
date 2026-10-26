@@ -7,7 +7,7 @@ const ARTICLE = /^제\s?\d+조/;
 const ANNEX = /^\[별첨/;
 const CLAUSE_NO = /^[①②③④⑤⑥⑦⑧⑨⑩]/;
 const SUB_ITEM = /^\s+\d+\./;
-const SIGN = /\(서명\/인\)/;
+const SIGN = /\((서명\/인|전자서명)\)/;
 
 // 계약서 본문 한 줄을 문서 스타일 HTML 블록으로 변환
 function renderLine(line) {
@@ -31,7 +31,8 @@ function renderLine(line) {
   return `<div style="margin:3px 0;font-size:11px;line-height:1.75;color:#1e2a3b;">${text}</div>`;
 }
 
-export async function generateContractPDF(contract) {
+// returnFile: true 면 내려받지 않고 { base64, pages } 를 돌려준다 (전자서명 요청 때 서버에 올려 고정)
+export async function generateContractPDF(contract, { returnFile = false } = {}) {
   const PAGE_W = 794;
   const PAGE_H = Math.round((PAGE_W * 297) / 210);
   const PAD = 56;
@@ -93,6 +94,10 @@ export async function generateContractPDF(contract) {
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297);
     }
 
+    if (returnFile) {
+      const b64 = pdf.output('datauristring').replace(/^data:[^,]*,/, '');
+      return { base64: b64, pages: pageDivs.length };
+    }
     const safe = (s) => String(s || '').replace(/[^\w\u3131-\uD79D一-龥]+/g, '_').slice(0, 40);
     pdf.save(`Contract_${safe(contract.contract_title || contract.client_name) || 'draft'}_${new Date().toISOString().slice(0, 10)}.pdf`);
   } finally {
