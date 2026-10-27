@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import useLogisticsRates from '@/components/landedcost/useLogisticsRates';
@@ -58,6 +58,14 @@ export default function useQuoteComparison(card) {
     });
     await save({ options, rows: sheet.rows });
   };
+
+  // AI 비서가 만든 초안(안만 있고 줄이 없는 비교표)은 처음 열 때 줄 맞추기를 한다
+  const built = useRef(null);
+  useEffect(() => {
+    if (!record || record.status !== 'DRAFT' || (record.rows || []).length || !(record.options || []).length || quotesQ.isLoading || built.current === record.id) return;
+    built.current = record.id;
+    changeOptions(record.options.map((o) => o.quotation_id)).then(() => { if (!record.fx?.usd_krw) save({ fx: latestFx }); }).catch(() => { built.current = null; });
+  }, [record, quotesQ.isLoading]);
 
   const refreshFx = () => save({ fx: latestFx });
 

@@ -14,7 +14,9 @@
     "check:qc-precheck": "node scripts/check-qc-precheck.mjs",
     "check:quote-compare": "node scripts/check-quote-compare.mjs",
     "check:order-cost": "node scripts/check-order-cost.mjs",
-    "check:signature": "node scripts/check-signature.mjs"
+    "check:signature": "node scripts/check-signature.mjs",
+    "check:dest-cost-invoice": "node scripts/check-dest-cost-invoice.mjs",
+    "check:assistant": "node --import ./scripts/fnmock/register.mjs scripts/check-assistant-functions.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.57",

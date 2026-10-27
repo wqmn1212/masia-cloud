@@ -135,6 +135,7 @@ export default function DestCostSection({ shipment, card, onSaved }) {
     dest_cost_actual: actual.amount === '' ? null : Number(actual.amount),
     dest_cost_actual_vat: actual.vat === '' ? null : Number(actual.vat),
     dest_cost_actual_note: actual.note.trim(),
+    dest_cost_actual_by_name: me, dest_cost_actual_at: new Date().toISOString(), dest_cost_actual_source: '직접 입력',
   }, '실제 청구 금액을 저장했습니다');
   const actualDirty = String(actual.amount) !== String(shipment.dest_cost_actual ?? '') || String(actual.vat) !== String(shipment.dest_cost_actual_vat ?? '') || actual.note !== (shipment.dest_cost_actual_note || '');
 
@@ -193,6 +194,7 @@ export default function DestCostSection({ shipment, card, onSaved }) {
                 {invoices.length ? <DocChips docs={invoices} max={2} /> : <span className="text-[11px] text-muted-foreground">청구서는 무역서류에 &lsquo;물류비 청구서&rsquo;로 올려 주세요</span>}
                 <Button size="sm" variant="outline" className="ml-auto h-7 text-xs" disabled={busy || !actualDirty} onClick={saveActual}>실제 금액 저장</Button>
               </div>
+              {shipment.dest_cost_actual_by_name && <p className="text-[11px] text-muted-foreground">기록: {shipment.dest_cost_actual_by_name}{shipment.dest_cost_actual_at ? ` · ${new Date(shipment.dest_cost_actual_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}{shipment.dest_cost_actual_source && shipment.dest_cost_actual_source !== '직접 입력' ? ` · 근거 ${shipment.dest_cost_actual_source}` : ''}</p>}
             </div>
           )}
         </>

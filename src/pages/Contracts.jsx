@@ -148,7 +148,24 @@ export default function Contracts() {
     });
   };
 
-  const selectContract = (c) => setForm({
+  // AI 비서가 만든 초안처럼 본문이 빈 계약서는 열 때 계약 종류에 맞는 양식으로 채운다 (저장은 직원이)
+  const templateFor = (c) => {
+    if (c.body || !['DRAFT', 'REVIEW'].includes(c.status || 'DRAFT')) return c.body || '';
+    if (c.contract_type === 'SERVICE') {
+      const a = agreements.find((x) => x.id === c.service_agreement_id);
+      return a ? buildServiceContract(a, { clientName: c.client_name || a.company_name, contractDate: c.contract_date }) : '';
+    }
+    const q = quotations.find((x) => x.id === c.quotation_id);
+    if (!q) return '';
+    return c.contract_type === 'TRIPARTITE' ? buildStandardContract(q, { contractDate: c.contract_date }) : buildSupplyContract(q, { clientName: c.client_name || q.client_name, contractDate: c.contract_date });
+  };
+
+  const selectContract = (c) => {
+    const body = templateFor(c);
+    if (body && !c.body) toast({ title: '양식으로 본문을 채웠습니다', description: '빈칸을 확인하고 저장하세요.' });
+    selectForm({ ...c, body });
+  };
+  const selectForm = (c) => setForm({
     id: c.id,
     quotation_id: c.quotation_id || '',
     contract_title: c.contract_title || '',
