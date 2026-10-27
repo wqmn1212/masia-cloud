@@ -4,6 +4,15 @@ module.exports = {
     content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
   	extend: {
+      // 글자 역할: 공개 사이트(랜딩)와 같은 크기 체계. 새 화면은 임의 px 대신 이 이름을 쓴다.
+      //  micro 11 — 배지·칩만 / caption 12.5 — 보조 설명·메타 / label 13 — 입력 이름·표·작은 버튼 / body 14.5 — 본문·값 / title 18 — 구역·창 제목
+      fontSize: {
+        micro: ['11px', { lineHeight: '16px' }],
+        caption: ['12.5px', { lineHeight: '18px' }],
+        label: ['13px', { lineHeight: '20px' }],
+        body: ['14.5px', { lineHeight: '23px' }],
+        title: ['18px', { lineHeight: '26px', letterSpacing: '-0.5px' }],
+      },
       fontFamily: {
         sans: ['var(--font-sans)'],
         display: ['var(--font-display)'],
@@ -44,6 +53,11 @@ module.exports = {
   			destructive: {
   				DEFAULT: 'hsl(var(--destructive))',
   				foreground: 'hsl(var(--destructive-foreground))'
+  			},
+  			// 주의(경고): warning 은 아이콘·옅은 배경, warning-text 는 흰 바탕에서 읽히는 글자색
+  			warning: {
+  				DEFAULT: 'hsl(var(--warning))',
+  				text: 'hsl(var(--warning-text))'
   			},
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',

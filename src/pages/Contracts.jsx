@@ -240,7 +240,7 @@ export default function Contracts() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">계약서 관리</h1>
-        <p className="text-sm text-muted-foreground mt-1">견적서로 계약서를 만들고, 고객이 포털에서 전자서명하도록 요청합니다. 자주 쓰는 특약은 오른쪽에서 골라 넣습니다.</p>
+        <p className="text-body text-muted-foreground mt-1">견적서로 계약서를 만들고, 고객이 포털에서 전자서명하도록 요청합니다. 자주 쓰는 특약은 오른쪽에서 골라 넣습니다.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

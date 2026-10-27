@@ -41,8 +41,8 @@ export default function SignatureSettingsPanel({ user }) {
   return (
     <Card>
       <CardContent className="space-y-3 p-4">
-        <p className="flex items-center gap-1.5 text-sm font-semibold"><Stamp className="h-4 w-4 text-primary" />전자서명 이지스 서명자</p>
-        <p className="text-xs text-muted-foreground">서명 요청을 보낼 때 이 정보가 고정되어 완료본의 전자서명 확인서에 들어갑니다. 마스터만 바꿀 수 있습니다.</p>
+        <p className="flex items-center gap-1.5 text-body font-semibold"><Stamp className="h-4 w-4 text-primary" />전자서명 이지스 서명자</p>
+        <p className="text-label text-muted-foreground">서명 요청을 보낼 때 이 정보가 고정되어 완료본의 전자서명 확인서에 들어갑니다. 마스터만 바꿀 수 있습니다.</p>
         <div className="grid gap-2 sm:grid-cols-3">
           <Input placeholder="대표 이름" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
           <Input placeholder="직책" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
@@ -50,11 +50,11 @@ export default function SignatureSettingsPanel({ user }) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" disabled={busy || !f.name.trim()} onClick={() => save({ signature_rep_name: f.name.trim(), signature_rep_title: f.title.trim(), signature_company: f.company.trim() })}>{busy && <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />}저장</Button>
-          <label className="cursor-pointer rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
+          <label className="cursor-pointer rounded-md border px-3 py-1.5 text-label hover:bg-muted">
             직인 이미지 {setting?.signature_seal_uri ? '바꾸기' : '올리기'}
             <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => uploadSeal(e.target.files?.[0])} />
           </label>
-          <span className="text-[11px] text-muted-foreground">{setting?.signature_seal_uri ? `직인 등록됨 · ${setting.signature_seal_updated_by || ''} ${setting.signature_seal_updated_at ? new Date(setting.signature_seal_updated_at).toLocaleDateString('ko-KR') : ''}` : '직인 미등록 (확인서에 "이미지 없음"으로 표시)'}</span>
+          <span className="text-caption text-muted-foreground">{setting?.signature_seal_uri ? `직인 등록됨 · ${setting.signature_seal_updated_by || ''} ${setting.signature_seal_updated_at ? new Date(setting.signature_seal_updated_at).toLocaleDateString('ko-KR') : ''}` : '직인 미등록 (확인서에 "이미지 없음"으로 표시)'}</span>
         </div>
       </CardContent>
     </Card>

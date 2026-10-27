@@ -43,12 +43,12 @@ export default function ChatComposer({ onSend, disabled }) {
   return (
     <div className="border-t border-border bg-card p-3">
       {uploadError && (
-        <p className="mb-2 text-xs text-destructive">{uploadError}</p>
+        <p className="mb-2 text-label text-destructive">{uploadError}</p>
       )}
       {files.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
           {files.map((f) => (
-            <span key={f.url} className="flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs">
+            <span key={f.url} className="flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-label">
               <Paperclip className="w-3 h-3" />
               <span className="max-w-[180px] truncate">{f.name}</span>
               <button onClick={() => setFiles(files.filter((x) => x.url !== f.url))}>

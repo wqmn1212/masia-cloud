@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { generateContractPDF } from '@/lib/generateContractPDF';
 import { hasEsignClause } from '@/lib/esignContracts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // 서명 요청 보내기 전 확인 창: 서명자(고객사 계정), 기한, 전자서명 조항·금액·당사자명을 한 번 더 보여 주고
 // 지금 본문으로 PDF 를 만들어 서버에 올린다. 서버가 지문값을 계산해 원본으로 고정한다.
@@ -52,29 +53,30 @@ export default function SendSignatureDialog({ open, onOpenChange, contract, clie
           <DialogDescription>지금 저장된 본문으로 PDF 를 만들어 고정합니다. 보낸 뒤에는 본문을 고칠 수 없고, 고치려면 회수한 뒤 새 버전으로 보냅니다.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="rounded-lg bg-muted/50 p-3 text-sm">
+          <div className="rounded-lg bg-muted/50 p-3 text-body">
             <p className="font-medium">{contract?.contract_title}</p>
             <ul className="mt-2 space-y-1">
               {checks.map((c) => (
-                <li key={c.text} className="flex items-center gap-1.5 text-xs">
-                  {c.ok ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> : <AlertTriangle className={`h-3.5 w-3.5 ${c.warn ? 'text-chart-3' : 'text-destructive'}`} />}
-                  <span className={c.ok ? '' : c.warn ? 'text-chart-3' : 'text-destructive'}>{c.text}{!c.ok && !c.warn ? ' — 필요' : !c.ok ? ' — 확인하세요' : ''}</span>
+                <li key={c.text} className="flex items-center gap-1.5 text-label">
+                  {c.ok ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> : <AlertTriangle className={`h-3.5 w-3.5 ${c.warn ? 'text-warning-text' : 'text-destructive'}`} />}
+                  <span className={c.ok ? '' : c.warn ? 'text-warning-text' : 'text-destructive'}>{c.text}{!c.ok && !c.warn ? ' — 필요' : !c.ok ? ' — 확인하세요' : ''}</span>
                 </li>
               ))}
             </ul>
           </div>
           <label className="block space-y-1">
-            <span className="text-xs font-medium text-muted-foreground">서명자 (고객사 계정)</span>
+            <span className="text-label font-medium text-muted-foreground">서명자 (고객사 계정)</span>
             {isLoading ? <div className="flex h-9 items-center"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
-              : signers.length === 0 ? <p className="text-xs text-destructive">이 고객사에 활성 계정이 없습니다. 고객 계정을 먼저 만들어 주세요.</p>
-              : <select className="h-9 w-full rounded-md border bg-background px-2 text-sm" value={signer} onChange={(e) => setSigner(e.target.value)}>
-                  {signers.map((s) => <option key={s.id} value={s.id}>{s.name || '이름 없음'} · {s.email}</option>)}
-                </select>}
-            {sel?.shared && <span className="flex items-center gap-1 text-[11px] text-chart-3"><AlertTriangle className="h-3 w-3" />공용 메일 계정입니다. 누가 서명했는지 남기려면 결재권자 개인 계정을 만들어 보내는 편이 좋습니다.</span>}
+              : signers.length === 0 ? <p className="text-label text-destructive">이 고객사에 활성 계정이 없습니다. 고객 계정을 먼저 만들어 주세요.</p>
+              : <Select value={signer} onValueChange={setSigner}>
+                  <SelectTrigger className="h-9 text-body"><SelectValue placeholder="서명자 선택" /></SelectTrigger>
+                  <SelectContent>{signers.map((s) => <SelectItem key={s.id} value={s.id} className="text-body">{s.name || '이름 없음'} · {s.email}</SelectItem>)}</SelectContent>
+                </Select>}
+            {sel?.shared && <span className="flex items-center gap-1 text-caption text-warning-text"><AlertTriangle className="h-3 w-3" />공용 메일 계정입니다. 누가 서명했는지 남기려면 결재권자 개인 계정을 만들어 보내는 편이 좋습니다.</span>}
           </label>
           <label className="block space-y-1">
-            <span className="text-xs font-medium text-muted-foreground">서명 기한</span>
-            <div className="flex items-center gap-2"><Input type="number" min={1} max={60} className="w-24" value={days} onChange={(e) => setDays(e.target.value)} /><span className="text-sm text-muted-foreground">일 뒤까지 (기본 14일)</span></div>
+            <span className="text-label font-medium text-muted-foreground">서명 기한</span>
+            <div className="flex items-center gap-2"><Input type="number" min={1} max={60} className="w-24" value={days} onChange={(e) => setDays(e.target.value)} /><span className="text-body text-muted-foreground">일 뒤까지 (기본 14일)</span></div>
           </label>
         </div>
         <div className="flex justify-end gap-2">

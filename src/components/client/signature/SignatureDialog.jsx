@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import PdfViewer from '@/components/signature/PdfViewer';
 import SignaturePad, { typedSignaturePng } from '@/components/signature/SignaturePad';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const STEPS = [['read', '계약서 확인'], ['verify', '본인 확인'], ['sign', '서명']];
 const METHODS = [['DRAW', '직접 그리기'], ['TYPE', '이름 입력'], ['SEAL', '직인 이미지']];
@@ -92,22 +93,22 @@ export default function SignatureDialog({ requestId, open, onOpenChange }) {
   const stepIdx = STEPS.findIndex(([k]) => k === step);
 
   const body = () => {
-    if (isLoading || !r) return isError ? <p className="py-10 text-center text-sm text-destructive">계약서를 불러오지 못했습니다. <button type="button" className="underline" onClick={() => refetch()}>다시 시도</button></p> : <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+    if (isLoading || !r) return isError ? <p className="py-10 text-center text-body text-destructive">계약서를 불러오지 못했습니다. <button type="button" className="underline" onClick={() => refetch()}>다시 시도</button></p> : <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
     if (done) {
       return (
         <div className="space-y-4 py-6 text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
           <div><p className="text-lg font-semibold">{done.completed ? '계약이 체결되었습니다' : '서명을 마쳤습니다'}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{done.completed ? '서명 확인서와 감사 추적이 붙은 완료본을 내려받아 보관하세요. 담당자에게도 알림이 갔습니다.' : '완료본을 만드는 중입니다. 잠시 뒤 다시 열어 주세요.'}</p></div>
+            <p className="mt-1 text-body text-muted-foreground">{done.completed ? '서명 확인서와 감사 추적이 붙은 완료본을 내려받아 보관하세요. 담당자에게도 알림이 갔습니다.' : '완료본을 만드는 중입니다. 잠시 뒤 다시 열어 주세요.'}</p></div>
           {done.completed && <Button className="gap-1.5" onClick={() => download(requestId).catch((e) => toast({ title: errText(e), variant: 'destructive' }))}><Download className="h-4 w-4" />완료본 내려받기</Button>}
-          <p className="text-xs text-muted-foreground">다음 단계: 프로젝트의 결제 탭에서 선금 안내를 확인해 주세요.</p>
+          <p className="text-label text-muted-foreground">다음 단계: 프로젝트의 결제 탭에서 선금 안내를 확인해 주세요.</p>
         </div>
       );
     }
     if (r.status === 'COMPLETED') {
       return (
         <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-body">
             <CheckCircle2 className="h-4 w-4 text-primary" /><span className="font-medium">체결됨</span><span className="text-muted-foreground">{kstTime(r.completed_at)}</span>
             <Button size="sm" className="ml-auto h-8 gap-1" onClick={() => download(requestId).catch((e) => toast({ title: errText(e), variant: 'destructive' }))}><Download className="h-3.5 w-3.5" />완료본 내려받기</Button>
           </div>
@@ -118,7 +119,7 @@ export default function SignatureDialog({ requestId, open, onOpenChange }) {
     if (r.block) {
       return (
         <div className="space-y-3">
-          <p className="flex items-center gap-2 rounded-lg bg-muted p-3 text-sm"><Lock className="h-4 w-4 shrink-0 text-muted-foreground" />{r.block_text}</p>
+          <p className="flex items-center gap-2 rounded-lg bg-muted p-3 text-body"><Lock className="h-4 w-4 shrink-0 text-muted-foreground" />{r.block_text}</p>
           {['NOT_SIGNER', 'VIEW_ONLY'].includes(r.block) && <PdfViewer url={data.file_url} className="h-[60vh]" />}
         </div>
       );
@@ -128,7 +129,7 @@ export default function SignatureDialog({ requestId, open, onOpenChange }) {
       <div className="space-y-3">
         <ol className="flex gap-1">
           {STEPS.map(([k, label], i) => (
-            <li key={k} className={`flex flex-1 items-center gap-1.5 rounded-md px-2 py-1.5 text-xs ${i === stepIdx ? 'bg-primary text-primary-foreground' : i < stepIdx ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+            <li key={k} className={`flex flex-1 items-center gap-1.5 rounded-md px-2 py-1.5 text-label ${i === stepIdx ? 'bg-primary text-primary-foreground' : i < stepIdx ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
               <span className="font-semibold">{i + 1}</span>{label}
             </li>
           ))}
@@ -139,7 +140,7 @@ export default function SignatureDialog({ requestId, open, onOpenChange }) {
             <PdfViewer url={data.file_url} onReachEnd={onReachEnd} className="h-[55vh] sm:h-[60vh]" />
             {declining ? (
               <div className="space-y-2 rounded-lg border p-3">
-                <p className="text-sm font-medium">어떤 부분을 고쳐야 하나요?</p>
+                <p className="text-body font-medium">어떤 부분을 고쳐야 하나요?</p>
                 <Textarea rows={3} maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="예: 제5조 선금 비율을 30%로 바꿔 주세요" />
                 <div className="flex justify-end gap-2">
                   <Button variant="ghost" size="sm" onClick={() => setDeclining(false)}>취소</Button>
@@ -148,8 +149,8 @@ export default function SignatureDialog({ requestId, open, onOpenChange }) {
               </div>
             ) : (
               <div className="flex flex-wrap items-center gap-2">
-                <Button variant="ghost" size="sm" className="text-xs" onClick={() => setDeclining(true)}>수정 요청하기</Button>
-                {!readEnd && <span className="ml-auto text-xs text-muted-foreground">계약서를 끝까지 내리면 다음으로 넘어갈 수 있습니다</span>}
+                <Button variant="ghost" size="sm" className="text-label" onClick={() => setDeclining(true)}>수정 요청하기</Button>
+                {!readEnd && <span className="ml-auto text-label text-muted-foreground">계약서를 끝까지 내리면 다음으로 넘어갈 수 있습니다</span>}
                 <Button className={readEnd ? 'ml-auto' : ''} disabled={!readEnd} onClick={() => setStep('verify')}>다음: 본인 확인</Button>
               </div>
             )}
@@ -159,39 +160,39 @@ export default function SignatureDialog({ requestId, open, onOpenChange }) {
         {step === 'verify' && (
           <div className="mx-auto max-w-sm space-y-3 py-4">
             <div className="text-center"><MailCheck className="mx-auto h-9 w-9 text-primary" /><p className="mt-2 font-semibold">계정 이메일로 본인 확인</p>
-              <p className="mt-1 text-sm text-muted-foreground">{sentTo || r.my?.email_masked}으로 인증번호 6자리를 보내 드립니다.</p></div>
+              <p className="mt-1 text-body text-muted-foreground">{sentTo || r.my?.email_masked}으로 인증번호 6자리를 보내 드립니다.</p></div>
             <Button variant="outline" className="w-full" disabled={busy === 'otp'} onClick={sendOtp}>{busy === 'otp' && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{sentTo || r.otp?.sent_at ? '인증번호 다시 받기' : '인증번호 받기'}</Button>
             <Input inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="인증번호 6자리" className="text-center text-lg tracking-[0.4em]" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
             <Button className="w-full" disabled={code.length !== 6 || busy === 'verify'} onClick={verify}>{busy === 'verify' && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}확인</Button>
-            <p className="text-center text-[11px] text-muted-foreground">10분 동안 유효하고, 5번 틀리면 30분 동안 잠깁니다. 이지스 직원은 인증번호를 묻지 않습니다.</p>
-            <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => setStep('read')}>계약서 다시 보기</Button>
+            <p className="text-center text-caption text-muted-foreground">10분 동안 유효하고, 5번 틀리면 30분 동안 잠깁니다. 이지스 직원은 인증번호를 묻지 않습니다.</p>
+            <Button variant="ghost" size="sm" className="w-full text-label" onClick={() => setStep('read')}>계약서 다시 보기</Button>
           </div>
         )}
 
         {step === 'sign' && f && (
           <div className="space-y-3">
             <div className="grid gap-2 sm:grid-cols-3">
-              <label className="space-y-1 text-xs"><span className="text-muted-foreground">이름</span><Input value={f.name} maxLength={40} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
-              <label className="space-y-1 text-xs"><span className="text-muted-foreground">직책</span><Input value={f.title} maxLength={40} placeholder="예: 대표, 구매팀장" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
-              <label className="space-y-1 text-xs"><span className="text-muted-foreground">회사명</span><Input value={f.company} maxLength={80} onChange={(e) => setF({ ...f, company: e.target.value })} /></label>
+              <label className="space-y-1 text-label"><span className="text-muted-foreground">이름</span><Input value={f.name} maxLength={40} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
+              <label className="space-y-1 text-label"><span className="text-muted-foreground">직책</span><Input value={f.title} maxLength={40} placeholder="예: 대표, 구매팀장" onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
+              <label className="space-y-1 text-label"><span className="text-muted-foreground">회사명</span><Input value={f.company} maxLength={80} onChange={(e) => setF({ ...f, company: e.target.value })} /></label>
             </div>
             <div className="flex gap-1 rounded-lg bg-muted p-1">
-              {METHODS.map(([k, label]) => <button key={k} type="button" onClick={() => setMethod(k)} className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium ${method === k ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}>{label}</button>)}
+              {METHODS.map(([k, label]) => <button key={k} type="button" onClick={() => setMethod(k)} className={`flex-1 rounded-md px-2 py-1.5 text-label font-medium ${method === k ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}>{label}</button>)}
             </div>
             {method === 'DRAW' && <SignaturePad ref={pad} onChange={setDrawn} />}
-            {method === 'TYPE' && <div className="flex h-36 items-center justify-center rounded-lg border-2 border-dashed bg-white text-4xl font-bold text-gray-900">{f.name.trim() || <span className="text-sm font-normal text-muted-foreground">이름을 입력하면 서명으로 쓰입니다</span>}</div>}
+            {method === 'TYPE' && <div className="flex h-36 items-center justify-center rounded-lg border-2 border-dashed bg-white text-4xl font-bold text-gray-900">{f.name.trim() || <span className="text-body font-normal text-muted-foreground">이름을 입력하면 서명으로 쓰입니다</span>}</div>}
             {method === 'SEAL' && (
               <label className="flex h-36 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed bg-white">
-                {seal ? <img src={seal} alt="직인" className="max-h-32 object-contain" /> : <span className="text-sm text-muted-foreground">회사 직인 이미지 올리기 (PNG·JPG, 600KB 이하)</span>}
+                {seal ? <img src={seal} alt="직인" className="max-h-32 object-contain" /> : <span className="text-body text-muted-foreground">회사 직인 이미지 올리기 (PNG·JPG, 600KB 이하)</span>}
                 <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => pickSeal(e.target.files?.[0])} />
               </label>
             )}
-            <label className="flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm">
-              <input type="checkbox" className="mt-1 h-4 w-4 accent-primary" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+            <label className="flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-body">
+              <Checkbox className="mt-1" checked={consent} onCheckedChange={(v) => setConsent(v === true)} />
               <span>{r.consent_text}</span>
             </label>
             <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1 text-[11px] text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" />본인 확인 완료 · 15분 안에 서명해 주세요</span>
+              <span className="flex items-center gap-1 text-caption text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" />본인 확인 완료 · 15분 안에 서명해 주세요</span>
               <Button className="ml-auto gap-1.5" disabled={!canSign || busy === 'sign'} onClick={sign}>{busy === 'sign' ? <Loader2 className="h-4 w-4 animate-spin" /> : <PenLine className="h-4 w-4" />}서명 완료</Button>
             </div>
           </div>
@@ -205,12 +206,12 @@ export default function SignatureDialog({ requestId, open, onOpenChange }) {
       <DialogContent className="max-h-[96vh] max-w-3xl overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 pr-6 text-base"><FileSignature className="h-4 w-4 shrink-0 text-primary" /><span className="truncate">{r?.document_title || '계약서'}</span></DialogTitle>
-          <DialogDescription asChild><div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+          <DialogDescription asChild><div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-label">
             {r ? <>
               <span>{r.document_no}{r.version > 1 ? ` · ${r.version}번째 버전` : ''}</span>
               {r.status === 'OUT' && <span>서명 기한 {kstDate(r.due_at)}</span>}
               {r.aegis_company && <span>보낸 곳 {r.aegis_company}</span>}
-              {r.status === 'COMPLETED' && <Badge className="border-0 bg-primary/10 text-[10px] text-primary">체결</Badge>}
+              {r.status === 'COMPLETED' && <Badge className="border-0 bg-primary/10 text-micro text-primary">체결</Badge>}
             </> : <span>계약서를 불러오는 중입니다</span>}
           </div></DialogDescription>
         </DialogHeader>

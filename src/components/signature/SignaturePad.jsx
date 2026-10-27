@@ -45,9 +45,9 @@ const SignaturePad = forwardRef(function SignaturePad({ onChange }, ref) {
     <div className="space-y-1">
       <div className="relative rounded-lg border-2 border-dashed bg-white">
         <canvas ref={canvas} width={W} height={H} className="h-36 w-full touch-none" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={up} aria-label="서명 그리는 칸" />
-        {empty && <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">여기에 서명해 주세요</span>}
+        {empty && <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-body text-muted-foreground">여기에 서명해 주세요</span>}
       </div>
-      <Button type="button" variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={clear}><Eraser className="h-3 w-3" />지우기</Button>
+      <Button type="button" variant="ghost" size="sm" className="h-7 gap-1 text-label" onClick={clear}><Eraser className="h-3 w-3" />지우기</Button>
     </div>
   );
 });

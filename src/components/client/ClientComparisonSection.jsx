@@ -56,12 +56,12 @@ export default function ClientComparisonSection({ cardId, cardTitle = '', client
     <section className="space-y-3 rounded-xl border p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="flex items-center gap-1.5 text-sm font-semibold"><Columns3 className="h-4 w-4 text-primary" />견적 비교표</h3>
-          <p className="text-xs text-muted-foreground">
+          <h3 className="flex items-center gap-1.5 text-body font-semibold"><Columns3 className="h-4 w-4 text-primary" />견적 비교표</h3>
+          <p className="text-label text-muted-foreground">
             {confirmed ? `${confirmedLabel}으로 확정되었습니다` : data.client_choice ? '진행 요청을 보냈습니다. 확정 전까지는 다른 안으로 바꿀 수 있습니다' : '공장 견적을 같은 기준으로 맞춰 비교했습니다. 진행할 안을 골라 주세요'}
           </p>
         </div>
-        <Button size="sm" variant="outline" className="h-8 gap-1 text-xs" onClick={pdf}><Download className="h-3.5 w-3.5" />품의용 PDF</Button>
+        <Button size="sm" variant="outline" className="h-8 gap-1 text-label" onClick={pdf}><Download className="h-3.5 w-3.5" />품의용 PDF</Button>
       </div>
       <ClientComparisonView
         snapshot={data.snapshot}
@@ -74,9 +74,9 @@ export default function ClientComparisonSection({ cardId, cardTitle = '', client
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base">{dialog?.mode === 'choose' ? `${dialog?.option.label}으로 진행` : `${dialog?.option.label}에 대해 질문`}</DialogTitle>
-            <DialogDescription className="text-xs">{dialog?.mode === 'choose' ? '진행 요청을 보내면 담당자가 확인하고 확정합니다. 남길 말씀이 있으면 적어 주세요 (선택).' : '담당자에게 보낼 질문을 적어 주세요. 문의 탭에서 답변을 받습니다.'}</DialogDescription>
+            <DialogDescription className="text-label">{dialog?.mode === 'choose' ? '진행 요청을 보내면 담당자가 확인하고 확정합니다. 남길 말씀이 있으면 적어 주세요 (선택).' : '담당자에게 보낼 질문을 적어 주세요. 문의 탭에서 답변을 받습니다.'}</DialogDescription>
           </DialogHeader>
-          <Textarea rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder={dialog?.mode === 'choose' ? '예: 납기를 우선해 이 안으로 진행합니다' : '예: 보증 기간을 2년으로 늘릴 수 있나요?'} className="text-sm" />
+          <Textarea rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder={dialog?.mode === 'choose' ? '예: 납기를 우선해 이 안으로 진행합니다' : '예: 보증 기간을 2년으로 늘릴 수 있나요?'} className="text-body" />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setDialog(null)}>취소</Button>
             <Button size="sm" disabled={busy || (dialog?.mode === 'ask' && !text.trim())} onClick={submit} className="gap-1">{busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}{dialog?.mode === 'choose' ? '진행 요청 보내기' : '질문 보내기'}</Button>
