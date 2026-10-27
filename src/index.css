@@ -36,6 +36,8 @@
     --chart-3: 38 92% 50%;
     --chart-4: 252 71% 59%;
     --chart-5: 340 75% 55%;
+    --warning: 34 100% 50%;
+    --warning-text: 28 100% 34%;
     --radius: 0.625rem;
     --sidebar-background: 240 4% 9%;
     --sidebar-foreground: 240 5% 96%;
@@ -72,6 +74,8 @@
     --chart-3: 38 92% 50%;
     --chart-4: 252 71% 66%;
     --chart-5: 340 75% 55%;
+    --warning: 34 100% 50%;
+    --warning-text: 34 100% 62%;
     --sidebar-background: 240 4% 5%;
     --sidebar-foreground: 240 5% 96%;
     --sidebar-primary: 216 100% 60%;

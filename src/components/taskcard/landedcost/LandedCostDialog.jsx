@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { CURRENCIES, LINE_KIND, LINE_SOURCE, WARNING_TEXT, fmtWon, lineKey, summarize } from '@/lib/orderCost';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const KINDS = [LINE_KIND.GOODS, LINE_KIND.LOGISTICS, LINE_KIND.DEST, LINE_KIND.OTHER];
 const won = (v) => (v == null ? '—' : fmtWon(v));
@@ -82,25 +83,27 @@ export default function LandedCostDialog({ open, onOpenChange, card, user, lc })
   const lineRow = (l) => (
     <tr key={l.key} className="border-t align-top">
       <td className="p-1.5">
-        <select className="h-8 w-full rounded-md border bg-background px-1 text-xs" value={l.kind} onChange={(e) => setLine(l.key, { kind: e.target.value })}>
-          {KINDS.map((k) => <option key={k} value={k}>{t(`lc.kind.${k}`)}</option>)}
-        </select>
+        <Select value={l.kind} onValueChange={(v) => setLine(l.key, { kind: v })}>
+          <SelectTrigger className="h-8 gap-1 px-2.5 text-label"><SelectValue /></SelectTrigger>
+          <SelectContent>{KINDS.map((k) => <SelectItem key={k} value={k} className="text-label">{t(`lc.kind.${k}`)}</SelectItem>)}</SelectContent>
+        </Select>
       </td>
       <td className="p-1.5">
-        <Input className="h-8 text-xs" value={l.label} onChange={(e) => setLine(l.key, { label: e.target.value })} placeholder={t('lc.labelPh')} />
+        <Input className="h-8 text-label" value={l.label} onChange={(e) => setLine(l.key, { label: e.target.value })} placeholder={t('lc.labelPh')} />
         <div className="mt-0.5 flex flex-wrap gap-1">
-          {l.estimated && <Badge variant="outline" className="h-4 px-1 text-[9px] text-chart-3">{t('lc.estimated')}</Badge>}
-          <span className="text-[10px] text-muted-foreground">{t(`lc.src.${l.source || 'MANUAL'}`)}{l.fx_basis ? ` · ${l.fx_basis}` : ''}</span>
+          {l.estimated && <Badge variant="outline" className="h-4 px-1 text-micro text-warning-text">{t('lc.estimated')}</Badge>}
+          <span className="text-micro text-muted-foreground">{t(`lc.src.${l.source || 'MANUAL'}`)}{l.fx_basis ? ` · ${l.fx_basis}` : ''}</span>
         </div>
       </td>
-      <td className="p-1.5"><Input className="h-8 w-28 text-right text-xs" inputMode="decimal" value={l.amount} onChange={(e) => setLine(l.key, { amount: e.target.value })} /></td>
+      <td className="p-1.5"><Input className="h-8 w-28 text-right text-label" inputMode="decimal" value={l.amount} onChange={(e) => setLine(l.key, { amount: e.target.value })} /></td>
       <td className="p-1.5">
-        <select className="h-8 rounded-md border bg-background px-1 text-xs" value={l.currency} onChange={(e) => setLine(l.key, { currency: e.target.value, fx: e.target.value === 'KRW' ? 1 : l.fx })}>
-          {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+        <Select value={l.currency} onValueChange={(v) => setLine(l.key, { currency: v, fx: v === 'KRW' ? 1 : l.fx })}>
+          <SelectTrigger className="h-8 w-[76px] text-label"><SelectValue /></SelectTrigger>
+          <SelectContent>{CURRENCIES.map((c) => <SelectItem key={c} value={c} className="text-label">{c}</SelectItem>)}</SelectContent>
+        </Select>
       </td>
-      <td className="p-1.5">{l.currency === 'KRW' ? <span className="block pt-2 text-center text-xs text-muted-foreground">—</span> : <Input className="h-8 w-20 text-right text-xs" inputMode="decimal" value={l.fx ?? ''} onChange={(e) => setLine(l.key, { fx: e.target.value, fx_basis: l.source === LINE_SOURCE.MANUAL ? '' : t('lc.fxManual') })} />}</td>
-      <td className="p-1.5 pt-3 text-right text-xs tabular-nums">{won(sum.lines.find((x) => x.key === l.key)?.amount_krw)}</td>
+      <td className="p-1.5">{l.currency === 'KRW' ? <span className="block pt-2 text-center text-label text-muted-foreground">—</span> : <Input className="h-8 w-20 text-right text-label" inputMode="decimal" value={l.fx ?? ''} onChange={(e) => setLine(l.key, { fx: e.target.value, fx_basis: l.source === LINE_SOURCE.MANUAL ? '' : t('lc.fxManual') })} />}</td>
+      <td className="p-1.5 pt-3 text-right text-label tabular-nums">{won(sum.lines.find((x) => x.key === l.key)?.amount_krw)}</td>
       <td className="p-1.5 pt-2.5 text-center"><Switch checked={!!l.one_time} onCheckedChange={(v) => setLine(l.key, { one_time: v })} /></td>
       <td className="p-1.5"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeLine(l.key)}><Trash2 className="h-3.5 w-3.5" /></Button></td>
     </tr>
@@ -108,9 +111,9 @@ export default function LandedCostDialog({ open, onOpenChange, card, user, lc })
 
   const field = (label, node, hint) => (
     <label className="block space-y-1">
-      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="text-label font-medium text-muted-foreground">{label}</span>
       {node}
-      {hint && <span className="block text-[11px] text-muted-foreground">{hint}</span>}
+      {hint && <span className="block text-caption text-muted-foreground">{hint}</span>}
     </label>
   );
 
@@ -124,10 +127,13 @@ export default function LandedCostDialog({ open, onOpenChange, card, user, lc })
 
         <div className="grid gap-3 sm:grid-cols-2">
           {field(t('lc.product'), (
-            <select className="h-9 w-full rounded-md border bg-background px-2 text-sm" value={selectedKey} onChange={(e) => pickProduct(e.target.value)}>
-              {productOptions.map((p) => <option key={p.key} value={p.key}>{p.name || p.key}{p.key === lc.defaultProduct.key ? ` (${t('lc.sameChain')})` : ''}</option>)}
-              <option value={NEW_PRODUCT}>{t('lc.newProduct')}</option>
-            </select>
+            <Select value={selectedKey} onValueChange={pickProduct}>
+              <SelectTrigger className="h-9 text-body"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {productOptions.map((p) => <SelectItem key={p.key} value={p.key} className="text-body">{p.name || p.key}{p.key === lc.defaultProduct.key ? ` (${t('lc.sameChain')})` : ''}</SelectItem>)}
+                <SelectItem value={NEW_PRODUCT} className="text-body">{t('lc.newProduct')}</SelectItem>
+              </SelectContent>
+            </Select>
           ), t('lc.productHint'))}
           {field(t('lc.productName'), <Input value={d.product_name} onChange={(e) => set('product_name', e.target.value)} />, t('lc.productNameHint'))}
           <div className="grid grid-cols-[1fr_80px] gap-2">
@@ -138,14 +144,14 @@ export default function LandedCostDialog({ open, onOpenChange, card, user, lc })
         </div>
 
         {warnings.length > 0 && (
-          <div className="space-y-1 rounded-lg border border-chart-3/40 bg-chart-3/5 p-2.5">
-            {warnings.map((w) => <p key={w} className="flex items-start gap-1.5 text-xs"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-chart-3" />{t(`lc.w.${w}`, WARNING_TEXT[w])}</p>)}
+          <div className="space-y-1 rounded-lg border border-warning/40 bg-warning/10 p-2.5">
+            {warnings.map((w) => <p key={w} className="flex items-start gap-1.5 text-label"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />{t(`lc.w.${w}`, WARNING_TEXT[w])}</p>)}
           </div>
         )}
 
         <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead className="bg-muted/50 text-[11px] text-muted-foreground">
+          <table className="w-full min-w-[760px] text-body">
+            <thead className="bg-muted/50 text-caption text-muted-foreground">
               <tr>
                 <th className="w-36 p-1.5 text-left font-medium">{t('lc.col.kind')}</th>
                 <th className="p-1.5 text-left font-medium">{t('lc.col.label')}</th>
@@ -161,16 +167,16 @@ export default function LandedCostDialog({ open, onOpenChange, card, user, lc })
           </table>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={addLine}><Plus className="h-3 w-3" />{t('lc.addLine')}</Button>
-          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={reload}><RotateCcw className="h-3 w-3" />{t('lc.reload')}</Button>
+          <Button variant="outline" size="sm" className="h-7 gap-1 text-label" onClick={addLine}><Plus className="h-3 w-3" />{t('lc.addLine')}</Button>
+          <Button variant="ghost" size="sm" className="h-7 gap-1 text-label" onClick={reload}><RotateCcw className="h-3 w-3" />{t('lc.reload')}</Button>
         </div>
 
-        <div className="grid gap-2 rounded-lg bg-muted/40 p-3 text-sm sm:grid-cols-4">
-          <div><p className="text-[11px] text-muted-foreground">{t('lc.sum.goods')}</p><p className="tabular-nums">{won(sum.goods_krw)}</p></div>
-          <div><p className="text-[11px] text-muted-foreground">{t('lc.sum.logistics')}</p><p className="tabular-nums">{won(sum.logistics_krw)}</p></div>
-          <div><p className="text-[11px] text-muted-foreground">{t('lc.sum.total')}</p><p className="font-semibold tabular-nums">{won(sum.total_krw)}</p></div>
-          <div><p className="text-[11px] text-muted-foreground">{t('lc.sum.perUnit').replace('{unit}', d.unit_label || '개')}</p><p className="text-lg font-bold tabular-nums text-primary">{won(sum.per_unit_krw)}</p></div>
-          <p className="text-[11px] text-muted-foreground sm:col-span-4">
+        <div className="grid gap-2 rounded-lg bg-muted/40 p-3 text-body sm:grid-cols-4">
+          <div><p className="text-caption text-muted-foreground">{t('lc.sum.goods')}</p><p className="tabular-nums">{won(sum.goods_krw)}</p></div>
+          <div><p className="text-caption text-muted-foreground">{t('lc.sum.logistics')}</p><p className="tabular-nums">{won(sum.logistics_krw)}</p></div>
+          <div><p className="text-caption text-muted-foreground">{t('lc.sum.total')}</p><p className="font-semibold tabular-nums">{won(sum.total_krw)}</p></div>
+          <div><p className="text-caption text-muted-foreground">{t('lc.sum.perUnit').replace('{unit}', d.unit_label || '개')}</p><p className="text-lg font-bold tabular-nums text-primary">{won(sum.per_unit_krw)}</p></div>
+          <p className="text-caption text-muted-foreground sm:col-span-4">
             {sum.other_krw > 0 && `${t('lc.sum.other')} ${won(sum.other_krw)} · `}
             {sum.one_time_krw > 0 && `${t('lc.sum.oneTime')} ${won(sum.one_time_krw)} · `}
             {t('lc.sum.vat')} {won(Number(d.vat_krw) || 0)}
@@ -185,8 +191,8 @@ export default function LandedCostDialog({ open, onOpenChange, card, user, lc })
         {rec && field(t('lc.reason'), <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('lc.reasonPh')} />)}
 
         <div className="flex flex-wrap items-center justify-end gap-2">
-          {!card.client_visible && <span className="mr-auto text-[11px] text-muted-foreground">{t('lc.notShared')}</span>}
-          {sum.missing_fx && <span className="text-[11px] text-destructive">{t('lc.w.NO_FX', WARNING_TEXT.NO_FX)}</span>}
+          {!card.client_visible && <span className="mr-auto text-caption text-muted-foreground">{t('lc.notShared')}</span>}
+          {sum.missing_fx && <span className="text-caption text-destructive">{t('lc.w.NO_FX', WARNING_TEXT.NO_FX)}</span>}
           <Button variant="ghost" onClick={() => onOpenChange(false)}>{t('cmp.cancel')}</Button>
           <Button disabled={!canSave} onClick={submit} className="gap-1">{busy && <Loader2 className="h-4 w-4 animate-spin" />}{rec ? t('lc.confirmRevision') : t('lc.confirm')}</Button>
         </div>

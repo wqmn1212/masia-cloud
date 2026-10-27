@@ -28,11 +28,11 @@ export default function ContractEditor({
     <Card>
       <CardContent className="p-4 space-y-4">
         <div className="flex items-center justify-between">
-          <p className="font-semibold text-sm">계약서 작성</p>
+          <p className="font-semibold text-body">계약서 작성</p>
           <Button variant="ghost" size="sm" onClick={onReset}><FilePlus className="w-3.5 h-3.5 mr-1" />새 계약서</Button>
         </div>
         {locked && (
-          <p className="flex items-center gap-1.5 rounded-md bg-muted px-3 py-2 text-xs"><Lock className="h-3.5 w-3.5" />{form.status === 'SENT' ? '서명 대기 중에는 본문을 고칠 수 없습니다. 고치려면 아래 전자서명에서 회수한 뒤 새 버전으로 보내세요.' : '체결된 계약서입니다. 바꿔야 하면 변경 계약서를 새로 만드세요.'}</p>
+          <p className="flex items-center gap-1.5 rounded-md bg-muted px-3 py-2 text-label"><Lock className="h-3.5 w-3.5" />{form.status === 'SENT' ? '서명 대기 중에는 본문을 고칠 수 없습니다. 고치려면 아래 전자서명에서 회수한 뒤 새 버전으로 보내세요.' : '체결된 계약서입니다. 바꿔야 하면 변경 계약서를 새로 만드세요.'}</p>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -92,7 +92,7 @@ export default function ContractEditor({
             </>
           )}
         </div>
-        {tripartite && <p className="flex items-start gap-1.5 text-xs text-chart-3"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />공장이 당사자인 3자 계약은 전자서명 2단계부터 지원합니다. 지금은 PDF 로 내려받아 진행해 주세요.</p>}
+        {tripartite && <p className="flex items-start gap-1.5 text-label text-warning-text"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />공장이 당사자인 3자 계약은 전자서명 2단계부터 지원합니다. 지금은 PDF 로 내려받아 진행해 주세요.</p>}
         <Button variant="secondary" className="w-full" onClick={onGenerate} disabled={locked || (form.contract_type === 'SERVICE' ? !form.service_agreement_id : !form.quotation_id)}>
           <Wand2 className="w-4 h-4 mr-2" />{form.contract_type === 'SERVICE' ? '구독 계약으로 계약서 초안 생성' : form.contract_type === 'TRIPARTITE' ? '견적서로 3자 계약서 초안 생성' : '견적서로 공급 계약서 초안 생성'}
         </Button>
@@ -133,8 +133,8 @@ export default function ContractEditor({
           <div className="mb-1 flex items-center justify-between gap-2">
             <Label>계약서 본문 / 특약 사항</Label>
             {!locked && !tripartite && (esignOk
-              ? <span className="text-[11px] text-muted-foreground">전자서명 조항 있음</span>
-              : <Button type="button" variant="ghost" size="sm" className="h-6 gap-1 px-2 text-[11px] text-chart-3" onClick={onInsertEsign} disabled={!form.body}><ShieldPlus className="h-3 w-3" />전자서명 조항 넣기</Button>)}
+              ? <span className="text-caption text-muted-foreground">전자서명 조항 있음</span>
+              : <Button type="button" variant="ghost" size="sm" className="h-6 gap-1 px-2 text-caption text-warning-text" onClick={onInsertEsign} disabled={!form.body}><ShieldPlus className="h-3 w-3" />전자서명 조항 넣기</Button>)}
           </div>
           <Textarea
             ref={bodyRef}
@@ -143,7 +143,7 @@ export default function ContractEditor({
             readOnly={locked}
             rows={18}
             placeholder="오른쪽 조항 라이브러리에서 조항을 선택해 삽입하거나 직접 작성하세요."
-            className="font-mono text-xs leading-relaxed"
+            className="font-mono text-label leading-relaxed"
           />
         </div>
 
@@ -161,7 +161,7 @@ export default function ContractEditor({
           )}
         </div>
         {!locked && form.id && form.status !== 'CANCELLED' && (
-          <button type="button" className="text-[11px] text-muted-foreground underline" onClick={onOfflineSigned}>종이로 서명받은 계약서 (스캔본 올리고 체결로 표시)</button>
+          <button type="button" className="text-caption text-muted-foreground underline" onClick={onOfflineSigned}>종이로 서명받은 계약서 (스캔본 올리고 체결로 표시)</button>
         )}
       </CardContent>
     </Card>

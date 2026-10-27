@@ -15,7 +15,7 @@ export default function Assistant() {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const endRef = useRef(null);
+  const scrollRef = useRef(null);
 
   const loadConversations = async () => {
     const list = await base44.agents.listConversations({ agent_name: AGENT_NAME });
@@ -47,8 +47,10 @@ export default function Assistant() {
     return () => unsubscribe();
   }, [conversation?.id]);
 
+  // 대화 칸 안에서만 내린다 (scrollIntoView 는 바깥 화면까지 밀어 제목이 가려진다)
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
   const openConversation = async (id) => {
@@ -89,14 +91,15 @@ export default function Assistant() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    // 높이: 화면 - 상단바(4rem) - 레이아웃 여백(위아래 p-3 / md:p-6). 넘치면 입력칸이 화면 밖으로 밀린다
+    <div className="flex flex-col h-[calc(100dvh-5.5rem)] md:h-[calc(100dvh-7rem)]">
       <div className="flex items-center gap-3 px-4 md:px-6 py-4 border-b border-border">
         <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
           <Bot className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-lg font-bold">AI 업무 비서</h1>
-          <p className="text-xs text-muted-foreground">진행 중인 업무 카드와 파일을 분석하고, 첨부 파일을 알맞은 카드에 등록합니다.</p>
+          <h1 className="text-title font-bold">AI 업무 비서</h1>
+          <p className="text-label text-muted-foreground">진행 중인 업무 카드와 파일을 분석하고, 첨부 파일을 알맞은 카드에 등록합니다.</p>
         </div>
       </div>
 
@@ -108,10 +111,10 @@ export default function Assistant() {
           onNew={startConversation}
         />
         <div className="flex-1 flex flex-col min-h-0">
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
             {error && (
               <div className="flex items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
-                <span className="flex items-center gap-2 text-sm text-destructive">
+                <span className="flex items-center gap-2 text-body text-destructive">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
                   {error}
                 </span>
@@ -123,14 +126,13 @@ export default function Assistant() {
             ) : messages.length === 0 ? (
               <div className="max-w-md mx-auto text-center pt-10 space-y-2">
                 <Bot className="w-10 h-10 mx-auto text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground">
+                <p className="text-body text-muted-foreground">
                   "지금 진행 중인 업무 정리해줘", "이 견적서 파일 알맞은 카드에 등록해줘" 처럼 요청해 보세요.
                 </p>
               </div>
             ) : (
               messages.map((m, i) => <MessageBubble key={i} message={m} />)
             )}
-            <div ref={endRef} />
           </div>
           <ChatComposer onSend={handleSend} disabled={sending} />
         </div>

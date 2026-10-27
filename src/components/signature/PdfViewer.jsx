@@ -43,7 +43,7 @@ function Page({ doc, number, width }) {
   return (
     <div className="relative overflow-hidden rounded-sm bg-white shadow-sm ring-1 ring-black/5" style={{ width, height: width * ratio }}>
       <canvas ref={ref} className="h-full w-full" aria-label={`${number}쪽`} />
-      <span className="absolute bottom-1 right-2 text-[10px] text-muted-foreground">{number}</span>
+      <span className="absolute bottom-1 right-2 text-micro text-muted-foreground">{number}</span>
     </div>
   );
 }
@@ -81,12 +81,12 @@ export default function PdfViewer({ url, onReachEnd, className = '' }) {
 
   return (
     <div ref={box} className={`overflow-y-auto rounded-lg bg-muted/60 p-2 ${className}`}>
-      {error ? <p className="py-10 text-center text-sm text-destructive">{error}</p>
+      {error ? <p className="py-10 text-center text-body text-destructive">{error}</p>
         : !doc ? <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         : (
           <div className="flex flex-col items-center gap-2">
             {width > 0 && Array.from({ length: doc.numPages }, (_, i) => <Page key={i} doc={doc} number={i + 1} width={width} />)}
-            <div ref={end} className="py-2 text-center text-[11px] text-muted-foreground">— 계약서 끝 ({doc.numPages}쪽) —</div>
+            <div ref={end} className="py-2 text-center text-caption text-muted-foreground">— 계약서 끝 ({doc.numPages}쪽) —</div>
           </div>
         )}
     </div>

@@ -10,6 +10,7 @@ import useQuoteComparison from './useQuoteComparison';
 import QuoteComparisonDialog from './QuoteComparisonDialog';
 import ConfirmComparisonDialog from './ConfirmComparisonDialog';
 import { fmtDateTime } from './format';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // 견적 탭 맨 위: 견적이 2건 이상이면 비교표를 만들고, 있으면 상태 한 줄과 열기 버튼을 보여 준다.
 export default function QuoteComparisonPanel({ card, user }) {
@@ -47,38 +48,38 @@ export default function QuoteComparisonPanel({ card, user }) {
     <section id="quote-compare" className="space-y-2 rounded-xl border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5 text-sm font-semibold"><Columns3 className="h-4 w-4 text-primary" />{t('cmp.title')}
-            {record && <Badge variant="outline" className="text-[10px]">{t(`cmp.status.${record.status}`)}{record.version ? ` · v${record.version}` : ''}</Badge>}
+          <div className="flex items-center gap-1.5 text-body font-semibold"><Columns3 className="h-4 w-4 text-primary" />{t('cmp.title')}
+            {record && <Badge variant="outline" className="text-micro">{t(`cmp.status.${record.status}`)}{record.version ? ` · v${record.version}` : ''}</Badge>}
           </div>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-caption text-muted-foreground">
             {record
               ? `${record.options.length}${t('cmp.optionsCount')}${record.published_at ? ` · ${t('cmp.lastPublished')} ${fmtDateTime(record.published_at)}` : ` · ${t('cmp.notPublished')}`}`
               : t('cmp.panelDesc').replace('{n}', quotations.length)}
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {!record && !picking && <Button size="sm" className="h-7 text-xs" onClick={() => startPick('create')}>{t('cmp.start')}</Button>}
-          {record && !picking && <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setOpen(true)}>{t('cmp.open')}</Button>}
-          {record && ['PUBLISHED', 'CHOSEN'].includes(record.status) && !picking && <Button size="sm" variant={record.status === 'CHOSEN' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setConfirming(true)}>{t('cmp.confirm')}</Button>}
+          {!record && !picking && <Button size="sm" className="h-7 text-label" onClick={() => startPick('create')}>{t('cmp.start')}</Button>}
+          {record && !picking && <Button size="sm" variant="outline" className="h-7 text-label" onClick={() => setOpen(true)}>{t('cmp.open')}</Button>}
+          {record && ['PUBLISHED', 'CHOSEN'].includes(record.status) && !picking && <Button size="sm" variant={record.status === 'CHOSEN' ? 'default' : 'outline'} className="h-7 text-label" onClick={() => setConfirming(true)}>{t('cmp.confirm')}</Button>}
         </div>
       </div>
 
       {record && choiceKey && (
-        <p className="flex items-center gap-1 text-xs"><CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+        <p className="flex items-center gap-1 text-label"><CheckCircle2 className="h-3.5 w-3.5 text-primary" />
           {record.status === 'CONFIRMED' ? t('cmp.confirmedLine').replace('{label}', record.options.find((o) => o.key === record.confirmed_option_key)?.label || '') : t('cmp.clientChose').replace('{label}', choiceLabel)}
           {record.client_choice.note && <span className="text-muted-foreground">— “{record.client_choice.note}”</span>}
         </p>
       )}
-      {record?.status === 'CONFIRMED' && !choiceKey && <p className="text-xs">{t('cmp.confirmedLine').replace('{label}', record.options.find((o) => o.key === record.confirmed_option_key)?.label || '')}</p>}
-      {stale && <p className="flex items-center gap-1 text-xs"><AlertTriangle className="h-3.5 w-3.5 text-chart-3" />{t('cmp.staleNotice')}</p>}
+      {record?.status === 'CONFIRMED' && !choiceKey && <p className="text-label">{t('cmp.confirmedLine').replace('{label}', record.options.find((o) => o.key === record.confirmed_option_key)?.label || '')}</p>}
+      {stale && <p className="flex items-center gap-1 text-label"><AlertTriangle className="h-3.5 w-3.5 text-warning" />{t('cmp.staleNotice')}</p>}
 
       {picking && (
         <div className="space-y-2 rounded-lg bg-muted/30 p-2">
-          <p className="text-[11px] text-muted-foreground">{t('cmp.pickHint').replace('{max}', MAX_OPTIONS)}</p>
+          <p className="text-caption text-muted-foreground">{t('cmp.pickHint').replace('{max}', MAX_OPTIONS)}</p>
           <div className="space-y-1">
             {quotations.map((q) => (
-              <label key={q.id} className={`flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-background ${q.status === 'REJECTED' ? 'opacity-60' : ''}`}>
-                <input type="checkbox" checked={selected.includes(q.id)} onChange={() => toggle(q.id)} disabled={!selected.includes(q.id) && selected.length >= MAX_OPTIONS} />
+              <label key={q.id} className={`flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-label hover:bg-background ${q.status === 'REJECTED' ? 'opacity-60' : ''}`}>
+                <Checkbox checked={selected.includes(q.id)} onCheckedChange={() => toggle(q.id)} disabled={!selected.includes(q.id) && selected.length >= MAX_OPTIONS} />
                 <span className="font-medium">{q.factory_name || '—'}</span>
                 <span className="truncate text-muted-foreground">{q.quote_title || q.product_name || ''}</span>
                 <span className="ml-auto whitespace-nowrap text-muted-foreground">{q.incoterms || ''} · {quotePriceLabel(q)} · {t(`cmp.qstatus.${q.status}`, q.status)}</span>
@@ -86,8 +87,8 @@ export default function QuoteComparisonPanel({ card, user }) {
             ))}
           </div>
           <div className="flex justify-end gap-1.5">
-            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setPicking(null)}>{t('cmp.cancel')}</Button>
-            <Button size="sm" className="h-7 gap-1 text-xs" disabled={busy || selected.length < 1} onClick={submit}>
+            <Button size="sm" variant="ghost" className="h-7 text-label" onClick={() => setPicking(null)}>{t('cmp.cancel')}</Button>
+            <Button size="sm" className="h-7 gap-1 text-label" disabled={busy || selected.length < 1} onClick={submit}>
               {busy && <Loader2 className="h-3 w-3 animate-spin" />}{picking === 'create' ? t('cmp.create') : t('cmp.applyOptions')} ({selected.length})
             </Button>
           </div>
