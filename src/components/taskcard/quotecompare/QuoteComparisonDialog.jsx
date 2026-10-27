@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/use-toast';
@@ -50,7 +51,7 @@ function CellMenu({ row, optKey, rows, onState, onMove }) {
 function BlurInput({ value, onSave, className = '', ...rest }) {
   const [v, setV] = useState(value ?? '');
   useEffect(() => { setV(value ?? ''); }, [value]);
-  return <Input value={v} onChange={(e) => setV(e.target.value)} onBlur={() => { if (String(v) !== String(value ?? '')) onSave(v); }} className={`h-7 text-label ${className}`} {...rest} />;
+  return <Input value={v} onChange={(e) => setV(e.target.value)} onBlur={() => { if (String(v) !== String(value ?? '')) onSave(v); }} className={cn('h-7 text-label', className)} {...rest} />;
 }
 
 export default function QuoteComparisonDialog({ open, onOpenChange, cmp, card, user, onEditOptions }) {
@@ -114,19 +115,27 @@ export default function QuoteComparisonDialog({ open, onOpenChange, cmp, card, u
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] max-w-[min(1100px,96vw)] overflow-y-auto p-4 sm:p-6">
-        <DialogHeader>
-          <DialogTitle className="flex flex-wrap items-center gap-2 text-base">
-            {t('cmp.title')}
-            <BlurInput value={record.title} onSave={(v) => save({ title: v })} className="h-7 w-56 text-body font-semibold" aria-label={t('cmp.sheetTitle')} />
-            <Badge variant="outline" className="text-micro">{t(`cmp.status.${record.status}`)}{record.version ? ` · v${record.version}` : ''}</Badge>
-          </DialogTitle>
-          <DialogDescription className="text-label">
-            {t('cmp.dialogDesc')}{record.published_at ? ` · ${t('cmp.lastPublished')} ${fmtDateTime(record.published_at)} ${record.published_by_name || ''}` : ''}
-          </DialogDescription>
-        </DialogHeader>
+        {/* 1줄: 제목·상태 + 동작 버튼 (오른쪽 닫기 버튼 자리 비움) · 2줄: 화면 전환과 계산 기준 */}
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 pr-8">
+          <DialogHeader className="min-w-0">
+            <DialogTitle className="flex flex-wrap items-center gap-2 text-title">
+              {t('cmp.title')}
+              <BlurInput value={record.title} onSave={(v) => save({ title: v })} className="h-8 w-56 text-body font-semibold" aria-label={t('cmp.sheetTitle')} />
+              <Badge variant="outline" className="text-micro">{t(`cmp.status.${record.status}`)}{record.version ? ` · v${record.version}` : ''}</Badge>
+            </DialogTitle>
+            <DialogDescription className="text-label">
+              {t('cmp.dialogDesc')}{record.published_at ? ` · ${t('cmp.lastPublished')} ${fmtDateTime(record.published_at)} ${record.published_by_name || ''}` : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex shrink-0 flex-wrap gap-1.5">
+            <Button variant="outline" size="sm" className="h-8 text-label" onClick={onEditOptions}>{t('cmp.editOptions')}</Button>
+            {questions.length > 0 && <Button variant="outline" size="sm" className="h-8 gap-1 text-label" onClick={copyQuestions}><Copy className="h-3.5 w-3.5" />{t('cmp.copyQuestions')} ({questions.length})</Button>}
+            <Button variant="outline" size="sm" className="h-8 gap-1 text-label" disabled={!snapshot?.options?.length} onClick={() => generateComparisonPDF(record.client_snapshot && record.status !== 'DRAFT' && !stale ? record.client_snapshot : snapshot, { cardTitle: card?.title || '', clientName: card?.client_name || '', choice: record.client_choice }).catch((e) => toast({ title: e.message, variant: 'destructive' }))}><Download className="h-3.5 w-3.5" />PDF</Button>
+          </div>
+        </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-md border p-0.5 text-label">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-muted/40 px-3 py-2">
+          <div className="inline-flex rounded-md border bg-background p-0.5 text-label">
             {['cost', 'client', 'preview'].map((m) => (
               <button key={m} type="button" onClick={() => setMode(m)} className={`rounded px-2.5 py-1 ${mode === m ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>
                 {m === 'preview' && <Eye className="mr-1 inline h-3 w-3" />}{t(`cmp.mode.${m}`)}
@@ -140,17 +149,12 @@ export default function QuoteComparisonDialog({ open, onOpenChange, cmp, card, u
             </Select>
           </label>
           <label className="flex items-center gap-1 text-label text-muted-foreground">{t('cmp.dutyRate')}
-            <BlurInput type="number" step="0.1" value={record.duty_rate ?? 8} onSave={(v) => save({ duty_rate: Number(v) || 0 })} className="w-16" />%
+            <BlurInput type="number" step="0.1" value={record.duty_rate ?? 8} onSave={(v) => save({ duty_rate: Number(v) || 0 })} className="h-8 w-16 text-label" />%
           </label>
           <span className="text-caption text-muted-foreground">
             {t('cmp.fx')} {computed.fx.usd_krw ? `$1=₩${Number(computed.fx.usd_krw).toLocaleString()}` : '—'}{computed.fx.usd_cny ? ` · $1=¥${computed.fx.usd_cny}` : ''}{computed.fx.date ? ` (${computed.fx.date})` : ''}
           </span>
-          {latestFx.date && latestFx.date !== computed.fx.date && <Button variant="ghost" size="sm" className="h-7 gap-1 text-label" onClick={refreshFx}><RefreshCw className="h-3 w-3" />{t('cmp.refreshFx')}</Button>}
-          <div className="ml-auto flex flex-wrap gap-1.5">
-            <Button variant="outline" size="sm" className="h-7 text-label" onClick={onEditOptions}>{t('cmp.editOptions')}</Button>
-            {questions.length > 0 && <Button variant="outline" size="sm" className="h-7 gap-1 text-label" onClick={copyQuestions}><Copy className="h-3 w-3" />{t('cmp.copyQuestions')} ({questions.length})</Button>}
-            <Button variant="outline" size="sm" className="h-7 gap-1 text-label" disabled={!snapshot?.options?.length} onClick={() => generateComparisonPDF(record.client_snapshot && record.status !== 'DRAFT' && !stale ? record.client_snapshot : snapshot, { cardTitle: card?.title || '', clientName: card?.client_name || '', choice: record.client_choice }).catch((e) => toast({ title: e.message, variant: 'destructive' }))}><Download className="h-3 w-3" />PDF</Button>
-          </div>
+          {latestFx.date && latestFx.date !== computed.fx.date && <Button variant="ghost" size="sm" className="h-8 gap-1 text-label" onClick={refreshFx}><RefreshCw className="h-3 w-3" />{t('cmp.refreshFx')}</Button>}
         </div>
 
         {stale && <p className="rounded-md bg-warning/10 px-3 py-2 text-label"><AlertTriangle className="mr-1 inline h-3.5 w-3.5 text-warning" />{t('cmp.staleNotice')}</p>}
