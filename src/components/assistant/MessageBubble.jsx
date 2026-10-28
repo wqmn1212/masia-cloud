@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { Check, X, Loader2, ChevronDown, ChevronRight, Paperclip } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -136,7 +135,7 @@ export default function MessageBubble({ message }) {
         )}
         {content && (isUser
           ? <p className="text-body whitespace-pre-wrap">{content}</p>
-          : <div className="text-body"><ReactMarkdown remarkPlugins={[remarkGfm]} components={MD}>{content}</ReactMarkdown></div>
+          : <div className="text-body"><ReactMarkdown components={MD}>{content}</ReactMarkdown></div>
         )}
       </div>
     </div>
