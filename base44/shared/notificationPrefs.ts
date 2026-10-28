@@ -2,7 +2,7 @@
 // 결정 요청과 결제 요청·결제 기한·공장 계좌 변경(송금 중지 안내)은 끌 수 없다. 직원 계정은 설정과 상관없이 지금처럼 받는다.
 // 화면 src/components/notifications/NotificationPrefsDialog.jsx 와 묶음 이름을 맞춘다. 검산: npm run check:notification-prefs
 export const EMAIL_BUNDLES: Record<string, string[]> = {
-  decision: ['comparison_published', 'spec_sent', 'qc_published', 'dest_cost_sent', 'contract_sent'],
+  decision: ['comparison_published', 'spec_sent', 'qc_published', 'dest_cost_sent', 'contract_sent', 'file_review_requested', 'client_approval_requested', 'client_approval_decided'],
   payment: ['payment_requested', 'payment_due', 'payment_request_canceled', 'payment_confirmed', 'factory_account_changed', 'factory_account_verified'],
   progress: ['card_moved', 'card_shared', 'file_shared', 'schedule_changed', 'chat_message', 'quote_published', 'holiday_conflict', 'holiday_notice', 'monthly_report'],
   shipment: ['shipment_updated', 'landed_cost_confirmed'],

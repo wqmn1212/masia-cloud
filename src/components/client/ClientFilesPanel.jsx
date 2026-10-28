@@ -39,6 +39,7 @@ export default function ClientFilesPanel({ attachments, cardsById, onCardClick }
                 <span className="font-medium text-sm truncate">{file.file_name}</span>
                 <Badge variant="secondary" className="text-[10px]">{DOCUMENT_TYPES[file.document_type] || '일반 파일'}</Badge>
                 {file.factory_approved && <Badge className="border-0 bg-primary/10 text-[10px] text-primary">공장 전달 승인본 v{file.revision || 1}</Badge>}
+                {file.client_approved_at && <Badge variant="outline" className="border-primary/40 text-[10px] text-primary">고객 승인 {format(new Date(file.client_approved_at), 'MM.dd')}</Badge>}
                 {file.superseded && <Badge variant="outline" className="text-[10px] text-muted-foreground">이전 판 · 사용 안 함</Badge>}
                 {file.file_type && (
                   <Badge variant="outline" className="text-[10px] uppercase">{file.file_type}</Badge>

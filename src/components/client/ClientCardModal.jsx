@@ -22,6 +22,8 @@ import ClientClaimPanel from './ClientClaimPanel';
 import ClientGoldenSample from './ClientGoldenSample';
 import ClientImportRequirements from './ClientImportRequirements';
 import ClientSharedFiles from '@/components/client/ClientSharedFiles';
+import ClientFileReviewSection from './filereview/ClientFileReviewSection';
+import { ClientDecisionProvider } from './approval/ClientDecisionContext';
 
 const TABS = ['overview', 'quotation', 'qc', 'chat', 'settlement', 'files'];
 
@@ -62,6 +64,7 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
               </div>
             </DialogHeader>
             <ClientReorderDialog open={reorderOpen} onOpenChange={setReorderOpen} card={data.card} onOpenCard={onOpenCard} />
+            <ClientDecisionProvider cardId={data.card.id} approvals={data.approvals || []} team={data.team || null}>
             <Tabs key={`${cardId}-${initialTab || ''}`} defaultValue={TABS.includes(initialTab) ? initialTab : 'overview'} className="mt-3">
               <TabsList className="flex w-full justify-start overflow-x-auto sm:grid sm:grid-cols-6">
                 <TabsTrigger value="overview" className="text-xs sm:text-sm">진행 정보</TabsTrigger>
@@ -75,7 +78,10 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
                   결제
                   {(data.payment_stages || []).some((st) => st.request_state === 'REQUESTED') && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" aria-label="결제 요청 있음" />}
                 </TabsTrigger>
-                <TabsTrigger value="files" className="text-xs sm:text-sm">파일</TabsTrigger>
+                <TabsTrigger value="files" className="relative text-xs sm:text-sm">
+                  파일
+                  {(data.file_reviews || []).some((r) => r.status === 'PENDING') && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" aria-label="확인할 디자인 있음" />}
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="overview" className="mt-4">
                 <ClientShipmentPanel cardId={data.card.id} shipments={data.shipments || []} onChanged={refetch} />
@@ -95,11 +101,15 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
               <TabsContent value="chat" className="mt-4">
                 <ClientChatPanel cardId={data.card.id} chats={data.chats || []} />
               </TabsContent>
-              <TabsContent value="files" className="mt-4"><ClientSharedFiles cardId={data.card.id} /></TabsContent>
+              <TabsContent value="files" className="mt-4">
+                <ClientFileReviewSection cardId={data.card.id} reviews={data.file_reviews || []} />
+                <ClientSharedFiles cardId={data.card.id} />
+              </TabsContent>
               <TabsContent value="settlement" className="mt-4">
                 <ClientSettlementPanel cardId={data.card.id} stages={data.payment_stages || []} factoryPayment={data.factory_payment || null} receipts={(data.attachments || []).filter((a) => a.document_type?.startsWith('REMITTANCE_'))} canReport={user?.account_tier === 'client'} />
               </TabsContent>
             </Tabs>
+            </ClientDecisionProvider>
           </>
         )}
       </DialogContent>

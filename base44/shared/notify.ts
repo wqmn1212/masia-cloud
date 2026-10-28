@@ -2,13 +2,15 @@
 // Notification 의 권한 키는 recipient_id 이므로 cross-tenant(본사 ↔ 고객사) 알림이 동작한다.
 // 발신자명은 앱 전체에서 'AEGIS' 로 단일화한다.
 // 고객 계정은 알림 설정(User.notification_prefs)에서 끈 묶음의 메일을 받지 않는다 (앱 알림은 그대로).
+// 역할을 정한 고객사는 알림 묶음별로 받을 역할에게만 보낸다 (clientRoles.ts notificationAudience).
 import { wantsEmail } from './notificationPrefs.ts';
+import { notificationAudience } from './clientRoles.ts';
 
 export const FROM_NAME = 'AEGIS';
 
 const DEBOUNCE_MS = 5 * 60 * 1000;
 // 매번 이메일을 보내는 알림 (5분 규칙 제외)
-const ALWAYS_EMAIL = ['quote_published', 'payment_confirmed', 'schedule_changed', 'payment_requested', 'payment_due'];
+const ALWAYS_EMAIL = ['quote_published', 'payment_confirmed', 'schedule_changed', 'payment_requested', 'payment_due', 'client_approval_requested', 'client_approval_decided', 'file_review_requested'];
 
 // 공통 이메일 본문 틀: 본문 + 프로젝트 + 바로가기 링크 + 안내
 export function emailBody(text, cardTitle, link) {
@@ -39,10 +41,11 @@ async function shouldEmail(svc, recipientId, type, cardId) {
  * @param svc  base44.asServiceRole
  * @param recipients  User 레코드 배열
  * @param payload  { type, title, body, link, task_card_id, card_title }
- * @param options  { email: false } 이면 이메일 생략 (앱 알림만)
+ * @param options  { email: false } 이면 이메일 생략 (앱 알림만) · { roleFilter: false } 이면 고객사 역할로 좁히지 않음 (특정인에게 보낼 때)
  */
 export async function notifyUsers(svc, recipients, payload, options = {}) {
-  const targets = (recipients || []).filter((u) => u?.id && u.is_active !== false);
+  let targets = (recipients || []).filter((u) => u?.id && u.is_active !== false);
+  if (options.roleFilter !== false) targets = await byClientRole(svc, targets, payload.type);
   if (targets.length === 0) return 0;
 
   for (const u of targets) {
@@ -73,6 +76,19 @@ export async function notifyUsers(svc, recipients, payload, options = {}) {
     }
   }
   return targets.length;
+}
+
+// 고객 계정은 고객사별로 역할을 보고 좁힌다 (직원 계정은 그대로)
+async function byClientRole(svc, targets, type) {
+  const companyIds = [...new Set(targets.filter((u) => u.account_tier === 'client' && u.company_id).map((u) => u.company_id))];
+  if (!companyIds.length) return targets;
+  const keep = new Set(targets.filter((u) => u.account_tier !== 'client' || !u.company_id).map((u) => u.id));
+  for (const id of companyIds) {
+    const group = targets.filter((u) => u.account_tier === 'client' && u.company_id === id);
+    const company = await svc.entities.Company.get(id).catch(() => null);
+    for (const u of notificationAudience(company, group, type)) keep.add(u.id);
+  }
+  return targets.filter((u) => keep.has(u.id));
 }
 
 // 특정 고객사(Company)에 속한 활성 client 계정 전원

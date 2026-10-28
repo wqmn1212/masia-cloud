@@ -15,8 +15,9 @@ import SignatureDialog from '@/components/client/signature/SignatureDialog';
 export default function ClientPortalDashboard() {
   const { data: cards = [], isLoading } = useClientCards();
   const overview = useClientOverview();
-  const [selectedId, setSelectedId] = useState(null);
-  const [initialTab, setInitialTab] = useState(null);
+  // 알림 링크(/client/dashboard?card=ID&tab=files)로 들어오면 그 카드를 연다
+  const [selectedId, setSelectedId] = useState(() => new URLSearchParams(window.location.search).get('card'));
+  const [initialTab, setInitialTab] = useState(() => new URLSearchParams(window.location.search).get('tab'));
   const open = (id, tab = null) => { setInitialTab(tab); setSelectedId(id); };
   // 알림 링크(/client/dashboard?sign=ID)로 들어오면 서명 창을 연다
   const [signId, setSignId] = useState(() => new URLSearchParams(window.location.search).get('sign'));

@@ -9,6 +9,7 @@ import { clientFactoryCheck } from '../../shared/factoryCheck.ts';
 import { clientClaim } from '../../shared/claims.ts';
 import { clientImportRequirements } from '../../shared/importRequirements.ts';
 import { clientPaymentStage } from '../../shared/paymentRequest.ts';
+import { can, canApprove, normalizeRules } from '../../shared/clientRoles.ts';
 
 // 고객 포털 카드 상세: 오버뷰 · 공개 채팅 · 정산 단계(읽기 전용) · 담당자가 공개한 검수 리포트.
 // 내부 전용 데이터(견적 원가, BOM, 결정, 내부 채팅)는 응답에 포함하지 않는다.
@@ -50,6 +51,13 @@ export default async function (req) {
     // 담당 PM: 팀 운영 설정에서 켠 경우에만 이름과 답변 가능 시간 (기본은 숨김)
     const setting = (await svc.entities.OperationSetting.filter({ tenant_id: card.tenant_id }, '-updated_date', 1)).find((x) => x.tenant_id === card.tenant_id);
     const pm = setting?.client_show_pm === true && card.owner_name ? { name: card.owner_name, reply_hours: setting.client_reply_hours || '' } : null;
+    // 디자인·도면 확인 요청 (거둔 것 제외). 비교할 이전 판은 고객에게 공개된 파일일 때만
+    const visibleIds = new Set(documents.filter((d) => d.document_kind === 'attachment').map((d) => d.id));
+    const reviews = (await svc.entities.FileReview.filter({ card_id }, '-requested_at', 20)).filter((r) => r.card_id === card.id && r.company_id === auth.companyId && r.status !== 'CANCELED' && visibleIds.has(r.attachment_id));
+    // 사내 결재: 이 카드의 결재 중 요청과 내 권한 (역할을 정하지 않은 고객사는 비어 있다)
+    const company = await svc.entities.Company.get(auth.companyId).catch(() => null);
+    const me = String(auth.user.email || '').toLowerCase();
+    const approvals = (await svc.entities.ClientApproval.filter({ card_id, status: 'PENDING' }, '-requested_at', 20)).filter((a) => a.card_id === card.id && a.company_id === auth.companyId);
     // 계획 확정 전 초안은 고객에게 보이지 않는다
     const milestones = card.plan_confirmed_at
       ? (await svc.entities.CardMilestone.filter({ card_id }, 'seq', 100)).filter((m) => m.client_visible !== false && m.status !== 'skipped')
@@ -58,6 +66,23 @@ export default async function (req) {
     return Response.json({
       attachments: documents.map(documentMetadata),
       pm,
+      team: {
+        can_decide: auth.user.account_tier !== 'client' || can(company, me, 'decide'),
+        rules_on: Object.entries(normalizeRules(company?.approval_rules).kinds).filter(([, r]) => r.on).map(([k]) => k),
+        // 결재권자이고 자기 결재를 막지 않았으면 결정이 바로 전달된다
+        direct: can(company, me, 'approve') && !normalizeRules(company?.approval_rules).block_self_approval,
+      },
+      approvals: approvals.map((a) => ({
+        id: a.id, kind: a.kind, target_id: a.target_id, target_label: a.target_label || '', requested_by_name: a.requested_by_name || '', requested_at: a.requested_at || '',
+        request_note: a.request_note || '', mine: String(a.requested_by_email || '').toLowerCase() === me, can_approve: canApprove(company, me, a),
+      })),
+      file_reviews: reviews.map((r) => ({
+        id: r.id, attachment_id: r.attachment_id, previous_attachment_id: visibleIds.has(r.previous_attachment_id) ? r.previous_attachment_id : '',
+        file_name: r.file_name || '', file_type: r.file_type || '', question: r.question || '', due_date: r.due_date || '', status: r.status,
+        pins: (r.pins || []).map((p) => ({ n: p.n, page: p.page, x: p.x, y: p.y, text: p.text, by_name: p.by_name || '' })),
+        decision_note: r.decision_note || '', decided_by_name: r.decided_by_name || '', decided_at: r.decided_at || '',
+        requested_by_name: r.requested_by_name || '', requested_at: r.requested_at || '',
+      })),
       card: {
         id: card.id,
         title: card.title, title_cn: card.title_cn || '',

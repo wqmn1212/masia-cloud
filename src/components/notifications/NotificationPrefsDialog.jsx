@@ -10,7 +10,7 @@ import { toast } from '@/components/ui/use-toast';
 // 고객 메일 알림 설정: 묶음별로 메일을 끄고 켠다. 앱 알림(종)은 모두 그대로 온다.
 // 묶음 이름과 잠긴 알림은 서버 base44/shared/notificationPrefs.ts 와 같다.
 const BUNDLES = [
-  { key: 'decision', label: '결정 요청', desc: '견적 비교표, 품질 기준서, 검수 결과, 도착지 비용, 계약서 서명 요청', locked: '고객님이 판단하셔야 하는 일이라 끌 수 없습니다' },
+  { key: 'decision', label: '결정 요청', desc: '견적 비교표, 품질 기준서, 검수 결과, 도착지 비용, 계약서 서명 요청, 디자인 확인, 사내 결재', locked: '고객님이 판단하셔야 하는 일이라 끌 수 없습니다' },
   { key: 'payment', label: '결제', desc: '입금 확인, 공장 계좌 확인', note: '결제 요청·결제 기한·공장 계좌 변경(송금 중지 안내) 메일은 끌 수 없습니다' },
   { key: 'progress', label: '진행', desc: '단계 변경, 새 프로젝트, 파일 공유, 일정 변경, 담당자 답변, 중국 휴무, 월간 리포트' },
   { key: 'shipment', label: '선적', desc: '선적 상태 변경, 도착 원가 확정' },

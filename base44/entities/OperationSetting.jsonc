@@ -81,6 +81,11 @@
     "client_reply_hours": {
       "type": "string",
       "description": "\uace0\uac1d \ud654\uba74\uc5d0 \ubcf4\uc77c \ub2f5\ubcc0 \uac00\ub2a5 \uc2dc\uac04 (\uc608: \ud3c9\uc77c 10:00~18:00, \ud55c\uad6d \uc2dc\uac04)"
+    },
+    "factory_approval_requires_client": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uace0\uac1d \ud655\uc778\uc744 \uc694\uccad\ud55c \ud30c\uc77c\uc740 \uace0\uac1d\uc774 \uc2b9\uc778\ud55c \ud310\ub9cc \uacf5\uc7a5 \uc804\ub2ec \uc2b9\uc778\ubcf8\uc73c\ub85c \uc9c0\uc815\ud560 \uc218 \uc788\uac8c \ud560\uc9c0"
     }
   },
   "required": [

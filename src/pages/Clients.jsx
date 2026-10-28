@@ -13,6 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
 import CreateClientTeamButton from '@/components/client/CreateClientTeamButton';
 import ClientPortalSettingsPanel from '@/components/client/ClientPortalSettingsPanel';
+import ClientTeamPanel, { ClientApprovalRulesPanel } from '@/components/client/team/ClientTeamPanel';
 
 const emptyClient = {
   company_type: 'CLIENT',
@@ -31,6 +32,7 @@ export default function Clients() {
   const [editTarget, setEditTarget] = useState(null);
   const [form, setForm] = useState(emptyClient);
   const [uploading, setUploading] = useState(false);
+  const [teamOf, setTeamOf] = useState(null); // 계정·역할 창을 연 고객사
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -89,7 +91,9 @@ export default function Clients() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editTarget) {
-      updateMutation.mutate({ id: editTarget.id, data: form });
+      // 역할·결재 규칙은 manageClientTeam 만 쓴다 (열어 둔 사이 고객이 바꾼 값을 덮지 않도록 빼고 저장)
+      const { client_roles: _r, approval_rules: _a, client_team_updated_at: _u, client_team_updated_by_name: _b, ...data } = form;
+      updateMutation.mutate({ id: editTarget.id, data });
     } else {
       createMutation.mutate(form);
     }
@@ -110,6 +114,21 @@ export default function Clients() {
       </div>
 
       <ClientPortalSettingsPanel />
+
+      <Dialog open={!!teamOf} onOpenChange={(o) => !o && setTeamOf(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{teamOf?.company_name} · 고객 계정과 사내 결재</DialogTitle></DialogHeader>
+          {teamOf && (
+            <div className="space-y-6">
+              <ClientTeamPanel companyId={teamOf.id} staff />
+              <section className="space-y-2">
+                <h3 className="text-body font-semibold">결재 규칙</h3>
+                <ClientApprovalRulesPanel companyId={teamOf.id} />
+              </section>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* 등록/수정 다이얼로그 */}
       <Dialog open={open} onOpenChange={handleClose}>
@@ -244,6 +263,11 @@ export default function Clients() {
                   </Link>
                 </Button>
                 <CreateClientTeamButton company={c} hasTeam={clientTenants.some((t) => t.company_id === c.id)} />
+                {clientTenants.some((t) => t.company_id === c.id) && (
+                  <Button type="button" variant="ghost" size="sm" className="w-full h-8 gap-1.5 text-xs" onClick={() => setTeamOf(c)}>
+                    <Users className="w-3.5 h-3.5" />고객 계정·역할·결재 규칙
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ))}
