@@ -65,6 +65,7 @@
         "MOLD_OWNERSHIP",
         "REMITTANCE_DOWN",
         "REMITTANCE_BALANCE",
+        "REMITTANCE_INTERIM",
         "SPEC_SHEET",
         "TEST_REPORT",
         "CERTIFICATE",

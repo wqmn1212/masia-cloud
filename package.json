@@ -18,6 +18,12 @@
     "check:dest-cost-invoice": "node scripts/check-dest-cost-invoice.mjs",
     "check:admin-inbox": "node scripts/check-admin-inbox.mjs",
     "check:md-tables": "node scripts/check-md-tables.mjs",
+    "check:client-summary": "node scripts/check-client-summary.mjs",
+    "check:payment-request": "node scripts/check-payment-request.mjs",
+    "check:zip-store": "node scripts/check-zip-store.mjs",
+    "check:notification-prefs": "node scripts/check-notification-prefs.mjs",
+    "check:client-documents": "node --import ./scripts/fnmock/register.mjs scripts/check-client-documents.mjs",
+    "check:payment-functions": "node --import ./scripts/fnmock/register.mjs scripts/check-payment-functions.mjs",
     "check:assistant": "node --import ./scripts/fnmock/register.mjs scripts/check-assistant-functions.mjs"
   },
   "dependencies": {

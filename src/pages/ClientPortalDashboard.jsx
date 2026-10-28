@@ -1,30 +1,25 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Loader2, Kanban } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 import useClientCards from '@/lib/useClientCards';
+import useClientOverview from '@/lib/useClientOverview';
 import ClientStatusSummary from '@/components/client/ClientStatusSummary';
-import ClientCardTile from '@/components/client/ClientCardTile';
+import ClientOrderBoard from '@/components/client/ClientOrderBoard';
 import ClientSupportCard from '@/components/client/ClientSupportCard';
 import ClientCardModal from '@/components/client/ClientCardModal';
-import CompanyFilesLibrary from '@/components/files/CompanyFilesLibrary';
 import ChinaHolidayNotice from '@/components/client/ChinaHolidayNotice';
 import ClientTodoCard from '@/components/client/ClientTodoCard';
 import ClientContractCard from '@/components/client/ClientContractCard';
 import ClientSignatureCard from '@/components/client/signature/ClientSignatureCard';
 import SignatureDialog from '@/components/client/signature/SignatureDialog';
-import ClientExportButton from '@/components/client/ClientExportButton';
 
 export default function ClientPortalDashboard() {
   const { data: cards = [], isLoading } = useClientCards();
+  const overview = useClientOverview();
   const [selectedId, setSelectedId] = useState(null);
   const [initialTab, setInitialTab] = useState(null);
   const open = (id, tab = null) => { setInitialTab(tab); setSelectedId(id); };
   // 알림 링크(/client/dashboard?sign=ID)로 들어오면 서명 창을 연다
   const [signId, setSignId] = useState(() => new URLSearchParams(window.location.search).get('sign'));
-
-  const active = cards.filter((c) => !['DONE', 'CANCELLED'].includes(c.status));
 
   return (
     <div className="space-y-6">
@@ -39,37 +34,16 @@ export default function ClientPortalDashboard() {
         <>
           <ClientTodoCard onOpen={open} onSign={setSignId} />
           <ClientStatusSummary cards={cards} />
+          <ClientOrderBoard cards={cards} overview={overview.data} loading={overview.isLoading} onOpen={open} />
           <ClientSignatureCard onOpen={setSignId} />
           <ClientContractCard />
-          <ChinaHolidayNotice />
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card className="lg:col-span-2 p-5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold">진행 중인 프로젝트 {active.length}건</h2>
-                <div className="flex gap-1.5">
-                  <ClientExportButton />
-                  <Button asChild variant="outline" size="sm" className="gap-1.5">
-                    <Link to="/client/board"><Kanban className="w-3.5 h-3.5" />보드로 보기</Link>
-                  </Button>
-                </div>
-              </div>
-              {active.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-10">
-                  아직 공개된 프로젝트가 없습니다. 담당자가 검토를 마치면 여기에 표시됩니다.
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
-                  {active.map((c) => <ClientCardTile key={c.id} card={c} onClick={() => open(c.id)} />)}
-                </div>
-              )}
-            </Card>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="lg:col-span-2"><ChinaHolidayNotice /></div>
             <ClientSupportCard />
           </div>
         </>
       )}
 
-      <CompanyFilesLibrary onCardClick={card => open(card.id)} />
       <ClientCardModal cardId={selectedId} initialTab={initialTab} open={!!selectedId} onClose={() => setSelectedId(null)} onOpenCard={(id) => open(id)} />
       {signId && <SignatureDialog requestId={signId} open={!!signId} onOpenChange={(o) => !o && setSignId(null)} />}
     </div>

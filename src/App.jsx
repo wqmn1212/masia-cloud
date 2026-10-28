@@ -50,6 +50,7 @@ const ArtCraft = lazy(() => import('@/pages/ArtCraft'));
 const Leads = lazy(() => import('@/pages/Leads'));
 const ClientPortalDashboard = lazy(() => import('@/pages/ClientPortalDashboard'));
 const ClientBoard = lazy(() => import('@/pages/ClientBoard'));
+const ClientDocuments = lazy(() => import('@/pages/ClientDocuments'));
 const PortfolioAdmin = lazy(() => import('@/pages/PortfolioAdmin'));
 const JoinInvite = lazy(() => import('@/pages/JoinInvite'));
 const ServiceGuide = lazy(() => import('@/pages/ServiceGuide'));
@@ -127,6 +128,7 @@ const AuthenticatedApp = () => {
         {/* 고객 포털 — 내부 관리 화면과 라우트 단위로 분리 */}
         <Route path="/client/dashboard" element={<ClientPortalDashboard />} />
         <Route path="/client/board" element={<ClientBoard />} />
+        <Route path="/client/documents" element={<ClientDocuments />} />
         <Route path="/client/guide" element={<ClientGuide />} />
         <Route path="/client/mold-review" element={<MoldReview />} />
         <Route path="/client/landed-cost" element={<ClientLandedCost />} />

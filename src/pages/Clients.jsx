@@ -12,6 +12,7 @@ import { Plus, Users, Mail, Phone, MapPin, FileText, Upload, Loader2, ExternalLi
 import { useToast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
 import CreateClientTeamButton from '@/components/client/CreateClientTeamButton';
+import ClientPortalSettingsPanel from '@/components/client/ClientPortalSettingsPanel';
 
 const emptyClient = {
   company_type: 'CLIENT',
@@ -107,6 +108,8 @@ export default function Clients() {
           <Plus className="w-4 h-4 mr-2" />{t('clients.add')}
         </Button>
       </div>
+
+      <ClientPortalSettingsPanel />
 
       {/* 등록/수정 다이얼로그 */}
       <Dialog open={open} onOpenChange={handleClose}>

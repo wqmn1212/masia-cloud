@@ -1,16 +1,12 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { ClipboardCheck, CalendarClock, ChevronRight } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
-import { withClientView } from '@/lib/clientView';
+import useClientOverview from '@/lib/useClientOverview';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { shortDate, dday, money, kstToday } from './clientFormat';
 
-const DAY = ['일', '월', '화', '수', '목', '금', '토'];
-const shortDate = (s) => {
-  const [y, m, d] = s.split('-').map(Number);
-  return `${m}/${d} (${DAY[new Date(y, m - 1, d).getDay()]})`;
-};
+const STAGE = { DOWN_PAYMENT: '선금', INTERIM_PAYMENT: '중도금', BALANCE_PAYMENT: '잔금' };
+const daysLeft = (ymd) => (ymd ? Math.round((Date.parse(ymd) - Date.parse(kstToday())) / 86400000) : null);
 
 function Row({ onClick, children }) {
   return (
@@ -23,23 +19,20 @@ function Row({ onClick, children }) {
   );
 }
 
-// 고객 대시보드 맨 위: 고객이 직접 해야 할 일(계약서 서명, 기준서·출고 판단, 도착지 비용 확인, 견적 비교표)과 앞으로 2주 일정.
+// 고객 대시보드 맨 위: 고객이 직접 해야 할 일(계약서 서명, 결제, 기준서·출고 판단, 도착지 비용 확인, 견적 비교표)과 앞으로 2주 일정.
 export default function ClientTodoCard({ onOpen, onSign }) {
-  const { data } = useQuery({
-    queryKey: ['client-todos'],
-    queryFn: async () => (await base44.functions.invoke('listClientTodos', withClientView())).data,
-    refetchInterval: 60000,
-  });
+  const { data } = useClientOverview();
+  const payments = data?.payment_pending || [];
   const specs = data?.spec_pending || [];
   const qc = data?.qc_pending || [];
   const destCosts = data?.dest_cost_pending || [];
   const comparisons = data?.comparison_pending || [];
   const signatures = data?.signature_pending || [];
   const upcoming = data?.upcoming || [];
-  const count = specs.length + qc.length + destCosts.length + comparisons.length + signatures.length;
+  const count = payments.length + specs.length + qc.length + destCosts.length + comparisons.length + signatures.length;
 
   return (
-    <Card className="grid gap-5 p-5 md:grid-cols-2">
+    <Card className="grid gap-5 p-5 xl:grid-cols-2">
       <section>
         <h2 className="flex items-center gap-1.5 text-sm font-semibold">
           <ClipboardCheck className="h-4 w-4 text-primary" />고객님이 확인하실 일
@@ -56,6 +49,16 @@ export default function ClientTodoCard({ onOpen, onSign }) {
                 <span className="shrink-0 text-xs text-muted-foreground">기한 {shortDate(new Date(Date.parse(r.due_at) + 9 * 3600000).toISOString().slice(0, 10))}</span>
               </Row>
             ))}
+            {payments.map((p) => {
+              const left = daysLeft(p.due_date);
+              return (
+                <Row key={p.stage_id} onClick={() => onOpen(p.card_id, 'settlement')}>
+                  <Badge className="shrink-0 border-0 bg-primary/10 text-[10px] text-primary">{STAGE[p.stage_type] || '대금'} 결제</Badge>
+                  <span className="min-w-[96px] flex-1 truncate">{p.card_title}</span>
+                  <span className={`min-w-0 truncate text-xs tabular-nums ${left != null && left <= 3 ? 'font-medium text-warning-text' : 'text-muted-foreground'}`}>{[money(p.amount, p.currency), p.due_date ? `기한 ${shortDate(p.due_date)}${left != null && left <= 3 ? ` · ${dday(left)}` : ''}` : ''].filter(Boolean).join(' · ')}</span>
+                </Row>
+              );
+            })}
             {comparisons.map((c) => (
               <Row key={c.comparison_id} onClick={() => onOpen(c.card_id, 'quotation')}>
                 <Badge variant="outline" className="shrink-0 text-[10px]">견적 비교표 확인</Badge>

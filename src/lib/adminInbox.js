@@ -10,14 +10,25 @@ export const daysUntil = (ymd, now = Date.now()) => {
   return Math.round((Date.parse(ymd) - Date.parse(today)) / DAY);
 };
 
-// 입금 확인 대기: 아직 확인하지 않았고, 입금일이 적혔거나 송금확인증이 올라온 단계만 (입금 전 단계는 할 일이 아니다)
+// 입금 확인 대기: 아직 확인하지 않았고, 입금일이 적혔거나 송금확인증이 올라왔거나 고객이 '송금했어요'를 누른 단계만
+// (입금 전 단계는 할 일이 아니다). 입금일(없으면 고객이 적은 송금일) 빠른 순
 export function paymentQueue(stages = [], attachments = []) {
   const has = new Set(attachments.map((a) => `${a.card_id}:${a.document_type}`));
+  const when = (s) => String(s.paid_date || s.client_reported_paid_date || '9999');
   return stages
     .filter((s) => s.approval_status === 'PENDING')
-    .map((s) => ({ ...s, has_receipt: has.has(`${s.card_id}:${REMITTANCE_FOR_STAGE[s.stage_type]}`) }))
-    .filter((s) => s.paid_date || s.has_receipt)
-    .sort((a, b) => String(a.paid_date || '9999').localeCompare(String(b.paid_date || '9999')));
+    .map((s) => ({ ...s, has_receipt: has.has(`${s.card_id}:${REMITTANCE_FOR_STAGE[s.stage_type]}`), reported: !!s.client_reported_paid_at }))
+    .filter((s) => s.paid_date || s.has_receipt || s.reported)
+    .sort((a, b) => when(a).localeCompare(when(b)));
+}
+
+// 결제 기한이 지났는데 고객이 아직 송금했다고 알리지 않은 결제 요청. 오래 지난 순
+export function overdueQueue(stages = [], now = Date.now()) {
+  return stages
+    .filter((s) => s.approval_status === 'PENDING' && s.requested_at && !s.client_reported_paid_at && s.due_date)
+    .map((s) => ({ ...s, left: daysUntil(s.due_date, now) }))
+    .filter((s) => s.left < 0)
+    .sort((a, b) => a.left - b.left);
 }
 
 export const OPEN_CLAIM = ['SUBMITTED', 'REVIEWING', 'FACTORY_CONFIRMED'];
@@ -40,10 +51,11 @@ export function signatureQueue(sig = {}, now = Date.now()) {
   ];
 }
 
-export function inboxCounts({ accounts = [], payments = [], comparisons = [], signatures = [], costs = { cards: [], shipments: [] }, claims = [] }) {
+export function inboxCounts({ accounts = [], payments = [], overdue = [], comparisons = [], signatures = [], costs = { cards: [], shipments: [] }, claims = [] }) {
   return {
     accounts: accounts.length,
     payments: payments.length,
+    overdue: overdue.length,
     comparisons: comparisons.length,
     signatures: signatures.length,
     costs: costs.cards.length + costs.shipments.length,

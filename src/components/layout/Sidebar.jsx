@@ -9,7 +9,7 @@ import {
 import { cn } from '@/lib/utils';
 import { canAccessPath, CLIENT_MENU_OPTIONS } from '@/lib/menuPermissions';
 
-const CLIENT_ICONS = { '/client/dashboard': LayoutDashboard, '/client/board': Kanban, '/client/mold-review': ScanSearch, '/client/costs': Calculator, '/client/landed-cost': Ship, '/client/molds': Boxes, '/client/guide': BookOpen };
+const CLIENT_ICONS = { '/client/dashboard': LayoutDashboard, '/client/board': Kanban, '/client/documents': FolderOpen, '/client/mold-review': ScanSearch, '/client/costs': Calculator, '/client/landed-cost': Ship, '/client/molds': Boxes, '/client/guide': BookOpen };
 
 const navSectionDefs = [
   {

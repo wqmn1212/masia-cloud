@@ -56,7 +56,12 @@
         "contract_sent",
         "contract_signed",
         "contract_declined",
-        "contract_expired"
+        "contract_expired",
+        "payment_requested",
+        "payment_request_canceled",
+        "payment_reported",
+        "payment_due",
+        "payment_overdue"
       ],
       "description": "\uc54c\ub9bc \uc720\ud615"
     },

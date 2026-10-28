@@ -3,13 +3,17 @@ import { schedulePatch, scheduleDiff, deliveryDate, validDate } from '../../shar
 import { sendCollaborationEmail } from '../../shared/collaborationEmail.ts';
 import { syncCardLedger } from '../../shared/cardLedger.ts';
 import { notifyUsers, clientUsersOfCompany } from '../../shared/notify.ts';
+import { kstToday } from '../../shared/chinaHoliday.ts';
+import { clientFactoryPayment } from '../../shared/factoryAccount.ts';
+import { paymentRequestPatch, CLEARED_REPORT, STAGE_LABEL } from '../../shared/paymentRequest.ts';
+const money = (amount, currency) => `${currency} ${Number(amount).toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req), user = await base44.auth.me();
     if (!user) return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     if (user.is_active === false || !['master', 'service', 'sub'].includes(user.account_tier)) return Response.json({ error: '직원만 변경할 수 있습니다.' }, { status: 403 });
     const input = await req.json();
-    if (!['initialize', 'schedule', 'payment', 'retry_email', 'notify_holiday', 'milestone_delivery', 'milestone_reset'].includes(input.action) || typeof input.card_id !== 'string' || !input.card_id) return Response.json({ error: '카드와 작업을 지정하세요.' }, { status: 400 });
+    if (!['initialize', 'schedule', 'payment', 'payment_request', 'payment_request_cancel', 'retry_email', 'notify_holiday', 'milestone_delivery', 'milestone_reset'].includes(input.action) || typeof input.card_id !== 'string' || !input.card_id) return Response.json({ error: '카드와 작업을 지정하세요.' }, { status: 400 });
     const svc = base44.asServiceRole;
     const card = await svc.entities.TaskCard.get(input.card_id);
     if (!card || !card.tenant_id || (user.account_tier !== 'master' && card.tenant_id !== user.tenant_id)) return Response.json({ error: '카드 접근 권한이 없습니다.' }, { status: 403 });
@@ -36,6 +40,48 @@ export default async function(req) {
       const now = new Date().toISOString();
       await svc.entities.TaskCard.update(card.id, { holiday_conflicts: card.holiday_conflicts.map(c => pending.includes(c) ? { ...c, client_notified_at: now } : c) });
       return Response.json({ sent: users.length });
+    }
+    if (input.action === 'payment_request' || input.action === 'payment_request_cancel') {
+      // 결제 요청: 금액·기한·받는 곳을 정해 고객에게 보낸다. 받는 곳은 마스터가 등록한 이지스 계좌(PayeeAccount)나 이지스가 확인한 공장 계좌만
+      if (typeof input.stage_id !== 'string') return Response.json({ error: '결제 단계를 지정하세요.' }, { status: 400 });
+      const stage = await svc.entities.PaymentStage.get(input.stage_id);
+      if (!stage || stage.card_id !== card.id || (stage.tenant_id && stage.tenant_id !== card.tenant_id)) return Response.json({ error: '결제 단계 접근 권한이 없습니다.' }, { status: 403 });
+      if (input.expected_updated_date !== stage.updated_date) return Response.json({ error: '결제 단계가 변경되었습니다. 다시 불러오세요.' }, { status: 409 });
+      const label = STAGE_LABEL[stage.stage_type] || '대금', by = user.full_name || user.email;
+      const visible = card.client_visible === true && !!card.client_id;
+      const audit = (event_type, details) => svc.entities.ProjectAuditLog.create({ tenant_id: card.tenant_id, card_id: card.id, event_type, actor_id: user.id, actor_name: by, details }).catch(() => null);
+      if (input.action === 'payment_request_cancel') {
+        if (!stage.requested_at) return Response.json({ saved: true, unchanged: true });
+        if (stage.approval_status === 'APPROVED') return Response.json({ error: '입금 확인된 단계는 요청을 취소할 수 없습니다.' }, { status: 400 });
+        await svc.entities.PaymentStage.update(stage.id, { tenant_id: card.tenant_id, requested_at: '', requested_by_name: '', due_date: '', payee: '', payee_account_id: '', request_note: '', ...CLEARED_REPORT });
+        await audit('PAYMENT_REQUEST_CANCELED', `${label} 결제 요청 취소`);
+        if (visible) {
+          try {
+            const clients = await clientUsersOfCompany(svc, card.client_id);
+            await notifyUsers(svc, clients, { type: 'payment_request_canceled', title: `[결제 요청 취소] ${card.title} ${label}`, body: `${label} 결제 요청이 취소되었습니다. 이 요청으로는 송금하지 마세요. 새 요청이 오면 다시 알려 드립니다.`, link: `/client/board?card=${card.id}&tab=settlement`, task_card_id: card.id, card_title: card.title }, { email: false });
+          } catch (_e) { /* 알림 실패가 취소를 막지 않는다 */ }
+        }
+        return Response.json({ saved: true });
+      }
+      if (input.payee === 'FACTORY' && !card.client_pays_factory) return Response.json({ error: '고객이 공장에 직접 송금하는 프로젝트로 설정된 카드만 공장 계좌로 요청할 수 있습니다.' }, { status: 400 });
+      const picked = input.payee === 'AEGIS' && typeof input.payee_account_id === 'string' && input.payee_account_id ? await svc.entities.PayeeAccount.get(input.payee_account_id).catch(() => null) : null;
+      const account = picked && picked.tenant_id === card.tenant_id ? picked : null;
+      const factory = input.payee === 'FACTORY' ? await clientFactoryPayment(svc, card) : null;
+      const checked = paymentRequestPatch(input, { stage, account, factoryVerified: !!factory?.verified && !factory.pending_change, today: kstToday() });
+      if (checked.error) return Response.json({ error: checked.error }, { status: 400 });
+      const p = checked.patch;
+      await svc.entities.PaymentStage.update(stage.id, { tenant_id: card.tenant_id, ...p, requested_at: new Date().toISOString(), requested_by_name: by, ...CLEARED_REPORT });
+      const payeeLabel = p.payee === 'AEGIS' ? '이지스 계좌' : '이지스가 확인한 공장 계좌';
+      await audit('PAYMENT_REQUESTED', `${label} 결제 요청: ${money(p.amount, p.currency)} · 기한 ${p.due_date} · ${p.payee === 'AEGIS' ? `이지스 계좌(${account.label || account.bank_name})` : payeeLabel}`);
+      let sent = 0;
+      if (visible) {
+        try {
+          const clients = await clientUsersOfCompany(svc, card.client_id);
+          // 계좌 번호는 메일에 넣지 않는다 (메일·메신저로 온 계좌가 계좌 사기의 시작이므로 포털에서만 보여 준다)
+          sent = await notifyUsers(svc, clients, { type: 'payment_requested', title: `[결제 요청] ${card.title} ${label}`, body: `${label} ${money(p.amount, p.currency)} · 결제 기한 ${p.due_date}\n받는 곳: ${payeeLabel}${p.request_note ? `\n${p.request_note}` : ''}\n계좌는 포털의 결제 탭에서만 확인해 주세요. 메일·메신저로 받은 계좌로는 송금하지 마세요.`, link: `/client/board?card=${card.id}&tab=settlement`, task_card_id: card.id, card_title: card.title });
+        } catch (_e) { /* 알림 실패가 요청 저장을 막지 않는다 */ }
+      }
+      return Response.json({ saved: true, sent, skipped: visible ? undefined : 'not_shared' });
     }
     const holidays = await svc.entities.ChinaHoliday.list('-start_date', 200);
     if (typeof input.reason !== 'string' || !input.reason.trim() || input.reason.length > 1000) return Response.json({ error: '변경 사유를 1000자 이내로 입력하세요.' }, { status: 400 });

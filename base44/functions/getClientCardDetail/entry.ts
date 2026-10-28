@@ -8,6 +8,7 @@ import { clientFactoryPayment } from '../../shared/factoryAccount.ts';
 import { clientFactoryCheck } from '../../shared/factoryCheck.ts';
 import { clientClaim } from '../../shared/claims.ts';
 import { clientImportRequirements } from '../../shared/importRequirements.ts';
+import { clientPaymentStage } from '../../shared/paymentRequest.ts';
 
 // 고객 포털 카드 상세: 오버뷰 · 공개 채팅 · 정산 단계(읽기 전용) · 담당자가 공개한 검수 리포트.
 // 내부 전용 데이터(견적 원가, BOM, 결정, 내부 채팅)는 응답에 포함하지 않는다.
@@ -33,7 +34,11 @@ export default async function (req) {
       return Response.json({ attachments });
     }
     const chats = await svc.entities.CardChat.filter({ card_id }, 'created_date', 200);
-    const stages = await svc.entities.PaymentStage.filter({ card_id }, 'created_date', 20);
+    const stages = (await svc.entities.PaymentStage.filter({ card_id }, 'created_date', 20)).filter((s) => s.card_id === card.id);
+    // 결제 요청의 이지스 계좌: 마스터가 등록한 같은 팀 계좌만 (결제 단계에는 계좌 ID만 있다)
+    const accounts = stages.some((s) => s.payee === 'AEGIS' && s.payee_account_id)
+      ? (await svc.entities.PayeeAccount.filter({ tenant_id: card.tenant_id }, '-created_date', 50)).filter((a) => a.tenant_id === card.tenant_id)
+      : [];
     const qcReports = await svc.entities.QCReport.filter({ card_id, client_visible: true }, '-created_date', 50);
     // 선적: 고객 공개분만. 서류는 준비 여부만 알리고 파일·포워더·내부 메모는 보내지 않는다
     const shipments = (await svc.entities.Shipment.filter({ card_id, client_visible: true }, 'created_date', 20)).filter((s) => s.card_id === card.id);
@@ -42,6 +47,9 @@ export default async function (req) {
     const claims = (await svc.entities.QualityClaim.filter({ card_id }, '-created_date', 50)).filter((c) => c.card_id === card.id);
     const claimPhotos = claims.length ? documents.filter((d) => d.document_kind === 'attachment' && d.document_type === 'CLAIM_PHOTO') : [];
     const spec = latestSentSpecs((await svc.entities.QualitySpec.filter({ card_id, status: 'SENT' }, '-version', 10)).filter((s) => s.card_id === card.id)).get(card.id);
+    // 담당 PM: 팀 운영 설정에서 켠 경우에만 이름과 답변 가능 시간 (기본은 숨김)
+    const setting = (await svc.entities.OperationSetting.filter({ tenant_id: card.tenant_id }, '-updated_date', 1)).find((x) => x.tenant_id === card.tenant_id);
+    const pm = setting?.client_show_pm === true && card.owner_name ? { name: card.owner_name, reply_hours: setting.client_reply_hours || '' } : null;
     // 계획 확정 전 초안은 고객에게 보이지 않는다
     const milestones = card.plan_confirmed_at
       ? (await svc.entities.CardMilestone.filter({ card_id }, 'seq', 100)).filter((m) => m.client_visible !== false && m.status !== 'skipped')
@@ -49,6 +57,7 @@ export default async function (req) {
 
     return Response.json({
       attachments: documents.map(documentMetadata),
+      pm,
       card: {
         id: card.id,
         title: card.title, title_cn: card.title_cn || '',
@@ -85,15 +94,8 @@ export default async function (req) {
         planned_date: m.planned_date || '', actual_date: m.actual_date || '',
         delay_reason: m.delay_reason_public ? (m.delay_reason || '') : '',
       })),
-      payment_stages: stages.map((s) => ({
-        id: s.id,
-        stage_type: s.stage_type,
-        percentage: Number(s.percentage) || 0,
-        amount: s.amount ?? null,
-        currency: s.currency || '',
-        approval_status: s.approval_status,
-        approved_at: s.approved_at || '',
-      })),
+      // 결제 단계: 결제 요청(금액·기한·받는 계좌)과 고객 송금 알림 상태까지
+      payment_stages: stages.map((s) => clientPaymentStage(s, accounts)),
       // 고객이 공장에 직접 송금하는 카드만: 이지스가 확인한 계좌와 변경 요청 여부
       factory_payment: await clientFactoryPayment(svc, card),
       // 거래 공장 확인 결과 (항목별 확인 여부만, 공장명·주소·메모 제외)
