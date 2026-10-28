@@ -5,7 +5,7 @@ const L = (zh, ko, cn) => (zh ? cn : ko);
 
 export function MemberMock({ zh }) {
   return (
-    <Frame title={L(zh, '일정 탭 · 팀원', '日程页 · 团队成员')}>
+    <Frame title={L(zh, '일정 탭 · 팀원', '日程页 · 团队成员')} badge={L(zh, '예시 화면', '示例画面')}>
       <div className="flex items-center gap-2 py-1.5">
         <span className="flex-1">{L(zh, '1차 샘플', '第一次样品')} · 왕QC</span>
         <Mark n={2} inline><span className="text-muted-foreground">10-20</span></Mark>
@@ -19,7 +19,7 @@ export function MemberMock({ zh }) {
 
 export function MyWorkMock({ zh }) {
   return (
-    <Frame title={L(zh, '내 업무', '我的工作')}>
+    <Frame title={L(zh, '내 업무', '我的工作')} badge={L(zh, '예시 화면', '示例画面')}>
       <Mark n={1}><div className="p-2 space-y-1">
         <div className="text-[10px] font-semibold text-destructive">{L(zh, '기한 지남 · 지연', '已逾期 · 延误')}</div>
         <div className="flex flex-wrap items-center gap-2"><span className="font-medium">LED 마스크 OEM</span>
@@ -36,7 +36,7 @@ export function MyWorkMock({ zh }) {
 export function BoardMock({ zh }) {
   const cols = [['진행 중', '进行中'], ['검토', '审核中'], ['생산', '生产中']];
   return (
-    <Frame title={L(zh, '소싱 칸반 보드', '采购看板')}>
+    <Frame title={L(zh, '소싱 칸반 보드', '采购看板')} badge={L(zh, '예시 화면', '示例画面')}>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         {cols.map(([k, c], i) => (
           <div key={k} className={`rounded bg-muted p-2 space-y-2 ${i !== 2 ? 'hidden sm:block' : ''}`}>
@@ -56,10 +56,10 @@ export function BoardMock({ zh }) {
   );
 }
 
-export function OpsMock() {
+export function OpsMock({ zh }) {
   const items = [['지연 카드', '3'], ['다음 할 일 기한 지남', '5'], ['책임자 미지정', '2'], ['정시 납품률', '86%'], ['진행 중 카드', '12']];
   return (
-    <Frame title="대시보드 · 운영 지표">
+    <Frame title="대시보드 · 운영 지표" badge={L(zh, '예시 화면', '示例画面')}>
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
         {items.map(([k, v], i) => <Mark key={k} n={i + 1}><div className="p-2"><div className="text-[10px] text-muted-foreground">{k}</div><div className="text-base font-bold">{v}</div></div></Mark>)}
       </div>
@@ -68,18 +68,18 @@ export function OpsMock() {
   );
 }
 
-export function AlertMock() {
+export function AlertMock({ zh }) {
   return (
-    <Frame title="알림">
+    <Frame title="알림" badge={L(zh, '예시 화면', '示例画面')}>
       <div className="flex justify-end mb-2"><Mark n={1} inline><span>🔔 <Badge tone="red">2</Badge></span></Mark></div>
       <Mark n={2}><div className="p-2"><div className="font-semibold">LED 마스크 OEM · 기한 지난 단계 1개</div><div className="text-muted-foreground">양산 시작: 계획일 2026-10-08 (담당 왕QC)</div></div></Mark>
     </Frame>
   );
 }
 
-export function HolidayMock() {
+export function HolidayMock({ zh }) {
   return (
-    <Frame title="중국 휴무">
+    <Frame title="중국 휴무" badge={L(zh, '예시 화면', '示例画面')}>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <Field label="휴일" value="춘절 · 2027-02-06 ~ 02-12" />
         <Mark n={1}><Field label="공장 앞뒤 추가 휴무(일)" value="5" /></Mark>
@@ -92,9 +92,9 @@ export function HolidayMock() {
   );
 }
 
-export function ScheduleMock() {
+export function ScheduleMock({ zh }) {
   return (
-    <Frame title="오버뷰 · 견적·납품 일정 관리">
+    <Frame title="오버뷰 · 견적·납품 일정 관리" badge={L(zh, '예시 화면', '示例画面')}>
       <div className="flex flex-wrap items-center gap-2 mb-2">
         <Mark n={1} inline><Badge tone="amber">국경절과 겹침</Badge></Mark>
         <Mark n={2} inline><Btn>고객에게 안내</Btn></Mark>
@@ -112,9 +112,9 @@ export function ScheduleMock() {
   );
 }
 
-export function ClientMock() {
+export function ClientMock({ zh }) {
   return (
-    <Frame title="고객 화면 · 진행 단계">
+    <Frame title="고객 화면 · 진행 단계" badge={L(zh, '예시 화면', '示例画面')}>
       <Mark n={1}><div className="flex justify-between p-1.5"><span>✔ 샘플 제작</span><span className="text-muted-foreground">완료 10-20</span></div></Mark>
       <div className="mt-2"><Mark n={2}><div className="flex justify-between p-1.5 font-medium"><span>● 양산</span><span>예정 11-10</span></div></Mark></div>
       <div className="mt-2"><Mark n={3}><div className="p-1.5 text-muted-foreground">사유: 원자재 입고 지연</div></Mark></div>

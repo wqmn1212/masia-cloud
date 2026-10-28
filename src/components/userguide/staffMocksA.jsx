@@ -6,7 +6,7 @@ const L = (zh, ko, cn) => (zh ? cn : ko);
 
 export function MenuMock({ zh }) {
   return (
-    <Frame title="AEGIS Cloud">
+    <Frame title="AEGIS Cloud" badge={L(zh, '예시 화면', '示例画面')}>
       <div className="flex gap-3">
         <div className="w-36 shrink-0 rounded bg-sidebar text-sidebar-foreground p-2 space-y-2">
           <div className="opacity-60 text-[10px]">{L(zh, '본사 관리', '总部管理')}</div>
@@ -33,7 +33,7 @@ export function MenuMock({ zh }) {
 
 export function OwnerMock({ zh }) {
   return (
-    <Frame title={L(zh, '카드 상세', '卡片详情')}>
+    <Frame title={L(zh, '카드 상세', '卡片详情')} badge={L(zh, '예시 화면', '示例画面')}>
       <div className="font-semibold mb-2">LED 마스크 OEM</div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
         <Mark n={1}><Field label={L(zh, '책임자', '负责人')} value="김PM" /></Mark>
@@ -47,7 +47,7 @@ export function OwnerMock({ zh }) {
 
 export function CreateMock({ zh }) {
   return (
-    <Frame title={L(zh, '일정 탭', '日程页')}>
+    <Frame title={L(zh, '일정 탭', '日程页')} badge={L(zh, '예시 화면', '示例画面')}>
       <div className="space-y-2">
         <Mark n={1}><Field label={L(zh, '템플릿', '模板')} value={L(zh, '일반 OEM · 11단계', '通用OEM · 11步')} /></Mark>
         <Mark n={2}><Field label={L(zh, '시작일', '开始日期')} value="2026-10-12" /></Mark>
@@ -59,7 +59,7 @@ export function CreateMock({ zh }) {
 
 export function ConfirmMock({ zh }) {
   return (
-    <Frame title={L(zh, '일정 탭', '日程页')}>
+    <Frame title={L(zh, '일정 탭', '日程页')} badge={L(zh, '예시 화면', '示例画面')}>
       <div className="flex justify-end gap-2 mb-2"><Mark n={5} inline><Btn>{L(zh, '다시 만들기', '重新创建')}</Btn></Mark><Mark n={1} inline><Btn primary>{L(zh, '계획 확정', '确认计划')}</Btn></Mark></div>
       {[['사양 확정', '规格确认', '10-15', '김PM'], ['공장 확정', '工厂确认', '10-19', '리PM']].map(([k, c, d, o], i) => (
         <div key={k} className="flex items-center gap-2 py-1.5 border-t">
@@ -74,7 +74,7 @@ export function ConfirmMock({ zh }) {
 
 export function CompleteMock({ zh }) {
   return (
-    <Frame title={L(zh, '단계 완료', '完成步骤')}>
+    <Frame title={L(zh, '단계 완료', '完成步骤')} badge={L(zh, '예시 화면', '示例画面')}>
       <div className="space-y-2">
         <Mark n={1}><Field label={L(zh, '실제 완료일', '实际完成日')} value="2026-10-24" /></Mark>
         <Mark n={2}><div className="flex items-center gap-2 p-1"><input type="checkbox" checked readOnly tabIndex={-1} />{L(zh, '뒤 단계 계획일도 늦어진 만큼 밀기', '后续步骤计划日也按延后天数顺延')}</div></Mark>
@@ -86,7 +86,7 @@ export function CompleteMock({ zh }) {
 
 export function QcMock({ zh }) {
   return (
-    <Frame title={L(zh, '단계 완료 · 출고 전 검수', '完成步骤 · 出货前检验')}>
+    <Frame title={L(zh, '단계 완료 · 출고 전 검수', '完成步骤 · 出货前检验')} badge={L(zh, '예시 화면', '示例画面')}>
       <div className="space-y-2">
         <Mark n={1}><Field label={L(zh, 'QC 보고서 연결', '关联QC报告')} value={L(zh, '2026-10-06 · 합격', '2026-10-06 · 合格')} /></Mark>
         <Mark n={2}><div className="px-2 py-1 rounded border opacity-50">2026-10-02 · <Badge tone="red">{L(zh, '불합격', '不合格')}</Badge> ({L(zh, '선택 불가', '不可选')})</div></Mark>
@@ -97,7 +97,7 @@ export function QcMock({ zh }) {
 
 export function DelayMock({ zh }) {
   return (
-    <Frame title={L(zh, '일정 탭', '日程页')}>
+    <Frame title={L(zh, '일정 탭', '日程页')} badge={L(zh, '예시 화면', '示例画面')}>
       <div className="mb-2"><Mark n={1} inline><Badge tone="red">{L(zh, '납품 +4일', '交货 +4天')}</Badge></Mark></div>
       <div className="flex items-center gap-2 py-1.5 border-t">
         <span className="flex-1">{L(zh, '양산', '量产')}</span>

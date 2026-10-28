@@ -16,6 +16,8 @@
     "check:order-cost": "node scripts/check-order-cost.mjs",
     "check:signature": "node scripts/check-signature.mjs",
     "check:dest-cost-invoice": "node scripts/check-dest-cost-invoice.mjs",
+    "check:admin-inbox": "node scripts/check-admin-inbox.mjs",
+    "check:md-tables": "node scripts/check-md-tables.mjs",
     "check:assistant": "node --import ./scripts/fnmock/register.mjs scripts/check-assistant-functions.mjs"
   },
   "dependencies": {
@@ -72,7 +74,6 @@
     "react-resizable-panels": "^2.1.7",
     "react-router-dom": "^6.26.0",
     "recharts": "^2.15.4",
-    "remark-gfm": "^4.0.0",
     "sonner": "^2.0.1",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",

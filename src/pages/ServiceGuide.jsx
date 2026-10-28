@@ -12,6 +12,11 @@ export default function ServiceGuide() {
   const content = serviceGuideContent[lang] || serviceGuideContent.ko;
   const { data: user } = useQuery({ queryKey: ['current-user'], queryFn: () => base44.auth.me() });
   const [active, setActive] = useState(content.steps[0].id);
+  // 이용 가이드 등에서 /service-guide#guide-<id> 로 들어오면 그 단계로 내려간다
+  useEffect(() => {
+    const id = window.location.hash.slice(1);
+    if (id) requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: 'start' }));
+  }, []);
   useEffect(() => {
     let frame = 0;
     const update = () => {
@@ -29,13 +34,14 @@ export default function ServiceGuide() {
     return () => { cancelAnimationFrame(frame); window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); };
   }, [content]);
   return (
-    <div className="mx-auto w-full min-w-0 max-w-5xl space-y-5 pb-10 break-keep [overflow-wrap:anywhere]">
+    // break-keep 은 한국어 낱말 단위 줄바꿈. 중국어에 쓰면 쉼표에서만 줄이 바뀐다
+    <div className={`mx-auto w-full min-w-0 max-w-5xl space-y-5 pb-10 [overflow-wrap:anywhere] ${lang === 'zh' ? '' : 'break-keep'}`}>
       <GuideIntro content={content} />
       <GuideOutline content={content} active={active} />
       <div className="space-y-6">{content.steps.map((step, index) => <GuideStep key={step.id} step={step} index={index} content={content} user={user} />)}</div>
       <footer className="rounded-xl border border-dashed px-5 py-6 text-center">
-        <h2 className="text-base font-semibold">{content.footer}</h2>
-        <p className="mx-auto mt-2 max-w-2xl text-sm leading-7 text-muted-foreground">{content.footerBody}</p>
+        <h2 className="text-title font-semibold">{content.footer}</h2>
+        <p className="mx-auto mt-2 max-w-2xl text-body leading-7 text-muted-foreground">{content.footerBody}</p>
       </footer>
     </div>
   );

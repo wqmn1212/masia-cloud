@@ -60,6 +60,8 @@ export default function TaskBoard() {
   const [selectedCard, setSelectedCard] = useState(null);
   const [inboxOpen, setInboxOpen] = useState(false);
   const [linkedCardId, setLinkedCardId] = useState(() => new URLSearchParams(window.location.search).get('card'));
+  // ?tab=settlement 처럼 열 탭도 지정할 수 있다 (관리자 할 일 등에서 연결). 카드를 닫으면 기본 탭으로 돌아간다
+  const [linkedTab, setLinkedTab] = useState(() => new URLSearchParams(window.location.search).get('tab'));
   const { query: search, setQuery: setSearch } = useSearch();
   const { lang, t, content } = useLanguage();
   const [filterCategory, setFilterCategory] = useState('ALL');
@@ -420,7 +422,8 @@ export default function TaskBoard() {
         <CardModal
           card={selectedCard}
           open={!!selectedCard}
-          onClose={() => setSelectedCard(null)}
+          initialTab={linkedTab || 'overview'}
+          onClose={() => { setSelectedCard(null); setLinkedTab(null); }}
         />
       )}
     </div>

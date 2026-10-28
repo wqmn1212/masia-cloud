@@ -34,6 +34,7 @@ const TaskBoard = lazy(() => import('@/pages/TaskBoard'));
 const FactoryDashboard = lazy(() => import('@/pages/FactoryDashboard'));
 const ClientDashboard = lazy(() => import('@/pages/ClientDashboard'));
 const MasterAdminDashboard = lazy(() => import('@/pages/MasterAdminDashboard'));
+const AdminInbox = lazy(() => import('@/pages/AdminInbox'));
 const TeamManagement = lazy(() => import('@/pages/TeamManagement'));
 const UserPermissions = lazy(() => import('@/pages/UserPermissions'));
 const FinancialReport = lazy(() => import('@/pages/FinancialReport'));
@@ -161,6 +162,7 @@ const AuthenticatedApp = () => {
         <Route path="/factories/:factoryId/dashboard" element={<FactoryDashboard />} />
         <Route path="/clients/:clientId/dashboard" element={<ClientDashboard />} />
         <Route path="/master-admin" element={<MasterAdminDashboard />} />
+        <Route path="/admin-inbox" element={<AdminInbox />} />
         <Route path="/master-admin/teams/:tenantId" element={<MasterTeamDashboard />} />
         <Route path="/team" element={<TeamManagement />} />
         <Route path="/user-permissions" element={<UserPermissions />} />
