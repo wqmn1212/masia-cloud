@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap');
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+/* 글꼴은 index.html 에서 화면을 막지 않게 불러온다 (중국에서 Google Fonts 차단 대응) */
 
 @tailwind base;
 @tailwind components;
@@ -111,7 +110,7 @@
     letter-spacing: normal;
   }
   html.lang-zh body {
-    font-family: 'Pretendard Variable', Pretendard, 'Noto Sans SC', sans-serif;
+    font-family: 'Pretendard Variable', Pretendard, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
     letter-spacing: 0;
     word-break: normal;
   }
