@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Check, X, Loader2, ChevronDown, ChevronRight, Paperclip } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { splitMarkdownTables } from '@/lib/mdTables';
 
 const parseResults = (results) => {
   if (!results) return null;
@@ -61,11 +62,23 @@ const MD = {
   a: (props) => <a className="font-medium text-primary underline underline-offset-2" target="_blank" rel="noreferrer" {...props} />,
   code: (props) => <code className="rounded bg-muted px-1 py-0.5 text-label" {...props} />,
   blockquote: (props) => <blockquote className="my-2 border-l-2 border-warning pl-3 text-warning-text" {...props} />,
-  table: (props) => <div className="my-2 overflow-x-auto rounded-lg border"><table className="w-full text-label" {...props} /></div>,
-  thead: (props) => <thead className="bg-muted/60 text-muted-foreground" {...props} />,
-  th: ({ style, ...props }) => <th className="whitespace-nowrap px-2.5 py-1.5 text-left font-medium" style={style} {...props} />,
-  td: ({ style, ...props }) => <td className="border-t px-2.5 py-1.5 align-top tabular-nums" style={style} {...props} />,
 };
+// 표 칸 안의 굵게·링크만 살린다 (문단 여백 없이)
+const CELL = { ...MD, p: (props) => <span {...props} /> };
+
+// 표는 remark-gfm 없이 직접 그린다 (Base44 빌드에서 remark-gfm 을 쓸 수 없음)
+function AssistantMarkdown({ text }) {
+  return splitMarkdownTables(text).map((seg, i) => seg.type === 'md'
+    ? <ReactMarkdown key={i} components={MD}>{seg.text}</ReactMarkdown>
+    : (
+      <div key={i} className="my-2 overflow-x-auto rounded-lg border">
+        <table className="w-full text-label">
+          <thead className="bg-muted/60 text-muted-foreground"><tr>{seg.header.map((h, k) => <th key={k} className="whitespace-nowrap px-2.5 py-1.5 font-medium" style={{ textAlign: seg.align[k] }}><ReactMarkdown components={CELL}>{h}</ReactMarkdown></th>)}</tr></thead>
+          <tbody>{seg.rows.map((row, r) => <tr key={r}>{row.map((c, k) => <td key={k} className="border-t px-2.5 py-1.5 align-top tabular-nums" style={{ textAlign: seg.align[k] }}><ReactMarkdown components={CELL}>{c}</ReactMarkdown></td>)}</tr>)}</tbody>
+        </table>
+      </div>
+    ));
+}
 
 function FunctionDisplay({ toolCall }) {
   const [expanded, setExpanded] = useState(false);
@@ -135,7 +148,7 @@ export default function MessageBubble({ message }) {
         )}
         {content && (isUser
           ? <p className="text-body whitespace-pre-wrap">{content}</p>
-          : <div className="text-body"><ReactMarkdown components={MD}>{content}</ReactMarkdown></div>
+          : <div className="text-body"><AssistantMarkdown text={content} /></div>
         )}
       </div>
     </div>
