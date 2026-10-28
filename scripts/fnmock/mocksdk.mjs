@@ -7,12 +7,13 @@ const entity = (name) => ({
   get: async (id) => { const r = (globalThis.__db[name] || []).find((x) => x.id === id); if (!r) throw new Error('not found'); return r; },
   create: async (d) => { const r = { id: `${name}-${++seq}`, created_date: new Date().toISOString(), ...d }; (globalThis.__db[name] ||= []).push(r); return r; },
   update: async (id, d) => { const r = globalThis.__db[name].find((x) => x.id === id); Object.assign(r, d); return r; },
+  bulkCreate: async (rows) => Promise.all(rows.map((d) => entity(name).create(d))),
 });
 export function createClientFromRequest() {
   const entities = new Proxy({}, { get: (_, n) => entity(n) });
   return {
     auth: { me: async () => globalThis.__user },
     entities,
-    asServiceRole: { entities, integrations: { Core: { InvokeLLM: async (a) => globalThis.__llm(a), UploadPrivateFile: async ({ file }) => ({ file_uri: `private://${file.name}` }) } } },
+    asServiceRole: { entities, integrations: { Core: { InvokeLLM: async (a) => globalThis.__llm(a), UploadPrivateFile: async ({ file }) => ({ file_uri: `private://${file.name}` }), SendEmail: async (m) => { (globalThis.__emails ||= []).push(m); return {}; } } } },
   };
 }

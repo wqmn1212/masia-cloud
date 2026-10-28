@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, Repeat } from 'lucide-react';
+import { Loader2, Repeat, UserRound } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import PdfButton from '@/components/reports/PdfButton';
@@ -48,6 +48,11 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
           <>
             <DialogHeader>
               <DialogTitle className="text-base pr-6">{data.card.title}</DialogTitle>
+              {data.pm && (
+                <p className="flex flex-wrap items-center gap-x-1.5 text-label text-muted-foreground">
+                  <UserRound className="h-3.5 w-3.5" />담당 PM <span className="font-medium text-foreground">{data.pm.name}</span>{data.pm.reply_hours && <span>· 답변 {data.pm.reply_hours}</span>}<span>· 문의 탭에 남기시면 담당 PM이 답합니다</span>
+                </p>
+              )}
               <div className="flex flex-wrap items-center gap-2">
                 <button type="button" className="mr-auto text-xs text-primary" disabled={isFetching} onClick={() => refetch()}>{isFetching ? '불러오는 중...' : '최신 일정·입금 상태 새로고침'}</button>
                 <PdfButton generate={() => generateProjectSummaryPDF(data)} label="보고용 PDF" className="h-8" />
@@ -66,7 +71,10 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
                   {((data.qc_reports || []).some((r) => r.decision !== 'APPROVED') || data.quality_spec?.decision === 'PENDING') && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" aria-label="확인할 검수 결과 있음" />}
                 </TabsTrigger>
                 <TabsTrigger value="chat" className="text-xs sm:text-sm">문의</TabsTrigger>
-                <TabsTrigger value="settlement" className="text-xs sm:text-sm">결제</TabsTrigger>
+                <TabsTrigger value="settlement" className="relative text-xs sm:text-sm">
+                  결제
+                  {(data.payment_stages || []).some((st) => st.request_state === 'REQUESTED') && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" aria-label="결제 요청 있음" />}
+                </TabsTrigger>
                 <TabsTrigger value="files" className="text-xs sm:text-sm">파일</TabsTrigger>
               </TabsList>
               <TabsContent value="overview" className="mt-4">
@@ -89,7 +97,7 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
               </TabsContent>
               <TabsContent value="files" className="mt-4"><ClientSharedFiles cardId={data.card.id} /></TabsContent>
               <TabsContent value="settlement" className="mt-4">
-                <ClientSettlementPanel stages={data.payment_stages || []} factoryPayment={data.factory_payment || null} receipts={(data.attachments || []).filter((a) => a.document_type?.startsWith('REMITTANCE_'))} />
+                <ClientSettlementPanel cardId={data.card.id} stages={data.payment_stages || []} factoryPayment={data.factory_payment || null} receipts={(data.attachments || []).filter((a) => a.document_type?.startsWith('REMITTANCE_'))} canReport={user?.account_tier === 'client'} />
               </TabsContent>
             </Tabs>
           </>

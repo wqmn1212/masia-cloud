@@ -1,7 +1,7 @@
 // 관리자 할 일 목록 검산: 입금 확인 대기·불량 신고·전자서명 알림을 어떤 기준으로 고르는지 확인한다.
 // 실행: npm run check:admin-inbox
 import assert from 'node:assert/strict';
-import { paymentQueue, claimQueue, signatureQueue, inboxCounts, daysUntil, daysSince } from '../src/lib/adminInbox.js';
+import { paymentQueue, overdueQueue, claimQueue, signatureQueue, inboxCounts, daysUntil, daysSince } from '../src/lib/adminInbox.js';
 
 const NOW = Date.parse('2026-10-28T03:00:00Z'); // 한국 시각 10월 28일 낮 12시
 
@@ -26,7 +26,24 @@ const pq = paymentQueue(stages, receipts);
 assert.deepEqual(pq.map((p) => p.id), ['e', 'a', 'c'], '입금 전(b)·이미 확인(d)은 빼고, 입금일 순, 입금일 없으면 뒤로');
 assert.equal(pq.find((p) => p.id === 'a').has_receipt, true);
 assert.equal(pq.find((p) => p.id === 'c').has_receipt, true, '입금일 없이 송금확인증만 있어도 대기');
-assert.equal(pq.find((p) => p.id === 'e').has_receipt, false, '중도금은 송금확인증 종류가 없다');
+assert.equal(pq.find((p) => p.id === 'e').has_receipt, false, '중도금 송금확인증이 따로 없으면 없음');
+assert.equal(paymentQueue([{ id: 'i', card_id: 'c5', stage_type: 'INTERIM_PAYMENT', approval_status: 'PENDING' }], [{ card_id: 'c5', document_type: 'REMITTANCE_INTERIM' }])[0]?.has_receipt, true, '중도금 송금확인증');
+
+// 고객이 '송금했어요'를 누른 단계도 입금 확인 대기 (입금일이 없으면 고객이 적은 송금일로 정렬)
+const withReport = paymentQueue([...stages, { id: 'r', card_id: 'c6', stage_type: 'BALANCE_PAYMENT', approval_status: 'PENDING', requested_at: '2026-10-20T00:00:00Z', client_reported_paid_at: '2026-10-27T05:00:00Z', client_reported_paid_date: '2026-10-15' }], receipts);
+assert.deepEqual(withReport.map((p) => p.id), ['e', 'r', 'a', 'c']);
+assert.equal(withReport.find((p) => p.id === 'r').reported, true);
+
+// 결제 기한 지남: 요청했고, 고객 송금 알림이 없고, 기한이 지난 것만. 오래 지난 순
+const oq = overdueQueue([
+  { id: 'o1', approval_status: 'PENDING', requested_at: 'x', due_date: '2026-10-27' },
+  { id: 'o2', approval_status: 'PENDING', requested_at: 'x', due_date: '2026-10-20' },
+  { id: 'o3', approval_status: 'PENDING', requested_at: 'x', due_date: '2026-10-28' },
+  { id: 'o4', approval_status: 'PENDING', requested_at: 'x', due_date: '2026-10-01', client_reported_paid_at: 'y' },
+  { id: 'o5', approval_status: 'APPROVED', requested_at: 'x', due_date: '2026-10-01' },
+  { id: 'o6', approval_status: 'PENDING', due_date: '2026-10-01' },
+], NOW);
+assert.deepEqual(oq.map((o) => `${o.id}:${o.left}`), ['o2:-8', 'o1:-1'], '오늘 기한·송금 알림·입금 확인·요청 전은 뺀다');
 
 // 불량 신고: 닫힌 건 제외, 2일 넘게 접수 상태인 건이 위로
 const cq = claimQueue([
@@ -56,8 +73,8 @@ assert.equal(sq.find((r) => r.contract_id === 'k3').left, 0);
 assert.deepEqual(signatureQueue(undefined, NOW), [], '현황을 못 불러와도 빈 목록');
 
 // 개수
-assert.deepEqual(inboxCounts({ accounts: [1], payments: pq, comparisons: [], signatures: sq, costs: { cards: [1, 2], shipments: [3] }, claims: cq }),
-  { accounts: 1, payments: 3, comparisons: 0, signatures: 4, costs: 3, claims: 3 });
-assert.deepEqual(inboxCounts({}), { accounts: 0, payments: 0, comparisons: 0, signatures: 0, costs: 0, claims: 0 });
+assert.deepEqual(inboxCounts({ accounts: [1], payments: pq, overdue: oq, comparisons: [], signatures: sq, costs: { cards: [1, 2], shipments: [3] }, claims: cq }),
+  { accounts: 1, payments: 3, overdue: 2, comparisons: 0, signatures: 4, costs: 3, claims: 3 });
+assert.deepEqual(inboxCounts({}), { accounts: 0, payments: 0, overdue: 0, comparisons: 0, signatures: 0, costs: 0, claims: 0 });
 
 console.log('admin-inbox: 모든 검산 통과');

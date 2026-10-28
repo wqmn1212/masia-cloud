@@ -6,10 +6,12 @@ import { uploadPrivateAttachments, linkCardAttachments } from '../../shared/priv
 import { QC_DECISIONS, SPEC_DECISIONS, latestSentSpecs } from '../../shared/clientQc.ts';
 import { DEST_COST_DECISIONS, destCostState } from '../../shared/destCost.ts';
 import { latestClientComparison } from '../../shared/clientComparison.ts';
+import { paymentReportPatch, REMITTANCE_FOR_STAGE, STAGE_LABEL } from '../../shared/paymentRequest.ts';
+import { kstToday } from '../../shared/chinaHoliday.ts';
 
 // 고객이 수행 가능한 쓰기 동작: 채팅 작성 · 요구사항(hq_requirements) 수정 · 공개된 검수 결과의 출고 승인/보류
 // · 보낸 품질 기준서의 승인/수정 요청 · 선적 도착지 비용 예상액의 확인/문의 · 받은 물건의 불량 신고(클레임)
-// · 견적 비교표에서 진행할 안 고르기.
+// · 견적 비교표에서 진행할 안 고르기 · 결제 요청에 '송금했어요' 알리기(입금 확인은 직원만).
 // 그 외 필드는 서버에서 아예 받지 않으므로 프런트 우회로 변경할 수 없다.
 export default async function (req) {
   try {
@@ -17,7 +19,7 @@ export default async function (req) {
     const auth = await requireClient(base44);
     if (auth.error) return auth.error;
 
-    const { card_id, action, message, message_cn, hq_requirements, hq_requirements_cn, attachments, report_id, spec_id, shipment_id, sent_at, decision, note, claim, document_type, option_key, version } = await req.json();
+    const { card_id, action, message, message_cn, hq_requirements, hq_requirements_cn, attachments, report_id, spec_id, shipment_id, sent_at, decision, note, claim, document_type, option_key, version, stage_id, paid_date } = await req.json();
     if (!card_id || !action) return Response.json({ error: 'card_id, action 이 필요합니다' }, { status: 400 });
 
     const svc = base44.asServiceRole;
@@ -28,7 +30,7 @@ export default async function (req) {
     const senderName = auth.user.full_name || auth.user.account_label || auth.user.email;
     // 고객 업로드 파일: 비공개 저장 후 카드 파일 탭에 고객 공개 상태로 연동
     // 고객이 고를 수 있는 파일 종류 (직접 송금한 송금확인증, 고객이 가진 사양서·인증서). 그 외는 일반 파일
-    const CLIENT_DOC_TYPES: Record<string, string> = { REMITTANCE_DOWN: '송금확인증 (선금)', REMITTANCE_BALANCE: '송금확인증 (잔금)', SPEC_SHEET: '사양서', CERTIFICATE: '인증서' };
+    const CLIENT_DOC_TYPES: Record<string, string> = { REMITTANCE_DOWN: '송금확인증 (선금)', REMITTANCE_INTERIM: '송금확인증 (중도금)', REMITTANCE_BALANCE: '송금확인증 (잔금)', SPEC_SHEET: '사양서', CERTIFICATE: '인증서' };
     const docType = typeof document_type === 'string' && CLIENT_DOC_TYPES[document_type] ? document_type : 'GENERAL';
     const saveFiles = async (documentType = 'GENERAL') => {
       const files = await uploadPrivateAttachments(svc, attachments);
@@ -48,6 +50,33 @@ export default async function (req) {
         task_card_id: card.id,
       });
       return Response.json({ ok: true, count: files.length });
+    }
+
+    if (action === 'payment_reported') {
+      // 고객이 결제 요청대로 송금했다고 알린다. 직원이 통장을 확인해 '입금 확인'을 눌러야 끝난다
+      const stage = typeof stage_id === 'string' && stage_id ? await svc.entities.PaymentStage.get(stage_id).catch(() => null) : null;
+      if (!stage || stage.card_id !== card.id) return Response.json({ error: '결제 단계를 찾을 수 없습니다' }, { status: 404 });
+      const checked = paymentReportPatch({ paid_date, note }, { stage, today: kstToday(), by: senderName, now: new Date().toISOString() });
+      if (checked.error) return Response.json({ error: checked.error }, { status: 400 });
+      const files = await saveFiles(REMITTANCE_FOR_STAGE[stage.stage_type] || 'GENERAL');
+      await svc.entities.PaymentStage.update(stage.id, checked.patch);
+      const label = STAGE_LABEL[stage.stage_type] || '대금';
+      const memo = checked.patch.client_report_note;
+      try {
+        await svc.entities.ProjectAuditLog.create({ tenant_id: card.tenant_id, card_id: card.id, event_type: 'PAYMENT_REPORTED', actor_id: auth.user.id, actor_name: senderName, details: `${label} 고객 송금 알림: 송금일 ${checked.patch.client_reported_paid_date}${files.length ? ` · 송금확인증 ${files.length}개` : ''}${memo ? ` · ${memo}` : ''}` });
+      } catch (_e) { /* 기록 실패가 고객 알림을 막지 않는다 */ }
+      try {
+        const staff = await internalUsersOfTenant(svc, card.tenant_id);
+        await notifyUsers(svc, staff, {
+          type: 'payment_reported',
+          title: `[송금 알림] ${card.title} ${label}`,
+          body: `${senderName}: ${checked.patch.client_reported_paid_date} 송금${files.length ? ` · 송금확인증 ${files.map((f) => f.name).join(', ')}` : ' · 송금확인증 없음'}${memo ? `\n${memo}` : ''}\n통장 입금을 확인한 뒤 정산 탭에서 입금 확인을 눌러 주세요.`,
+          link: `/task-board?card=${card.id}&tab=settlement`,
+          task_card_id: card.id,
+          card_title: card.title,
+        });
+      } catch (_e) { /* 알림 실패가 고객 알림 저장을 막지 않는다 */ }
+      return Response.json({ ok: true, files: files.length });
     }
 
     if (action === 'chat') {

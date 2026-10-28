@@ -1,11 +1,14 @@
 // 앱 내 알림 + 이메일 병행 발송 공용 모듈.
 // Notification 의 권한 키는 recipient_id 이므로 cross-tenant(본사 ↔ 고객사) 알림이 동작한다.
 // 발신자명은 앱 전체에서 'AEGIS' 로 단일화한다.
+// 고객 계정은 알림 설정(User.notification_prefs)에서 끈 묶음의 메일을 받지 않는다 (앱 알림은 그대로).
+import { wantsEmail } from './notificationPrefs.ts';
+
 export const FROM_NAME = 'AEGIS';
 
 const DEBOUNCE_MS = 5 * 60 * 1000;
 // 매번 이메일을 보내는 알림 (5분 규칙 제외)
-const ALWAYS_EMAIL = ['quote_published', 'payment_confirmed', 'schedule_changed'];
+const ALWAYS_EMAIL = ['quote_published', 'payment_confirmed', 'schedule_changed', 'payment_requested', 'payment_due'];
 
 // 공통 이메일 본문 틀: 본문 + 프로젝트 + 바로가기 링크 + 안내
 export function emailBody(text, cardTitle, link) {
@@ -43,7 +46,7 @@ export async function notifyUsers(svc, recipients, payload, options = {}) {
   if (targets.length === 0) return 0;
 
   for (const u of targets) {
-    const emailAllowed = options.email !== false &&
+    const emailAllowed = options.email !== false && wantsEmail(u, payload.type) &&
       (ALWAYS_EMAIL.includes(payload.type) || await shouldEmail(svc, u.id, payload.type, payload.task_card_id));
 
     await svc.entities.Notification.create({

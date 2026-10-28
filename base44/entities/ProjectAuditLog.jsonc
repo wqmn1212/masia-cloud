@@ -27,7 +27,10 @@
         "CLAIM_SUBMITTED",
         "CLAIM_UPDATED",
         "COMPARISON_CLIENT_CHOICE",
-        "LANDED_COST_CONFIRMED"
+        "LANDED_COST_CONFIRMED",
+        "PAYMENT_REQUESTED",
+        "PAYMENT_REQUEST_CANCELED",
+        "PAYMENT_REPORTED"
       ]
     },
     "actor_id": {

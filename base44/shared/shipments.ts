@@ -31,3 +31,19 @@ export function docStatus(s, attachmentTypes = []) {
   });
 }
 export const missingBeforeDeparture = (s, attachmentTypes = []) => docStatus(s, attachmentTypes).filter((d) => d.status === 'MISSING' && BEFORE_DEPARTURE.includes(d.key));
+
+// 고객 서류함의 '아직 공유되지 않은 서류': 선적 예약 뒤엔 인보이스·패킹리스트(위험물이면 위험물 서류), 출항 뒤엔 B/L·원산지증명서까지.
+// 담당자가 '해당 없음'으로 표시한 서류는 빼고, 공유 여부는 고객 공개 파일의 종류로 본다 (내부에서 '준비됨'이어도 공유 전이면 빠진 것).
+const AFTER_DEPARTURE = ['DEPARTED', 'ARRIVED', 'CUSTOMS', 'CLEARED', 'DELIVERED'];
+export function missingSharedDocs(shipments = [], sharedTypes = []) {
+  const shared = new Set(sharedTypes.map((t) => DOC_FROM_ATTACHMENT[t]).filter(Boolean));
+  return shipments.flatMap((s) => {
+    if (!['BOOKED', ...AFTER_DEPARTURE].includes(s.status)) return [];
+    const na = new Set((s.docs || []).filter((d) => d.status === 'NA').map((d) => d.key));
+    const departed = AFTER_DEPARTURE.includes(s.status);
+    return requiredDocs(s)
+      .filter((k) => departed || !['BILL_OF_LADING', 'CERT_ORIGIN'].includes(k))
+      .filter((k) => !na.has(k) && !shared.has(k))
+      .map((k) => ({ shipment_id: s.id, shipment_label: s.label || '선적', key: k, label: DOC_LABEL[k] }));
+  });
+}

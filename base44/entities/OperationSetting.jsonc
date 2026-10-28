@@ -72,6 +72,15 @@
     "signature_seal_updated_by": {
       "type": "string",
       "description": "\uc9c1\uc778 \ubcc0\uacbd\uc790"
+    },
+    "client_show_pm": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uace0\uac1d \ud3ec\ud138 \uce74\ub4dc\uc5d0 \ub2f4\ub2f9 PM \uc774\ub984(\uce74\ub4dc \ucc45\uc784\uc790)\uc744 \ubcf4\uc5ec \uc904\uc9c0. \uae30\ubcf8\uc740 \uc228\uae40"
+    },
+    "client_reply_hours": {
+      "type": "string",
+      "description": "\uace0\uac1d \ud654\uba74\uc5d0 \ubcf4\uc77c \ub2f5\ubcc0 \uac00\ub2a5 \uc2dc\uac04 (\uc608: \ud3c9\uc77c 10:00~18:00, \ud55c\uad6d \uc2dc\uac04)"
     }
   },
   "required": [

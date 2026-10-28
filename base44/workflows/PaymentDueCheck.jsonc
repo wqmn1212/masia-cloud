@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "payment_due_check",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "payment_due_check": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkPaymentDue",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\uacb0\uc81c \uae30\ud55c \uc810\uac80",
+            "description": "\uacb0\uc81c \uc694\uccad \uae30\ud55c 3\uc77c \uc804\u00b7\ub2f9\uc77c \uace0\uac1d \uc54c\ub9bc, \uae30\ud55c \uc9c0\ub098\uba74 \uc9c1\uc6d0 \uc54c\ub9bc"
+          }
+        }
+      }
+    ]
+  },
+  "description": "\ub9e4\uc77c 09:40 KST \uacb0\uc81c \uc694\uccad \uae30\ud55c 3\uc77c \uc804\uacfc \ub2f9\uc77c\uc5d0 \uace0\uac1d\uc5d0\uac8c \uc54c\ub9ac\uace0, \uae30\ud55c\uc774 \uc9c0\ub098\ub3c4\ub85d \uc1a1\uae08 \uc54c\ub9bc\uc774 \uc5c6\uc73c\uba74 \uc9c1\uc6d0\uc5d0\uac8c \uc54c\ub9bd\ub2c8\ub2e4",
+  "name": "\uacb0\uc81c \uae30\ud55c \uc810\uac80",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "40 9 * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

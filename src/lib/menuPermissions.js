@@ -38,6 +38,7 @@ const SERVICE_ADMIN_PATHS = ['/admin-inbox', '/team', '/user-permissions', '/mar
 export const CLIENT_MENU_OPTIONS = [
   { path: '/client/dashboard', label: '고객 대시보드', labelKey: 'nav.clientDashboard' },
   { path: '/client/board', label: '소싱 보드', labelKey: 'nav.clientBoard' },
+  { path: '/client/documents', label: '서류함', labelKey: 'nav.clientDocuments' },
   { path: '/client/mold-review', label: '금형 사전 검토', labelKey: 'nav.clientMoldReview' },
   { path: '/client/costs', label: '상품 원가', labelKey: 'nav.clientCosts' },
   { path: '/client/landed-cost', label: '물류비 계산기', labelKey: 'nav.clientLandedCost' },

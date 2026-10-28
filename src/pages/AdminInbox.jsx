@@ -1,14 +1,15 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowUpRight, CheckCircle2, ClipboardCheck, Columns3, FileSignature, Landmark, Loader2, PackageX, RefreshCw, Wallet, Calculator } from 'lucide-react';
+import { AlarmClock, AlertTriangle, ArrowUpRight, CheckCircle2, ClipboardCheck, Columns3, FileSignature, Landmark, Loader2, PackageX, RefreshCw, Wallet, Calculator } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useLanguage } from '@/lib/LanguageContext';
 import { REMITTANCE_FOR_STAGE } from '@/components/files/documentTypes';
-import { paymentQueue, claimQueue, signatureQueue, inboxCounts, daysSince } from '@/lib/adminInbox';
+import { paymentQueue, overdueQueue, claimQueue, signatureQueue, inboxCounts, daysSince } from '@/lib/adminInbox';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import PayeeAccountsPanel from '@/components/payments/PayeeAccountsPanel';
 
 // 관리자 할 일: 대표·팀 관리자(service)와 마스터가 처리하거나 챙겨야 할 일을 한곳에 모은다. 처리는 각 화면에서 한다.
 const STAGE = { DOWN_PAYMENT: ['선금', '首款'], INTERIM_PAYMENT: ['중도금', '中期款'], BALANCE_PAYMENT: ['잔금', '尾款'] };
@@ -24,11 +25,11 @@ function useInbox() {
     queryFn: async () => {
       const stages = await base44.entities.PaymentStage.filter({ approval_status: 'PENDING' }, '-updated_date', 200);
       const receipts = (await Promise.all(Object.values(REMITTANCE_FOR_STAGE).map((t) => base44.entities.CardAttachment.filter({ document_type: t }, '-created_date', 300)))).flat();
-      return paymentQueue(stages, receipts);
+      return { queue: paymentQueue(stages, receipts), overdue: overdueQueue(stages) };
     },
   });
   const claims = useQuery({ queryKey: ['admin-inbox', 'claims'], queryFn: async () => claimQueue(await base44.entities.QualityClaim.filter({}, '-submitted_at', 200)) });
-  const cardIds = useMemo(() => [...new Set([...(payments.data || []), ...(claims.data || [])].map((r) => r.card_id).filter(Boolean))], [payments.data, claims.data]);
+  const cardIds = useMemo(() => [...new Set([...(payments.data?.queue || []), ...(payments.data?.overdue || []), ...(claims.data || [])].map((r) => r.card_id).filter(Boolean))], [payments.data, claims.data]);
   const cards = useQuery({
     queryKey: ['admin-inbox', 'cards', cardIds],
     enabled: cardIds.length > 0,
@@ -81,11 +82,13 @@ export default function AdminInbox() {
   const sigs = signatureQueue(s.signatures);
   const comparisons = s.comparisons?.awaiting_confirm || [];
   const costs = { cards: s.costs?.cards_to_confirm || [], shipments: s.costs?.shipments_missing_actual || [] };
-  const counts = inboxCounts({ accounts: accounts.data || [], payments: payments.data || [], comparisons, signatures: sigs, costs, claims: claims.data || [] });
+  const paymentRows = payments.data?.queue || [];
+  const overdueRows = payments.data?.overdue || [];
+  const counts = inboxCounts({ accounts: accounts.data || [], payments: paymentRows, overdue: overdueRows, comparisons, signatures: sigs, costs, claims: claims.data || [] });
   const canVerify = user?.account_tier === 'master';
   const statusErr = status.isError ? L(['현황을 불러오지 못했습니다.', '无法加载现状。']) : null;
   const tiles = [
-    ['accounts', Landmark, ['공장 계좌', '工厂账户']], ['payments', Wallet, ['입금 확인', '确认到账']], ['comparisons', Columns3, ['고객 선택', '客户选择']],
+    ['accounts', Landmark, ['공장 계좌', '工厂账户']], ['payments', Wallet, ['입금 확인', '确认到账']], ['overdue', AlarmClock, ['결제 기한 지남', '付款逾期']], ['comparisons', Columns3, ['고객 선택', '客户选择']],
     ['signatures', FileSignature, ['전자서명', '电子签名']], ['costs', Calculator, ['도착 원가', '到岸成本']], ['claims', PackageX, ['불량 신고', '不良投诉']],
   ];
   const cardTitle = (id) => cards[id]?.title || L(['(카드)', '(卡片)']);
@@ -101,7 +104,7 @@ export default function AdminInbox() {
         <Button variant="outline" size="sm" className="h-8 gap-1 text-label" onClick={() => qc.invalidateQueries({ queryKey: ['admin-inbox'] })}><RefreshCw className="h-3.5 w-3.5" />{L(['새로 고침', '刷新'])}</Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
         {tiles.map(([key, Icon, label]) => (
           <a key={key} href={`#inbox-${key}`} className="rounded-xl border bg-card p-3 transition-colors hover:border-primary">
             <p className="flex items-center gap-1.5 text-label text-muted-foreground"><Icon className="h-3.5 w-3.5" />{L(label)}</p>
@@ -123,13 +126,25 @@ export default function AdminInbox() {
       </Section>
 
       <Section id="inbox-payments" icon={Wallet} title={L(['입금 확인 대기', '待确认到账'])} count={counts.payments} loading={payments.isLoading} error={payments.isError && L(['불러오지 못했습니다.', '加载失败。'])}
-        desc={L(['입금일이 적혔거나 송금확인증이 올라온 결제 단계입니다. 통장 입금을 확인한 뒤 카드 정산 탭에서 입금 확인을 누르세요.', '已填写到账日期或已上传汇款凭证的付款阶段。核对银行到账后，在卡片结算页点击确认到账。'])}
+        desc={L(['입금일이 적혔거나, 송금확인증이 올라왔거나, 고객이 "송금했어요"를 누른 결제 단계입니다. 통장 입금을 확인한 뒤 카드 정산 탭에서 입금 확인을 누르세요.', '已填写到账日期、已上传汇款凭证或客户点了“已汇款”的付款阶段。核对银行到账后，在卡片结算页点击确认到账。'])}
         empty={L(['확인할 입금이 없습니다.', '没有需要确认的到账。'])}>
-        {(payments.data || []).map((p) => (
+        {paymentRows.map((p) => (
           <Row key={p.id} title={`${cardTitle(p.card_id)} · ${L(STAGE[p.stage_type] || ['결제', '付款'])} ${p.percentage ?? ''}%`}
-            meta={[p.amount ? `${p.currency || ''} ${Number(p.amount).toLocaleString('ko-KR')}` : '', p.paid_date ? `${L(['입금일', '到账日'])} ${p.paid_date}` : '', p.has_receipt ? L(['송금확인증 있음', '有汇款凭证']) : ''].filter(Boolean).join(' · ')}
+            badge={p.reported ? <Badge className="border-0 bg-primary/10 text-micro text-primary">{L(['고객 송금 알림', '客户已告知汇款'])}</Badge> : null}
+            meta={[p.amount ? `${p.currency || ''} ${Number(p.amount).toLocaleString('ko-KR')}` : '', p.paid_date ? `${L(['입금일', '到账日'])} ${p.paid_date}` : '', p.reported ? `${L(['고객이 적은 송금일', '客户填写的汇款日'])} ${p.client_reported_paid_date || ''}${p.client_reported_by_name ? ` (${p.client_reported_by_name})` : ''}` : '', p.has_receipt ? L(['송금확인증 있음', '有汇款凭证']) : ''].filter(Boolean).join(' · ')}
             warn={!p.has_receipt && REMITTANCE_FOR_STAGE[p.stage_type] ? L(['송금확인증이 없습니다. 고객에게 요청하거나 통장 내역으로 확인하세요.', '没有汇款凭证。请向客户索取，或以银行流水核对。']) : null}
             to={cardLink(p.card_id, 'settlement')} action={L(['입금 확인', '确认到账'])} />
+        ))}
+      </Section>
+
+      <Section id="inbox-overdue" icon={AlarmClock} title={L(['결제 기한 지남', '付款逾期'])} count={counts.overdue} loading={payments.isLoading} error={payments.isError && L(['불러오지 못했습니다.', '加载失败。'])}
+        desc={L(['결제 요청을 보냈는데 기한이 지나도록 고객이 송금했다고 알리지 않은 단계입니다. 고객에게 연락하거나 기한을 고쳐 다시 보내세요.', '已发送付款请求但超过期限客户仍未告知汇款的阶段。请联系客户，或修改期限后重新发送。'])}
+        empty={L(['기한이 지난 결제 요청이 없습니다.', '没有逾期的付款请求。'])}>
+        {overdueRows.map((p) => (
+          <Row key={p.id} title={`${cardTitle(p.card_id)} · ${L(STAGE[p.stage_type] || ['결제', '付款'])} ${p.percentage ?? ''}%`}
+            badge={<Badge variant="outline" className="border-warning/40 text-micro text-warning-text">{L([`${-p.left}일 지남`, `逾期 ${-p.left} 天`])}</Badge>}
+            meta={[p.amount ? `${p.currency || ''} ${Number(p.amount).toLocaleString('ko-KR')}` : '', `${L(['기한', '期限'])} ${p.due_date}`, p.requested_by_name ? `${L(['요청', '请求'])} ${p.requested_by_name}` : ''].filter(Boolean).join(' · ')}
+            to={cardLink(p.card_id, 'settlement')} action={L(['결제 요청 보기', '查看付款请求'])} />
         ))}
       </Section>
 
@@ -181,6 +196,8 @@ export default function AdminInbox() {
             to={cardLink(c.card_id, 'tasks')} action={L(['처리하기', '去处理'])} />
         ))}
       </Section>
+
+      {user && <PayeeAccountsPanel user={user} />}
     </div>
   );
 }

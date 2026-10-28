@@ -1,22 +1,64 @@
-import React from 'react';
-import { AlertTriangle, CheckCircle2, Landmark } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertTriangle, CheckCircle2, Copy, Landmark, Send, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 import DocChips from '@/components/files/DocChips';
 import { REMITTANCE_FOR_STAGE } from '@/components/files/documentTypes';
+import ClientPaymentReportDialog from './ClientPaymentReportDialog';
+import { shortDate, dday, money, kstToday } from './clientFormat';
 
 const STAGE_LABEL = {
   DOWN_PAYMENT: '선금',
   INTERIM_PAYMENT: '중도금',
   BALANCE_PAYMENT: '잔금',
 };
+const daysLeft = (ymd) => (ymd ? Math.round((Date.parse(ymd) - Date.parse(kstToday())) / 86400000) : null);
 
-const STATUS_META = {
-  PENDING: { label: '확인 대기', cls: 'bg-muted text-muted-foreground' },
-  APPROVED: { label: '입금 확인', cls: 'bg-primary/15 text-primary' },
-  REJECTED: { label: '보류', cls: 'bg-destructive/15 text-destructive' },
-};
+// 결제 요청 상태 (서버 base44/shared/paymentRequest.ts 의 request_state)
+function StateBadge({ s }) {
+  if (s.request_state === 'PAID') return <Badge className="border-0 bg-primary/15 text-primary">입금 확인</Badge>;
+  if (s.request_state === 'REPORTED') return <Badge className="border-0 bg-primary/10 text-primary">송금 확인 중</Badge>;
+  if (s.request_state === 'REQUESTED') {
+    const left = daysLeft(s.due_date);
+    return <Badge className={cn('border-0', left != null && left <= 3 ? 'bg-warning/15 text-warning-text' : 'bg-primary text-primary-foreground')}>결제 요청{left != null ? ` · ${dday(left)}` : ''}</Badge>;
+  }
+  return <Badge className="border-0 bg-muted text-muted-foreground">요청 전</Badge>;
+}
 
-const fmtMoney = (amount, currency) => `${currency || ''} ${Number(amount).toLocaleString('ko-KR')}`.trim();
+function CopyRow({ label, value, mono }) {
+  if (!value) return null;
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(value); toast({ title: `${label}를 복사했습니다` }); } catch { toast({ title: '복사하지 못했습니다. 직접 선택해 주세요.', variant: 'destructive' }); }
+  };
+  return (
+    <>
+      <dt className="pt-1 text-muted-foreground">{label}</dt>
+      <dd className="flex min-w-0 items-start gap-1">
+        <span className={cn('min-w-0 break-all pt-1', mono && 'font-mono')}>{value}</span>
+        <button type="button" onClick={copy} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label={`${label} 복사`}><Copy className="h-3.5 w-3.5" /></button>
+      </dd>
+    </>
+  );
+}
+
+// 이지스 받는 계좌 (마스터가 등록한 계좌만 서버가 보낸다)
+function AegisAccountBox({ a }) {
+  return (
+    <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-3">
+      <p className="flex items-center gap-1.5 text-label font-semibold"><Landmark className="h-4 w-4 text-primary" />{a.label || '이지스 받는 계좌'} <span className="font-normal text-muted-foreground">({a.currency})</span></p>
+      <dl className="grid grid-cols-[72px_minmax(0,1fr)] gap-x-2 text-label">
+        <CopyRow label="예금주" value={a.account_holder} />
+        <CopyRow label="은행" value={a.bank_name} />
+        <CopyRow label="계좌" value={a.account_no} mono />
+        <CopyRow label="SWIFT" value={a.swift_code} mono />
+        <CopyRow label="은행 주소" value={a.bank_address} />
+      </dl>
+      {a.note && <p className="text-caption text-muted-foreground">{a.note}</p>}
+    </div>
+  );
+}
 
 // 고객이 공장에 직접 송금하는 프로젝트: 이지스가 공장에 직접 확인한 계좌만 보여 준다
 function FactoryPaymentBox({ payment }) {
@@ -48,7 +90,42 @@ function FactoryPaymentBox({ payment }) {
   );
 }
 
-export default function ClientSettlementPanel({ stages, factoryPayment, receipts = [] }) {
+function StageCard({ s, receipts, factoryPayment, canReport, onReport }) {
+  const open = s.request_state === 'REQUESTED' || s.request_state === 'REPORTED';
+  const mine = receipts.filter((r) => r.document_type === REMITTANCE_FOR_STAGE[s.stage_type]);
+  return (
+    <div className={cn('space-y-2.5 rounded-xl border p-3', s.request_state === 'REQUESTED' && 'border-primary/40')}>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="text-body font-semibold">{STAGE_LABEL[s.stage_type] || s.stage_type}</span>
+        <span className="text-label text-muted-foreground tabular-nums">{s.percentage}%{s.amount != null ? ` · ${money(s.amount, s.currency)}` : ''}</span>
+        <span className="ml-auto"><StateBadge s={s} /></span>
+      </div>
+      {s.request_state === 'PAID' && s.paid_date && <p className="text-caption text-muted-foreground">입금일 {s.paid_date}</p>}
+      {open && (
+        <>
+          <p className="text-label">결제 기한 <span className="font-semibold tabular-nums">{shortDate(s.due_date)}</span></p>
+          {s.payee === 'FACTORY' ? (factoryPayment ? <FactoryPaymentBox payment={factoryPayment} /> : null)
+            : s.payee_account ? <AegisAccountBox a={s.payee_account} />
+              : <p className="rounded-xl border p-3 text-caption text-muted-foreground">받는 계좌를 다시 확인하고 있습니다. 계좌가 여기에 보이기 전에는 송금하지 말고 담당자에게 문의해 주세요.</p>}
+          {s.request_note && <p className="rounded-lg bg-muted/50 px-3 py-2 text-label">담당자 메모: {s.request_note}</p>}
+        </>
+      )}
+      {s.request_state === 'REPORTED' && (
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-muted-foreground">
+          <ShieldCheck className="h-3.5 w-3.5 text-primary" />{shortDate(s.reported_paid_date)} 송금 · {s.reported_by_name}님이 알림. 이지스가 통장 입금을 확인하면 '입금 확인'으로 바뀝니다.
+          {canReport && <button type="button" className="font-medium text-primary underline-offset-2 hover:underline" onClick={() => onReport(s)}>송금 정보 고치기</button>}
+        </p>
+      )}
+      {mine.length > 0 && <div className="flex flex-wrap items-center gap-1.5 text-caption text-muted-foreground">송금확인증<DocChips docs={mine} max={2} /></div>}
+      {s.request_state === 'REQUESTED' && canReport && (
+        <Button type="button" size="sm" className="h-8 gap-1.5" onClick={() => onReport(s)}><Send className="h-3.5 w-3.5" />송금했어요</Button>
+      )}
+    </div>
+  );
+}
+
+export default function ClientSettlementPanel({ cardId, stages, factoryPayment, receipts = [], canReport = false }) {
+  const [reporting, setReporting] = useState(null);
   if (stages.length === 0) {
     return (
       <div className="space-y-3">
@@ -60,6 +137,7 @@ export default function ClientSettlementPanel({ stages, factoryPayment, receipts
   const collected = stages
     .filter((s) => s.approval_status === 'APPROVED')
     .reduce((sum, s) => sum + s.percentage, 0);
+  const anyFactoryRequest = stages.some((s) => s.payee === 'FACTORY' && (s.request_state === 'REQUESTED' || s.request_state === 'REPORTED'));
 
   return (
     <div className="space-y-3">
@@ -71,22 +149,14 @@ export default function ClientSettlementPanel({ stages, factoryPayment, receipts
         </div>
       </div>
       <div className="space-y-2">
-        {stages.map((s) => {
-          const m = STATUS_META[s.approval_status] || STATUS_META.PENDING;
-          return (
-            <div key={s.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border rounded-lg px-3 py-2.5">
-              <span className="text-sm font-medium">{STAGE_LABEL[s.stage_type] || s.stage_type}</span>
-              <span className="text-sm text-muted-foreground">{s.percentage}%{s.amount ? ` · ${fmtMoney(s.amount, s.currency)}` : ''}{s.paid_date ? ` · 입금일 ${s.paid_date}` : ''}</span>
-              <Badge className={`${m.cls} border-0 ml-auto`}>{m.label}</Badge>
-              {receipts.some((r) => r.document_type === REMITTANCE_FOR_STAGE[s.stage_type]) && (
-                <div className="flex w-full flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">송금확인증<DocChips docs={receipts.filter((r) => r.document_type === REMITTANCE_FOR_STAGE[s.stage_type])} max={2} /></div>
-              )}
-            </div>
-          );
-        })}
+        {stages.map((s) => <StageCard key={s.id} s={s} receipts={receipts} factoryPayment={factoryPayment} canReport={canReport} onReport={setReporting} />)}
       </div>
-      {factoryPayment && <FactoryPaymentBox payment={factoryPayment} />}
-      <p className="text-[11px] text-muted-foreground">* 금액 상세는 발행된 견적서 PDF 를 확인해 주세요.</p>
+      {factoryPayment && !anyFactoryRequest && <FactoryPaymentBox payment={factoryPayment} />}
+      <p className="flex gap-1.5 rounded-lg border border-warning/40 bg-warning/10 p-2.5 text-caption text-warning-text">
+        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />계좌가 바뀌었다는 연락은 이 화면에서만 확인해 주세요. 메일·메신저로 받은 계좌로는 송금하지 말고 담당자에게 먼저 알려 주세요.
+      </p>
+      <p className="text-[11px] text-muted-foreground">* 결제 요청이 오기 전 금액은 발행된 견적서 PDF의 결제 조건을 참고해 주세요.</p>
+      <ClientPaymentReportDialog cardId={cardId} stage={reporting} onClose={() => setReporting(null)} />
     </div>
   );
 }

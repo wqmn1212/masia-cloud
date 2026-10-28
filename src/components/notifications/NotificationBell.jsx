@@ -1,13 +1,15 @@
-import React from 'react';
-import { Bell, CheckCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, CheckCheck, Settings2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import NotificationItem from './NotificationItem';
+import NotificationPrefsDialog from './NotificationPrefsDialog';
 
 export default function NotificationBell({ user }) {
   const qc = useQueryClient();
+  const [prefsOpen, setPrefsOpen] = useState(false);
 
   const { data: items = [] } = useQuery({
     queryKey: ['notifications', user?.id],
@@ -40,15 +42,23 @@ export default function NotificationBell({ user }) {
       <PopoverContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between px-3 py-2 border-b">
           <span className="text-sm font-semibold">알림</span>
-          {unread.length > 0 && (
-            <button
-              type="button"
-              onClick={() => markRead.mutate(unread.map((n) => n.id))}
-              className="text-xs text-primary hover:underline inline-flex items-center gap-1"
-            >
-              <CheckCheck className="w-3 h-3" />모두 읽음
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {unread.length > 0 && (
+              <button
+                type="button"
+                onClick={() => markRead.mutate(unread.map((n) => n.id))}
+                className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+              >
+                <CheckCheck className="w-3 h-3" />모두 읽음
+              </button>
+            )}
+            {/* 고객 계정: 받을 메일 고르기 */}
+            {user.account_tier === 'client' && (
+              <button type="button" onClick={() => setPrefsOpen(true)} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+                <Settings2 className="w-3 h-3" />메일 설정
+              </button>
+            )}
+          </div>
         </div>
         <div className="max-h-[380px] overflow-y-auto divide-y">
           {items.length === 0 ? (
@@ -60,6 +70,7 @@ export default function NotificationBell({ user }) {
           )}
         </div>
       </PopoverContent>
+      {user.account_tier === 'client' && <NotificationPrefsDialog open={prefsOpen} onOpenChange={setPrefsOpen} />}
     </Popover>
   );
 }
