@@ -12,6 +12,11 @@ export default function ServiceGuide() {
   const content = serviceGuideContent[lang] || serviceGuideContent.ko;
   const { data: user } = useQuery({ queryKey: ['current-user'], queryFn: () => base44.auth.me() });
   const [active, setActive] = useState(content.steps[0].id);
+  // 이용 가이드 등에서 /service-guide#guide-<id> 로 들어오면 그 단계로 내려간다
+  useEffect(() => {
+    const id = window.location.hash.slice(1);
+    if (id) requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: 'start' }));
+  }, []);
   useEffect(() => {
     let frame = 0;
     const update = () => {
