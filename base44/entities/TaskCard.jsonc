@@ -315,6 +315,15 @@
     },
     "import_req_updated_at": {
       "type": "string"
+    },
+    "quote_deadline_client_visible": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uacac\uc801 \ub9c8\uac10\uc77c(quote_deadline)\uc744 \uace0\uac1d \uc18c\uc2f1 \uc9c4\ud589\ub960\uc5d0 \ubcf4\uc5ec \uc904\uc9c0"
+    },
+    "inquiry_details": {
+      "type": "object",
+      "description": "\uace0\uac1d \ubb38\uc758 \uc591\uc2dd \ub2f5 {categories, quantity, target_price, desired_date, destination, certifications[], sample, spec_answers{\uc9c8\ubb38:\ub2f5}, landed_estimate}"
     }
   },
   "required": [

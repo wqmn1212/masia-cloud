@@ -9,8 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import FileDropArea from '@/components/files/FileDropArea';
+import { INQUIRY_CATEGORIES as CATEGORIES, SPEC_QUESTIONS, CERT_OPTIONS, SAMPLE_OPTIONS } from '@/lib/inquiryForm';
 
-const CATEGORIES = ['기계설비', '정밀가공', '전자 · 전기', '뷰티 · 의료', '리빙 · 공구', '굿즈 · 조형', '기타'];
+const kstToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+const chip = (active) => `px-2.5 py-1 rounded-full text-xs border transition-colors ${active ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted border-border'}`;
 const MAX_FILES = 5;
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
@@ -35,6 +37,14 @@ export default function NewInquiryDialog({ open, onClose, initialTitle = '', ini
   const [targetPrice, setTargetPrice] = useState('');
   const [detail, setDetail] = useState('');
   const [files, setFiles] = useState([]);
+  // 카테고리별 사양 질문 답 · 희망 입고일 · 도착지 · 필요한 인증 · 샘플
+  const [answers, setAnswers] = useState({});
+  const [desiredDate, setDesiredDate] = useState('');
+  const [destination, setDestination] = useState('');
+  const [certs, setCerts] = useState([]);
+  const [sample, setSample] = useState('');
+  const questions = [...new Set(categories.flatMap((c) => SPEC_QUESTIONS[c] || []))];
+  const missing = questions.filter((q) => !String(answers[q] || '').trim());
 
   // 다른 화면(물류비 계산기 등)에서 내용을 채워 열 때
   useEffect(() => {
@@ -50,6 +60,7 @@ export default function NewInquiryDialog({ open, onClose, initialTitle = '', ini
     setTargetPrice('');
     setDetail('');
     setFiles([]);
+    setAnswers({}); setDesiredDate(''); setDestination(''); setCerts([]); setSample('');
   };
 
   const toggleCategory = (c) =>
@@ -80,6 +91,11 @@ export default function NewInquiryDialog({ open, onClose, initialTitle = '', ini
         quantity,
         target_price: targetPrice,
         detail,
+        spec_answers: Object.fromEntries(questions.map((q) => [q, answers[q] || ''])),
+        desired_date: desiredDate,
+        destination,
+        certifications: certs,
+        sample,
         attachments,
       });
       if (res.data?.error) throw new Error(res.data.error);
@@ -94,7 +110,7 @@ export default function NewInquiryDialog({ open, onClose, initialTitle = '', ini
     onError: (err) => toast({ title: '접수 실패', description: err.message, variant: 'destructive' }),
   });
 
-  const canSubmit = title.trim() && detail.trim() && !submit.isPending;
+  const canSubmit = title.trim() && detail.trim() && !missing.length && !submit.isPending;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) { reset(); onClose(); } }}>
@@ -119,9 +135,7 @@ export default function NewInquiryDialog({ open, onClose, initialTitle = '', ini
                     key={c}
                     type="button"
                     onClick={() => toggleCategory(c)}
-                    className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
-                      active ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted border-border'
-                    }`}
+                    className={chip(active)}
                   >
                     {c}
                   </button>
@@ -129,6 +143,20 @@ export default function NewInquiryDialog({ open, onClose, initialTitle = '', ini
               })}
             </div>
           </div>
+
+          {questions.length > 0 && (
+            <div className="space-y-2 rounded-lg border border-dashed p-3">
+              <p className="text-xs font-medium">견적에 꼭 필요한 사양 <span className="font-normal text-muted-foreground">· 모르시면 '모름'이라고 적어 주세요</span></p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {questions.map((q) => (
+                  <div key={q} className="space-y-1">
+                    <Label className="text-xs">{q} *</Label>
+                    <Input value={answers[q] || ''} maxLength={300} onChange={(e) => setAnswers((a) => ({ ...a, [q]: e.target.value }))} className="h-8 text-sm" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -141,13 +169,40 @@ export default function NewInquiryDialog({ open, onClose, initialTitle = '', ini
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>희망 입고일</Label>
+              <Input type="date" min={kstToday()} value={desiredDate} onChange={(e) => setDesiredDate(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>도착지</Label>
+              <Input value={destination} maxLength={200} onChange={(e) => setDestination(e.target.value)} placeholder="예: 경기 김포 물류창고" />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>필요한 인증 (아는 것만)</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {CERT_OPTIONS.map(([k, label]) => (
+                <button key={k} type="button" onClick={() => setCerts((x) => (x.includes(k) ? x.filter((y) => y !== k) : [...x, k]))} className={chip(certs.includes(k))}>{label}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>샘플</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(SAMPLE_OPTIONS).map(([k, label]) => <button key={k} type="button" onClick={() => setSample((x) => (x === k ? '' : k))} className={chip(sample === k)}>{label}</button>)}
+            </div>
+          </div>
+
           <div className="space-y-1.5">
             <Label>요구사항 상세 *</Label>
             <Textarea
               rows={5}
               value={detail}
               onChange={(e) => setDetail(e.target.value)}
-              placeholder="사양, 마감, 납기, 인증 등 요구사항을 자세히 적어주시면 정확한 견적이 가능합니다."
+              placeholder="위에 없는 사양·마감·포장 등을 자세히 적어 주시면 정확한 견적이 가능합니다. 물류비 계산기 결과를 붙여 넣으셔도 됩니다."
             />
           </div>
 
@@ -182,7 +237,8 @@ export default function NewInquiryDialog({ open, onClose, initialTitle = '', ini
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="items-center gap-2">
+          {missing.length > 0 && <p className="mr-auto text-xs text-muted-foreground">사양 {missing.length}개에 답해 주세요</p>}
           <Button variant="outline" onClick={() => { reset(); onClose(); }}>취소</Button>
           <Button disabled={!canSubmit} onClick={() => submit.mutate()}>
             {submit.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}

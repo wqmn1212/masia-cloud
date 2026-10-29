@@ -9,7 +9,7 @@ import ClientExportButton from './ClientExportButton';
 import ClientArrivalCalendar from './ClientArrivalCalendar';
 import { shortDate, dday } from './clientFormat';
 
-// 주문 현황판: 진행 중인 프로젝트를 한 줄씩 — 지금 단계 · 다음 일정 · 누구 차례인지 · 일정 상태 · 도착 예정 · 입금.
+// 주문 현황판: 진행 중인 프로젝트를 한 줄씩 — 지금 단계(소싱 중이면 진행률) · 다음 일정 · 누구 차례인지 · 일정 상태 · 도착 예정 · 입금.
 // 요약과 순서는 서버(listClientTodos → base44/shared/clientSummary.ts)가 정한다. 지연 일수는 보여 주지 않는다.
 const TURN = {
   CLIENT: { label: '고객님', cls: 'bg-primary text-primary-foreground' },
@@ -35,6 +35,17 @@ function Cell({ label, children }) {
 }
 
 const Dash = () => <span className="text-label text-muted-foreground">—</span>;
+
+// 소싱 진행률: 요구사항 확인 → 공장 후보 → 견적 받음 → 비교표 준비 (숫자만, 공장 이름 없음)
+function SourcingSteps({ sp }) {
+  const text = `${sp.steps.filter((x) => x.done && x.key !== 'req').map((x) => x.label).join(' · ') || '요구사항 확인'}${sp.at >= 0 ? ` → ${sp.steps[sp.at].label}` : ''}${sp.due ? ` (${shortDate(sp.due)} 예정)` : ''}`;
+  return (
+    <div className="mt-1 space-y-0.5">
+      <div className="flex gap-0.5" aria-hidden="true">{sp.steps.map((x, i) => <span key={x.key} className={cn('h-1 flex-1 rounded-full', x.done ? 'bg-primary' : i === sp.at ? 'bg-primary/40' : 'bg-muted')} />)}</div>
+      <p className="truncate text-caption text-muted-foreground" title={text}>{text}</p>
+    </div>
+  );
+}
 
 function PaidBar({ percent }) {
   return (
@@ -63,6 +74,7 @@ function OrderRow({ card, s, onOpen }) {
           {s.next_label
             ? <p className="truncate text-caption text-muted-foreground">다음 {s.next_label}{s.next_date ? ` · ${shortDate(s.next_date)}` : ''}</p>
             : card.due_date ? <p className="truncate text-caption text-muted-foreground">목표일 {shortDate(card.due_date)}</p> : null}
+          {s.sourcing && <SourcingSteps sp={s.sourcing} />}
         </Cell>
         <Cell label="차례">
           <Badge className={cn('border-0', turn.cls)}>{turn.label}</Badge>

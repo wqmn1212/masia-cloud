@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import ClientReorderDialog from '@/components/client/ClientReorderDialog';
 import { fmtWon, groupByProduct } from '@/lib/orderCost';
+import ProductPlanBox from '@/components/client/productcost/ProductPlanBox';
+import ProductQualityBox, { useQuality, QualityLine } from '@/components/client/productcost/ProductQualityBox';
 
 const won = fmtWon;
 const signed = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${fmtWon(Math.abs(v))}`;
@@ -54,8 +56,12 @@ function ChangeLine({ label, value }) {
   return <div className="flex justify-between gap-3 text-label"><dt className="text-muted-foreground">{label}</dt><dd className="tabular-nums">{value > 0 ? '▲' : '▼'} {signed(value)}</dd></div>;
 }
 
-function ProductCard({ g, onReorder, canReorder }) {
+// 상품의 발주→도착 평균 일수 (기록이 있는 주문만)
+const avgLead = (orders) => { const l = orders.map((o) => o.lead_days).filter((d) => d > 0); return l.length ? Math.round(l.reduce((a, b) => a + b, 0) / l.length) : 0; };
+
+function ProductCard({ g, onReorder, canReorder, ctx }) {
   const [open, setOpen] = useState(false);
+  const quality = useQuality(g.orders);
   const r = g.latest;
   const ch = g.change;
   const unit = g.unit_label;
@@ -98,9 +104,12 @@ function ProductCard({ g, onReorder, canReorder }) {
         </div>
       )}
 
+      <QualityLine sum={quality.sum} />
+      <ProductPlanBox productKey={g.key} unit={unit} plan={ctx.plans.find((p) => p.product_key === g.key)} leadDays={avgLead(g.orders)} today={ctx.today} holidays={ctx.holidays} canEdit={canReorder} />
+
       <div className="flex flex-wrap gap-1.5">
         <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-label" onClick={() => setOpen((v) => !v)}>{open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}{open ? '접기' : '원가 내역·주문별 보기'}</Button>
-        {canReorder && r.reorder_card && <Button size="sm" variant="outline" className="ml-auto h-7 gap-1 text-label" onClick={() => onReorder(r.reorder_card)}><Repeat className="h-3 w-3" />재주문</Button>}
+        {canReorder && r.reorder_card && <Button size="sm" variant="outline" className="ml-auto h-7 gap-1 text-label" onClick={() => onReorder({ card: r.reorder_card, forecast: { orders: g.orders, krwPerNow: ctx.krwPerNow, today: ctx.today, holidays: ctx.holidays, unit } })}><Repeat className="h-3 w-3" />재주문 · 예상 보기</Button>}
       </div>
 
       {open && (
@@ -124,6 +133,10 @@ function ProductCard({ g, onReorder, canReorder }) {
             {oneTime.length > 0 && <p className="mt-1 text-caption text-muted-foreground">일회성 비용(개당 원가에서 뺌): {oneTime.map((l) => `${l.label} ${won(l.amount_krw)}`).join(', ')}</p>}
             {r.vat_krw > 0 && <p className="mt-1 text-caption text-muted-foreground">수입 부가세 {won(r.vat_krw)}는 매입세액 공제 대상이라 원가에서 뺐습니다.</p>}
             {r.client_note && <p className="mt-2 rounded-md border-l-2 border-primary bg-primary/5 px-2 py-1 text-label">{r.client_note}</p>}
+          </div>
+          <div>
+            <p className="mb-1 text-caption font-medium">품질 이력</p>
+            <ProductQualityBox rows={quality.rows} />
           </div>
           {g.orders.length > 1 && (
             <div className="overflow-x-auto">
@@ -158,12 +171,13 @@ export default function ClientProductCosts() {
     queryFn: async () => (await base44.functions.invoke('getClientLandedCosts', withClientView())).data,
   });
   const groups = useMemo(() => groupByProduct(data?.records || []), [data]);
+  const ctx = { plans: data?.plans || [], today: data?.today || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }), holidays: data?.holidays || [], krwPerNow: data?.krw_per_now || {} };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">상품 원가</h1>
-        <p className="mt-1 text-body text-muted-foreground">주문이 끝나면 실제로 낸 상품 대금(입금일 환율)과 물류·통관·관세를 더해 개당 한국 도착 원가를 확정해 드립니다. 직전 주문보다 왜 오르거나 내렸는지도 함께 보여 드립니다.</p>
+        <p className="mt-1 text-body text-muted-foreground">주문이 끝나면 실제로 낸 상품 대금(입금일 환율)과 물류·통관·관세를 더해 개당 한국 도착 원가를 확정해 드립니다. 직전 주문보다 왜 오르거나 내렸는지, 주문별 검수·불량 이력, 재주문 예상 단가와 도착일도 함께 보여 드립니다.</p>
       </div>
       {isLoading ? <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         : isError ? <p className="text-body text-destructive">상품 원가를 불러오지 못했습니다.</p>
@@ -171,11 +185,11 @@ export default function ClientProductCosts() {
           <Card className="p-12 text-center"><PackageSearch className="mx-auto h-10 w-10 text-muted-foreground/40" /><p className="mt-3 font-semibold">아직 확정된 원가가 없습니다</p><p className="mt-1 text-body text-muted-foreground">주문한 물건이 한국에 도착하고 비용 정산이 끝나면 담당자가 이곳에 원가를 올려 드립니다.</p></Card>
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
-            {groups.map((g) => <ProductCard key={g.key} g={g} canReorder={user?.account_tier === 'client'} onReorder={setReorder} />)}
+            {groups.map((g) => <ProductCard key={g.key} g={g} ctx={ctx} canReorder={user?.account_tier === 'client'} onReorder={setReorder} />)}
           </div>
         )}
       <p className="text-caption text-muted-foreground">부가세 제외 금액입니다. 원가 관리를 돕는 참고 자료이며 회계 장부나 세무 신고 자료를 대신하지 않습니다.</p>
-      {reorder && <ClientReorderDialog open={!!reorder} onOpenChange={(o) => !o && setReorder(null)} card={reorder} onOpenCard={(id) => navigate(`/client/board?card=${id}`)} />}
+      {reorder && <ClientReorderDialog open={!!reorder} onOpenChange={(o) => !o && setReorder(null)} card={reorder.card} forecast={reorder.forecast} onOpenCard={(id) => navigate(`/client/board?card=${id}`)} />}
     </div>
   );
 }

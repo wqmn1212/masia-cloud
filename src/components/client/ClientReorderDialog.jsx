@@ -8,9 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
+import ReorderForecastPanel from '@/components/client/productcost/ReorderForecastPanel';
 
 // 고객 재주문 요청: 지난 프로젝트의 도면·품질 기준·공장 정보를 그대로 가져와 새 프로젝트로 접수한다.
-export default function ClientReorderDialog({ open, onOpenChange, card, onOpenCard }) {
+// forecast(상품 원가 화면에서 열 때)가 있으면 수량을 넣는 대로 예상 단가 범위와 도착 예정을 보여 준다.
+export default function ClientReorderDialog({ open, onOpenChange, card, onOpenCard, forecast = null }) {
   const qc = useQueryClient();
   const [f, setF] = useState({ quantity: '', target_date: '', changes: '' });
   const [sending, setSending] = useState(false);
@@ -50,6 +52,7 @@ export default function ClientReorderDialog({ open, onOpenChange, card, onOpenCa
             <div><Label className="text-xs">수량</Label><Input value={f.quantity} maxLength={200} placeholder="예: 5,000개 (지난번 3,000개)" onChange={(e) => set('quantity', e.target.value)} /></div>
             <div><Label className="text-xs">희망 입고일 (선택)</Label><Input type="date" value={f.target_date} onChange={(e) => set('target_date', e.target.value)} /></div>
             <div><Label className="text-xs">바뀌는 점 (선택)</Label><Textarea rows={3} maxLength={3000} value={f.changes} placeholder="예: 색상 1종 추가(민트), 단상자 문구 변경. 바뀌는 게 없으면 비워 두세요." onChange={(e) => set('changes', e.target.value)} /></div>
+            <ReorderForecastPanel input={forecast} quantityText={f.quantity} />
             <p className="rounded-md bg-muted/60 p-2 text-[11px] text-muted-foreground">단가와 납기는 원자재 가격·공장 일정에 따라 지난번과 달라질 수 있어, 담당자가 확인 후 새 견적으로 안내드립니다.</p>
           </div>
         )}

@@ -5,7 +5,7 @@ import { AlarmClock, AlertTriangle, ArrowUpRight, CheckCircle2, ClipboardCheck, 
 import { base44 } from '@/api/base44Client';
 import { useLanguage } from '@/lib/LanguageContext';
 import { REMITTANCE_FOR_STAGE } from '@/components/files/documentTypes';
-import { paymentQueue, overdueQueue, claimQueue, signatureQueue, inboxCounts, daysSince } from '@/lib/adminInbox';
+import { paymentQueue, overdueQueue, claimQueue, signatureQueue, inboxCounts, daysSince, OPEN_CLAIM } from '@/lib/adminInbox';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -186,13 +186,13 @@ export default function AdminInbox() {
       </Section>
 
       <Section id="inbox-claims" icon={PackageX} title={L(['처리 중인 불량 신고', '处理中的不良投诉'])} count={counts.claims} loading={claims.isLoading} error={claims.isError && L(['불러오지 못했습니다.', '加载失败。'])}
-        desc={L(['고객이 포털 검수 탭에서 신고한 불량입니다. 접수 후 2일 넘게 그대로인 건이 위에 옵니다.', '客户在门户检验页提交的不良投诉。受理后超过 2 天仍未处理的排在前面。'])}
+        desc={L(['고객이 포털 검수 탭에서 신고한 불량과, 다음 주문에 아직 반영하지 않은 보상 약속입니다. 공장 회신 3영업일이 지난 건, 접수 후 2일 넘게 그대로인 건이 위에 옵니다.', '客户在门户检验页提交的不良投诉，以及尚未在下次订单中兑现的补偿承诺。工厂超过 3 个工作日未回复、受理后超过 2 天仍未处理的排在前面。'])}
         empty={L(['처리 중인 불량 신고가 없습니다.', '没有处理中的不良投诉。'])}>
         {(claims.data || []).map((c) => (
           <Row key={c.id} title={`${cardTitle(c.card_id)} · ${c.title}`}
-            badge={<Badge variant="outline" className={`text-micro ${c.stale ? 'border-warning/40 text-warning-text' : ''}`}>{L(CLAIM[c.status])}</Badge>}
-            meta={`${c.submitted_by_name || ''}${c.age != null ? ` · ${ago(c.age)} ${L(['접수', '受理'])}` : ''}${c.defect_qty != null ? ` · ${L(['불량', '不良'])} ${c.defect_qty}${c.received_qty ? `/${c.received_qty}` : ''}` : ''}`}
-            warn={c.stale ? L(['접수 후 2일 넘게 확인하지 않았습니다.', '受理后超过 2 天未确认。']) : null}
+            badge={<Badge variant="outline" className={`text-micro ${c.stale || c.factory_overdue ? 'border-warning/40 text-warning-text' : ''}`}>{c.promise && !OPEN_CLAIM.includes(c.status) ? L(['보상 미반영', '补偿未兑现']) : L(CLAIM[c.status])}</Badge>}
+            meta={`${c.submitted_by_name || ''}${c.age != null ? ` · ${ago(c.age)} ${L(['접수', '受理'])}` : ''}${c.defect_qty != null ? ` · ${L(['불량', '不良'])} ${c.defect_qty}${c.received_qty ? `/${c.received_qty}` : ''}` : ''}${c.wait ? ` · ${L(['공장 회신 대기', '等待工厂回复'])} ${c.wait.business}${L(['영업일', '个工作日'])}` : ''}`}
+            warn={c.factory_overdue ? L(['공장 회신 기한(3영업일)이 지났습니다. 공장에 독촉하고 회신을 기록하세요.', '已超过工厂回复期限（3 个工作日），请催促工厂并记录回复。']) : c.stale ? L(['접수 후 2일 넘게 확인하지 않았습니다.', '受理后超过 2 天未确认。']) : c.promise && !OPEN_CLAIM.includes(c.status) ? L(['약속한 보상을 다음 주문에 반영했는지 기록하세요.', '请记录承诺的补偿是否已在下次订单中兑现。']) : null}
             to={cardLink(c.card_id, 'tasks')} action={L(['처리하기', '去处理'])} />
         ))}
       </Section>

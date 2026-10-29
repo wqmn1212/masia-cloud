@@ -7,6 +7,24 @@ import ScheduleFields from '@/components/taskcard/ScheduleFields';
 import CollaborationHistory from '@/components/taskcard/CollaborationHistory';
 import HolidayConflictPanel from '@/components/taskcard/HolidayConflictPanel';
 import { useToast } from '@/components/ui/use-toast';
+import { Switch } from '@/components/ui/switch';
+
+// 견적 마감일을 고객 소싱 진행률에 '비교표 예정일'로 보여 줄지 (기본은 숨김)
+function QuoteDeadlineVisibility({ card, allowed }) {
+  const qc = useQueryClient(), { toast } = useToast();
+  const on = card.quote_deadline_client_visible === true;
+  const save = useMutation({
+    mutationFn: (v) => base44.entities.TaskCard.update(card.id, { quote_deadline_client_visible: v }),
+    onSuccess: (_d, v) => { qc.invalidateQueries({ queryKey: ['card-schedule', card.id] }); qc.invalidateQueries({ queryKey: ['task-cards'] }); toast({ title: v ? '고객 진행률에 견적 마감일을 보여 줍니다' : '고객에게 견적 마감일을 숨깁니다' }); },
+  });
+  return (
+    <label className="flex items-center justify-between gap-3 rounded-lg border p-2.5 text-sm">
+      <span>견적 발송 기한을 고객 소싱 진행률에 보여 주기<span className="block text-xs text-muted-foreground">켜면 고객 화면 '소싱 중' 진행률에 비교표 예정일로 보입니다. 지킬 수 있는 날짜일 때만 켜세요.</span></span>
+      <Switch checked={on} disabled={!allowed || save.isPending || !card.quote_deadline} onCheckedChange={(v) => save.mutate(v)} aria-label="견적 마감일 고객 공개" />
+    </label>
+  );
+}
+
 export default function CardSchedulePanel({ card, user }) {
   const qc = useQueryClient(), { toast } = useToast();
   const query = useQuery({ queryKey: ['card-schedule', card.id], queryFn: () => base44.entities.TaskCard.get(card.id) });
@@ -23,6 +41,7 @@ export default function CardSchedulePanel({ card, user }) {
       {save.isError && <p role="alert" className="text-sm text-destructive">{save.error?.response?.data?.error || '저장에 실패했습니다.'}</p>}
       <div className="flex justify-end gap-2"><Button type="button" variant="outline" disabled={save.isPending} onClick={async () => { await query.refetch(); setForm(null); save.reset(); }}>최신 내용 다시 불러오기</Button><Button type="submit" disabled={!allowed || save.isPending}>{save.isPending ? '저장 중...' : '일정 저장'}</Button></div>
     </form>}
+    {query.data && <QuoteDeadlineVisibility card={query.data} allowed={allowed} />}
     <CollaborationHistory cardId={card.id} />
   </section>;
 }
