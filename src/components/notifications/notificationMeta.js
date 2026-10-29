@@ -16,6 +16,7 @@ export const NOTIFICATION_META = {
   quote_accepted: { label: '견적 수락', icon: '🤝' },
   file_review_requested: { label: '디자인 확인 요청', icon: '🎨' },
   file_review_decision: { label: '디자인 확인 결과', icon: '🎨' },
+  claim_factory_overdue: { label: '공장 회신 지연', icon: '⏳' },
   schedule_changed: { label: '일정 변경', icon: '📅' },
   file_shared: { label: '파일 공유', icon: '📎' },
   requirements_updated: { label: '요구사항 변경', icon: '📝' },

@@ -134,3 +134,22 @@ export function calendarEvents({ cards = [], milestones = [], shipments = [], fr
   }
   return events.sort((a, b) => a.date.localeCompare(b.date) || a.kind.localeCompare(b.kind));
 }
+
+/**
+ * 소싱 진행률 (3단계 G): '소싱 중' 카드에서 요구사항 확인 → 공장 후보 n곳 → 견적 n건 받음 → 비교표 준비.
+ * 숫자는 직원 입력이 아니라 후보 공장 목록·견적 수·비교표 초안 여부로 센다. 공장 이름은 보내지 않는다.
+ * 견적 마감일은 직원이 고객 공개로 켠 경우만 비교표 예정일로 보여 준다.
+ */
+export function sourcingProgress({ card, quotes = 0, comparison = false }: { card: any; quotes?: number; comparison?: boolean }) {
+  if (card?.status !== 'IN_PROGRESS') return null;
+  const factories = (Array.isArray(card.candidate_factory_ids) && card.candidate_factory_ids.length) || (Array.isArray(card.candidate_factory_names) ? card.candidate_factory_names.length : 0);
+  const steps = [
+    { key: 'req', label: '요구사항 확인', done: true },
+    { key: 'factories', label: factories ? `공장 후보 ${factories}곳` : '공장 찾는 중', done: factories > 0 },
+    { key: 'quotes', label: quotes ? `견적 ${quotes}건 받음` : '견적 받는 중', done: quotes > 0 },
+    { key: 'compare', label: comparison ? '비교표 준비 중' : '비교표 준비', done: false },
+  ];
+  const at = steps.findIndex((x) => !x.done);
+  return { steps, at, due: card.quote_deadline_client_visible === true && card.quote_deadline ? card.quote_deadline : '' };
+}
+

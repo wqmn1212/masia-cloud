@@ -97,6 +97,13 @@ function ClaimItem({ c }) {
           {c.client_message && <p className="mt-0.5 whitespace-pre-wrap">{c.client_message}</p>}
         </div>
       )}
+      {c.factory_wait_days != null && <p className="text-[11px] font-medium text-warning-text">공장 회신 대기 {c.factory_wait_days}일 · 이지스가 공장에 원인과 처리 방안을 요청했습니다 (기한 3영업일)</p>}
+      {c.compensation && (
+        <p className="rounded-md border border-dashed px-2 py-1 text-[11px]">
+          <b>보상 약속</b>: {CLAIM_RESOLUTION[c.compensation.kind]}{c.compensation.amount != null ? ` · ${c.compensation.currency} ${Number(c.compensation.amount).toLocaleString('ko-KR')}` : ''}{c.compensation.note ? ` · ${c.compensation.note}` : ''}
+          <span className={c.compensation.state === 'APPLIED' ? 'text-primary' : 'text-warning-text'}> — {c.compensation.state === 'APPLIED' ? `반영됨 (${c.compensation.applied_card_title || '다음 주문'})` : '다음 주문에 반영 예정'}</span>
+        </p>
+      )}
     </li>
   );
 }

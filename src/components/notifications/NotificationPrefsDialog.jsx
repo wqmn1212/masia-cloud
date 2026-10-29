@@ -12,9 +12,10 @@ import { toast } from '@/components/ui/use-toast';
 const BUNDLES = [
   { key: 'decision', label: '결정 요청', desc: '견적 비교표, 품질 기준서, 검수 결과, 도착지 비용, 계약서 서명 요청, 디자인 확인, 사내 결재', locked: '고객님이 판단하셔야 하는 일이라 끌 수 없습니다' },
   { key: 'payment', label: '결제', desc: '입금 확인, 공장 계좌 확인', note: '결제 요청·결제 기한·공장 계좌 변경(송금 중지 안내) 메일은 끌 수 없습니다' },
-  { key: 'progress', label: '진행', desc: '단계 변경, 새 프로젝트, 파일 공유, 일정 변경, 담당자 답변, 중국 휴무, 월간 리포트' },
+  { key: 'progress', label: '진행', desc: '단계 변경, 새 프로젝트, 파일 공유, 일정 변경, 담당자 답변, 중국 휴무, 월간 리포트, 재주문 시점' },
   { key: 'shipment', label: '선적', desc: '선적 상태 변경, 도착 원가 확정' },
   { key: 'quality', label: '품질', desc: '불량 신고 처리 상황' },
+  { key: 'weekly', label: '주간 요약', desc: '월요일 아침 한 통: 이번 주 확인하실 일, 이번 주 일정·도착 예정, 지난주 바뀐 것' },
 ];
 
 export default function NotificationPrefsDialog({ open, onOpenChange }) {

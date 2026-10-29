@@ -3,6 +3,7 @@ let seq = 0;
 const match = (r, q) => Object.entries(q || {}).every(([k, v]) => (v && typeof v === 'object' && '$in' in v ? v.$in.includes(r[k]) : r[k] === v));
 const sortBy = (rows, sort) => { if (!sort) return rows; const d = sort.startsWith('-'); const f = sort.replace(/^-/, ''); return [...rows].sort((a, b) => ((a[f] ?? '') > (b[f] ?? '') ? 1 : (a[f] ?? '') < (b[f] ?? '') ? -1 : 0) * (d ? -1 : 1)); };
 const entity = (name) => ({
+  list: async (sort, limit) => sortBy([...(globalThis.__db[name] ||= [])], sort).slice(0, limit || 1000),
   filter: async (q, sort, limit) => sortBy((globalThis.__db[name] ||= []).filter((r) => match(r, q)), sort).slice(0, limit || 1000),
   get: async (id) => { const r = (globalThis.__db[name] || []).find((x) => x.id === id); if (!r) throw new Error('not found'); return r; },
   create: async (d) => { const r = { id: `${name}-${++seq}`, created_date: new Date().toISOString(), ...d }; (globalThis.__db[name] ||= []).push(r); return r; },

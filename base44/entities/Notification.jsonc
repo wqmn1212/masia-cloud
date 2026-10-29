@@ -66,7 +66,8 @@
         "client_approval_decided",
         "quote_accepted",
         "file_review_requested",
-        "file_review_decision"
+        "file_review_decision",
+        "claim_factory_overdue"
       ],
       "description": "\uc54c\ub9bc \uc720\ud615"
     },

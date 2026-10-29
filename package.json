@@ -27,7 +27,12 @@
     "check:assistant": "node --import ./scripts/fnmock/register.mjs scripts/check-assistant-functions.mjs",
     "check:client-roles": "node scripts/check-client-roles.mjs",
     "check:file-review": "node scripts/check-file-review.mjs",
-    "check:client-approvals": "node --import ./scripts/fnmock/register.mjs scripts/check-client-approvals.mjs"
+    "check:client-approvals": "node --import ./scripts/fnmock/register.mjs scripts/check-client-approvals.mjs",
+    "check:reorder-forecast": "node scripts/check-reorder-forecast.mjs",
+    "check:claim-tracking": "node scripts/check-claim-tracking.mjs",
+    "check:inquiry-form": "node scripts/check-inquiry-form.mjs",
+    "check:weekly-digest": "node scripts/check-weekly-digest.mjs",
+    "check:client-phase3": "node --import ./scripts/fnmock/register.mjs scripts/check-client-phase3.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.57",

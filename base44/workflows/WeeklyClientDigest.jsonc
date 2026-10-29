@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "weekly_client_digest",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "weekly_client_digest": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendWeeklyDigest",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\uace0\uac1d \uc8fc\uac04 \uc694\uc57d \uba54\uc77c",
+            "description": "\uc6d4\uc694\uc77c \uc544\uce68 \uace0\uac1d \uacc4\uc815\ub9c8\ub2e4 \uc774\ubc88 \uc8fc \ud655\uc778\ud558\uc2e4 \uc77c\u00b7\uc77c\uc815\uacfc \uc9c0\ub09c\uc8fc \ubc14\ub010 \uac83\uc744 \ud55c \ud1b5\uc73c\ub85c"
+          }
+        }
+      }
+    ]
+  },
+  "description": "\ub9e4\uc8fc \uc6d4\uc694\uc77c 08:20 KST \uace0\uac1d \uacc4\uc815\ub9c8\ub2e4 \uc774\ubc88 \uc8fc \ud655\uc778\ud558\uc2e4 \uc77c, \uc774\ubc88 \uc8fc \uc77c\uc815\u00b7\ub3c4\ucc29 \uc608\uc815, \uc9c0\ub09c\uc8fc \ubc14\ub010 \uac83\uc744 \ud55c \ud1b5\uc758 \uba54\uc77c\ub85c \ubcf4\ub0c5\ub2c8\ub2e4 (\uba54\uc77c \uc124\uc815\uc5d0\uc11c \ub048 \uacc4\uc815 \uc81c\uc678)",
+  "name": "\uace0\uac1d \uc8fc\uac04 \uc694\uc57d \uba54\uc77c",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "20 8 * * 1",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

@@ -2,11 +2,14 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { requireClient } from '../../shared/clientAccess.ts';
 import { FROM_NAME, notifyUsers, internalUsersOfTenant } from '../../shared/notify.ts';
 import { uploadPrivateAttachments, linkCardAttachments } from '../../shared/privateAttachments.ts';
+import { cleanInquiry } from '../../shared/inquiryForm.ts';
+import { kstToday } from '../../shared/chinaHoliday.ts';
 
 // 로그인한 고객사가 소싱 보드에서 신규 문의를 작성 → 새 TaskCard 자동 생성.
 // tenant_id 는 본사(HQ) 테넌트로 지정하여 본사 팀 보드에도 노출되고, client_id 로 고객 보드에도 노출된다.
+// 문의 양식(카테고리별 사양 질문·희망 입고일·도착지·인증·샘플)은 inquiry_details 로 남기고 요구사항 글에도 붙인다.
+// 고른 인증은 카드 수입 요건에 '필요'로 미리 넣는다.
 const RATE_LIMIT_MS = 5 * 60 * 1000;
-const CATEGORIES = ['기계설비', '정밀가공', '전자 · 전기', '뷰티 · 의료', '리빙 · 공구', '굿즈 · 조형', '기타'];
 
 const clean = (v, max = 2000) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 
@@ -24,11 +27,9 @@ export default async function (req) {
     const detail = clean(body.detail, 5000);
     if (!detail) return Response.json({ error: '요구사항을 입력해 주세요' }, { status: 400 });
 
-    const categories = Array.isArray(body.categories)
-      ? body.categories.filter((c) => CATEGORIES.includes(c))
-      : [];
-    const quantity = clean(body.quantity, 200);
-    const target_price = clean(body.target_price, 200);
+    const form = cleanInquiry(body, kstToday());
+    // 사양 질문은 꼭 답한다 (모르면 '모름'). 양식을 거치지 않는 금형 검토 요청은 카테고리가 없어 질문이 없다
+    if (form.missing.length) return Response.json({ error: `사양 질문에 답해 주세요 (모르면 '모름'): ${form.missing.join(', ')}` }, { status: 400 });
 
     // 같은 고객사 5분 내 중복 문의 차단
     const recent = await svc.entities.TaskCard.filter(
@@ -57,9 +58,11 @@ export default async function (req) {
       client_id: auth.companyId,
       client_name: clientName,
       client_visible: true,
+      inquiry_details: form.details,
+      ...(form.details.desired_date ? { due_date: form.details.desired_date } : {}),
+      ...(form.importReqs.length ? { import_requirements: form.importReqs, import_req_updated_at: new Date().toISOString() } : {}),
       hq_requirements: [
-        `카테고리: ${categories.join(', ') || '-'}`,
-        `수량: ${quantity || '-'} / 희망 단가: ${target_price || '-'}`,
+        ...form.lines,
         `첨부: ${attachments.length}건 (파일 탭에서 확인)`,
         ``,
         detail,

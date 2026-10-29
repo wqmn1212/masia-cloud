@@ -109,6 +109,25 @@
           }
         }
       }
+    },
+    "factory_requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\uacf5\uc7a5\uc5d0 \uc911\uad6d\uc5b4 \ud074\ub808\uc784 \ubb38\uc11c\ub97c \ubcf4\ub0b8 \uc2dc\uac01 (3\uc601\uc5c5\uc77c \ud68c\uc2e0 \uae30\ud55c\uc758 \uc2dc\uc791)"
+    },
+    "factory_responded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\uacf5\uc7a5 \ud68c\uc2e0\uc744 \ucc98\uc74c \uae30\ub85d\ud55c \uc2dc\uac01"
+    },
+    "compensation": {
+      "type": "object",
+      "description": "\ubcf4\uc0c1 \uc57d\uc18d\uacfc \ubc18\uc601 {kind: REPLACE|DISCOUNT|REFUND|REWORK, amount, currency, note, promised_at, applied_card_id, applied_card_title, applied_at, applied_by_name, applied_note}. \uc7ac\uc0dd\uc0b0\u00b7\ub2e4\uc74c \ubc1c\uc8fc \ud560\uc778\uc740 \ub2e4\uc74c \uc8fc\ubb38\uc5d0 \ubc18\uc601\ub420 \ub54c\uae4c\uc9c0 \ubbf8\ubc18\uc601"
+    },
+    "factory_overdue_notified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\uacf5\uc7a5 \ud68c\uc2e0 \uae30\ud55c(3\uc601\uc5c5\uc77c)\uc774 \uc9c0\ub098 \ud300\uc5d0 \uc54c\ub9b0 \uc2dc\uac01"
     }
   },
   "required": [

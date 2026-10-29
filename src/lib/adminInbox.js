@@ -1,5 +1,6 @@
 // 관리자 할 일(/admin-inbox) 목록을 만드는 순수 함수. 화면과 scripts/check-admin-inbox.mjs 가 함께 쓴다.
 import { REMITTANCE_FOR_STAGE } from '../components/files/documentTypes.js';
+import { factoryWait, compensationState } from './claimTracking.js';
 
 const DAY = 86400000;
 export const daysSince = (iso, now = Date.now()) => (iso ? Math.max(0, Math.floor((now - Date.parse(iso)) / DAY)) : null);
@@ -32,13 +33,14 @@ export function overdueQueue(stages = [], now = Date.now()) {
 }
 
 export const OPEN_CLAIM = ['SUBMITTED', 'REVIEWING', 'FACTORY_CONFIRMED'];
-// 열린 불량 신고. 접수 후 2일 넘게 그대로인 건(SUBMITTED)이 위로
+// 열린 불량 신고와 다음 주문에 아직 반영하지 않은 보상 약속.
+// 공장 회신 3영업일이 지난 건 → 접수 후 2일 넘게 그대로인 건(SUBMITTED) → 나머지 순
 export function claimQueue(claims = [], now = Date.now()) {
   return claims
-    .filter((c) => OPEN_CLAIM.includes(c.status))
-    .map((c) => ({ ...c, age: daysSince(c.submitted_at || c.created_date, now) }))
-    .map((c) => ({ ...c, stale: c.status === 'SUBMITTED' && c.age > 2 }))
-    .sort((a, b) => Number(b.stale) - Number(a.stale) || (b.age ?? 0) - (a.age ?? 0));
+    .filter((c) => OPEN_CLAIM.includes(c.status) || compensationState(c) === 'PROMISED')
+    .map((c) => ({ ...c, age: daysSince(c.submitted_at || c.created_date, now), wait: factoryWait(c, now), promise: compensationState(c) === 'PROMISED' }))
+    .map((c) => ({ ...c, stale: c.status === 'SUBMITTED' && c.age > 2, factory_overdue: !!c.wait?.overdue }))
+    .sort((a, b) => Number(b.factory_overdue) - Number(a.factory_overdue) || Number(b.stale) - Number(a.stale) || Number(OPEN_CLAIM.includes(b.status)) - Number(OPEN_CLAIM.includes(a.status)) || (b.age ?? 0) - (a.age ?? 0));
 }
 
 // 전자서명: 고객 수정 요청, 기한 지남, 기한 3일 이내 서명 대기
