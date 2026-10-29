@@ -7,6 +7,8 @@ import Breadcrumbs from './files/Breadcrumbs';
 import FolderRow from './files/FolderRow';
 import FileApprovalDialog from '@/components/taskcard/files/FileApprovalDialog';
 import { approvalPatches } from '@/lib/fileApproval';
+import { factoryApprovalBlock, isReviewable } from '@/lib/fileReview';
+import FileReviewRequestDialog from '@/components/taskcard/files/FileReviewRequestDialog';
 import { TRADE_DOCUMENT_TYPES } from '@/components/files/documentTypes';
 import FileRow from './files/FileRow';
 import NewFolderDialog from './files/NewFolderDialog';
@@ -62,6 +64,25 @@ export default function FilesTab({ card, tradeOnly = false }) {
     onError: (e) => setUploadError(e.message || '승인본을 저장하지 못했습니다'),
   });
   const nameOf = (id) => files.find((f) => f.id === id)?.file_name || '';
+
+  // 고객 확인 요청 (디자인·도면): 보내기·거두기. 설정이 켜져 있으면 고객이 승인한 판만 승인본으로 지정
+  const { data: setting } = useQuery({
+    queryKey: ['operation-setting', card.tenant_id],
+    enabled: !!card.tenant_id,
+    queryFn: async () => (await base44.entities.OperationSetting.filter({ tenant_id: card.tenant_id }, '-updated_date', 1))[0] || null,
+  });
+  const requiresClient = setting?.factory_approval_requires_client === true;
+  const [reviewing, setReviewing] = useState(null);
+  const review = useMutation({
+    mutationFn: async (body) => (await base44.functions.invoke('requestFileReview', body)).data,
+    onSuccess: (_d, body) => { qc.invalidateQueries({ queryKey: filesKey }); setReviewing(null); if (body.action === 'request') setUploadError(''); },
+    onError: (e) => setUploadError(e?.response?.data?.error || e.message || '고객 확인 요청을 보내지 못했습니다'),
+  });
+  const startApprove = (file) => {
+    const block = factoryApprovalBlock(file, requiresClient);
+    if (block) { setUploadError(block); return; }
+    setApproving(file);
+  };
 
   const currentFolders = useMemo(
     () => folders.filter(f => (f.parent_folder_id || null) === currentFolderId),
@@ -410,9 +431,13 @@ export default function FilesTab({ card, tradeOnly = false }) {
                 visibilityPending={visibility.isPending}
                 approval={tradeOnly || file.document_type === 'CLAIM_PHOTO' ? undefined : {
                   replacedName: nameOf(file.superseded_by_id),
-                  onApprove: () => setApproving(file),
+                  onApprove: () => startApprove(file),
                   onUnapprove: () => approval.mutate({ kind: 'unapprove', file }),
                   onMarkSent: () => approval.mutate({ kind: 'sent', file }),
+                }}
+                review={tradeOnly || !isReviewable(file) || !card.client_id ? undefined : {
+                  onRequest: () => setReviewing(file),
+                  onCancel: () => review.mutate({ action: 'cancel', review_id: file.client_review_id }),
                 }}
                 onDelete={() => deleteFileMutation.mutate(file.id)}
               />
@@ -429,6 +454,8 @@ export default function FilesTab({ card, tradeOnly = false }) {
       )}
 
       {!tradeOnly && <CardFactoryDocuments card={card} />}
+      <FileReviewRequestDialog key={`review-${reviewing?.id || 'none'}`} file={reviewing} files={files} open={!!reviewing} pending={review.isPending} onClose={() => setReviewing(null)}
+        onSend={(input) => review.mutate({ action: 'request', card_id: card.id, attachment_id: reviewing.id, ...input })} />
       <FileApprovalDialog key={approving?.id || 'none'} file={approving} files={files} open={!!approving} pending={approval.isPending} onClose={() => setApproving(null)} onConfirm={(replaced) => approval.mutate({ kind: 'approve', file: approving, replaced })} />
       <NewFolderDialog
         open={showNewFolder}

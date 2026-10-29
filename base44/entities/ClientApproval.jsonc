@@ -1,0 +1,143 @@
+{
+  "name": "ClientApproval",
+  "type": "object",
+  "description": "\uace0\uac1d\uc0ac \uc0ac\ub0b4 \uacb0\uc7ac \uc694\uccad. \uc2e4\ubb34\uc790\uc758 \uacb0\uc815(\ube44\uad50\ud45c \uc120\ud0dd\u00b7\uacac\uc801 \uc218\ub77d\u00b7\ucd9c\uace0 \uc2b9\uc778\u00b7\uae30\uc900\uc11c \uc2b9\uc778\u00b7\ub514\uc790\uc778 \uc2b9\uc778)\uc744 \uacb0\uc7ac\uad8c\uc790\uac00 \uc2b9\uc778\ud558\uba74 \uadf8\ub54c \uc2e4\ud589\ud55c\ub2e4. \uc4f0\uae30\ub294 \uc11c\ubc84 \ud568\uc218\ub9cc, \uace0\uac1d\uc740 \uc11c\ubc84 \ud568\uc218\ub85c \uac19\uc740 \uace0\uac1d\uc0ac \uac83\ub9cc \ubcf8\ub2e4",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uce74\ub4dc \uc18c\uc720 \ud300(\ubcf8\uc0ac) \u2014 \uc9c1\uc6d0 \uc77d\uae30 \ubc94\uc704"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac"
+    },
+    "card_id": {
+      "type": "string"
+    },
+    "card_title": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "comparison_choice",
+        "quote_accept",
+        "qc_decision",
+        "spec_decision",
+        "file_review"
+      ],
+      "description": "\uacb0\uc815 \uc885\ub958"
+    },
+    "target_id": {
+      "type": "string",
+      "description": "\uacb0\uc815 \ub300\uc0c1 id (\ube44\uad50\ud45c\u00b7\uacac\uc801\uc11c\u00b7\uac80\uc218 \uacb0\uacfc\u00b7\uae30\uc900\uc11c\u00b7\ud30c\uc77c \ud655\uc778 \uc694\uccad)"
+    },
+    "target_label": {
+      "type": "string",
+      "description": "\uacb0\uc815 \ub300\uc0c1 \uc774\ub984 (\uc608: \uacac\uc801 \ube44\uad50\ud45c v2 B\uc548)"
+    },
+    "payload": {
+      "type": "object",
+      "description": "\uacb0\uc7ac \ud6c4 \uc2e4\ud589\ud560 \uacb0\uc815 \ub0b4\uc6a9 (clientCardAction \uc785\ub825\uacfc \uac19\uc740 \ud0a4)"
+    },
+    "amount_krw": {
+      "type": "number",
+      "description": "\uae08\uc561 \uae30\uc900\uc744 \ubcf8 \uc6d0\ud654 \uae08\uc561 (\ubaa8\ub974\uba74 \ube44\uc6c0)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "APPROVED",
+        "REJECTED",
+        "CANCELED",
+        "STALE"
+      ],
+      "default": "PENDING",
+      "description": "STALE = \uadf8\uc0ac\uc774 \ub300\uc0c1\uc774 \ubc14\ub00c\uc5b4 \uc2e4\ud589\ud560 \uc218 \uc5c6\uac8c \ub428"
+    },
+    "requested_by_email": {
+      "type": "string"
+    },
+    "requested_by_name": {
+      "type": "string"
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "request_note": {
+      "type": "string",
+      "description": "\uc694\uccad\uc790 \uba54\ubaa8 (\uacb0\uc815 \uba54\ubaa8)"
+    },
+    "decided_by_email": {
+      "type": "string"
+    },
+    "decided_by_name": {
+      "type": "string"
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reason": {
+      "type": "string",
+      "description": "\ubc18\ub824 \uc0ac\uc720 \ub610\ub294 \ubb34\ud6a8 \uc0ac\uc720"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "company_id",
+    "card_id",
+    "kind",
+    "target_id",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

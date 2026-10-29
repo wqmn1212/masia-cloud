@@ -2,9 +2,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { CONSENT_TEXT, DEFAULT_DUE_DAYS, MAX_PDF_BYTES, documentNo, fromBase64, hasEsignClause, isPdf, maskEmail, sha256Hex } from '../../shared/signature.ts';
 import { appendEvent, signatureSettings, staffCanAccess, uploadPrivate } from '../../shared/signatureServer.ts';
 import { notifyUsers } from '../../shared/notify.ts';
+import { approversOf } from '../../shared/clientRoles.ts';
 
 // 직원: 계약서 PDF 를 고정해 고객 서명을 요청한다.
 //  mode 'signers' — 계약 고객사의 서명 가능한 계정 목록 / mode 'send' — 요청 발송
+// 고객사가 결재권자를 정했으면 서명자는 결재권자 중에서만 고른다.
 // 지문값은 서버가 받은 바이트로 계산한다 (화면이 보낸 값은 쓰지 않는다).
 export default async function (req: Request) {
   try {
@@ -17,9 +19,11 @@ export default async function (req: Request) {
     if (!staffCanAccess(user, contract)) return Response.json({ error: '계약서에 접근할 수 없습니다' }, { status: 403 });
     if (!contract.client_id) return Response.json({ error: '계약서에 고객사를 먼저 연결하세요' }, { status: 400 });
 
-    const clients = (await db.User.filter({ account_tier: 'client', company_id: contract.client_id })).filter((u: any) => u.is_active !== false && u.company_id === contract.client_id);
+    const active = (await db.User.filter({ account_tier: 'client', company_id: contract.client_id })).filter((u: any) => u.is_active !== false && u.company_id === contract.client_id);
+    const approvers = approversOf(await db.Company.get(contract.client_id).catch(() => null));
+    const clients = approvers.length ? active.filter((u: any) => approvers.includes(String(u.email || '').toLowerCase())) : active;
     if (body.mode === 'signers') {
-      return Response.json({ signers: clients.map((u: any) => ({ id: u.id, name: u.full_name || '', email: u.email || '', shared: /^(info|office|admin|contact|sales|cs|help)@/i.test(u.email || '') })) });
+      return Response.json({ approvers_only: approvers.length > 0, signers: clients.map((u: any) => ({ id: u.id, name: u.full_name || '', email: u.email || '', shared: /^(info|office|admin|contact|sales|cs|help)@/i.test(u.email || '') })) });
     }
 
     // ── 발송 ──
@@ -27,7 +31,7 @@ export default async function (req: Request) {
     if (!hasEsignClause(contract.body)) return Response.json({ error: '계약서에 전자서명 조항이 없습니다. "제○조 (전자서명)" 조항을 넣고 저장한 뒤 보내세요', code: 'NO_ESIGN_CLAUSE' }, { status: 400 });
     if (contract.contract_type === 'TRIPARTITE') return Response.json({ error: '공장이 당사자인 3자 계약은 2단계부터 전자서명을 지원합니다. PDF 로 진행해 주세요' }, { status: 400 });
     const signer = clients.find((u: any) => u.id === body.signer_user_id);
-    if (!signer?.email) return Response.json({ error: '서명자는 계약 고객사의 활성 계정이어야 합니다' }, { status: 400 });
+    if (!signer?.email) return Response.json({ error: approvers.length ? '서명자는 계약 고객사의 결재권자여야 합니다' : '서명자는 계약 고객사의 활성 계정이어야 합니다' }, { status: 400 });
     const open = await db.SignatureRequest.filter({ contract_id: contract.id, status: 'OUT' }, '-created_date', 1);
     if (open.length) return Response.json({ error: '진행 중인 서명 요청이 있습니다' }, { status: 409 });
 

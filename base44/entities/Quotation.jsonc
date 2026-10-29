@@ -955,6 +955,19 @@
         "REJECTED"
       ],
       "description": "\uacac\uc801 \uc0c1\ud0dc"
+    },
+    "client_accepted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\uace0\uac1d\uc774 '\uc774 \uacac\uc801\uc73c\ub85c \uc9c4\ud589'\uc744 \ub204\ub978(\uacb0\uc7ac\uac00 \uc788\uc73c\uba74 \uacb0\uc7ac\uac00 \ub05d\ub09c) \uc2dc\uac01"
+    },
+    "client_accepted_by_name": {
+      "type": "string",
+      "description": "\uacac\uc801\uc744 \uc218\ub77d\ud55c \uace0\uac1d (\uacb0\uc7ac\uc790 \ud3ec\ud568)"
+    },
+    "client_accept_note": {
+      "type": "string",
+      "description": "\uacac\uc801 \uc218\ub77d \ub54c \uace0\uac1d \uba54\ubaa8"
     }
   },
   "required": [

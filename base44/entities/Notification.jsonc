@@ -61,7 +61,12 @@
         "payment_request_canceled",
         "payment_reported",
         "payment_due",
-        "payment_overdue"
+        "payment_overdue",
+        "client_approval_requested",
+        "client_approval_decided",
+        "quote_accepted",
+        "file_review_requested",
+        "file_review_decision"
       ],
       "description": "\uc54c\ub9bc \uc720\ud615"
     },

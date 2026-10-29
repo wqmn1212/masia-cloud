@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { shortDate, dday, money, kstToday } from './clientFormat';
 
 const STAGE = { DOWN_PAYMENT: '선금', INTERIM_PAYMENT: '중도금', BALANCE_PAYMENT: '잔금' };
+// 결재할 결정이 있는 카드 탭
+const KIND_TAB = { comparison_choice: 'quotation', quote_accept: 'quotation', qc_decision: 'qc', spec_decision: 'qc', file_review: 'files' };
 const daysLeft = (ymd) => (ymd ? Math.round((Date.parse(ymd) - Date.parse(kstToday())) / 86400000) : null);
 
 function Row({ onClick, children }) {
@@ -19,7 +21,7 @@ function Row({ onClick, children }) {
   );
 }
 
-// 고객 대시보드 맨 위: 고객이 직접 해야 할 일(계약서 서명, 결제, 기준서·출고 판단, 도착지 비용 확인, 견적 비교표)과 앞으로 2주 일정.
+// 고객 대시보드 맨 위: 고객이 직접 해야 할 일(사내 결재, 계약서 서명, 결제, 기준서·출고 판단, 디자인 확인, 도착지 비용 확인, 견적 비교표)과 앞으로 2주 일정.
 export default function ClientTodoCard({ onOpen, onSign }) {
   const { data } = useClientOverview();
   const payments = data?.payment_pending || [];
@@ -29,7 +31,11 @@ export default function ClientTodoCard({ onOpen, onSign }) {
   const comparisons = data?.comparison_pending || [];
   const signatures = data?.signature_pending || [];
   const upcoming = data?.upcoming || [];
-  const count = payments.length + specs.length + qc.length + destCosts.length + comparisons.length + signatures.length;
+  const reviews = data?.file_review_pending || [];
+  // 내가 결재할 것 + 내가 요청했다가 반려·무효가 된 것
+  const toApprove = (data?.approvals || []).filter((a) => a.can_approve);
+  const returned = (data?.approvals || []).filter((a) => a.mine && ['REJECTED', 'STALE'].includes(a.status));
+  const count = toApprove.length + returned.length + payments.length + specs.length + qc.length + destCosts.length + comparisons.length + signatures.length + reviews.length;
 
   return (
     <Card className="grid gap-5 p-5 xl:grid-cols-2">
@@ -42,6 +48,20 @@ export default function ClientTodoCard({ onOpen, onSign }) {
           <p className="py-4 text-sm text-muted-foreground">지금 확인하실 일은 없습니다.</p>
         ) : (
           <ul className="mt-2 space-y-0.5">
+            {toApprove.map((a) => (
+              <Row key={a.approval_id} onClick={() => onOpen(a.card_id, KIND_TAB[a.kind] || 'overview')}>
+                <Badge className="shrink-0 border-0 bg-primary text-[10px] text-primary-foreground">결재 요청</Badge>
+                <span className="min-w-[96px] flex-1 truncate">{a.card_title}</span>
+                <span className="min-w-0 truncate text-xs text-muted-foreground">{a.target_label} · {a.requested_by_name}</span>
+              </Row>
+            ))}
+            {returned.map((a) => (
+              <Row key={a.approval_id} onClick={() => onOpen(a.card_id, KIND_TAB[a.kind] || 'overview')}>
+                <Badge className="shrink-0 border-0 bg-destructive/15 text-[10px] text-destructive">{a.status === 'REJECTED' ? '결재 반려' : '결재 무효'}</Badge>
+                <span className="min-w-[96px] flex-1 truncate">{a.card_title}</span>
+                <span className="min-w-0 truncate text-xs text-muted-foreground">{a.reason}</span>
+              </Row>
+            ))}
             {signatures.map((r) => (
               <Row key={r.request_id} onClick={() => onSign?.(r.request_id)}>
                 <Badge className="shrink-0 border-0 bg-primary/10 text-[10px] text-primary">계약서 서명</Badge>
@@ -71,6 +91,13 @@ export default function ClientTodoCard({ onOpen, onSign }) {
                 <Badge variant="outline" className="shrink-0 text-[10px]">기준서 승인 대기</Badge>
                 <span className="min-w-0 truncate">{s.card_title}</span>
                 <span className="shrink-0 text-xs text-muted-foreground">품질 기준서 v{s.version}</span>
+              </Row>
+            ))}
+            {reviews.map((r) => (
+              <Row key={r.review_id} onClick={() => onOpen(r.card_id, 'files')}>
+                <Badge variant="outline" className="shrink-0 text-[10px]">디자인 확인</Badge>
+                <span className="min-w-[96px] flex-1 truncate">{r.card_title}</span>
+                <span className="min-w-0 truncate text-xs text-muted-foreground">{r.file_name}{r.due_date ? ` · 기한 ${shortDate(r.due_date)}` : ''}</span>
               </Row>
             ))}
             {destCosts.map((d) => (

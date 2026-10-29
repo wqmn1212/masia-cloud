@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -666,6 +667,16 @@ export default function QuotationTab({ card, user }) {
             const st = STATUS_META[q.status] || STATUS_META.DRAFT;
             return (
               <div key={q.id} className="border rounded-xl p-3 space-y-2 hover:bg-muted/20 transition-colors">
+                {q.client_accepted_at && (
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs">
+                    <b className="text-primary">고객이 이 견적으로 진행 요청</b>
+                    <span className="text-muted-foreground">{q.client_accepted_by_name} · {new Date(q.client_accepted_at).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' })}{q.client_accept_note ? ` · ${q.client_accept_note}` : ''}</span>
+                    <span className="ml-auto flex gap-1.5">
+                      {q.status !== 'ACCEPTED' && <Button type="button" size="sm" variant="outline" className="h-6 px-2 text-[11px]" disabled={updateStatusMutation.isPending} onClick={() => updateStatusMutation.mutate({ quote: q, status: 'ACCEPTED' })}>수주 완료로 바꾸기</Button>}
+                      <Button asChild size="sm" className="h-6 px-2 text-[11px]"><Link to={`/contracts?quotation=${q.id}`}>계약서 만들기</Link></Button>
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-muted-foreground" />

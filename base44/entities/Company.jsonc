@@ -114,6 +114,43 @@
     },
     "cn_trademark_note": {
       "type": "string"
+    },
+    "client_roles": {
+      "type": "array",
+      "description": "\uace0\uac1d\uc0ac \uacc4\uc815 \uc5ed\ud560 [{email, roles: ADMIN(\uace0\uac1d \uad00\ub9ac\uc790)|APPROVER(\uacb0\uc7ac\uad8c\uc790)|MEMBER(\uc2e4\ubb34\uc790)|FINANCE(\uc7ac\ubb34)}]. \uc11c\ubc84 \ud568\uc218(manageClientTeam)\ub9cc \uc4f4\ub2e4. \ube44\uc5b4 \uc788\uc73c\uba74 \uc5ed\ud560 \uc5c6\uc774 \uc9c0\uae08\ucc98\ub7fc \ub3d9\uc791",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ADMIN",
+                "APPROVER",
+                "MEMBER",
+                "FINANCE"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "approval_rules": {
+      "type": "object",
+      "description": "\uc0ac\ub0b4 \uacb0\uc7ac \uaddc\uce59 {kinds: {comparison_choice|quote_accept|qc_decision|spec_decision|file_review: {on, min_amount_krw}}, block_self_approval}. \uc11c\ubc84 \ud568\uc218\ub9cc \uc4f4\ub2e4"
+    },
+    "client_team_updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\uc5ed\ud560\u00b7\uacb0\uc7ac \uaddc\uce59\uc744 \ub9c8\uc9c0\ub9c9\uc73c\ub85c \ubc14\uafbc \uc2dc\uac01"
+    },
+    "client_team_updated_by_name": {
+      "type": "string",
+      "description": "\uc5ed\ud560\u00b7\uacb0\uc7ac \uaddc\uce59\uc744 \ub9c8\uc9c0\ub9c9\uc73c\ub85c \ubc14\uafbc \uc0ac\ub78c"
     }
   },
   "required": [

@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { toast } from '@/components/ui/use-toast';
 import { generateComparisonPDF } from '@/lib/generateComparisonPDF';
 import ClientComparisonView from '@/components/taskcard/quotecompare/ClientComparisonView';
+import { useDecisionGate, decisionToast, financeOnlyText, viaApprovalText } from './approval/ClientDecisionContext';
+import ApprovalPendingNote from './approval/ApprovalPendingNote';
 
 // 고객 견적 탭 맨 위: 담당자가 공개한 견적 비교표. 안을 고르거나(진행 요청) 안별로 질문을 남긴다.
 export default function ClientComparisonSection({ cardId, cardTitle = '', clientName = '' }) {
@@ -17,6 +19,7 @@ export default function ClientComparisonSection({ cardId, cardTitle = '', client
   const [dialog, setDialog] = useState(null); // { mode: 'choose' | 'ask', option }
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
+  const gate = useDecisionGate('comparison_choice');
   const { data, isLoading } = useQuery({
     queryKey: ['client-comparison', cardId],
     queryFn: async () => (await base44.functions.invoke('getClientComparison', withClientView({ card_id: cardId }))).data?.comparison || null,
@@ -30,8 +33,9 @@ export default function ClientComparisonSection({ cardId, cardTitle = '', client
     setBusy(true);
     try {
       if (dialog.mode === 'choose') {
-        await base44.functions.invoke('clientCardAction', { card_id: cardId, action: 'comparison_choice', option_key: dialog.option.key, version: data.version, note: text });
-        toast({ title: `${dialog.option.label}으로 진행을 요청했습니다`, description: '담당자가 확정하면 계약서를 보내 드립니다.' });
+        const res = await base44.functions.invoke('clientCardAction', { card_id: cardId, action: 'comparison_choice', option_key: dialog.option.key, version: data.version, note: text });
+        decisionToast(res.data, { title: `${dialog.option.label}으로 진행을 요청했습니다`, description: '담당자가 확정하면 계약서를 보내 드립니다.' });
+        qc.invalidateQueries({ queryKey: ['client-card-detail', cardId] });
       } else {
         if (!text.trim()) { setBusy(false); return; }
         await base44.functions.invoke('clientCardAction', { card_id: cardId, action: 'chat', message: `[견적 비교표 ${dialog.option.label}] ${text.trim()}` });
@@ -63,10 +67,12 @@ export default function ClientComparisonSection({ cardId, cardTitle = '', client
         </div>
         <Button size="sm" variant="outline" className="h-8 gap-1 text-label" onClick={pdf}><Download className="h-3.5 w-3.5" />품의용 PDF</Button>
       </div>
+      {!confirmed && gate.pending && <ApprovalPendingNote approval={gate.pending} cardId={cardId} />}
+      {!confirmed && !gate.pending && !readOnly && (gate.financeOnly || gate.viaApproval) && <p className="text-caption text-muted-foreground">{gate.financeOnly ? financeOnlyText : `안 선택: ${viaApprovalText}`}</p>}
       <ClientComparisonView
         snapshot={data.snapshot}
         choice={confirmed ? { option_key: data.confirmed_option_key } : data.client_choice}
-        onChoose={readOnly || confirmed ? null : (o) => open('choose', o)}
+        onChoose={readOnly || confirmed || !gate.canDecide ? null : (o) => open('choose', o)}
         onAsk={readOnly ? null : (o) => open('ask', o)}
         busy={busy}
       />
@@ -74,7 +80,7 @@ export default function ClientComparisonSection({ cardId, cardTitle = '', client
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base">{dialog?.mode === 'choose' ? `${dialog?.option.label}으로 진행` : `${dialog?.option.label}에 대해 질문`}</DialogTitle>
-            <DialogDescription className="text-label">{dialog?.mode === 'choose' ? '진행 요청을 보내면 담당자가 확인하고 확정합니다. 남길 말씀이 있으면 적어 주세요 (선택).' : '담당자에게 보낼 질문을 적어 주세요. 문의 탭에서 답변을 받습니다.'}</DialogDescription>
+            <DialogDescription className="text-label">{dialog?.mode === 'choose' ? (gate.viaApproval ? '결재권자가 승인하면 담당자에게 진행 요청이 갑니다. 남길 말씀이 있으면 적어 주세요 (선택).' : '진행 요청을 보내면 담당자가 확인하고 확정합니다. 남길 말씀이 있으면 적어 주세요 (선택).') : '담당자에게 보낼 질문을 적어 주세요. 문의 탭에서 답변을 받습니다.'}</DialogDescription>
           </DialogHeader>
           <Textarea rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder={dialog?.mode === 'choose' ? '예: 납기를 우선해 이 안으로 진행합니다' : '예: 보증 기간을 2년으로 늘릴 수 있나요?'} className="text-body" />
           <div className="flex justify-end gap-2">

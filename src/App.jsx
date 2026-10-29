@@ -51,6 +51,7 @@ const Leads = lazy(() => import('@/pages/Leads'));
 const ClientPortalDashboard = lazy(() => import('@/pages/ClientPortalDashboard'));
 const ClientBoard = lazy(() => import('@/pages/ClientBoard'));
 const ClientDocuments = lazy(() => import('@/pages/ClientDocuments'));
+const ClientTeam = lazy(() => import('@/pages/ClientTeam'));
 const PortfolioAdmin = lazy(() => import('@/pages/PortfolioAdmin'));
 const JoinInvite = lazy(() => import('@/pages/JoinInvite'));
 const ServiceGuide = lazy(() => import('@/pages/ServiceGuide'));
@@ -129,6 +130,7 @@ const AuthenticatedApp = () => {
         <Route path="/client/dashboard" element={<ClientPortalDashboard />} />
         <Route path="/client/board" element={<ClientBoard />} />
         <Route path="/client/documents" element={<ClientDocuments />} />
+        <Route path="/client/team" element={<ClientTeam />} />
         <Route path="/client/guide" element={<ClientGuide />} />
         <Route path="/client/mold-review" element={<MoldReview />} />
         <Route path="/client/landed-cost" element={<ClientLandedCost />} />

@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import ClientSpecSection from './ClientSpecSection';
+import { useDecisionGate, decisionToast, financeOnlyText, viaApprovalText } from './approval/ClientDecisionContext';
+import ApprovalPendingNote from './approval/ApprovalPendingNote';
 
 const RESULT = {
   PASS: { label: '합격', cls: 'bg-primary/15 text-primary' },
@@ -25,16 +27,18 @@ const when = (iso) => (iso ? new Date(iso).toLocaleString('ko-KR', { dateStyle: 
 const approveLabel = (r) => (r.inspection_type === 'SAMPLE' ? '샘플 승인' : '출고 승인');
 const errorText = (e) => e?.response?.data?.error || e?.message || '처리하지 못했습니다';
 
-function Decision({ cardId, report, canDecide }) {
+function Decision({ cardId, report, canDecide: isClient }) {
   const qc = useQueryClient();
   const [note, setNote] = useState('');
+  const gate = useDecisionGate('qc_decision', report.id);
+  const canDecide = isClient && gate.canDecide;
   const decide = useMutation({
-    mutationFn: (decision) => base44.functions.invoke('clientCardAction', { card_id: cardId, action: 'qc_decision', report_id: report.id, decision, note }),
-    onSuccess: (_res, decision) => {
+    mutationFn: async (decision) => (await base44.functions.invoke('clientCardAction', { card_id: cardId, action: 'qc_decision', report_id: report.id, decision, note })).data,
+    onSuccess: (data, decision) => {
       setNote('');
       qc.invalidateQueries({ queryKey: ['client-card-detail', cardId] });
       qc.invalidateQueries({ queryKey: ['client-todos'] });
-      toast({ title: decision === 'APPROVED' ? `${approveLabel(report)}을 보냈습니다` : '보류를 요청했습니다', description: '담당자에게 바로 알림이 갑니다.' });
+      decisionToast(data, { title: decision === 'APPROVED' ? `${approveLabel(report)}을 보냈습니다` : '보류를 요청했습니다', description: '담당자에게 바로 알림이 갑니다.' });
     },
     onError: (e) => toast({ title: '처리하지 못했습니다', description: errorText(e), variant: 'destructive' }),
   });
@@ -50,7 +54,8 @@ function Decision({ cardId, report, canDecide }) {
   }
 
   const label = approveLabel(report);
-  const approve = () => window.confirm(`${label}할까요?\n승인 후에는 바꿀 수 없으며 담당자에게 바로 알림이 갑니다.`) && decide.mutate('APPROVED');
+  if (gate.pending) return <ApprovalPendingNote approval={gate.pending} cardId={cardId} />;
+  const approve = () => window.confirm(gate.viaApproval ? `${label}을 결재권자에게 요청할까요?\n결재가 끝나면 담당자에게 전달됩니다.` : `${label}할까요?\n승인 후에는 바꿀 수 없으며 담당자에게 바로 알림이 갑니다.`) && decide.mutate('APPROVED');
   return (
     <div className="space-y-2 rounded-lg border border-dashed p-3">
       {report.decision === 'ON_HOLD' && (
@@ -77,7 +82,9 @@ function Decision({ cardId, report, canDecide }) {
           <PauseCircle className="h-3.5 w-3.5" />보류 요청
         </Button>
       </div>
-      {!canDecide && <p className="text-[11px] text-muted-foreground">승인·보류는 고객사 계정에서만 선택할 수 있습니다.</p>}
+      {gate.financeOnly ? <p className="text-[11px] text-muted-foreground">{financeOnlyText}</p>
+        : !canDecide ? <p className="text-[11px] text-muted-foreground">승인·보류는 고객사 계정에서만 선택할 수 있습니다.</p>
+        : gate.viaApproval && <p className="text-[11px] text-muted-foreground">{label}: {viaApprovalText} 보류는 바로 전달됩니다.</p>}
     </div>
   );
 }

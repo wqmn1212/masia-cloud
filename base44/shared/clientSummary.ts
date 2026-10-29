@@ -22,6 +22,8 @@ export function todosByCard(t: any) {
   (t.spec_pending || []).forEach((s: any) => add(s.card_id, '기준서 확인', 'qc'));
   (t.dest_cost_pending || []).forEach((d: any) => add(d.card_id, '도착지 비용 확인', 'overview'));
   (t.qc_pending || []).filter((q: any) => q.decision !== 'ON_HOLD').forEach((q: any) => add(q.card_id, q.inspection_type === 'SAMPLE' ? '샘플 승인' : '출고 승인', 'qc'));
+  (t.file_review_pending || []).forEach((r: any) => add(r.card_id, '디자인 확인', 'files'));
+  (t.approvals || []).filter((a: any) => a.status === 'PENDING').forEach((a: any) => add(a.card_id, '사내 결재', 'overview'));
   return map;
 }
 

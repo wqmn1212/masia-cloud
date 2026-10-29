@@ -1,0 +1,128 @@
+{
+  "name": "FileReview",
+  "type": "object",
+  "description": "\ub514\uc790\uc778\u00b7\ub3c4\uba74 \ud30c\uc77c \uace0\uac1d \ud655\uc778 \uc694\uccad. \uc9c1\uc6d0\uc774 requestFileReview \ub85c \ubcf4\ub0b4\uace0, \uace0\uac1d\uc774 \uc774\uc804 \ud310\uacfc \ube44\uad50\ud558\uba70 \uc704\uce58 \uc758\uacac(\ud540)\uc744 \ub0a8\uae34 \ub4a4 \uc2b9\uc778 \ub610\ub294 \uc218\uc815 \uc694\uccad\uc744 \uace0\ub978\ub2e4. \uc4f0\uae30\ub294 \uc11c\ubc84 \ud568\uc218\ub9cc",
+  "properties": {
+    "tenant_id": {
+      "type": "string"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac"
+    },
+    "card_id": {
+      "type": "string"
+    },
+    "attachment_id": {
+      "type": "string",
+      "description": "\ud655\uc778\ud560 \ud30c\uc77c (CardAttachment)"
+    },
+    "previous_attachment_id": {
+      "type": "string",
+      "description": "\ube44\uad50\ud560 \uc774\uc804 \ud310 \ud30c\uc77c"
+    },
+    "file_name": {
+      "type": "string"
+    },
+    "file_type": {
+      "type": "string"
+    },
+    "question": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc5d0\uac8c \ubb3b\ub294 \ub0b4\uc6a9"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\ud68c\uc2e0 \uae30\ud55c (\ud55c\uad6d \ub0a0\uc9dc)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "APPROVED",
+        "REVISION_REQUESTED",
+        "CANCELED"
+      ],
+      "default": "PENDING"
+    },
+    "pins": {
+      "type": "array",
+      "description": "\uc704\uce58 \uc758\uacac [{n, page, x, y(0~1 \ube44\uc728), text, by_name, at}]",
+      "items": {
+        "type": "object"
+      }
+    },
+    "decision_note": {
+      "type": "string"
+    },
+    "decided_by_name": {
+      "type": "string"
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "requested_by_name": {
+      "type": "string"
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "company_id",
+    "card_id",
+    "attachment_id",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

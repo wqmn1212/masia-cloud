@@ -65,9 +65,9 @@ export default function SendSignatureDialog({ open, onOpenChange, contract, clie
             </ul>
           </div>
           <label className="block space-y-1">
-            <span className="text-label font-medium text-muted-foreground">서명자 (고객사 계정)</span>
+            <span className="text-label font-medium text-muted-foreground">서명자 ({data?.approvers_only ? '고객사 결재권자' : '고객사 계정'})</span>
             {isLoading ? <div className="flex h-9 items-center"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
-              : signers.length === 0 ? <p className="text-label text-destructive">이 고객사에 활성 계정이 없습니다. 고객 계정을 먼저 만들어 주세요.</p>
+              : signers.length === 0 ? <p className="text-label text-destructive">{data?.approvers_only ? '활성 결재권자 계정이 없습니다. 고객사 관리에서 결재권자를 확인하세요.' : '이 고객사에 활성 계정이 없습니다. 고객 계정을 먼저 만들어 주세요.'}</p>
               : <Select value={signer} onValueChange={setSigner}>
                   <SelectTrigger className="h-9 text-body"><SelectValue placeholder="서명자 선택" /></SelectTrigger>
                   <SelectContent>{signers.map((s) => <SelectItem key={s.id} value={s.id} className="text-body">{s.name || '이름 없음'} · {s.email}</SelectItem>)}</SelectContent>

@@ -28,6 +28,7 @@ import DecisionsTab from './DecisionsTab';
 import BomTab from './BomTab';
 import ClientVisibilityToggle from './ClientVisibilityToggle';
 import QuotationPublishPanel from './QuotationPublishPanel';
+import ClientApprovalBanner from './client/ClientApprovalBanner';
 import CardSchedulePanel from '@/components/taskcard/CardSchedulePanel';
 import TradeDocumentsTab from '@/components/taskcard/TradeDocumentsTab';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -99,6 +100,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
             </p>
           )}
           <CardOwnerBar card={card} user={user} />
+          {card.client_id && <ClientApprovalBanner cardId={card.id} />}
         </DialogHeader>
         <ReorderDialog open={reorderOpen} onOpenChange={setReorderOpen} card={card} />
 

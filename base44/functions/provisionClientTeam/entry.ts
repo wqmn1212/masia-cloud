@@ -1,9 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { CLIENT_MENU } from '../../shared/clientAccess.ts';
-import { requestPasswordSetup } from '../../shared/invitationUser.ts';
+import { cleanEmails, inviteConflict, inviteClients } from '../../shared/clientInvite.ts';
 
 
-// 리드 → 고객사 팀 생성 및 담당자 초대. 초대는 어드민만 가능하다 (고객의 자체 초대 없음).
+// 리드 → 고객사 팀 생성 및 담당자 초대. 고객사가 생긴 뒤 동료 초대는 고객 관리자도 manageClientTeam 으로 할 수 있다.
 // 최초 호출에서 Tenant · Company · TeamRole 을 만들고, 이후 호출은 기존 팀에 초대만 추가한다.
 const slugify = (s) =>
   (s || 'client')
@@ -56,21 +56,13 @@ export default async function (req) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const inviteList = [...new Set(
-      (Array.isArray(emails) && emails.length > 0 ? emails : [lead.email])
-        .map((e) => String(e || '').trim().toLowerCase())
-        .filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))
-    )];
+    const inviteList = cleanEmails(Array.isArray(emails) && emails.length > 0 ? emails : [lead.email]);
     if (inviteList.length === 0) return Response.json({ error: '유효한 이메일이 없습니다' }, { status: 400 });
 
     const hqTenantId = lead.tenant_id;
     if (!hqTenantId) return Response.json({ error: '문의의 소속 팀을 확인하세요.' }, { status: 400 });
-    for (const email of inviteList) {
-      const users = await svc.entities.User.filter({ email });
-      if (users.some(u => u.account_tier && (u.account_tier !== 'client' || !lead.client_id || u.company_id !== lead.client_id))) return Response.json({ error: `${email}: 다른 회사 또는 직원 계정으로 사용 중입니다.` }, { status: 409 });
-      const pending = await svc.entities.PendingInvitation.filter({ email, claimed: false });
-      if (pending.some(i => i.account_tier !== 'client' || !lead.client_id || i.company_id !== lead.client_id)) return Response.json({ error: `${email}: 다른 팀의 대기 중 초대가 있습니다.` }, { status: 409 });
-    }
+    const conflict = await inviteConflict(svc, inviteList, lead.client_id || null);
+    if (conflict) return Response.json({ error: conflict }, { status: 409 });
 
     // 1. 고객사 팀 (최초 1회)
     let tenant = lead.client_tenant_id ? await svc.entities.Tenant.get(lead.client_tenant_id) : null;
@@ -112,57 +104,10 @@ export default async function (req) {
     // 초대 발송 실패 후에도 동일 팀으로 재시도할 수 있도록 연결부터 보관한다.
     if (lead.id) await svc.entities.ManufacturingLead.update(lead.id, { client_id: company.id, client_tenant_id: tenant.id });
 
-    // 2. 좌석 상한 검사 (유료화 대비)
-    const seatLimit = Number(tenant.seat_limit) || 2;
-    const existingUsers = await svc.entities.User.filter({ tenant_id: tenant.id, account_tier: 'client' });
-    const existingInvites = await svc.entities.PendingInvitation.filter({ tenant_id: tenant.id, claimed: false });
-    const seatsTaken = new Set([
-      ...existingUsers.map((u) => (u.email || '').toLowerCase()),
-      ...existingInvites.map((i) => (i.email || '').toLowerCase()),
-    ]);
-    const newEmails = inviteList.filter((e) => !seatsTaken.has(e));
-    if (seatsTaken.size + newEmails.length > seatLimit) {
-      return Response.json(
-        { error: `담당자 좌석 상한(${seatLimit}명)을 초과합니다. 현재 ${seatsTaken.size}명이 등록되어 있습니다.` },
-        { status: 403 }
-      );
-    }
-
-    // 3. 초대 (기존 계정이면 즉시 적용, 신규면 PendingInvitation)
-    const invited = [];
-    for (const email of inviteList) {
-      const inviteData = {
-        email,
-        account_tier: 'client',
-        tenant_id: tenant.id,
-        company_id: company.id,
-        allowed_tabs: CLIENT_MENU,
-        account_label: lead.company,
-        claimed: false,
-      };
-      const found = await svc.entities.User.filter({ email });
-      if (found[0]) {
-        await svc.entities.User.update(found[0].id, {
-          account_tier: 'client',
-          tenant_id: tenant.id,
-          company_id: company.id,
-          allowed_tabs: CLIENT_MENU,
-          account_label: lead.company,
-          is_active: true,
-        });
-        const password_setup = await requestPasswordSetup(base44, email, true, true, lead.company);
-        invited.push({ email, applied: true, existing_account: true, password_setup });
-        continue;
-      }
-      const pending = await svc.entities.PendingInvitation.filter({ email, tenant_id: tenant.id, claimed: false });
-      if (pending[0]) {
-        await svc.entities.PendingInvitation.update(pending[0].id, inviteData);
-      } else {
-        await svc.entities.PendingInvitation.create(inviteData);
-      }
-      await base44.users.inviteUser(email, 'user');
-      invited.push({ email, pending: true });
-    }
+    // 2·3. 좌석 상한 검사 후 초대 (기존 계정이면 즉시 적용, 신규면 PendingInvitation)
+    const result = await inviteClients(base44, svc, { tenant, company, emails: inviteList, label: lead.company });
+    if (result.error) return Response.json({ error: result.error }, { status: result.status });
+    const invited = result.invited;
 
     // 4. 리드 · 카드 연결
     if (lead.id) await svc.entities.ManufacturingLead.update(lead.id, {
