@@ -43,3 +43,44 @@ export function PortalMock({ zh }) {
     </Frame>
   );
 }
+
+// 고객 포털 2단계 직원 쪽 예시 화면 (고객 계정·역할·결재, 디자인 고객 확인, 견적 수락)
+export function ClientTeamMock({ zh }) {
+  const R = ({ on, children }) => <span className={`rounded-full border px-1.5 py-0.5 text-[9px] ${on ? 'border-primary bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>{children}</span>;
+  return (
+    <Frame title={L(zh, '고객사 관리 → 고객 계정·역할·결재 규칙', '客户管理 → 客户账号·角色·审批规则')} badge={L(zh, '예시 화면', '示例画面')}>
+      <div className="divide-y rounded border">
+        <div className="flex items-center gap-1 p-1"><span className="flex-1">{L(zh, '박대표', '朴代表')}</span><Mark n={1} inline><span className="flex gap-0.5"><R on>{L(zh, '고객 관리자', '客户管理员')}</R><R on>{L(zh, '결재권자', '审批人')}</R></span></Mark></div>
+        <div className="flex items-center gap-1 p-1"><span className="flex-1">{L(zh, '김담당', '金担当')}</span><Mark n={2} inline><span className="flex gap-0.5"><R on>{L(zh, '실무자', '经办人')}</R><R>{L(zh, '재무', '财务')}</R></span></Mark></div>
+      </div>
+      <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+        <Mark n={3}><div className="p-1">{L(zh, '동료 초대 · 자리 3 / 5명', '邀请同事 · 名额 3 / 5')}</div></Mark>
+        <Mark n={4}><div className="p-1">{L(zh, '⬤━ 출고 승인 · ⬤━ 견적 수락 (1,000만원 이상)', '⬤━ 出货批准 · ⬤━ 报价接受（1000万韩元以上）')}</div></Mark>
+      </div>
+      <Mark n={5} className="mt-1.5"><div className="rounded bg-primary/5 p-1 text-primary">{L(zh, '카드 머리: 고객사 결재 중 · 출고 승인 · 김담당 요청', '卡片顶部：客户审批中 · 出货批准 · 金担当申请')}</div></Mark>
+    </Frame>
+  );
+}
+
+export function FileReviewStaffMock({ zh }) {
+  return (
+    <Frame title={L(zh, '카드 → 파일 → 고객 확인 요청', '卡片 → 文件 → 客户确认请求')} badge={L(zh, '예시 화면', '示例画面')}>
+      <div className="flex items-center gap-1.5 rounded bg-muted/40 p-1"><span className="flex-1">박스_인쇄_v2.png</span><Mark n={1} inline><Btn>{L(zh, '고객 확인 요청', '客户确认请求')}</Btn></Mark></div>
+      <Mark n={2} className="mt-1.5"><div className="grid grid-cols-3 gap-1 p-0.5"><Field label={L(zh, '확인받을 내용', '确认内容')} value={L(zh, '로고 위치·색상', '标志位置·颜色')} /><Field label={L(zh, '기한', '期限')} value="11/03" /><Field label={L(zh, '이전 판', '上一版')} value="v1" /></div></Mark>
+      <div className="mt-1.5 flex flex-wrap items-center gap-1"><Mark n={3} inline><span className="flex gap-1"><Badge tone="amber">{L(zh, '고객 확인 중', '客户确认中')}</Badge><Badge tone="red">{L(zh, '수정 요청', '要求修改')}</Badge><Badge tone="blue">{L(zh, '고객 승인 10/27', '客户已批准 10/27')}</Badge></span></Mark></div>
+      <Mark n={4} className="mt-1.5"><div className="p-1">{L(zh, '[디자인 수정 요청] 1. 로고 2mm 위로 · 2. 하단 문구 크게', '[设计修改要求] 1. 标志上移2mm · 2. 底部文字放大')}</div></Mark>
+      <Mark n={5} className="mt-1.5"><div className="p-1 text-destructive">{L(zh, '승인본 지정: 고객이 아직 확인 중인 파일입니다', '指定定稿：客户仍在确认该文件')}</div></Mark>
+    </Frame>
+  );
+}
+
+export function QuoteAcceptMock({ zh }) {
+  return (
+    <Frame title={L(zh, '카드 → 견적', '卡片 → 报价')} badge={L(zh, '예시 화면', '示例画面')}>
+      <div className="rounded border p-1.5">
+        <Mark n={1}><div className="rounded bg-primary/10 p-1"><b className="text-primary">{L(zh, '고객이 이 견적으로 진행 요청', '客户请求按此报价推进')}</b> · {L(zh, '김담당 · 10/28 · 11월 첫 주 발주 예정', '金担当 · 10/28 · 预计11月第一周下单')}</div></Mark>
+        <div className="mt-1.5 flex justify-end gap-1"><Mark n={2} inline><Btn>{L(zh, '수주 완료로 바꾸기', '改为已成交')}</Btn></Mark><Mark n={3} inline><Btn primary>{L(zh, '계약서 만들기', '生成合同')}</Btn></Mark></div>
+      </div>
+    </Frame>
+  );
+}

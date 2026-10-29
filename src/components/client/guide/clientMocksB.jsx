@@ -9,7 +9,8 @@ export function QuoteMock() {
           <Mark n={1} inline><span className="font-medium">LED 마스크 견적서</span></Mark>
           <div><Mark n={2} inline><span className="text-muted-foreground">2026-09-08 · USD · LM-200</span></Mark></div>
         </div>
-        <Mark n={3} inline><Btn primary>PDF</Btn></Mark>
+        <Mark n={3} inline><Btn>PDF</Btn></Mark>
+        <Mark n={4} inline><Btn primary>이 견적으로 진행</Btn></Mark>
       </div>
     </Frame>
   );
