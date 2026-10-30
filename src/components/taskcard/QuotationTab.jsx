@@ -28,6 +28,8 @@ import ManualTotalField from '@/components/quotation/ManualTotalField';
 import { findDailyQuotationRates, getKstDate } from '@/lib/quotationRates';
 import QuoteComparisonPanel from '@/components/taskcard/quotecompare/QuoteComparisonPanel';
 import createQuotation from '@/lib/createQuotation';
+import QuoteTermsFields from '@/components/quotation/QuoteTermsFields';
+import QuoteImportDialog from '@/components/quotation/QuoteImportDialog';
 
 const STATUS_META = {
   DRAFT:    { label: '초안',     color: 'bg-muted text-muted-foreground' },
@@ -62,6 +64,12 @@ const emptyForm = {
   advance_payment_percent: '30',
   balance_payment_percent: '70',
   shipping_days: '',
+  lead_time_business_days: '',
+  validity_days: '30',
+  payment_terms_pending: false,
+  spec_table: [],
+  internal_notes: '',
+  factory_quote_date: '',
   product_image_url: '',
   manual_total: '',
   manual_reason: '',
@@ -173,77 +181,52 @@ export default function QuotationTab({ card, user }) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['quotations-by-card', card.id] }),
   });
 
+  // 공장 견적서 파일(엑셀·워드·PDF·이미지)을 서버에서 읽어 우리 양식으로 정리·검산한 뒤, 확인 창에서 적용한다
+  const [importResult, setImportResult] = useState(null);
   const handleFileUpload = async (file) => {
     if (!file) return;
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setForm(f => ({ ...f, raw_file_url: file_url }));
-    setUploading(false);
-
-    // AI 파싱 — 견적 항목(옵션명/사양/수량/단가/통화)까지 자동 추출
+    let fileUrl = '';
+    try {
+      fileUrl = (await base44.integrations.Core.UploadFile({ file })).file_url;
+      setForm(f => ({ ...f, raw_file_url: fileUrl }));
+    } catch (e) {
+      toast({ title: '파일을 올리지 못했습니다', description: e.message, variant: 'destructive' });
+      return;
+    } finally { setUploading(false); }
     setParsing(true);
-    const ext = (file.name.split('.').pop() || '').toLowerCase();
-    let result = null;
-    if (['xlsx', 'xls', 'csv'].includes(ext)) {
-      // 엑셀: 백엔드에서 시트 내용을 텍스트로 변환 후 AI 추출 (정확도 높음)
-      const res = await base44.functions.invoke('parseQuotationExcel', { file_url });
-      result = res.data?.data || null;
-    } else {
-      // PDF/이미지: 비전 AI로 직접 추출
-      result = await base44.integrations.Core.InvokeLLM({
-        prompt: '첨부된 견적서에서 공장/발행처 회사명, 제품명, 모델명, 인코텀즈, 물류비, 그리고 모든 개별 견적 항목(품목명 원문 그대로, 사양/규격, 수량, 단가 숫자, 통화 — ¥/元/RMB는 CNY, $는 USD, ₩는 KRW)을 추출하세요. 합계/총계 행은 항목에 포함하지 마세요. 실제 파일에 있는 내용만 추출하세요.',
-        file_urls: [file_url],
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            factory_name: { type: 'string' },
-            product_name: { type: 'string' },
-            model_name: { type: 'string' },
-            incoterms: { type: 'string' },
-            logistics_cost: { type: 'number' },
-            items: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  option_name: { type: 'string' },
-                  specification: { type: 'string' },
-                  quantity: { type: 'number' },
-                  unit_price: { type: 'number' },
-                  currency: { type: 'string', enum: ['USD', 'CNY', 'KRW'] },
-                },
-              },
-            },
-          },
-        },
-      });
-    }
-    if (result) {
-      const items = (result.items || [])
-        .filter(it => it.option_name || it.unit_price)
-        .map(it => ({
-          option_name: it.option_name || '',
-          specification: it.specification || '',
-          quantity: Number(it.quantity) || 1,
-          unit_price: Number(it.unit_price) || 0,
-          currency: ['USD', 'CNY', 'KRW'].includes(it.currency) ? it.currency : 'CNY',
-          margin_percent: 0,
-        }));
-      setForm(f => ({
-        ...f,
-        factory_name: result.factory_name || f.factory_name,
-        product_name: result.product_name || f.product_name,
-        model_name: result.model_name || f.model_name,
-        logistics_cost: result.logistics_cost || f.logistics_cost,
-        incoterms: ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF'].includes(result.incoterms) ? result.incoterms : f.incoterms,
-        quote_options: items.length > 0 ? items : f.quote_options,
-      }));
-      if (items.length > 0) toast({ title: `견적 항목 ${items.length}개 자동 입력 완료`, description: '옵션명·사양·수량·단가·통화를 확인 후 필요 시 수정하세요.' });
-    } else {
-      toast({ title: '자동 추출 실패', description: '파일 내용을 인식하지 못했습니다. 직접 입력해주세요.', variant: 'destructive' });
-    }
-    setParsing(false);
+    try {
+      const res = await base44.functions.invoke('parseQuotationFile', { file_url: fileUrl, file_name: file.name });
+      if (res.data?.import) setImportResult({ ...res.data.import, kind: res.data.kind, file_name: file.name });
+      else throw new Error(res.data?.error || '견적 내용을 읽지 못했습니다');
+    } catch (e) {
+      toast({ title: '견적서를 읽지 못했습니다', description: e?.response?.data?.error || e.message, variant: 'destructive' });
+    } finally { setParsing(false); }
   };
+  const applyImport = (imp) => {
+    const f0 = imp.form;
+    setForm(f => ({
+      ...f,
+      factory_name: f0.factory_name || f.factory_name,
+      product_name: f0.product_name || f.product_name,
+      model_name: f0.model_name || f.model_name,
+      quote_title: f.quote_title || f0.quote_title,
+      incoterms: ['EXW', 'FCA', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP', 'FAS', 'FOB', 'CFR', 'CIF'].includes(f0.incoterms) ? f0.incoterms : f.incoterms,
+      logistics_cost: f0.logistics_cost || f.logistics_cost,
+      quote_options: f0.quote_options.length ? f0.quote_options.map(o => ({ ...o, margin_percent: o.margin_percent || '' })) : f.quote_options,
+      spec_table: f0.spec_table.length ? f0.spec_table : f.spec_table,
+      remarks: [f.remarks, f0.remarks].filter(Boolean).join('\n'),
+      internal_notes: [f.internal_notes, f0.internal_notes].filter(Boolean).join('\n'),
+      lead_time_business_days: f0.lead_time_business_days || f.lead_time_business_days,
+      shipping_days: f0.lead_time_business_days ? '' : (f0.shipping_days || f.shipping_days),
+      validity_days: f0.validity_days || f.validity_days,
+      payment_terms_pending: f0.payment_terms_pending || f.payment_terms_pending,
+      factory_quote_date: f0.factory_quote_date || f.factory_quote_date,
+    }));
+    setImportResult(null);
+    toast({ title: '견적서 내용을 채웠습니다', description: '마진·수수료·환율을 확인하고 저장하세요.' });
+  };
+
 
   const handleImageUpload = async (file) => {
     if (!file) return;
@@ -276,9 +259,14 @@ export default function QuotationTab({ card, user }) {
         currency: o.currency || 'CNY',
         margin_percent: Number(o.margin_percent) || 0,
         total_usd: (Number(o.quantity) || 0) * optionToUSD(o.unit_price, o.currency, usdR, cnyR),
+        unit_label: String(o.unit_label || '').trim(),
+        optional: !!o.optional,
+        ...(o.option_name_cn ? { option_name_cn: o.option_name_cn } : {}),
+        ...(o.specification_cn ? { specification_cn: o.specification_cn } : {}),
+        ...(o.lead_time ? { lead_time: o.lead_time } : {}),
       }));
-    const optTotalUSD = normalizedOptions.reduce((s, o) => s + o.total_usd, 0);
-    const optMarginUSD = normalizedOptions.reduce((s, o) => s + o.total_usd * (o.margin_percent || 0) / 100, 0);
+    // 공장 원가 합계에는 선택 사양을 넣지 않는다
+    const optTotalUSD = normalizedOptions.filter(o => !o.optional).reduce((s, o) => s + o.total_usd, 0);
     const payload = {
       ...form,
       quote_options: normalizedOptions,
@@ -288,6 +276,13 @@ export default function QuotationTab({ card, user }) {
       advance_payment_percent: Number(form.advance_payment_percent) || 0,
       balance_payment_percent: Number(form.balance_payment_percent) || 0,
       shipping_days: Number(form.shipping_days) || 0,
+      lead_time_business_days: Number(form.lead_time_business_days) || 0,
+      validity_days: Number(form.validity_days) || 30,
+      payment_terms_pending: !!form.payment_terms_pending,
+      spec_table: (form.spec_table || []).map(r => ({ label: String(r.label || '').trim(), label_cn: r.label_cn || '', value: String(r.value || '').trim() })).filter(r => r.label && r.value),
+      internal_notes: form.internal_notes || '',
+      factory_quote_date: form.factory_quote_date || '',
+      optional_price_lines: quoteCalc.optionalLines,
       product_image_url: form.product_image_url || '',
       card_id: card.id,
       tenant_id: user?.tenant_id || card.tenant_id,
@@ -378,6 +373,12 @@ export default function QuotationTab({ card, user }) {
       advance_payment_percent: q.advance_payment_percent ?? '30',
       balance_payment_percent: q.balance_payment_percent ?? '70',
       shipping_days: q.shipping_days || '',
+      lead_time_business_days: q.lead_time_business_days || '',
+      validity_days: q.validity_days || '30',
+      payment_terms_pending: !!q.payment_terms_pending,
+      spec_table: q.spec_table || [],
+      internal_notes: q.internal_notes || '',
+      factory_quote_date: q.factory_quote_date || '',
       product_image_url: q.product_image_url || '',
       status: q.status || 'DRAFT',
       raw_file_url: q.raw_file_url || '',
@@ -417,18 +418,19 @@ export default function QuotationTab({ card, user }) {
 
           {/* 파일 업로드 */}
           <div>
-            <Label className="text-xs">견적서 파일 업로드 (선택 — AI 자동 추출)</Label>
+            <Label className="text-xs">공장 견적서 파일 (엑셀·워드·PDF·사진 — AI 가 읽어 우리 양식으로 정리)</Label>
             <div className="flex gap-2 mt-1">
               <DropZone
                 onFile={handleFileUpload}
                 uploading={uploading || parsing}
-                accept=".pdf,.xlsx,.xls,.jpg,.jpeg,.png"
+                accept=".pdf,.xlsx,.xls,.csv,.docx,.jpg,.jpeg,.png,.webp"
                 compact
                 label={parsing ? 'AI 분석 중...' : '파일 선택'}
               />
               {form.raw_file_url && <span className="text-[10px] text-accent self-center">✓ 업로드 완료</span>}
             </div>
           </div>
+          <QuoteImportDialog result={importResult} onClose={() => setImportResult(null)} onApply={applyImport} />
 
           <div>
             <Label className="text-xs">견적서 제목</Label>
@@ -587,20 +589,7 @@ export default function QuotationTab({ card, user }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <Label className="text-xs">선금 (%)</Label>
-              <Input type="number" min="0" max="100" value={form.advance_payment_percent} onChange={e => setForm(f => ({ ...f, advance_payment_percent: e.target.value }))} className="h-8 text-xs" placeholder="예: 30" />
-            </div>
-            <div>
-              <Label className="text-xs">잔금 (%)</Label>
-              <Input type="number" min="0" max="100" value={form.balance_payment_percent} onChange={e => setForm(f => ({ ...f, balance_payment_percent: e.target.value }))} className="h-8 text-xs" placeholder="예: 70" />
-            </div>
-            <div>
-              <Label className="text-xs">출하일 (발주 후 일)</Label>
-              <Input type="number" min="0" value={form.shipping_days} onChange={e => setForm(f => ({ ...f, shipping_days: e.target.value }))} className="h-8 text-xs" placeholder="예: 45" />
-            </div>
-          </div>
+          <QuoteTermsFields form={form} setForm={setForm} />
 
           <div className="grid grid-cols-2 gap-3">
             <div>

@@ -36,7 +36,8 @@ export default async function (req) {
     const legacyCnyToKrw = Number(q.exchange_rate_krw) || 0;
     const modernUSD = usdToCny > 0;
 
-    const options = Array.isArray(q.quote_options) ? q.quote_options : [];
+    // 선택 사양(optional)은 합계 줄에서 빼고 따로 돌려준다
+    const options = (Array.isArray(q.quote_options) ? q.quote_options : []).filter((o) => !o.optional);
     const baseOf = (o) =>
       o.total_usd ?? (Number(o.quantity) || 0) * (Number(o.unit_price ?? o.unit_price_usd) || 0);
 
@@ -49,7 +50,7 @@ export default async function (req) {
       // 새 규칙: 저장 시 확정된 품목 금액·총액을 그대로 사용 (재계산·재반올림 없음)
       currency = ['CNY', 'KRW'].includes(q.final_currency) ? q.final_currency : 'USD';
       lineItems = (Array.isArray(q.price_lines) ? q.price_lines : []).map((l) => ({
-        option_name: l.option_name || '', specification: l.specification || '', quantity: l.quantity ?? null,
+        option_name: l.option_name || '', specification: l.specification || '', quantity: l.quantity ?? null, unit_label: l.unit_label || '',
         unit_price_display: l.unit_price ?? null, total_display: l.total ?? null,
       }));
       totalDisplay = Number(q.final_total) || 0;
@@ -126,6 +127,12 @@ export default async function (req) {
       quote_issuer: issuer,
       issuer_name: issuer === 'FACTORY' ? q.factory_name || '' : 'DONGGUAN AEGIS TRADE CO., LTD',
       remarks: q.remarks || '',
+      // 선택 사양 (합계 미포함, 저장 시 확정한 금액만)
+      optional_lines: v2 && Array.isArray(q.optional_price_lines) ? q.optional_price_lines.map((l) => ({ option_name: l.option_name || '', specification: l.specification || '', quantity: l.quantity ?? null, unit_label: l.unit_label || '', unit_price_display: l.unit_price ?? null, total_display: l.total ?? null })) : [],
+      spec_table: Array.isArray(q.spec_table) ? q.spec_table.filter((r) => r?.label && r?.value).map((r) => ({ label: r.label, value: r.value })) : [],
+      lead_time_business_days: Number(q.lead_time_business_days) || 0,
+      validity_days: Number(q.validity_days) || 30,
+      payment_terms_pending: !!q.payment_terms_pending,
       product_image_url: q.product_image_url || '',
       line_items: lineItems,
       total_display: totalDisplay,

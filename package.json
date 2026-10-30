@@ -34,7 +34,8 @@
     "check:weekly-digest": "node scripts/check-weekly-digest.mjs",
     "check:client-phase3": "node --import ./scripts/fnmock/register.mjs scripts/check-client-phase3.mjs",
     "check:factory-request": "node --import ./scripts/fnmock/register.mjs scripts/check-factory-request.mjs",
-    "check:ops-digest": "node --import ./scripts/fnmock/register.mjs scripts/check-ops-digest.mjs"
+    "check:ops-digest": "node --import ./scripts/fnmock/register.mjs scripts/check-ops-digest.mjs",
+    "check:quote-import": "node scripts/check-quote-import.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.57",
