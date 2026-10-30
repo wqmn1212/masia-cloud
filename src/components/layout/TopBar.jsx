@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, Menu, LogOut, Home } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { clearPersistedQueries } from '@/lib/query-client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -60,7 +61,7 @@ export default function TopBar({ onMenuClick, user }) {
             <p className="text-sm font-semibold leading-none truncate max-w-[160px]">{displayName}</p>
             <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[160px]">{tierLabel}</p>
           </div>
-          <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => base44.auth.logout('/')}>
+          <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => { clearPersistedQueries(); base44.auth.logout('/'); }}>
             <LogOut className="w-4 h-4" />
             <span className="hidden md:inline">{lang === 'zh' ? '退出登录' : '로그아웃'}</span>
           </Button>

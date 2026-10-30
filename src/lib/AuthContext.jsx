@@ -138,6 +138,7 @@ export const AuthProvider = ({ children }) => {
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
+    localStorage.removeItem('aegis-query-cache-v1');
     
     if (shouldRedirect) {
       // Use the SDK's logout method which handles token cleanup and redirect
