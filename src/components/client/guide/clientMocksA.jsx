@@ -67,12 +67,13 @@ export function InquiryMock() {
   return (
     <Frame title="신규 문의 작성">
       <div className="grid sm:grid-cols-2 gap-2">
-        <Mark n={1}><Field label="제목" value="무선 충전 패드" /></Mark>
-        <Mark n={2}><Field label="카테고리" value="전자 · 전기" /></Mark>
-        <Mark n={3} className="sm:col-span-2"><div className="grid grid-cols-2 gap-2 p-0.5"><Field label="수량" value="3,000" /><Field label="희망 단가" value="USD 4.5" /></div></Mark>
-        <Mark n={4} className="sm:col-span-2"><Field label="요구사항" value="15W, 화이트, 로고 인쇄" /></Mark>
-        <Mark n={5}><div className="p-1.5 border border-dashed rounded">📎 도면.pdf</div></Mark>
-        <div className="flex items-end justify-end"><Mark n={6} inline><Btn primary>문의 접수</Btn></Mark></div>
+        <Mark n={1}><Field label="제목" value="보조배터리 1만mAh" /></Mark>
+        <Mark n={2}><div className="p-1"><Field label="카테고리" value="전자 · 전기" /><div className="mt-1 rounded border border-dashed p-1 text-[10px]">충전 단자: USB-C · 정격 전압·전력: 모름</div></div></Mark>
+        <Mark n={3}><div className="grid grid-cols-2 gap-2 p-0.5"><Field label="수량" value="3,000" /><Field label="희망 단가" value="USD 4.5" /></div></Mark>
+        <Mark n={4}><div className="grid grid-cols-2 gap-2 p-0.5"><Field label="희망 입고일" value="2027-01-10" /><Field label="도착지" value="김포 창고" /></div></Mark>
+        <Mark n={5} className="sm:col-span-2"><div className="flex flex-wrap gap-1 p-1"><Btn primary>전기용품 KC 인증</Btn><Btn primary>리튬 전지 안전확인 (KC)</Btn><Btn>모름 (담당자가 확인)</Btn><Btn primary>샘플 먼저 받고 싶음</Btn></div></Mark>
+        <Mark n={6}><div className="p-1.5"><Field label="요구사항" value="화이트, 로고 인쇄" /><span className="text-[10px] text-muted-foreground">📎 도면.pdf</span></div></Mark>
+        <div className="flex items-end justify-end"><Mark n={7} inline><Btn primary>문의 접수</Btn></Mark></div>
       </div>
     </Frame>
   );

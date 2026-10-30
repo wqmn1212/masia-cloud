@@ -84,3 +84,37 @@ export function QuoteAcceptMock({ zh }) {
     </Frame>
   );
 }
+
+// 고객 포털 3단계 직원 쪽 예시 화면 (문의 양식·소싱 진행률, 재주문 예상·주문 시점, 불량 보상·공장 회신 기한)
+export function InquiryFormStaffMock({ zh }) {
+  return (
+    <Frame title={L(zh, '카드 → 오버뷰 (고객 문의로 만든 카드)', '卡片 → 概览（由客户咨询生成）')} badge={L(zh, '예시 화면', '示例画面')}>
+      <Mark n={1}><div className="whitespace-pre-line p-1 text-[10px]">{L(zh, '카테고리: 전자 · 전기 / 수량: 3,000\n[사양] 충전 단자: USB-C · 정격 전압·전력: (미입력)', '카테고리: 전자 · 전기 / 수량: 3,000\n[사양] 충전 단자: USB-C · 정격 전압·전력: (미입력)')}</div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1">{L(zh, '납기 2027-01-10 · 수입 요건', '交期 2027-01-10 · 进口要求')} <Badge tone="amber">{L(zh, '전기용품 KC 인증 · 필요', '电器 KC 认证 · 需要')}</Badge></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1 text-[10px]">{[L(zh, '요구사항 확인', '确认需求'), L(zh, '공장 후보 3곳', '候选工厂3家'), L(zh, '견적 2건 받음', '已收报价2份'), L(zh, '비교표 준비', '准备比价表')].map((k, i) => <span key={k} className={`rounded-full px-1.5 py-0.5 ${i <= 2 ? 'bg-primary text-primary-foreground' : 'border text-muted-foreground'}`}>{k}</span>)}</div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex items-center justify-between gap-2 p-1"><span>{L(zh, '견적 발송 기한을 고객 소싱 진행률에 보여 주기', '在客户寻源进度中显示报价截止日')}</span><span className="h-3.5 w-7 rounded-full bg-primary" /></div></Mark>
+    </Frame>
+  );
+}
+
+export function ReorderStaffMock({ zh }) {
+  return (
+    <Frame title={L(zh, '고객 포털 → 상품 원가 (고객 화면)', '客户门户 → 产品成本（客户画面）')} badge={L(zh, '예시 화면', '示例画面')}>
+      <Mark n={1}><div className="p-1">{L(zh, '6,000개 · 개당 1,065원 ~ 1,441원 · 합계 639만 ~ 865만원', '6,000个 · 单价 1,065 ~ 1,441 韩元 · 合计 639万 ~ 865万韩元')} <span className="text-muted-foreground">{L(zh, '(환율 1,304원 → 1,370원)', '（汇率 1,304 → 1,370 韩元）')}</span></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="p-1">{L(zh, '도착 예상 1/2 ~ 1/8 · 춘절 공장 휴무 7일 반영', '预计到货 1/2 ~ 1/8 · 已计入春节工厂停工7天')}</div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="rounded bg-muted/40 p-1">{L(zh, '재고 6,000 · 월 3,000 → 예상 소진 12/26 · 주문 권장 11/12 · 알림 10/29', '库存 6,000 · 月用量 3,000 → 预计用完 12/26 · 建议下单 11/12 · 提醒 10/29')}</div></Mark>
+      <div className="mt-1.5 flex justify-end"><Mark n={4} inline><Btn primary>{L(zh, '재주문 요청', '返单请求')}</Btn></Mark></div>
+    </Frame>
+  );
+}
+
+export function ClaimTrackStaffMock({ zh }) {
+  return (
+    <Frame title={L(zh, '카드 → 업무 → 불량 신고', '卡片 → 任务 → 不良投诉')} badge={L(zh, '예시 화면', '示例画面')}>
+      <Mark n={1}><div className="p-1 text-[10px] text-muted-foreground">{L(zh, '공장에 보냄 10/24 · 회신 대기 2영업일', '已发工厂 10/24 · 等待回复 2 个工作日')}</div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="grid grid-cols-[1fr_auto] items-end gap-1 p-0.5"><Field label={L(zh, '공장 회신 (내부용)', '工厂回复（内部）')} value={L(zh, '스프링 불량 · 재생산 동의', '弹簧不良 · 同意重新生产')} /><Btn>{L(zh, '저장', '保存')}</Btn></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="p-1 text-[10px] text-amber-700">{L(zh, '관리자 할 일: 공장 회신 기한(3영업일)이 지났습니다. 공장에 독촉하고 회신을 기록하세요.', '管理员待办：已超过工厂回复期限（3 个工作日），请催促工厂并记录回复。')}</div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><b>{L(zh, '보상 약속', '补偿承诺')}</b> KRW 150,000 · {L(zh, '반영할 다음 주문', '兑现的下一订单')}: <span className="rounded border px-1">{L(zh, '휴대용 선풍기 2차', '便携风扇 第2批')}</span> <Badge tone="blue">{L(zh, '반영됨', '已兑现')}</Badge></div></Mark>
+    </Frame>
+  );
+}
