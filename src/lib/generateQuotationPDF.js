@@ -34,6 +34,8 @@ export async function generateQuotationPDF(quotation) {
   const adv = p.advance_payment_percent || 30;
   const bal = p.balance_payment_percent || (100 - adv);
   const shipDays = p.shipping_days || 0;
+  const leadBiz = p.lead_time_business_days || 0;
+  const validity = p.validity_days || 30;
 
   // 헤더
   const logo = await imageToJpeg(LOGO_URL, 700, { x: 0.29, y: 0.3, w: 0.42, h: 0.4 }).catch(() => null);
@@ -108,7 +110,8 @@ export async function generateQuotationPDF(quotation) {
     y += h;
   };
   drawRow(cols.map((c) => c.t), true);
-  (p.line_items || []).forEach((r, i) => drawRow([i + 1, r.option_name, r.specification, r.quantity ?? '-', money(r.unit_price_display, cur, 2), money(r.total_display, cur)]));
+  const qtyText = (r) => (r.quantity == null ? '-' : `${Number(r.quantity).toLocaleString()}${r.unit_label || ''}`);
+  (p.line_items || []).forEach((r, i) => drawRow([i + 1, r.option_name, r.specification, qtyText(r), money(r.unit_price_display, cur, 2), money(r.total_display, cur)]));
   y += 6;
 
   // 합계 + 참고 환산
@@ -146,6 +149,33 @@ export async function generateQuotationPDF(quotation) {
   }
   y += 6;
 
+  // 선택 사양 (합계 미포함): 같은 표 모양으로, 금액은 '선택 시 추가'
+  if (p.optional_lines?.length) {
+    ensure(14);
+    font(9, true); color(INK); pdf.text('선택 사양 · Options (합계 미포함 / not included in total)', M, y + 4); y += 7;
+    drawRow(cols.map((c) => c.t), true);
+    p.optional_lines.forEach((r, i) => drawRow([`O${i + 1}`, r.option_name, r.specification, qtyText(r), money(r.unit_price_display, cur, 2), money(r.total_display, cur)]));
+    y += 6;
+  }
+  // 주요 사양: 2열 표 (항목 · 값)
+  if (p.spec_table?.length) {
+    ensure(14);
+    font(9, true); color(INK); pdf.text('주요 사양 · Specifications', M, y + 4); y += 7;
+    const half2 = CW / 2, lw = 34;
+    for (let i = 0; i < p.spec_table.length; i += 2) {
+      ensure(8);
+      [p.spec_table[i], p.spec_table[i + 1]].forEach((r, k) => {
+        const x = M + k * half2;
+        pdf.setDrawColor(...LINE); pdf.setFillColor(...SOFT); pdf.rect(x, y, lw, 8, r ? 'FD' : 'D'); pdf.rect(x + lw, y, half2 - lw, 8);
+        if (!r) return;
+        font(7.5, true); color(INK); pdf.text(String(r.label), x + 2, y + 5.2, { maxWidth: lw - 4 });
+        font(7.5); pdf.text(String(r.value), x + lw + 2, y + 5.2, { maxWidth: half2 - lw - 4 });
+      });
+      y += 8;
+    }
+    y += 6;
+  }
+
   // 박스 섹션 (계약 조건 / 비고)
   const box = (title, text, fill, border) => {
     font(8);
@@ -159,9 +189,9 @@ export async function generateQuotationPDF(quotation) {
   };
   box('계약 조건 · Terms & Conditions', [
     `1. 인코텀즈 / Incoterms: ${INCOTERMS_LABEL[p.incoterms] || '별도 협의'}`,
-    '2. 견적 유효기간 / Validity: 발행일로부터 30일 (30 days from issue date)',
-    `3. 결제 조건 / Payment: 계약 시 선금 ${adv}%, 출하 전 잔금 ${bal}% (T/T)`,
-    `4. 납기 / Delivery: ${shipDays > 0 ? `발주 및 선금 입금 확인 후 ${shipDays}일 이내 출하 (${shipDays} days after order confirmation)` : '발주 및 선금 입금 확인 후 협의된 일정에 따름'}`,
+    `2. 견적 유효기간 / Validity: 발행일로부터 ${validity}일 (${validity} days from issue date)`,
+    p.payment_terms_pending ? '3. 결제 조건 / Payment: 계약 시 확정 (to be confirmed in the contract)' : `3. 결제 조건 / Payment: 계약 시 선금 ${adv}%, 출하 전 잔금 ${bal}% (T/T)`,
+    `4. 납기 / Delivery: ${leadBiz > 0 ? `선금 입금 확인 후 ${leadBiz}영업일 이내 출하, 중국 공휴일 제외 (${leadBiz} working days after down payment)` : shipDays > 0 ? `발주 및 선금 입금 확인 후 ${shipDays}일 이내 출하 (${shipDays} days after order confirmation)` : '발주 및 선금 입금 확인 후 협의된 일정에 따름'}`,
     `5. 실제 결제는 ${cur} 기준으로 진행됩니다.`,
   ].join('\n'), [250, 250, 250], LINE);
   if (p.remarks) box('비고 · Remarks', p.remarks, [255, 251, 235], [253, 230, 138]);

@@ -97,7 +97,7 @@ export default function SettlementTab({ card, user }) {
     setForm(f => ({
       ...f,
       quotation_ids: ids,
-      quote_lines: quotes.flatMap(x => (x.quote_options || []).map(o => ({
+      quote_lines: quotes.flatMap(x => (x.quote_options || []).filter(o => !o.optional).map(o => ({
         quotation_id: x.id,
         option_name: o.option_name || '',
         quantity: Number(o.quantity) || 0,

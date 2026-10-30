@@ -50,7 +50,10 @@ export function calculateQuote(form) {
   const usdToCny = Number(form.exchange_rate_usd_cny) || 0;
   const cur = quoteCurrencyOf(form);
   const inCur = (v, c) => fromUSD(toUSD(v, c || 'CNY', usdToKrw, usdToCny), cur, usdToKrw, usdToCny);
-  const options = (form.quote_options || []).filter((o) => o.option_name || Number(o.unit_price));
+  // 선택 사양(optional)은 합계·원가·수수료 계산에서 빼고, 같은 마진·수수료 비율로 '선택 시 금액'만 따로 낸다
+  const filled = (form.quote_options || []).map((o, i) => ({ o, i })).filter(({ o }) => o.option_name || Number(o.unit_price));
+  const options = filled.filter(({ o }) => !o.optional).map(({ o }) => o);
+  const extras = filled.filter(({ o }) => o.optional);
 
   const optionBaseUSD = options.reduce((s, o) => s + (Number(o.quantity) || 0) * toUSD(o.unit_price, o.currency || 'CNY', usdToKrw, usdToCny), 0);
   const optionMarginUSD = options.reduce((s, o) => s + (Number(o.quantity) || 0) * toUSD(o.unit_price, o.currency || 'CNY', usdToKrw, usdToCny) * (Number(o.margin_percent) || 0) / 100, 0);
@@ -69,12 +72,16 @@ export function calculateQuote(form) {
   const preFeeUSD = factoryUSD + optionMarginUSD + logisticsUSD;
   const feeFactor = preFeeUSD > 0 ? 1 + feeUSD / preFeeUSD : 1;
   const lines = [];
+  // optionLine[i]: 견적 항목 i 의 고객 금액 줄 (편집 화면이 줄마다 보여 준다)
+  const optionLine = [];
+  const priceOf = (o) => {
+    const qty = Number(o.quantity) || 0;
+    const unit = ceilToUnit(inCur(o.unit_price, o.currency) * (1 + (Number(o.margin_percent) || 0) / 100) * feeFactor, cur);
+    return { option_name: o.option_name || '', specification: o.specification || '', quantity: qty, unit_label: o.unit_label || '', unit_price: unit, total: tidy(unit * qty, cur) };
+  };
+  const optionalLines = extras.map(({ o, i }) => { const l = priceOf(o); optionLine[i] = { ...l, optional: true }; return l; });
   if (options.length) {
-    options.forEach((o) => {
-      const qty = Number(o.quantity) || 0;
-      const unit = ceilToUnit(inCur(o.unit_price, o.currency) * (1 + (Number(o.margin_percent) || 0) / 100) * feeFactor, cur);
-      lines.push({ option_name: o.option_name || '', specification: o.specification || '', quantity: qty, unit_price: unit, total: tidy(unit * qty, cur) });
-    });
+    filled.filter(({ o }) => !o.optional).forEach(({ o, i }) => { const l = priceOf(o); optionLine[i] = l; lines.push(l); });
   } else if (factoryUSD > 0) {
     const unit = ceilToUnit(fromUSD(factoryUSD, cur, usdToKrw, usdToCny) * feeFactor, cur);
     lines.push({ option_name: form.product_name || '장비 본체 일체', specification: form.model_name || '-', quantity: 1, unit_price: unit, total: unit });
@@ -98,7 +105,7 @@ export function calculateQuote(form) {
   const totalUSD = toUSD(total, cur, usdToKrw, usdToCny);
 
   return {
-    currency: cur, lines, autoTotal, total, manual, impliedMargin,
+    currency: cur, lines, optionalLines, optionLine, autoTotal, total, manual, impliedMargin,
     optionBaseUSD, optionMarginUSD, factoryUSD, logisticsUSD, baseUSD, feeUSD, totalUSD,
     factoryCNY: factoryUSD * usdToCny, logisticsCNY: rawLogisticsUSD * usdToCny, logisticsTotal, logisticsCurrency,
   };

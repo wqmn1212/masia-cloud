@@ -169,7 +169,8 @@ export function detectType(text) {
 export function quoteLines(quotation) {
   if (!quotation) return [];
   const li = (quotation.line_items || []).map((l) => ({ name: l.item_name_ko || l.item_name_cn || '', name_cn: l.item_name_cn || '', spec: l.specification || '' }));
-  const qo = (quotation.quote_options || []).map((o) => ({ name: o.option_name || '', name_cn: '', spec: o.specification || '' }));
+  // 선택 사양(고객이 고르지 않으면 만들지 않는 것)은 점검 대상에서 뺀다
+  const qo = (quotation.quote_options || []).filter((o) => !o.optional).map((o) => ({ name: o.option_name || '', name_cn: o.option_name_cn || '', spec: o.specification || '' }));
   return (li.length ? li : qo).filter((l) => (l.name || l.spec).trim());
 }
 

@@ -22,6 +22,7 @@ export default async function (req: Request) {
     const options = (Array.isArray(body.quote_options) ? body.quote_options : []).slice(0, 100).map((o: any) => ({
       option_name: s(o.option_name), specification: s(o.specification, 500), quantity: n(o.quantity), unit_price: n(o.unit_price),
       currency: CUR.includes(String(o.currency || '').toUpperCase()) ? String(o.currency).toUpperCase() : 'CNY',
+      unit_label: s(o.unit_label, 20), optional: o.optional === true,
     })).filter((o: any) => o.option_name || o.unit_price);
     if (!options.length) return Response.json({ error: '견적 품목이 없습니다' }, { status: 400 });
     const lineItems = (Array.isArray(body.line_items) ? body.line_items : []).slice(0, 100).map((l: any) => {
@@ -38,11 +39,21 @@ export default async function (req: Request) {
       incoterms: s(body.incoterms, 30), quote_options: options, line_items: lineItems,
     };
     if (body.logistics_cost != null && body.logistics_cost !== '') record.logistics_cost = n(body.logistics_cost);
-    if (allCny) { record.factory_total_cost = options.reduce((t: number, o: any) => t + o.quantity * o.unit_price, 0); record.factory_cost_currency = 'CNY'; }
+    // 견적서 읽기(parseQuotationExcel)가 정리한 조건·사양도 함께 받는다. 선택 사양은 공장 원가 합계에 넣지 않는다
+    const specs = (Array.isArray(body.spec_table) ? body.spec_table : []).slice(0, 40).map((r: any) => ({ label: s(r?.label, 120), label_cn: s(r?.label_cn, 120), value: s(r?.value, 200) })).filter((r: any) => r.label && r.value);
+    if (specs.length) record.spec_table = specs;
+    if (s(body.remarks, 3000)) record.remarks = s(body.remarks, 3000);
+    if (s(body.internal_notes, 3000)) record.internal_notes = s(body.internal_notes, 3000);
+    if (n(body.lead_time_business_days) > 0) record.lead_time_business_days = Math.round(n(body.lead_time_business_days));
+    if (n(body.validity_days) > 0) record.validity_days = Math.round(n(body.validity_days));
+    if (body.payment_terms_pending === true) record.payment_terms_pending = true;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s(body.factory_quote_date, 10))) record.factory_quote_date = s(body.factory_quote_date, 10);
+    const included = options.filter((o: any) => !o.optional);
+    if (allCny) { record.factory_total_cost = included.reduce((t: number, o: any) => t + o.quantity * o.unit_price, 0); record.factory_cost_currency = 'CNY'; }
     const created = await db.Quotation.create(record);
     const totals: Record<string, number> = {};
-    for (const o of options) totals[o.currency] = (totals[o.currency] || 0) + o.quantity * o.unit_price;
-    return Response.json({ ok: true, quotation_id: created.id, card_title: card.title || '', factory_name: record.factory_name, items: options.length, cost_totals: totals, next: '견적 화면에서 마진·수수료·최종가를 입력하세요.' });
+    for (const o of included) totals[o.currency] = (totals[o.currency] || 0) + o.quantity * o.unit_price;
+    return Response.json({ ok: true, quotation_id: created.id, card_title: card.title || '', factory_name: record.factory_name, items: included.length, optional_items: options.length - included.length, cost_totals: totals, next: '견적 화면에서 마진·수수료·최종가를 입력하세요.' });
   } catch (error) {
     return Response.json({ error: (error as Error).message }, { status: 500 });
   }

@@ -39,7 +39,7 @@ export default async function(req: Request) {
     await svc.entities.QCPrecheck.update(rec.id, { ai_status: 'RUNNING', ai_error: '' });
 
     const quotation = rec.quotation_id ? await svc.entities.Quotation.get(rec.quotation_id).catch(() => null) : null;
-    const lines = quotation ? [...(quotation.line_items || []).map((l: any) => ({ name: l.item_name_ko || l.item_name_cn, spec: l.specification })), ...(quotation.quote_options || []).map((o: any) => ({ name: o.option_name, spec: o.specification }))] : [];
+    const lines = quotation ? [...(quotation.line_items || []).map((l: any) => ({ name: l.item_name_ko || l.item_name_cn, spec: l.specification })), ...(quotation.quote_options || []).filter((o: any) => !o.optional).map((o: any) => ({ name: o.option_name, spec: o.specification }))] : [];
     const cases = (await svc.entities.QCKnowledgeLog.filter(card.tenant_id ? { tenant_id: card.tenant_id } : {}, '-created_date', 100))
       .filter((k: any) => components.some((c: any) => (k.component_type || (k.target_category ? 'EQUIPMENT' : '')) === c.type))
       .slice(0, 10)

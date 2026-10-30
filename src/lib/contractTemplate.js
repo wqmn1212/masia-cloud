@@ -12,7 +12,7 @@ export function buildStandardContract(q, { issuerName = 'AEGIS', contractDate } 
   const eul = q?.quote_issuer === 'FACTORY' ? (q?.factory_name || issuerName) : issuerName;
   const byeong = q?.factory_name || '____________';
   const product = q?.quote_title || q?.product_name || '____________';
-  const itemCount = (q?.quote_options || []).length;
+  const itemCount = (q?.quote_options || []).filter((o) => !o.optional).length;
   const itemLabel = itemCount ? `${product} ${itemCount}종` : product;
   const quoteNo = q?.id ? `Q-${q.id.slice(-8).toUpperCase()}` : '____________';
   const quoteDate = fmtDate((q?.created_date || '').slice(0, 10)) || '____________';

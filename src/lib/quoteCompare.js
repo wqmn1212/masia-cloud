@@ -41,9 +41,9 @@ export const MATCH_THRESHOLD = 0.5;
 // ── 견적 읽기 ───────────────────────────────────────────────────
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
-// 공장 원가 줄: quote_options 우선, 없으면 line_items. 원가는 줄 통화 그대로 둔다.
+// 공장 원가 줄: quote_options 우선, 없으면 line_items. 원가는 줄 통화 그대로 둔다. 선택 사양(합계 미포함)은 비교에서 뺀다.
 export function costLines(q) {
-  const opts = (q?.quote_options || []).filter((o) => (o.option_name || '').trim() || num(o.unit_price));
+  const opts = (q?.quote_options || []).filter((o) => !o.optional && ((o.option_name || '').trim() || num(o.unit_price)));
   if (opts.length) {
     return opts.map((o, idx) => ({
       idx, name: o.option_name || '', spec: o.specification || '', qty: num(o.quantity),
@@ -59,7 +59,7 @@ export function costLines(q) {
 // 고객에게 보이는 금액: 견적서 PDF(getQuotationPresentation)와 같은 규칙으로 만든다. 한 원도 달라지면 안 된다.
 export function clientLines(q) {
   const usdToKrw = num(q.exchange_rate_usd); const usdToCny = num(q.exchange_rate_usd_cny);
-  const options = Array.isArray(q.quote_options) ? q.quote_options : [];
+  const options = (Array.isArray(q.quote_options) ? q.quote_options : []).filter((o) => !o.optional);
   const baseOf = (o) => o.total_usd ?? num(o.quantity) * num(o.unit_price ?? o.unit_price_usd);
   let lines = []; let total = 0; let currency = 'USD';
   const v2 = q.rounding_version === 2 && q.final_total != null;
