@@ -49,7 +49,7 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
       queryClient.invalidateQueries({ queryKey: ['task-items-all'] });
       toast({
         title: 'Google Tasks 동기화 완료',
-        description: `신규 ${d.created || 0}건 등록 · 캘린더에서 완료 ${d.completedInApp || 0}건 반영`,
+        description: `신규 ${d.created || 0}건 등록 · 변경 ${d.updated || 0}건 반영 · Google에서 완료 ${d.completedInApp || 0}건 가져옴`,
       });
     } catch (e) {
       toast({ title: '동기화 실패', description: e.message, variant: 'destructive' });
@@ -281,7 +281,7 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
           <Button variant="outline" className="flex-1 gap-2" onClick={() => setShowForm(true)}>
             <Plus className="w-4 h-4" /> 세부 업무 추가
           </Button>
-          <Button variant="outline" className="gap-2" onClick={syncGoogle} disabled={syncing}>
+          <Button variant="outline" className="gap-2" onClick={syncGoogle} disabled={syncing} title="할일은 저장할 때마다 자동으로 Google Tasks에 반영됩니다. 이 버튼은 Google에서 체크한 완료를 가져오고 빠진 항목을 채웁니다.">
             <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} /> Google Tasks 동기화
           </Button>
         </div>
