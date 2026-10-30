@@ -62,6 +62,9 @@ r = await call('manageProductPlan', { action: 'save', product_key: 'c1', stock_q
 assert.equal(r.status, 200);
 assert.equal(db.ProductPlan[0].tenant_id, 't1');
 assert.equal(db.ProductPlan[0].stock_qty, 6000);
+// 4단계: 저장하면 주문 권장일·권장 발주량을 바로 계산해 둔다 (평균 55일, 소진 60일 뒤 → 5일 뒤)
+assert.deepEqual([db.ProductPlan[0].order_by, db.ProductPlan[0].runout, db.ProductPlan[0].lead_days, db.ProductPlan[0].recommended_qty], [kst(5), kst(60), 55, 9000]);
+assert.deepEqual([db.ProductPlan[0].incoming_qty, db.ProductPlan[0].safety_weeks, db.ProductPlan[0].moq], [0, 0, 0], '선택 칸을 비우면 0');
 
 // ── 일일 점검: 재고 6,000 / 월 3,000 → 60일 뒤 소진, 평균 55일 전 주문 → 5일 뒤 주문 권장, 알림일 지남 → 알림 ──
 globalThis.__user = null;
@@ -97,6 +100,8 @@ const sp = r.data.summaries.c3.sourcing;
 assert.deepEqual(sp.steps.map((x) => x.label), ['요구사항 확인', '공장 후보 2곳', '견적 2건 받음', '비교표 준비']);
 assert.equal(sp.due, kst(5));
 assert.equal(JSON.stringify(r.data).includes('비밀공장'), false);
+// 4단계: 주문 권장일이 2주 안이면 고객 할 일에 재주문 시점
+assert.deepEqual(r.data.reorder_pending.map((x) => [x.product_name, x.order_by, x.recommended_qty, x.overdue]), [['휴대용 선풍기', kst(5), 9000, false]]);
 
 // ── 주간 요약 ──
 globalThis.__emails = [];
@@ -111,4 +116,12 @@ assert.match(mail.body, /샘플 선적 도착 · 드립백 포장재/);
 assert.match(mail.body, /선금 입금 확인 · 드립백 포장재/);
 assert.match(mail.body, /견적서 발행 · 드립백 포장재/);
 assert.match(mail.body, /요구사항 확정 완료/);
+assert.match(mail.body, /재주문 시점 · 휴대용 선풍기 · \d+\/\d+까지 주문 권장/, '4단계: 주간 요약에도 재주문 시점');
+r = await call('sendWeeklyDigest', {});
+assert.equal(r.data.sent, 0, '같은 주에 다시 불러도 다시 보내지 않는다');
+assert.equal(globalThis.__emails.length, 1);
+globalThis.__user = CLIENT;
+r = await call('sendWeeklyDigest', {});
+assert.equal(r.status, 403, '고객·직원 계정은 직접 부를 수 없다');
+globalThis.__user = null;
 console.log('client-phase3: 3단계 서버 함수 검산 통과');

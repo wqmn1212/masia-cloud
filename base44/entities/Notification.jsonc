@@ -67,7 +67,9 @@
         "quote_accepted",
         "file_review_requested",
         "file_review_decision",
-        "claim_factory_overdue"
+        "claim_factory_overdue",
+        "factory_submission",
+        "daily_digest"
       ],
       "description": "\uc54c\ub9bc \uc720\ud615"
     },

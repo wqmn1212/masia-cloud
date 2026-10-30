@@ -8,14 +8,19 @@ import { ARRIVED } from '../../shared/reorderForecast.ts';
 // 고객 주간 요약 메일 (워크플로 WeeklyClientDigest, 월요일 08:20 KST).
 // 고객 계정마다 대시보드와 같은 계산(clientOverview)으로 이번 주 확인하실 일·일정을, 지난 7일의 공개 단계 완료·도착·견적 발행·입금 확인을 모아 한 통 보낸다.
 // 보낼 내용이 없거나 메일 설정에서 주간 요약을 끈 계정은 건너뛴다.
+// 예약 실행(로그인 없음)과 마스터만 부를 수 있고, 같은 계정에는 한 주에 한 번만 보낸다 (User.weekly_digest_sent_for).
 export default async function (req: Request) {
   try {
     const base44 = createClientFromRequest(req);
+    const caller = await base44.auth.me().catch(() => null);
+    if (caller && caller.account_tier !== 'master') return Response.json({ error: 'Forbidden' }, { status: 403 });
     const svc = base44.asServiceRole;
     const today = kstToday();
+    // 이번 주 월요일 (한 주 한 번 기준)
+    const monday = shiftDate(today, -((new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7));
     const from = shiftDate(today, -7);
     const weekEnd = shiftDate(today, 6);
-    const users = (await svc.entities.User.filter({ account_tier: 'client' })).filter(wantsWeekly);
+    const users = (await svc.entities.User.filter({ account_tier: 'client' })).filter((u: any) => wantsWeekly(u) && u.weekly_digest_sent_for !== monday);
     const byCompany = new Map<string, any[]>();
     for (const u of users) if (u.company_id) byCompany.set(u.company_id, [...(byCompany.get(u.company_id) || []), u]);
     let sent = 0, skipped = 0;
@@ -38,6 +43,7 @@ export default async function (req: Request) {
         if (!d) { skipped += 1; continue; }
         try {
           await svc.integrations.Core.SendEmail({ to: u.email, from_name: FROM_NAME, subject: d.subject, body: emailBody(d.text, '', '/client/dashboard') });
+          await svc.entities.User.update(u.id, { weekly_digest_sent_for: monday }).catch(() => null);
           sent += 1;
         } catch (_e) { skipped += 1; }
       }

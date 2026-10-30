@@ -18,6 +18,7 @@ import MoldRegistryPanel from './MoldRegistryPanel';
 import ImportRequirementsPanel from './ImportRequirementsPanel';
 import QualitySpecPanel from './QualitySpecPanel';
 import QCPrecheckPanel from './qcprecheck/QCPrecheckPanel';
+import FactoryRequestPanel from '@/components/taskcard/factoryrequest/FactoryRequestPanel';
 import QCPrecheckSummary from './QCPrecheckSummary';
 import PaymentGatePanel from './PaymentGatePanel';
 import ProcessControlPanel from './ProcessControlPanel';
@@ -126,6 +127,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
             <AIProposalPanel card={card} user={user} />
             <TaskItemsTab card={card} viewLang={viewLang} />
             <QCPrecheckPanel card={card} user={user} />
+            <FactoryRequestPanel card={card} />
             <QualitySpecPanel card={card} user={user} />
             <GoldenSamplePanel card={card} user={user} />
             <QCReportPanel card={card} user={user} />

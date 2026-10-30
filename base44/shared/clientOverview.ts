@@ -12,6 +12,8 @@ const kstDate = (ms) => new Date(ms + 9 * 3600 * 1000).toISOString().slice(0, 10
 const DAY_MS = 24 * 3600 * 1000;
 // 결재 요청자에게 반려·무효를 보여 주는 기간
 const RETURNED_DAYS = 14;
+// 주문 권장일 몇 일 전부터 고객 할 일에 올리나 (알림과 같은 2주)
+const REORDER_ALERT_DAYS = 14;
 
 export async function clientOverview(svc: any, { user, companyId }: { user: any; companyId: string }): Promise<any> {
   // 서명할 계약서: 이 계정이 서명자로 지정된, 기한 안의 요청 (카드 없는 구독 계약서도 포함)
@@ -37,7 +39,14 @@ export async function clientOverview(svc: any, { user, companyId }: { user: any;
         mine: String(a.requested_by_email || '').toLowerCase() === me, can_approve: a.status === 'PENDING' && canApprove(company, me, a),
       }))
     : [];
-  if (!cards.length) return { spec_pending: [], qc_pending: [], dest_cost_pending: [], comparison_pending: [], payment_pending: [], file_review_pending: [], signature_pending: signaturePending, approvals, team, upcoming: [], summaries: {}, order: [], calendar: [] };
+  // 재주문 시점: 고객이 적은 재고로 계산해 둔 주문 권장일(ProductPlan.order_by)이 2주 안이거나 지난 상품
+  const todayKst = kstDate(Date.now());
+  const alertFrom = kstDate(Date.now() + REORDER_ALERT_DAYS * DAY_MS);
+  const reorderPending = (await svc.entities.ProductPlan.filter({ company_id: companyId }, '-updated_date', 200))
+    .filter((p) => p.company_id === companyId && p.order_by && p.order_by <= alertFrom && Number(p.monthly_usage) > 0)
+    .map((p) => ({ product_key: p.product_key, product_name: p.product_name || '', unit_label: p.unit_label || '개', order_by: p.order_by, runout: p.runout || '', recommended_qty: p.recommended_qty ?? null, overdue: p.order_by < todayKst }))
+    .sort((a, b) => a.order_by.localeCompare(b.order_by));
+  if (!cards.length) return { spec_pending: [], qc_pending: [], dest_cost_pending: [], comparison_pending: [], payment_pending: [], file_review_pending: [], signature_pending: signaturePending, reorder_pending: reorderPending, approvals, team, upcoming: [], summaries: {}, order: [], calendar: [] };
   const ids = cards.map((c) => c.id);
   const titles = new Map(cards.map((c) => [c.id, c.title]));
 
@@ -119,5 +128,5 @@ export async function clientOverview(svc: any, { user, companyId }: { user: any;
   // 입고 달력: 지난 60일 ~ 앞으로 180일
   const calendar = calendarEvents({ cards, milestones, shipments, from: kstDate(Date.now() - 60 * DAY_MS), to: kstDate(Date.now() + 180 * DAY_MS) });
 
-  return { spec_pending: specPending, qc_pending: qcPending, dest_cost_pending: destCostPending, comparison_pending: comparisonPending, payment_pending: paymentPending, file_review_pending: fileReviewPending, signature_pending: signaturePending, approvals, team, upcoming, summaries, order, calendar };
+  return { spec_pending: specPending, qc_pending: qcPending, dest_cost_pending: destCostPending, comparison_pending: comparisonPending, payment_pending: paymentPending, file_review_pending: fileReviewPending, signature_pending: signaturePending, reorder_pending: reorderPending, approvals, team, upcoming, summaries, order, calendar };
 }

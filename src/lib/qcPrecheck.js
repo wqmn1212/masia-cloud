@@ -415,11 +415,12 @@ export function sortItems(items) {
 }
 
 // 다시 점검해도 같은 항목(key)은 이전 결정(업무 등록·제외 등)을 이어받는다. AI 항목은 그대로 남긴다.
+// 공장 업로드 링크로 받은 답(factory_answer)도 새 판에 이어받는다
 export function mergeDecisions(next, previous = []) {
   const byKey = new Map(previous.map((p) => [p.key, p]));
   const merged = next.map((n) => {
     const p = byKey.get(n.key);
-    return p ? { ...n, decision: p.decision || 'PENDING', linked_id: p.linked_id || '', dismiss_reason: p.dismiss_reason || '', decided_by_name: p.decided_by_name || '', decided_at: p.decided_at || '' } : { ...n, decision: 'PENDING' };
+    return p ? { ...n, decision: p.decision || 'PENDING', linked_id: p.linked_id || '', dismiss_reason: p.dismiss_reason || '', decided_by_name: p.decided_by_name || '', decided_at: p.decided_at || '', ...(p.factory_answer ? { factory_answer: p.factory_answer, factory_answered_at: p.factory_answered_at || '' } : {}) } : { ...n, decision: 'PENDING' };
   });
   const ai = previous.filter((p) => p.source === 'AI' && !merged.some((m) => m.key === p.key));
   return sortItems([...merged, ...ai]);

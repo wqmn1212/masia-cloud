@@ -99,26 +99,45 @@ export function reorderForecast({ orders = [], quantity, krwPerNow = {}, today, 
 }
 
 /**
- * 재고·월 사용량으로 주문 시점: 예상 소진일 − 지난 발주→도착 일수 = 주문 권장일, 그 2주 전에 알린다.
+ * 재고·월 사용량으로 주문 시점: 재고가 안전재고에 닿는 날 − 지난 발주→도착 일수 = 주문 권장일, 그 2주 전에 알린다.
  * 그 사이에 중국 휴무가 걸리면 휴무 기간만큼 앞당기고 발주 마감일을 함께 알린다.
+ * 입고 예정 수량은 재고에 더하고, 안전재고(주)를 적지 않으면 0 (소진일 기준 — 3단계와 같다).
+ * 권장 발주량 = 월 사용량 × 발주 주기(기본 3개월), MOQ가 더 크면 MOQ (몇 개월치인지 함께).
+ * 권장일이 지났으면 항공으로 바꿀 때 운송이 약 9일 줄어 언제까지 주문하면 되는지 보여 준다 (해상 LCL 14일 → 항공 5일).
  */
 export const ALERT_DAYS_BEFORE = 14;
-export function orderTiming({ stock_qty, monthly_usage, stock_as_of, lead_days, today, holidays = [] }: any) {
+export const DEFAULT_CYCLE_MONTHS = 3;
+export const AIR_SAVING_DAYS = 9;
+export function orderTiming({ stock_qty, monthly_usage, stock_as_of, lead_days, today, holidays = [], incoming_qty = 0, safety_weeks = 0, cycle_months = 0, moq = 0 }: any) {
   const usage = num(monthly_usage);
   const stock = num(stock_qty);
   if (usage <= 0 || stock < 0 || !stock_as_of) return null;
-  const runout = addDays(stock_as_of, (stock / usage) * 30);
+  const daily = usage / 30;
+  const have = stock + Math.max(0, num(incoming_qty));
+  const safety = Math.round(daily * Math.max(0, num(safety_weeks)) * 7);
+  const runout = addDays(stock_as_of, have / daily);
+  const reorderPoint = addDays(stock_as_of, Math.max(0, have - safety) / daily);
+  const cycle = num(cycle_months) > 0 ? num(cycle_months) : DEFAULT_CYCLE_MONTHS;
+  const minQty = Math.max(0, Math.round(num(moq)));
+  const base = Math.ceil(usage * cycle);
+  const recommended_qty = Math.max(base, minQty);
+  const moq_months = minQty > base ? Math.round((minQty / usage) * 10) / 10 : null;
   const lead = Math.round(num(lead_days));
-  if (lead <= 0) return { runout, order_by: null, alert_on: null, holiday: null, overdue: false, no_lead: true };
-  let orderBy = addDays(runout, -lead);
-  const holiday = overlappingHoliday(holidays, orderBy, runout);
+  const extra = { safety_qty: safety, recommended_qty, moq_months };
+  if (lead <= 0) return { runout, order_by: null, alert_on: null, holiday: null, overdue: false, no_lead: true, air: null, ...extra };
+  let orderBy = addDays(reorderPoint, -lead);
+  const holiday = overlappingHoliday(holidays, orderBy, reorderPoint);
   if (holiday) orderBy = addDays(orderBy, -holiday.days);
+  const overdue = !!today && today > orderBy;
+  const airBy = addDays(orderBy, AIR_SAVING_DAYS);
   return {
     runout,
     order_by: orderBy,
     alert_on: addDays(orderBy, -ALERT_DAYS_BEFORE),
     holiday,
-    overdue: !!today && today > orderBy,
+    overdue,
     no_lead: false,
+    air: overdue ? { saving_days: AIR_SAVING_DAYS, order_by: airBy, still_possible: today <= airBy } : null,
+    ...extra,
   };
 }

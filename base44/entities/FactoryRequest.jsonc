@@ -1,0 +1,221 @@
+{
+  "name": "FactoryRequest",
+  "type": "object",
+  "description": "\uacf5\uc7a5 \uc5c5\ub85c\ub4dc \ub9c1\ud06c: \uacf5\uc7a5\uc774 \uacc4\uc815 \uc5c6\uc774 \ub9c1\ud06c + PIN\uc73c\ub85c \uc0ac\uc9c4\u00b7\uc11c\ub958\u00b7\ub2f5\uc744 \uc62c\ub9ac\uace0 \uc9c1\uc6d0\uc774 \ucc44\ud0dd\ud55c\ub2e4. \ud1a0\ud070\u00b7PIN\uc740 \ud574\uc2dc\ub9cc \uc800\uc7a5, \uc4f0\uae30\ub294 \uc11c\ubc84 \ud568\uc218(manageFactoryRequest\u00b7submitFactoryRequest)\ub9cc",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uce74\ub4dc \uc18c\uc720 \ud300"
+    },
+    "card_id": {
+      "type": "string"
+    },
+    "factory_id": {
+      "type": "string"
+    },
+    "factory_name": {
+      "type": "string"
+    },
+    "token_hash": {
+      "type": "string",
+      "description": "\ub9c1\ud06c \ud1a0\ud070 SHA-256"
+    },
+    "pin_hash": {
+      "type": "string",
+      "description": "\ud1a0\ud070+PIN SHA-256"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "description": "\uc800\uc7a5 \uc0c1\ud0dc (\uae30\ud55c \uc9c0\ub0a8\uc740 \ud654\uba74\uc5d0\uc11c \uacc4\uc0b0)",
+      "enum": [
+        "OPEN",
+        "DONE",
+        "REVOKED"
+      ],
+      "default": "OPEN"
+    },
+    "message_cn": {
+      "type": "string",
+      "description": "\uacf5\uc7a5\uc5d0 \ubcf4\uc77c \uc548\ub0b4 (\uc911\uad6d\uc5b4)"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "description": "PHOTO \uc0ac\uc9c4 / DOC \uc11c\ub958 / ANSWER \uc9c8\ubb38 \ub2f5\ubcc0 / MILESTONE \uc644\ub8cc \ubcf4\uace0",
+            "enum": [
+              "PHOTO",
+              "DOC",
+              "ANSWER",
+              "MILESTONE"
+            ]
+          },
+          "label_ko": {
+            "type": "string"
+          },
+          "label_cn": {
+            "type": "string"
+          },
+          "note_cn": {
+            "type": "string",
+            "description": "\uacf5\uc7a5\uc5d0 \ubcf4\uc77c \uc124\uba85 (\uc911\uad6d\uc5b4)"
+          },
+          "milestone_id": {
+            "type": "string",
+            "description": "\uc644\ub8cc \ubcf4\uace0 \ub300\uc0c1 CardMilestone"
+          },
+          "precheck_item_key": {
+            "type": "string",
+            "description": "\ub2f5\uc744 \ub123\uc744 \uc0ac\uc804 QC \uacf5\uc7a5 \uc9c8\ubb38 \ud56d\ubaa9"
+          },
+          "doc_type": {
+            "type": "string",
+            "description": "\ucc44\ud0dd \uc2dc \uce74\ub4dc \ud30c\uc77c \ubb38\uc11c \uc885\ub958"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "WAITING",
+              "SUBMITTED",
+              "ACCEPTED",
+              "REDO"
+            ]
+          },
+          "redo_reason": {
+            "type": "string",
+            "description": "\uc7ac\uc694\uccad \uc0ac\uc720 (\uacf5\uc7a5\uc5d0 \ubcf4\uc784)"
+          },
+          "reviewed_by_name": {
+            "type": "string"
+          },
+          "reviewed_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "submissions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_key": {
+            "type": "string"
+          },
+          "file_name": {
+            "type": "string"
+          },
+          "file_uri": {
+            "type": "string",
+            "description": "\ube44\uacf5\uac1c \uc800\uc7a5 \ud30c\uc77c"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "submitted_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "review": {
+            "type": "string",
+            "description": "'' \ubbf8\uac80\ud1a0 / ACCEPTED / REDO"
+          },
+          "attachment_id": {
+            "type": "string",
+            "description": "\ucc44\ud0dd\ud574 \ub9cc\ub4e0 \uce74\ub4dc \ud30c\uc77c"
+          }
+        }
+      }
+    },
+    "failed_pin_count": {
+      "type": "number",
+      "default": 0
+    },
+    "locked_until": {
+      "type": "string"
+    },
+    "last_opened_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "submitted_notified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_by_name": {
+      "type": "string"
+    },
+    "revoked_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "card_id",
+    "token_hash",
+    "pin_hash",
+    "expires_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

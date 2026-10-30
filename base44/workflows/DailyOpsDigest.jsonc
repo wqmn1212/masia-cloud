@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "daily_ops_digest",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "daily_ops_digest": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendDailyOpsDigest",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\uc9c1\uc6d0 \uc77c\uc77c \uc6b4\uc601 \uc694\uc57d",
+            "description": "\ub9e4\uc77c \uc544\uce68 \ub2f4\ub2f9\uc790\ub9c8\ub2e4 \uc624\ub298 \ub9c8\uac10\u00b7\uc9c0\uc5f0 \uc704\ud5d8\u00b7\uace0\uac1d \ub300\uae30\u00b7\uacf5\uc7a5 \ub300\uae30\u00b7\ud655\uc778\ud560 \uac83\u00b7\uace0\uac1d \uc7ac\uc8fc\ubb38 \uc2dc\uc810\uc744 \ud55c \ud1b5\uc73c\ub85c"
+          }
+        }
+      }
+    ]
+  },
+  "description": "\ub9e4\uc77c 08:30 KST \uc9c1\uc6d0\ub9c8\ub2e4 \uc790\uae30 \uce74\ub4dc\uc758 \uc624\ub298 \ub9c8\uac10, \uc9c0\uc5f0 \uc704\ud5d8, \uace0\uac1d \ub300\uae30, \uacf5\uc7a5 \ub300\uae30, \ud655\uc778\ud560 \uac83, \uace0\uac1d \uc7ac\uc8fc\ubb38 \uc2dc\uc810\uc744 \uc571 \uc54c\ub9bc\uacfc \uba54\uc77c\ub85c \ubcf4\ub0c5\ub2c8\ub2e4 (\ud56d\ubaa9\uc774 \uc5c6\uac70\ub098 \uba54\uc77c \uc124\uc815\uc5d0\uc11c \ub048 \uc9c1\uc6d0 \uc81c\uc678)",
+  "name": "\uc9c1\uc6d0 \uc77c\uc77c \uc6b4\uc601 \uc694\uc57d",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "30 8 * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

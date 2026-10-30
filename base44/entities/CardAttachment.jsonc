@@ -130,6 +130,10 @@
     "client_approved_by_name": {
       "type": "string",
       "description": "\uc774 \ud310\uc744 \uc2b9\uc778\ud55c \uace0\uac1d"
+    },
+    "factory_request_id": {
+      "type": "string",
+      "description": "\uacf5\uc7a5 \uc5c5\ub85c\ub4dc \ub9c1\ud06c\ub85c \ubc1b\uc740 \ud30c\uc77c\uc774\uba74 \uadf8 \uc694\uccad"
     }
   },
   "required": [
