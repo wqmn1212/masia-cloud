@@ -1,4 +1,4 @@
-// 검산용 가짜 Base44 SDK: globalThis.__db(엔티티별 배열)·__user·__llm 을 쓴다
+// 검산용 가짜 Base44 SDK: globalThis.__db(엔티티별 배열)·__user·__llm·__connToken 을 쓴다
 let seq = 0;
 const match = (r, q) => Object.entries(q || {}).every(([k, v]) => (v && typeof v === 'object' && '$in' in v ? v.$in.includes(r[k]) : r[k] === v));
 const sortBy = (rows, sort) => { if (!sort) return rows; const d = sort.startsWith('-'); const f = sort.replace(/^-/, ''); return [...rows].sort((a, b) => ((a[f] ?? '') > (b[f] ?? '') ? 1 : (a[f] ?? '') < (b[f] ?? '') ? -1 : 0) * (d ? -1 : 1)); };
@@ -17,6 +17,6 @@ export function createClientFromRequest() {
     auth: { me: async () => globalThis.__user },
     users: { inviteUser: async (email, role) => { (globalThis.__invites ||= []).push({ email, role }); return {}; } },
     entities,
-    asServiceRole: { entities, integrations: { Core: { InvokeLLM: async (a) => globalThis.__llm(a), UploadPrivateFile: async ({ file }) => ({ file_uri: `private://${file.name}` }), SendEmail: async (m) => { (globalThis.__emails ||= []).push(m); return {}; } } } },
+    asServiceRole: { entities, connectors: { getConnection: async (type) => ({ accessToken: globalThis.__connToken || `token-${type}` }) }, integrations: { Core: { InvokeLLM: async (a) => globalThis.__llm(a), UploadPrivateFile: async ({ file }) => ({ file_uri: `private://${file.name}` }), SendEmail: async (m) => { (globalThis.__emails ||= []).push(m); return {}; } } } },
   };
 }

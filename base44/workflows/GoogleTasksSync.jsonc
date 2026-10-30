@@ -1,10 +1,10 @@
 {
-  "description": "\uc138\ubd80 \uc5c5\ubb34\ub97c Google Tasks\uc5d0 \ub4f1\ub85d\ud558\uace0, \uccb4\ud06c\ubc15\uc2a4\ub85c \uc644\ub8cc\ub41c \ud56d\ubaa9\uc744 \uc571\uc5d0 \ubc18\uc601\ud569\ub2c8\ub2e4 (15\ubd84 \uc8fc\uae30).",
+  "description": "\ud560\uc77c\uc774 \uc0dd\uae30\uac70\ub098 \uace0\uccd0\uc9c0\uac70\ub098 \uc9c0\uc6cc\uc9c8 \ub54c\ub9c8\ub2e4 \uadf8 \ud560\uc77c\ub9cc Google Tasks('Masia \uc5c5\ubb34')\uc5d0 \ubc18\uc601\ud569\ub2c8\ub2e4. \ubc14\ub010 \ub0b4\uc6a9\uc774 \uc5c6\uc73c\uba74 Google \uc744 \ubd80\ub974\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. Google \uc5d0\uc11c \uccb4\ud06c\ud55c \uc644\ub8cc\ub294 \ud560\uc77c \ud0ed\uc758 'Google \ub3d9\uae30\ud654' \ubc84\ud2bc\uc73c\ub85c \uac00\uc838\uc635\ub2c8\ub2e4.",
   "definition": {
     "document": {
       "dsl": "1.0.0",
       "name": "google_tasks_sync",
-      "version": "1.0",
+      "version": "2.0",
       "namespace": "base44"
     },
     "do": [
@@ -13,12 +13,15 @@
           "call": "invoke_backend_function",
           "with": {
             "function_name": "syncGoogleTasks",
-            "args": {}
+            "args": {
+              "item_id": "${ .trigger.entity_id }",
+              "google_task_id": "${ .trigger.data.google_task_id }"
+            }
           },
           "then": "end",
           "x-base44": {
-            "title": "Google Tasks \ub3d9\uae30\ud654",
-            "description": "\uc591\ubc29\ud5a5 \ubc18\uc601"
+            "title": "\ud560\uc77c \ud55c \uac74 Google Tasks \ubc18\uc601",
+            "description": "\ub4f1\ub85d\u00b7\uc218\uc815\u00b7\uc644\ub8cc\u00b7\uc0ad\uc81c"
           }
         }
       }
@@ -28,18 +31,13 @@
   "trigger": {
     "condition": null,
     "config": {
-      "trigger_type": "scheduled",
-      "events": [],
-      "schedule_mode": "recurring",
-      "cron_expression": "*/15 * * * *",
-      "one_time_date": null,
-      "timezone": "Asia/Seoul",
-      "interval_value": null,
-      "interval_unit": null,
-      "interval_anchor": null,
-      "ends_type": "never",
-      "ends_on_date": null,
-      "ends_after_count": null
+      "trigger_type": "entity",
+      "events": [
+        "create",
+        "update",
+        "delete"
+      ],
+      "entity_name": "TaskItem"
     }
   }
 }
