@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ClipboardCheck, CalendarClock, ChevronRight } from 'lucide-react';
 import useClientOverview from '@/lib/useClientOverview';
 import { Card } from '@/components/ui/card';
@@ -21,9 +22,11 @@ function Row({ onClick, children }) {
   );
 }
 
-// 고객 대시보드 맨 위: 고객이 직접 해야 할 일(사내 결재, 계약서 서명, 결제, 기준서·출고 판단, 디자인 확인, 도착지 비용 확인, 견적 비교표)과 앞으로 2주 일정.
+// 고객 대시보드 맨 위: 고객이 직접 해야 할 일(사내 결재, 계약서 서명, 결제, 기준서·출고 판단, 디자인 확인, 도착지 비용 확인, 견적 비교표, 재주문 시점)과 앞으로 2주 일정.
 export default function ClientTodoCard({ onOpen, onSign }) {
   const { data } = useClientOverview();
+  const navigate = useNavigate();
+  const reorders = data?.reorder_pending || [];
   const payments = data?.payment_pending || [];
   const specs = data?.spec_pending || [];
   const qc = data?.qc_pending || [];
@@ -35,7 +38,7 @@ export default function ClientTodoCard({ onOpen, onSign }) {
   // 내가 결재할 것 + 내가 요청했다가 반려·무효가 된 것
   const toApprove = (data?.approvals || []).filter((a) => a.can_approve);
   const returned = (data?.approvals || []).filter((a) => a.mine && ['REJECTED', 'STALE'].includes(a.status));
-  const count = toApprove.length + returned.length + payments.length + specs.length + qc.length + destCosts.length + comparisons.length + signatures.length + reviews.length;
+  const count = toApprove.length + returned.length + payments.length + specs.length + qc.length + destCosts.length + comparisons.length + signatures.length + reviews.length + reorders.length;
 
   return (
     <Card className="grid gap-5 p-5 xl:grid-cols-2">
@@ -98,6 +101,13 @@ export default function ClientTodoCard({ onOpen, onSign }) {
                 <Badge variant="outline" className="shrink-0 text-[10px]">디자인 확인</Badge>
                 <span className="min-w-[96px] flex-1 truncate">{r.card_title}</span>
                 <span className="min-w-0 truncate text-xs text-muted-foreground">{r.file_name}{r.due_date ? ` · 기한 ${shortDate(r.due_date)}` : ''}</span>
+              </Row>
+            ))}
+            {reorders.map((r) => (
+              <Row key={r.product_key} onClick={() => navigate('/client/costs')}>
+                <Badge variant="outline" className={`shrink-0 text-[10px] ${r.overdue ? 'border-warning/40 text-warning-text' : ''}`}>재주문 시점</Badge>
+                <span className="min-w-[96px] flex-1 truncate">{r.product_name}</span>
+                <span className={`min-w-0 truncate text-xs tabular-nums ${r.overdue ? 'font-medium text-warning-text' : 'text-muted-foreground'}`}>{r.overdue ? `주문 권장일 ${shortDate(r.order_by)} 지남` : `${shortDate(r.order_by)}까지 주문 권장`}{r.recommended_qty ? ` · 약 ${r.recommended_qty.toLocaleString('ko-KR')}${r.unit_label}` : ''}</span>
               </Row>
             ))}
             {destCosts.map((d) => (

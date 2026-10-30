@@ -17,6 +17,7 @@ export function digestTodos(overview: any) {
     ...(o.qc_pending || []).filter((q: any) => q.decision !== 'ON_HOLD').map((q: any) => `${q.inspection_type === 'SAMPLE' ? '샘플' : '출고'} 승인 · ${q.card_title}`),
     ...(o.file_review_pending || []).map((r: any) => `디자인 확인 · ${r.card_title} · ${r.file_name}${r.due_date ? ` · 기한 ${md(r.due_date)}` : ''}`),
     ...(o.dest_cost_pending || []).map((d: any) => `도착지 비용 확인 · ${d.card_title}`),
+    ...(o.reorder_pending || []).map((r: any) => `재주문 시점 · ${r.product_name} · ${r.overdue ? `주문 권장일 ${md(r.order_by)} 지남` : `${md(r.order_by)}까지 주문 권장`}`),
   ];
 }
 

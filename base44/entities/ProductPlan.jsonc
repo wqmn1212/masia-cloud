@@ -44,6 +44,45 @@
     },
     "updated_by_name": {
       "type": "string"
+    },
+    "incoming_qty": {
+      "type": "number",
+      "description": "\uc785\uace0 \uc608\uc815 \uc218\ub7c9 (\uc774\ubbf8 \ubc1c\uc8fc\ud574 \uc624\ub294 \uc911\uc778 \uac83)"
+    },
+    "safety_weeks": {
+      "type": "number",
+      "description": "\uc548\uc804\uc7ac\uace0 (\uc8fc \ub2e8\uc704 \ud310\ub9e4\ub7c9)"
+    },
+    "cycle_months": {
+      "type": "number",
+      "description": "\ubc1c\uc8fc \uc8fc\uae30 (\uac1c\uc6d4) \u2014 \uad8c\uc7a5 \ubc1c\uc8fc\ub7c9 \uacc4\uc0b0"
+    },
+    "moq": {
+      "type": "number",
+      "description": "\ucd5c\uc18c \uc8fc\ubb38 \uc218\ub7c9"
+    },
+    "order_by": {
+      "type": "string",
+      "format": "date",
+      "description": "\uacc4\uc0b0\ud574 \ub454 \uc8fc\ubb38 \uad8c\uc7a5\uc77c (\uc77c\uc77c \uc810\uac80\u00b7\uc800\uc7a5 \ub54c \uac31\uc2e0, \uc9c1\uc6d0 \ubaa9\ub85d\u00b7\uace0\uac1d \ud560 \uc77c\uc6a9)"
+    },
+    "runout": {
+      "type": "string",
+      "format": "date",
+      "description": "\uacc4\uc0b0\ud574 \ub454 \uc608\uc0c1 \uc18c\uc9c4\uc77c"
+    },
+    "lead_days": {
+      "type": "number",
+      "description": "\uacc4\uc0b0\uc5d0 \uc4f4 \ubc1c\uc8fc\u2192\ub3c4\ucc29 \uc77c\uc218 (\uc9c0\ub09c \uc8fc\ubb38 \ud3c9\uade0)"
+    },
+    "recommended_qty": {
+      "type": "number",
+      "description": "\uacc4\uc0b0\ud574 \ub454 \uad8c\uc7a5 \ubc1c\uc8fc\ub7c9"
+    },
+    "computed_on": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc704 \uac12\uc744 \uacc4\uc0b0\ud55c \ub0a0"
     }
   },
   "required": [

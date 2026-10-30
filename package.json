@@ -32,7 +32,9 @@
     "check:claim-tracking": "node scripts/check-claim-tracking.mjs",
     "check:inquiry-form": "node scripts/check-inquiry-form.mjs",
     "check:weekly-digest": "node scripts/check-weekly-digest.mjs",
-    "check:client-phase3": "node --import ./scripts/fnmock/register.mjs scripts/check-client-phase3.mjs"
+    "check:client-phase3": "node --import ./scripts/fnmock/register.mjs scripts/check-client-phase3.mjs",
+    "check:factory-request": "node --import ./scripts/fnmock/register.mjs scripts/check-factory-request.mjs",
+    "check:ops-digest": "node --import ./scripts/fnmock/register.mjs scripts/check-ops-digest.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.57",

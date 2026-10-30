@@ -64,6 +64,7 @@ const ClientLandedCost = lazy(() => import('@/pages/ClientLandedCost'));
 const ClientProductCosts = lazy(() => import('@/pages/ClientProductCosts'));
 const ClientMolds = lazy(() => import('@/pages/ClientMolds'));
 const LogisticsRates = lazy(() => import('@/pages/LogisticsRates'));
+const FactoryUpload = lazy(() => import('@/pages/FactoryUpload'));
 
 const Spinner = () => (
   <div className="fixed inset-0 flex items-center justify-center">
@@ -80,6 +81,8 @@ const AuthenticatedApp = () => {
   if (location.pathname === '/about') return <About />;
   if (location.pathname === '/pricing') return <Pricing />;
   if (location.pathname === '/cloud') return <Cloud />;
+  // 공장 업로드 링크 — 공장 담당자가 계정 없이 링크 + PIN으로 연다
+  if (location.pathname.startsWith('/f/')) return <Suspense fallback={<Spinner />}><FactoryUpload /></Suspense>;
   // 물류비 계산기는 고객 전용 — 예전 공개 주소는 고객 포털로 보낸다 (로그인 필요)
   if (location.pathname === '/tools/landed-cost') return <Navigate to="/client/landed-cost" replace />;
   if (location.pathname === '/cloud-guide') return <Navigate to="/cloud" replace />;

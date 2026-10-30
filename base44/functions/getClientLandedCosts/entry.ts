@@ -60,7 +60,7 @@ export default async function (req: Request) {
 
     return Response.json({
       today, krw_per_now: krwPerNow, holidays,
-      plans: plans.map((p: any) => ({ product_key: p.product_key, stock_qty: p.stock_qty ?? null, monthly_usage: p.monthly_usage ?? null, stock_as_of: p.stock_as_of || '', updated_by_name: p.updated_by_name || '', alerted_for: p.alerted_for || '' })),
+      plans: plans.map((p: any) => ({ product_key: p.product_key, stock_qty: p.stock_qty ?? null, monthly_usage: p.monthly_usage ?? null, stock_as_of: p.stock_as_of || '', incoming_qty: p.incoming_qty ?? null, safety_weeks: p.safety_weeks ?? null, cycle_months: p.cycle_months ?? null, moq: p.moq ?? null, updated_by_name: p.updated_by_name || '', alerted_for: p.alerted_for || '' })),
       records: records.map((r: any) => {
         const card: any = byId.get(r.card_id);
         return {

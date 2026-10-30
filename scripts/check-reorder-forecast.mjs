@@ -56,7 +56,22 @@ assert.equal(th.overdue, true, '권장일이 지났다');
 assert.equal(S.orderTiming({ stock_qty: 10, monthly_usage: 0, stock_as_of: today, lead_days: 30, today }), null);
 assert.equal(S.orderTiming({ stock_qty: 100, monthly_usage: 50, stock_as_of: today, lead_days: 0, today }).no_lead, true);
 
+// 발주 플래너 (4단계): 안전재고·입고 예정·권장 발주량·MOQ·항공 대안. 적지 않으면 3단계와 같다
+assert.equal(t.safety_qty, 0);
+assert.equal(t.recommended_qty, 9000, '월 3,000 × 기본 3개월');
+assert.equal(t.air, null, '권장일 전이면 항공 안내 없음');
+const ts = S.orderTiming({ stock_qty: 9000, monthly_usage: 3000, stock_as_of: '2026-10-01', lead_days: 55, today, safety_weeks: 2 });
+assert.deepEqual([ts.safety_qty, ts.runout, ts.order_by], [1400, '2026-12-30', '2026-10-22'], '안전재고 1,400(2주)에 닿는 12/16에 도착하도록');
+const ti = S.orderTiming({ stock_qty: 9000, monthly_usage: 3000, stock_as_of: '2026-10-01', lead_days: 55, today, incoming_qty: 3000 });
+assert.deepEqual([ti.runout, ti.order_by], ['2027-01-29', '2026-12-05'], '입고 예정은 재고에 더한다');
+const tm = S.orderTiming({ stock_qty: 9000, monthly_usage: 3000, stock_as_of: '2026-10-01', lead_days: 55, today, cycle_months: 2, moq: 20000 });
+assert.deepEqual([tm.recommended_qty, tm.moq_months], [20000, 6.7], 'MOQ가 2개월치보다 크면 MOQ, 약 6.7개월치');
+assert.equal(S.orderTiming({ stock_qty: 9000, monthly_usage: 3000, stock_as_of: '2026-10-01', lead_days: 55, today, cycle_months: 2 }).recommended_qty, 6000);
+assert.deepEqual(th.air, { saving_days: 9, order_by: '2026-11-03', still_possible: today <= '2026-11-03' }, '권장일이 지나면 항공(운송 약 9일 단축) 기준 마감');
+assert.equal(S.orderTiming({ stock_qty: 100, monthly_usage: 50, stock_as_of: today, lead_days: 0, today }).recommended_qty, 150, '도착 일수를 몰라도 권장 발주량은 낸다');
+
 // 화면 사본
 for (const args of [{ orders, quantity: 3000, krwPerNow: { USD: 1400 }, today, holidays }, { orders, quantity: 10000, krwPerNow: {}, today }]) assert.deepEqual(F.reorderForecast(args), S.reorderForecast(args));
 assert.deepEqual(F.orderTiming({ stock_qty: 9000, monthly_usage: 3000, stock_as_of: '2026-10-01', lead_days: 55, today, holidays }), th);
+for (const extra of [{ safety_weeks: 2 }, { incoming_qty: 3000, moq: 20000, cycle_months: 2 }]) assert.deepEqual(F.orderTiming({ stock_qty: 9000, monthly_usage: 3000, stock_as_of: '2026-10-01', lead_days: 55, today, holidays, ...extra }), S.orderTiming({ stock_qty: 9000, monthly_usage: 3000, stock_as_of: '2026-10-01', lead_days: 55, today, holidays, ...extra }));
 console.log('reorder-forecast: 재주문 예측 검산 통과');

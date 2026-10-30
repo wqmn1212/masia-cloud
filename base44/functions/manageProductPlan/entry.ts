@@ -1,9 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { requireClient, cardVisibleToClient } from '../../shared/clientAccess.ts';
 import { kstToday } from '../../shared/chinaHoliday.ts';
+import { factoryHolidays, refreshPlan } from '../../shared/productPlan.ts';
 
 // 고객 상품 원가 카드의 재고·월 사용량 (재주문 시점 알림용). 고객 계정만 저장하고, 상품은 우리 고객사의 확정 원가가 있는 것만.
-//  action 'save' {product_key, stock_qty, monthly_usage, stock_as_of} · 'clear' {product_key}
+//  action 'save' {product_key, stock_qty, monthly_usage, stock_as_of, incoming_qty?, safety_weeks?, cycle_months?, moq?} · 'clear' {product_key}
+// 저장하면 주문 권장일·소진일·권장 발주량을 바로 계산해 둔다 (refreshPlan).
 const num = (v: unknown) => (v === '' || v == null ? null : Number.isFinite(Number(v)) ? Number(v) : NaN);
 
 export default async function (req: Request) {
@@ -24,23 +26,28 @@ export default async function (req: Request) {
     const [plan] = (await svc.entities.ProductPlan.filter({ company_id: auth.companyId, product_key: key }, '-updated_date', 1)).filter((p: any) => p.company_id === auth.companyId);
 
     if (body.action === 'clear') {
-      if (plan) await svc.entities.ProductPlan.update(plan.id, { stock_qty: null, monthly_usage: null, stock_as_of: '', alerted_for: '' });
+      if (plan) await svc.entities.ProductPlan.update(plan.id, { stock_qty: null, monthly_usage: null, stock_as_of: '', alerted_for: '', incoming_qty: null, order_by: '', runout: '', recommended_qty: null });
       return Response.json({ ok: true });
     }
     if (body.action !== 'save') return Response.json({ error: '지원하지 않는 동작입니다' }, { status: 400 });
     const stock = num(body.stock_qty), usage = num(body.monthly_usage);
     if (Number.isNaN(stock) || Number.isNaN(usage) || stock == null || usage == null || stock < 0 || usage <= 0) return Response.json({ error: '재고(0 이상)와 월 사용량(0보다 큼)을 숫자로 적어 주세요' }, { status: 400 });
+    // 선택 칸: 비우면 0(입고 예정·안전재고·MOQ) 또는 기본값(발주 주기 3개월)
+    const opt = (v: unknown, max: number) => { const n = num(v); return n == null || Number.isNaN(n) || n < 0 ? 0 : Math.min(max, Math.round(n * 10) / 10); };
     const today = kstToday();
     const asOf = typeof body.stock_as_of === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.stock_as_of) && body.stock_as_of <= today ? body.stock_as_of : today;
     const patch = {
       stock_qty: Math.round(stock), monthly_usage: Math.round(usage * 100) / 100, stock_as_of: asOf,
+      incoming_qty: Math.round(opt(body.incoming_qty, 1e9)), safety_weeks: opt(body.safety_weeks, 26), cycle_months: opt(body.cycle_months, 24), moq: Math.round(opt(body.moq, 1e9)),
       product_name: latest.product_name || '', unit_label: latest.unit_label || '개',
       updated_by_name: auth.user.full_name || auth.user.email || '',
       // 숫자가 바뀌면 권장일이 바뀌므로 알림을 다시 보낼 수 있게 한다
       alerted_for: '',
     };
-    if (plan) await svc.entities.ProductPlan.update(plan.id, patch);
-    else await svc.entities.ProductPlan.create({ tenant_id: latest.tenant_id, company_id: auth.companyId, product_key: key, ...patch });
+    const saved = plan
+      ? { ...plan, ...patch, ...(await svc.entities.ProductPlan.update(plan.id, patch) || {}) }
+      : await svc.entities.ProductPlan.create({ tenant_id: latest.tenant_id, company_id: auth.companyId, product_key: key, ...patch });
+    await refreshPlan(svc, saved, { today, holidays: await factoryHolidays(svc, today) }).catch(() => null);
     return Response.json({ ok: true });
   } catch (error) {
     return Response.json({ error: (error as Error).message }, { status: 500 });

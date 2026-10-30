@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlarmClock, AlertTriangle, ArrowUpRight, CheckCircle2, ClipboardCheck, Columns3, FileSignature, Landmark, Loader2, PackageX, RefreshCw, Wallet, Calculator } from 'lucide-react';
+import { AlarmClock, AlertTriangle, ArrowUpRight, CheckCircle2, ClipboardCheck, Columns3, FileSignature, Landmark, Loader2, PackageX, RefreshCw, Wallet, Calculator, Factory, CalendarClock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useLanguage } from '@/lib/LanguageContext';
 import { REMITTANCE_FOR_STAGE } from '@/components/files/documentTypes';
@@ -197,7 +197,51 @@ export default function AdminInbox() {
         ))}
       </Section>
 
+      <FactoryAndReorderSections L={L} cardTitle={cardTitle} />
+
       {user && <PayeeAccountsPanel user={user} />}
     </div>
+  );
+}
+
+// 공장 업로드 링크 제출 확인 대기와 고객 재주문 시점 (4단계). 위쪽 숫자 칸에는 넣지 않고 참고 목록으로 둔다
+function FactoryAndReorderSections({ L, cardTitle }) {
+  const kstToday = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+  const until = new Date(Date.now() + (9 + 14 * 24) * 3600000).toISOString().slice(0, 10);
+  const factory = useQuery({ queryKey: ['admin-inbox', 'factory-requests'], queryFn: async () => (await base44.entities.FactoryRequest.filter({ status: 'OPEN' }, '-last_submitted_at', 100)).filter((r) => (r.items || []).some((i) => i.status === 'SUBMITTED')) });
+  const plans = useQuery({
+    queryKey: ['admin-inbox', 'reorder-plans'],
+    queryFn: async () => {
+      const rows = (await base44.entities.ProductPlan.filter({}, 'order_by', 200)).filter((p) => p.order_by && p.order_by <= until);
+      const names = {};
+      for (const id of [...new Set(rows.map((p) => p.company_id))]) names[id] = (await base44.entities.Company.get(id).catch(() => null))?.company_name || '';
+      return rows.map((p) => ({ ...p, company_name: names[p.company_id] }));
+    },
+  });
+  const factoryRows = factory.data || [];
+  const planRows = plans.data || [];
+  return (
+    <>
+      <Section id="inbox-factory" icon={Factory} title={L(['공장 제출 확인 대기', '工厂提交待确认'])} count={factoryRows.length} loading={factory.isLoading} error={factory.isError && L(['불러오지 못했습니다.', '加载失败。'])}
+        desc={L(['공장이 업로드 링크로 올린 사진·서류·답 중 아직 채택하거나 재요청하지 않은 것입니다. 카드 업무 탭의 공장 업로드 링크에서 처리합니다.', '工厂通过上传链接提交、尚未确认或要求重新提交的照片、文件和回答。请在卡片任务页的工厂上传链接中处理。'])}
+        empty={L(['확인할 공장 제출이 없습니다.', '没有待确认的工厂提交。'])}>
+        {factoryRows.map((r) => (
+          <Row key={r.id} title={`${cardTitle(r.card_id)} · ${r.factory_name || L(['공장', '工厂'])}`}
+            badge={<Badge className="border-0 bg-primary/10 text-micro text-primary">{L([`확인 대기 ${(r.items || []).filter((i) => i.status === 'SUBMITTED').length}건`, `待确认 ${(r.items || []).filter((i) => i.status === 'SUBMITTED').length} 项`])}</Badge>}
+            meta={`${L(['마지막 제출', '最近提交'])} ${String(r.last_submitted_at || '').slice(0, 10)} · ${r.created_by_name || ''}`}
+            to={cardLink(r.card_id, 'tasks')} action={L(['확인하기', '去确认'])} />
+        ))}
+      </Section>
+      <Section id="inbox-reorder" icon={CalendarClock} title={L(['고객 재주문 시점 (2주 이내)', '客户返单时机（2周内）'])} count={planRows.length} loading={plans.isLoading} error={plans.isError && L(['불러오지 못했습니다.', '加载失败。'])}
+        desc={L(['고객이 상품 원가에 적은 재고·월 사용량으로 계산한 주문 권장일이 2주 안이거나 지난 상품입니다. 재주문 영업과 공장 생산 일정을 미리 잡는 근거로 쓰세요.', '根据客户在产品成本中填写的库存和月用量计算，建议下单日在2周内或已过的产品。可作为返单销售和提前安排工厂生产的依据。'])}
+        empty={L(['2주 안에 주문 시점이 오는 고객 상품이 없습니다.', '2周内没有到下单时机的客户产品。'])}>
+        {planRows.map((p) => (
+          <Row key={p.id} title={`${p.company_name || L(['고객사', '客户'])} · ${p.product_name || L(['상품', '产品'])}`}
+            badge={<Badge variant="outline" className={`text-micro ${p.order_by < kstToday ? 'border-warning/40 text-warning-text' : ''}`}>{p.order_by < kstToday ? L(['권장일 지남', '已过建议日']) : L(['주문 권장', '建议下单'])} {p.order_by}</Badge>}
+            meta={[p.runout ? `${L(['예상 소진', '预计用完'])} ${p.runout}` : '', p.recommended_qty ? `${L(['권장 발주량', '建议数量'])} ${Number(p.recommended_qty).toLocaleString('ko-KR')}${p.unit_label || ''}` : '', p.lead_days ? `${L(['발주→도착 평균', '下单→到货平均'])} ${p.lead_days}${L(['일', '天'])}` : ''].filter(Boolean).join(' · ')}
+            to={cardLink(p.product_key, 'overview')} action={L(['카드 보기', '查看卡片'])} />
+        ))}
+      </Section>
+    </>
   );
 }

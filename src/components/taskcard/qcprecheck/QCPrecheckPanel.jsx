@@ -100,6 +100,7 @@ function ItemRow({ item, comp, kase, onTask, onSpec, onDismiss, busy }) {
       {tx('how') && <p className="text-xs text-muted-foreground"><span className="text-foreground/80">{t('qcp.how')}</span> · {tx('how')}</p>}
       {tx('criteria') && <p className="text-xs text-muted-foreground"><span className="text-foreground/80">{t('qcp.criteria')}</span> · {tx('criteria')}</p>}
       {item.question_cn && <p className="text-xs text-muted-foreground"><span className="text-foreground/80">{t('qcp.question')}</span> · {item.question_cn}</p>}
+      {item.factory_answer && <p className="whitespace-pre-line rounded bg-primary/5 px-2 py-1 text-xs"><span className="font-medium text-primary">{t('qcp.factoryAnswer')}</span> · {item.factory_answer}</p>}
       {kase && item.rule_id && <p className="text-[11px] text-primary">{t('qcp.source.CASE')}: {kase.issue_case}{kase.trigger_decision ? ` (${kase.trigger_decision})` : ''}</p>}
       {item.decision === 'DISMISSED' && item.dismiss_reason && <p className="text-[11px] text-muted-foreground">{item.dismiss_reason}</p>}
       {dismissing && !decided && (

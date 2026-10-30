@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import CardModal from '@/components/taskcard/CardModal';
 import MyWorkCardRow from '@/components/mywork/MyWorkCardRow';
+import DailyDigestCard from '@/components/mywork/DailyDigestCard';
 
 import { todayStr as today } from '@/lib/milestones';
 import { useWorkT } from '@/lib/workI18n';
@@ -28,6 +29,7 @@ export default function MyWork() {
         <h1 className="text-xl font-bold">{tr('내 업무')}</h1>
         <p className="text-sm text-muted-foreground">{tr('내가 책임자인 진행 중 카드')} {active.length}{tr('건')}</p>
       </div>
+      {user && ['service', 'sub'].includes(user.account_tier) && <DailyDigestCard user={user} cards={cards} onOpen={setSelected} />}
       {isLoading || !user ? (
         <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
       ) : !active.length ? (

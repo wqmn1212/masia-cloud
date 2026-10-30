@@ -29,6 +29,7 @@ export default function MilestoneRow({ m, confirmed, onChange, onComplete, onEdi
         {canManage && <Button size="icon" variant="ghost" className="h-7 w-7" title={tr('단계 수정')} onClick={() => onEdit(m)}><Pencil className="w-3.5 h-3.5" /></Button>}
         {canManage && <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" title={tr('단계 삭제')} onClick={() => window.confirm(tr('이 단계를 삭제할까요?')) && onRemove(m)}><Trash2 className="w-3.5 h-3.5" /></Button>}
       </div>
+      {m.factory_reported_at && !done && <p className="whitespace-pre-line rounded bg-primary/5 px-2 py-1 text-[11px]"><span className="font-medium text-primary">{tr('공장 완료 보고')} {String(m.factory_reported_at).slice(5, 10).replace('-', '/')}</span> · {m.factory_report_note}</p>}
       <div className="grid grid-cols-3 gap-2 text-[11px]">
         <div><p className="text-muted-foreground">{tr('기준일')}</p><p>{m.baseline_date || tr('미확정')}</p></div>
         <div>
