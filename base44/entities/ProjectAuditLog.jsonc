@@ -38,7 +38,11 @@
         "QUOTE_CLIENT_ACCEPTED",
         "FILE_REVIEW_REQUESTED",
         "FILE_REVIEW_CANCELED",
-        "FILE_REVIEW_DECISION"
+        "FILE_REVIEW_DECISION",
+        "QUOTE_REVIEW_REQUESTED",
+        "QUOTE_REVIEW_REJECTED",
+        "QUOTE_APPROVED_SENT",
+        "QUOTE_UNPUBLISHED"
       ]
     },
     "actor_id": {

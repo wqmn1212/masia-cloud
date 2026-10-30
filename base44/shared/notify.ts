@@ -10,7 +10,7 @@ export const FROM_NAME = 'AEGIS';
 
 const DEBOUNCE_MS = 5 * 60 * 1000;
 // 매번 이메일을 보내는 알림 (5분 규칙 제외)
-const ALWAYS_EMAIL = ['quote_published', 'payment_confirmed', 'schedule_changed', 'payment_requested', 'payment_due', 'client_approval_requested', 'client_approval_decided', 'file_review_requested'];
+const ALWAYS_EMAIL = ['quote_published', 'quote_review_requested', 'payment_confirmed', 'schedule_changed', 'payment_requested', 'payment_due', 'client_approval_requested', 'client_approval_decided', 'file_review_requested'];
 
 // 공통 이메일 본문 틀: 본문 + 프로젝트 + 바로가기 링크 + 안내
 export function emailBody(text, cardTitle, link) {

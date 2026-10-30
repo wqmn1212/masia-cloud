@@ -1,6 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { editableFields, restrictedFields, changedFields, historyVersion } from '../../shared/quotationHistory.ts';
 
+const APPROVER_ONLY_STATUS = ['APPROVED', 'SENT'];
+const APPROVAL_FIELDS = ['review_requested_at', 'review_requested_by_id', 'review_requested_by_name', 'review_note', 'review_rejected_reason', 'approved_at', 'approved_by_id', 'approved_by_name', 'sent_at'];
+
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -11,8 +14,9 @@ export default async function(req) {
     if (action === 'create') {
       // 새 견적 등록 — 수정용 원가 필드 제한은 적용하지 않고, 팀 범위만 서버에서 고정한다.
       if (!data || typeof data !== 'object' || Array.isArray(data)) return Response.json({ error: '견적 내용이 필요합니다.' }, { status: 400 });
-      const blocked = new Set(['id', 'created_date', 'updated_date', 'created_by', 'created_by_id', 'client_published_at']);
+      const blocked = new Set(['id', 'created_date', 'updated_date', 'created_by', 'created_by_id', 'client_published_at', ...APPROVAL_FIELDS]);
       const record = Object.fromEntries(Object.entries(data).filter(([k]) => !blocked.has(k)));
+      if (user.account_tier === 'sub' && APPROVER_ONLY_STATUS.includes(record.status)) record.status = 'DRAFT';
       record.tenant_id = user.account_tier === 'master' && typeof data.tenant_id === 'string' && data.tenant_id ? data.tenant_id : user.tenant_id;
       if (!record.tenant_id) return Response.json({ error: '소속 팀이 없습니다.' }, { status: 403 });
       if (typeof record.card_id === 'string' && record.card_id) {
@@ -45,6 +49,8 @@ export default async function(req) {
     if (!data || typeof data !== 'object' || Array.isArray(data) || typeof expected_updated_date !== 'string') return Response.json({ error: '수정 내용과 수정 전 시점이 필요합니다.' }, { status: 400 });
     if (q.updated_date !== expected_updated_date) return Response.json({ error: '다른 변경이 먼저 저장되었습니다. 견적 목록을 새로고침한 후 다시 수정해주세요.' }, { status: 409 });
     const patch = Object.fromEntries(Object.entries(data).filter(([k]) => editableFields.includes(k) && (user.account_tier !== 'sub' || !restrictedFields.has(k))));
+    // 승인됨·발송됨은 팀 관리자만 (직원은 '검토 요청'으로 승인을 받는다)
+    if (user.account_tier === 'sub' && APPROVER_ONLY_STATUS.includes(patch.status) && patch.status !== q.status) return Response.json({ error: '승인·발송은 팀 관리자만 할 수 있습니다. 견적 탭에서 검토를 요청하세요.' }, { status: 403 });
     const fields = changedFields(q, patch);
     if (!fields.length && (patch.status === undefined || patch.status === q.status)) return Response.json({ saved: true, unchanged: true });
     if (fields.length) {

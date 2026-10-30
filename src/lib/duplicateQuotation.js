@@ -1,6 +1,8 @@
 import createQuotation from '@/lib/createQuotation';
 
-const SYSTEM_FIELDS = ['id', 'created_date', 'updated_date', 'created_by_id', 'created_by', 'client_published_at', 'ai_status'];
+const SYSTEM_FIELDS = ['id', 'created_date', 'updated_date', 'created_by_id', 'created_by', 'client_published_at', 'ai_status',
+  'client_accepted_at', 'client_accepted_by_name', 'client_accept_note',
+  'review_requested_at', 'review_requested_by_id', 'review_requested_by_name', 'review_note', 'review_rejected_reason', 'approved_at', 'approved_by_id', 'approved_by_name', 'sent_at'];
 
 // 견적 내용을 그대로 복사한 새 초안 견적서를 만든다 (이름/가격만 바꿔 재발행용).
 export default async function duplicateQuotation(quote) {

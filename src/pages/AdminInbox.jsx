@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlarmClock, AlertTriangle, ArrowUpRight, CheckCircle2, ClipboardCheck, Columns3, FileSignature, Landmark, Loader2, PackageX, RefreshCw, Wallet, Calculator, Factory, CalendarClock } from 'lucide-react';
+import { AlarmClock, AlertTriangle, ArrowUpRight, CheckCircle2, ClipboardCheck, Columns3, FileCheck2, FileSignature, Landmark, Loader2, PackageX, RefreshCw, Wallet, Calculator, Factory, CalendarClock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useLanguage } from '@/lib/LanguageContext';
 import { REMITTANCE_FOR_STAGE } from '@/components/files/documentTypes';
@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import PayeeAccountsPanel from '@/components/payments/PayeeAccountsPanel';
+import QuoteApprovalSection from '@/components/quotation/QuoteApprovalSection';
 
 // 관리자 할 일: 대표·팀 관리자(service)와 마스터가 처리하거나 챙겨야 할 일을 한곳에 모은다. 처리는 각 화면에서 한다.
 const STAGE = { DOWN_PAYMENT: ['선금', '首款'], INTERIM_PAYMENT: ['중도금', '中期款'], BALANCE_PAYMENT: ['잔금', '尾款'] };
@@ -78,6 +79,12 @@ export default function AdminInbox() {
   const qc = useQueryClient();
   const { data: user } = useQuery({ queryKey: ['current-user'], queryFn: () => base44.auth.me() });
   const { status, accounts, payments, claims, cards } = useInbox();
+  const quotes = useQuery({
+    queryKey: ['admin-inbox', 'quotes'],
+    enabled: ['master', 'service'].includes(user?.account_tier),
+    queryFn: async () => (await base44.functions.invoke('quoteApproval', { action: 'queue' })).data,
+  });
+  const quoteCount = (quotes.data?.review?.length || 0) + (quotes.data?.unsent?.length || 0);
   const s = status.data || {};
   const sigs = signatureQueue(s.signatures);
   const comparisons = s.comparisons?.awaiting_confirm || [];
@@ -88,7 +95,7 @@ export default function AdminInbox() {
   const canVerify = user?.account_tier === 'master';
   const statusErr = status.isError ? L(['현황을 불러오지 못했습니다.', '无法加载现状。']) : null;
   const tiles = [
-    ['accounts', Landmark, ['공장 계좌', '工厂账户']], ['payments', Wallet, ['입금 확인', '确认到账']], ['overdue', AlarmClock, ['결제 기한 지남', '付款逾期']], ['comparisons', Columns3, ['고객 선택', '客户选择']],
+    ['quotes', FileCheck2, ['견적 승인', '报价审批']], ['accounts', Landmark, ['공장 계좌', '工厂账户']], ['payments', Wallet, ['입금 확인', '确认到账']], ['overdue', AlarmClock, ['결제 기한 지남', '付款逾期']], ['comparisons', Columns3, ['고객 선택', '客户选择']],
     ['signatures', FileSignature, ['전자서명', '电子签名']], ['costs', Calculator, ['도착 원가', '到岸成本']], ['claims', PackageX, ['불량 신고', '不良投诉']],
   ];
   const cardTitle = (id) => cards[id]?.title || L(['(카드)', '(卡片)']);
@@ -104,14 +111,18 @@ export default function AdminInbox() {
         <Button variant="outline" size="sm" className="h-8 gap-1 text-label" onClick={() => qc.invalidateQueries({ queryKey: ['admin-inbox'] })}><RefreshCw className="h-3.5 w-3.5" />{L(['새로 고침', '刷新'])}</Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
         {tiles.map(([key, Icon, label]) => (
           <a key={key} href={`#inbox-${key}`} className="rounded-xl border bg-card p-3 transition-colors hover:border-primary">
             <p className="flex items-center gap-1.5 text-label text-muted-foreground"><Icon className="h-3.5 w-3.5" />{L(label)}</p>
-            <p className={`mt-1 text-title font-bold tabular-nums ${counts[key] ? 'text-foreground' : 'text-muted-foreground'}`}>{counts[key]}</p>
+            <p className={`mt-1 text-title font-bold tabular-nums ${(key === 'quotes' ? quoteCount : counts[key]) ? 'text-foreground' : 'text-muted-foreground'}`}>{key === 'quotes' ? quoteCount : counts[key]}</p>
           </a>
         ))}
       </div>
+
+      {['master', 'service'].includes(user?.account_tier) && (
+        <QuoteApprovalSection data={quotes.data} loading={quotes.isLoading} error={quotes.isError && L(['견적 승인 목록을 불러오지 못했습니다.', '无法加载报价审批列表。'])} />
+      )}
 
       <Section id="inbox-accounts" icon={Landmark} title={L(['공장 지급 계좌 확인', '核实工厂收款账户'])} count={counts.accounts} loading={accounts.isLoading} error={accounts.isError && L(['불러오지 못했습니다.', '加载失败。'])}
         desc={canVerify ? L(['공장에 직접 전화·영상으로 확인한 뒤 확인된 계좌로 지정하세요. 확인 전에는 송금하지 않습니다.', '请直接通过电话或视频与工厂核实后，再指定为已核实账户。核实前不得付款。']) : L(['계좌 확인은 마스터 계정만 할 수 있습니다. 확인될 때까지 이 공장에 송금하지 마세요.', '只有 master 账号可以核实账户。核实前请勿向该工厂付款。'])}
