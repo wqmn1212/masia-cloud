@@ -81,8 +81,8 @@ export function AssistantMock({ zh }) {
 export function InboxMock({ zh }) {
   return (
     <Frame title={L(zh, '관리자 할 일', '管理员待办')} badge={L(zh, '예시 화면', '示例画面')}>
-      <Mark n={1}><div className="grid grid-cols-3 gap-1.5 p-1">
-        {[['공장 계좌', '工厂账户', 1], ['입금 확인', '确认到账', 2], ['고객 선택', '客户选择', 1], ['전자서명', '电子签名', 2], ['도착 원가', '到岸成本', 2], ['불량 신고', '不良投诉', 1]].map(([k, c, n]) => <div key={k} className="rounded border p-1.5"><div className="text-[10px] text-muted-foreground">{L(zh, k, c)}</div><b>{n}</b></div>)}
+      <Mark n={1}><div className="grid grid-cols-4 gap-1.5 p-1">
+        {[['견적 승인', '报价审批', 2], ['책임자 없음', '无负责人', 1], ['공장 계좌', '工厂账户', 1], ['입금 확인', '确认到账', 2], ['고객 선택', '客户选择', 1], ['전자서명', '电子签名', 2], ['도착 원가', '到岸成本', 2], ['불량 신고', '不良投诉', 1]].map(([k, c, n]) => <div key={k} className="rounded border p-1.5"><div className="text-[10px] text-muted-foreground">{L(zh, k, c)}</div><b>{n}</b></div>)}
       </div></Mark>
       <div className="mt-2 rounded border p-2">
         <b>{L(zh, '공장 지급 계좌 확인', '核实工厂收款账户')}</b>
