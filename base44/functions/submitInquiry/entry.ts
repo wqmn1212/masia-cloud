@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { applyIntake } from '../../shared/intakeServer.ts';
 import { uploadPrivateAttachments, linkCardAttachments } from '../../shared/privateAttachments.ts';
 
 // 랜딩 페이지 공개 문의 접수 — 비로그인 호출. 사용자 토큰을 신뢰하지 않고 서버가 tenant_id 를 결정한다.
@@ -101,6 +102,8 @@ export default async function (req) {
       ].join('\n'),
     });
     await svc.entities.ManufacturingLead.update(lead.id, { task_card_id: card.id });
+    // 배정 규칙으로 책임자·견적 기한을 정하고 알린다 (랜딩 문의는 아직 고객사가 없어 카테고리·팀 기본 규칙만 맞는다)
+    try { await applyIntake(svc, card, { categories, summary: `${lead.company} · ${lead.contact_name} 문의\n${String(lead.detail || '').slice(0, 120)}` }); } catch (_e) { /* 배정 실패는 접수를 막지 않음 */ }
     await linkCardAttachments(svc, {
       tenantId: tenant.id,
       cardId: card.id,
