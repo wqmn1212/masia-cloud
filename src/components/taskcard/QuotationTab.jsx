@@ -679,7 +679,8 @@ export default function QuotationTab({ card, user }) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.entries(STATUS_META).map(([k, v]) => (
+                        {/* 승인됨·발송됨은 위 '견적 승인 · 고객 발송'에서 팀 관리자가 처리한다 */}
+                        {Object.entries(STATUS_META).filter(([k]) => user?.account_tier !== 'sub' || !['APPROVED', 'SENT'].includes(k) || k === q.status).map(([k, v]) => (
                           <SelectItem key={k} value={k} className="text-xs">{v.label}</SelectItem>
                         ))}
                       </SelectContent>

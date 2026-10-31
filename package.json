@@ -36,7 +36,8 @@
     "check:factory-request": "node --import ./scripts/fnmock/register.mjs scripts/check-factory-request.mjs",
     "check:ops-digest": "node --import ./scripts/fnmock/register.mjs scripts/check-ops-digest.mjs",
     "check:quote-import": "node scripts/check-quote-import.mjs",
-    "check:google-tasks": "node --import ./scripts/fnmock/register.mjs scripts/check-google-tasks.mjs"
+    "check:google-tasks": "node --import ./scripts/fnmock/register.mjs scripts/check-google-tasks.mjs",
+    "check:quote-approval": "node --import ./scripts/fnmock/register.mjs scripts/check-quote-approval.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.57",

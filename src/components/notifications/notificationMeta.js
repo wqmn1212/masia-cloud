@@ -3,6 +3,8 @@ export const NOTIFICATION_META = {
   card_shared: { label: '프로젝트 공개', icon: '📂' },
   chat_message: { label: '새 메시지', icon: '💬' },
   quote_published: { label: '견적서 발행', icon: '📄' },
+  quote_review_requested: { label: '견적 승인 요청', icon: '📝' },
+  quote_review_decided: { label: '견적 승인 결과', icon: '📝' },
   settlement_due: { label: '정산 예정', icon: '💰' },
   portfolio_edit_request: { label: '포트폴리오 수정 요청', icon: '✏️' },
   payment_confirmed: { label: '입금 확인', icon: '💳' },
