@@ -66,6 +66,13 @@ assert.deepEqual(qq.unsent.map((r) => r.id), ['c']);
 assert.equal(qq.review[0].card_title, '타정기 5구');
 assert.equal(qq.review[0].summary.margin_pct, 20.5);
 assert.equal(qq.review[0].can_send, true);
+const closed = R.approvalQueue([
+  { ...base, id: 'f', card_id: 'done', status: 'REVIEW' },
+  { ...base, id: 'g', card_id: 'gone', status: 'SENT' },
+  { ...base, id: 'h', card_id: 'cancel', status: 'APPROVED' },
+  { ...base, id: 'i', card_id: 'c1', status: 'REVIEW' },
+], { c1: card, done: { ...card, id: 'done', status: 'DONE' }, cancel: { ...card, id: 'cancel', status: 'CANCELLED' } }, today);
+assert.deepEqual([...closed.review, ...closed.unsent].map((r) => r.id), ['i'], '완료·취소·없는 카드의 견적은 승인함에서 뺀다');
 console.log('quote-review ok');
 
 // 서버 함수

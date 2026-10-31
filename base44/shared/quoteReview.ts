@@ -74,8 +74,13 @@ export function reviewChecks(q: any, card: any, today: string) {
 export const canSend = (checks: { level: string }[]) => !checks.some((c) => c.level === 'block');
 export const isPublished = (q: any) => !!q.client_published_at;
 
-// 관리자 승인함: 검토 요청된 견적(오래된 순)과, 발송됨인데 고객 공개가 빠진 견적
+// 끝난 카드: 그 견적은 승인함에 올리지 않는다 (예전에는 '검토 중'을 진행 표시로도 썼다)
+export const CLOSED_CARD = ['DONE', 'CANCELLED'];
+
+// 관리자 승인함: 검토 요청된 견적(오래된 순)과, 발송됨인데 고객 공개가 빠진 견적.
+// 카드가 없거나(지워짐) 완료·취소된 카드의 견적은 뺀다
 export function approvalQueue(quotes: any[], cards: Record<string, any>, today: string) {
+  quotes = quotes.filter((q) => cards[q.card_id] && !CLOSED_CARD.includes(cards[q.card_id].status));
   const row = (q: any) => {
     const card = cards[q.card_id] || null;
     const checks = reviewChecks(q, card, today);
