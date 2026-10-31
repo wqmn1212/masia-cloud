@@ -12,7 +12,7 @@ import { KIND_LABEL, PRESETS, DEFAULT_DAYS, MAX_ITEMS } from '@/lib/factoryReque
 const chip = (on) => `rounded-full border px-2.5 py-1 text-caption ${on ? 'border-primary bg-primary text-primary-foreground' : 'bg-background hover:bg-muted'}`;
 const sel = 'h-8 rounded-md border bg-background px-2 text-xs';
 
-// 공장에 받을 항목 고르기: 자주 쓰는 사진·서류, 이 카드의 일정 단계(완료 보고), 사전 QC 공장 질문, 직접 입력
+// 공장에 받을 항목 고르기: 견적서·자주 쓰는 사진·서류, 이 카드의 일정 단계(완료 보고), 사전 QC 공장 질문, 직접 입력. 공장 이름은 링크마다 정한다
 export default function FactoryRequestDialog({ card, open, onClose, pending, onCreate }) {
   const { lang } = useLanguage();
   const L = (ko, zh) => (lang === 'zh' ? zh : ko);
@@ -20,7 +20,8 @@ export default function FactoryRequestDialog({ card, open, onClose, pending, onC
   const [custom, setCustom] = useState({ kind: 'PHOTO', label_ko: '', label_cn: '' });
   const [days, setDays] = useState(DEFAULT_DAYS);
   const [message, setMessage] = useState('');
-  useEffect(() => { if (open) { setPicked([]); setDays(DEFAULT_DAYS); setMessage(''); setCustom({ kind: 'PHOTO', label_ko: '', label_cn: '' }); } }, [open]);
+  const [factory, setFactory] = useState('');
+  useEffect(() => { if (open) { setPicked([]); setDays(DEFAULT_DAYS); setMessage(''); setFactory(card.factory_name || ''); setCustom({ kind: 'PHOTO', label_ko: '', label_cn: '' }); } }, [open, card.factory_name]);
 
   const { data: milestones = [] } = useQuery({ queryKey: ['card-milestones', card.id], enabled: open, queryFn: () => base44.entities.CardMilestone.filter({ card_id: card.id }, 'seq', 100) });
   const { data: precheck = [] } = useQuery({ queryKey: ['qc-precheck', card.id], enabled: open, queryFn: () => base44.entities.QCPrecheck.filter({ card_id: card.id }, '-version', 1) });
@@ -35,6 +36,9 @@ export default function FactoryRequestDialog({ card, open, onClose, pending, onC
     toggle({ ...custom, label_ko: custom.label_ko.trim(), label_cn: custom.label_cn.trim() });
     setCustom((c) => ({ ...c, label_ko: '', label_cn: '' }));
   };
+  const wantsQuote = picked.some((p) => p.kind === 'QUOTE');
+  // 견적 요청 문구 (공장에 보임): 제품명과 꼭 받아야 할 조건
+  const quoteMessage = () => `您好，请根据以下产品提供正式报价单：\n产品：${card.title_cn || card.title}\n请注明：单价、数量、模具费（如有）、交期（工作日）、付款条件、报价有效期、是否含税。\n可以直接上传 Excel、Word 或 PDF。谢谢！`;
   const customs = picked.filter((p) => !PRESETS.some((x) => id(x) === id(p)) && !p.milestone_id && !p.precheck_item_key);
 
   return (
@@ -46,10 +50,17 @@ export default function FactoryRequestDialog({ card, open, onClose, pending, onC
         </DialogHeader>
 
         <div className="space-y-4">
+          <label className="block text-label">{L('공장 이름', '工厂名称')}<Input className="mt-1 h-8 text-xs" value={factory} maxLength={200} onChange={(e) => setFactory(e.target.value)} placeholder={L('예: 운용(云涌)', '例：运涌')} /><span className="mt-0.5 block text-caption text-muted-foreground">{L('견적을 여러 공장에서 받을 때는 공장마다 링크를 따로 만드세요.', '向多家工厂询价时，请为每家工厂分别生成链接。')}</span></label>
           <div className="space-y-1.5">
-            <p className="text-label font-medium">{L('사진·서류', '照片·文件')}</p>
+            <p className="text-label font-medium">{L('견적서·사진·서류', '报价单·照片·文件')}</p>
             <div className="flex flex-wrap gap-1.5">{PRESETS.map((x) => <button key={id(x)} type="button" className={chip(has(x))} onClick={() => toggle(x)}>{lang === 'zh' ? x.label_cn : x.label_ko}</button>)}</div>
           </div>
+          {wantsQuote && (
+            <div className="flex flex-wrap items-center gap-2 rounded-lg bg-primary/5 p-2.5 text-caption">
+              <span className="min-w-0 flex-1">{L('공장이 견적서를 올리면 자동으로 읽어 이 카드에 견적 초안(공장 원가 그대로)을 만들고 알려 드립니다.', '工厂上传报价单后，系统会自动读取并在此卡片生成报价草稿。')}</span>
+              {!message.trim() && <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={() => setMessage(quoteMessage())}>{L('견적 요청 문구 넣기', '填入询价说明')}</Button>}
+            </div>
+          )}
           {steps.length > 0 && (
             <div className="space-y-1.5">
               <p className="text-label font-medium">{L('일정 단계 완료 보고', '进度完成报告')}</p>
@@ -76,14 +87,14 @@ export default function FactoryRequestDialog({ card, open, onClose, pending, onC
           </div>
           <div className="grid gap-2 sm:grid-cols-[120px_1fr]">
             <label className="text-label">{L('링크 기한 (일)', '链接有效期（天）')}<Input className="mt-1 h-8 text-xs" type="number" min={1} max={60} value={days} onChange={(e) => setDays(e.target.value)} /></label>
-            <label className="text-label">{L('공장에 보일 안내 (중국어, 선택)', '给工厂的说明（选填）')}<Textarea className="mt-1 min-h-[34px] text-xs" rows={1} maxLength={1000} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="例：请在11月5日前上传印刷完成的照片" /></label>
+            <label className="text-label">{L('공장에 보일 안내 (중국어, 선택)', '给工厂的说明（选填）')}<Textarea className="mt-1 min-h-[34px] text-xs" rows={wantsQuote && message ? 4 : 1} maxLength={1000} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="例：请在11月5日前上传印刷完成的照片" /></label>
           </div>
         </div>
 
         <DialogFooter className="items-center gap-2">
           <span className="mr-auto text-caption text-muted-foreground">{L(`${picked.length}개 항목`, `${picked.length} 项`)}</span>
           <Button variant="ghost" onClick={onClose} disabled={pending}>{L('취소', '取消')}</Button>
-          <Button disabled={pending || !picked.length} onClick={() => onCreate({ items: picked, days: Number(days) || DEFAULT_DAYS, message_cn: message })}>{pending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{L('링크 만들기', '生成链接')}</Button>
+          <Button disabled={pending || !picked.length} onClick={() => onCreate({ items: picked, days: Number(days) || DEFAULT_DAYS, message_cn: message, factory_name: factory.trim() })}>{pending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{L('링크 만들기', '生成链接')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

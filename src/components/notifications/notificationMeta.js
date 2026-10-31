@@ -20,6 +20,7 @@ export const NOTIFICATION_META = {
   file_review_decision: { label: '디자인 확인 결과', icon: '🎨' },
   claim_factory_overdue: { label: '공장 회신 지연', icon: '⏳' },
   factory_submission: { label: '공장 제출', icon: '🏭' },
+  factory_quote_imported: { label: '공장 견적 도착', icon: '🧾' },
   daily_digest: { label: '오늘 업무 요약', icon: '☀️' },
   schedule_changed: { label: '일정 변경', icon: '📅' },
   file_shared: { label: '파일 공유', icon: '📎' },

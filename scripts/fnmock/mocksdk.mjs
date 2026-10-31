@@ -17,6 +17,6 @@ export function createClientFromRequest() {
     auth: { me: async () => globalThis.__user },
     users: { inviteUser: async (email, role) => { (globalThis.__invites ||= []).push({ email, role }); return {}; } },
     entities,
-    asServiceRole: { entities, connectors: { getConnection: async (type) => ({ accessToken: globalThis.__connToken || `token-${type}` }) }, integrations: { Core: { InvokeLLM: async (a) => globalThis.__llm(a), UploadPrivateFile: async ({ file }) => ({ file_uri: `private://${file.name}` }), SendEmail: async (m) => { (globalThis.__emails ||= []).push(m); return {}; } } } },
+    asServiceRole: { entities, connectors: { getConnection: async (type) => ({ accessToken: globalThis.__connToken || `token-${type}` }) }, integrations: { Core: { InvokeLLM: async (a) => globalThis.__llm(a), UploadPrivateFile: async ({ file }) => ({ file_uri: `private://${file.name}` }), CreateFileSignedUrl: async ({ file_uri }) => ({ signed_url: globalThis.__signed ? globalThis.__signed(file_uri) : `https://files.example/${file_uri}` }), SendEmail: async (m) => { (globalThis.__emails ||= []).push(m); return {}; } } } },
   };
 }

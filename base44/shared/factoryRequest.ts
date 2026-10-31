@@ -1,14 +1,16 @@
-// 공장 업로드 링크 (4단계 ②). 공장 담당자가 계정 없이 링크 + PIN 6자리로 사진·서류·답을 올리고, 직원이 채택하거나 재요청한다.
+// 공장 업로드 링크 (4단계 ②). 공장 담당자가 계정 없이 링크 + PIN 6자리로 사진·서류·답·견적서를 올리고, 직원이 채택하거나 재요청한다.
+//  - 견적서(QUOTE)는 올라오면 서버가 읽어 견적 초안을 만든다 (factoryQuote.ts · importFactoryQuote).
 //  - 링크 토큰(32바이트)과 PIN은 해시로만 저장한다. 원문은 만들 때 한 번만 직원에게 돌려준다.
 //  - PIN 5번 틀리면 30분 잠금. 링크 기본 14일, 직원이 연장·회수할 수 있다.
 //  - 공장에게 보이는 것은 factoryView 가 고른 필드뿐이다 (고객사명·금액·다른 공장 없음).
 // 화면 src/lib/factoryRequest.js 가 같은 목록·상태 규칙을 쓴다. 검산: npm run check:factory-request
-export const ITEM_KINDS = ['PHOTO', 'DOC', 'ANSWER', 'MILESTONE'];
+export const ITEM_KINDS = ['PHOTO', 'DOC', 'ANSWER', 'MILESTONE', 'QUOTE'];
 export const KIND_LABEL: Record<string, { ko: string; cn: string }> = {
   PHOTO: { ko: '진행 사진', cn: '照片' },
   DOC: { ko: '서류', cn: '文件' },
   ANSWER: { ko: '질문 답변', cn: '回答问题' },
   MILESTONE: { ko: '완료 보고', cn: '完成报告' },
+  QUOTE: { ko: '견적서', cn: '报价单' },
 };
 // 서류 항목을 채택할 때 카드 파일의 문서 종류 (CardAttachment.document_type)
 export const DOC_TYPES = ['GENERAL', 'INVOICE_CI', 'INVOICE_PI', 'PACKING_LIST', 'CERT_ORIGIN', 'QUOTATION', 'TEST_REPORT', 'CERTIFICATE', 'SPEC_SHEET'];
@@ -19,14 +21,14 @@ export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 export const DAILY_SUBMIT_LIMIT = 100;
 export const PIN_TRIES = 5;
 export const LOCK_MINUTES = 30;
-const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'gif', 'pdf', 'xls', 'xlsx', 'csv'];
+const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'gif', 'pdf', 'xls', 'xlsx', 'csv', 'docx'];
 
 const clean = (v: unknown, max = 300) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 const DAY = 86400000;
 
 export const extOf = (name: string) => (String(name || '').split('.').pop() || '').toLowerCase();
 export const fileAllowed = (name: string, bytes: number) => {
-  if (!ALLOWED_EXT.includes(extOf(name))) return '사진·PDF·엑셀만 올릴 수 있습니다 / 仅支持照片、PDF、Excel';
+  if (!ALLOWED_EXT.includes(extOf(name))) return '사진·PDF·엑셀·워드(.docx)만 올릴 수 있습니다 / 仅支持照片、PDF、Excel、Word(.docx)';
   if (!(bytes > 0)) return '빈 파일입니다 / 文件为空';
   if (bytes > MAX_FILE_BYTES) return '파일은 10MB 이하여야 합니다 / 文件不能超过10MB';
   return '';
@@ -79,7 +81,7 @@ export function cleanItems(input: unknown, { milestones = [], precheckKeys = [] 
       note_cn: clean(raw.note_cn, 300),
       milestone_id: ms?.id || '',
       precheck_item_key: pk,
-      doc_type: kind === 'DOC' && DOC_TYPES.includes(raw?.doc_type) ? raw.doc_type : (kind === 'DOC' ? 'GENERAL' : ''),
+      doc_type: kind === 'QUOTE' ? 'QUOTATION' : kind === 'DOC' && DOC_TYPES.includes(raw?.doc_type) ? raw.doc_type : (kind === 'DOC' ? 'GENERAL' : ''),
       status: 'WAITING',
       redo_reason: '',
     });
@@ -156,6 +158,7 @@ export function submitPatch(req: any, itemKey: string, { file_name = '', file_ur
   if (item.status === 'ACCEPTED') return { error: '이미 확인된 항목입니다 / 该项目已确认' };
   const text = clean(answer, 2000);
   if ((item.kind === 'PHOTO' || item.kind === 'DOC') && !file_uri) return { error: '파일을 올려 주세요 / 请上传文件' };
+  if (item.kind === 'QUOTE' && !file_uri) return { error: '견적서 파일을 올려 주세요 / 请上传报价单文件' };
   if (item.kind === 'ANSWER' && !text && !file_uri) return { error: '답을 적어 주세요 / 请填写回答' };
   if (item.kind === 'MILESTONE' && !text && !file_uri) return { error: '완료 내용이나 사진을 올려 주세요 / 请填写完成情况或上传照片' };
   if (submissionsLastDay(req, now) >= DAILY_SUBMIT_LIMIT) return { error: '오늘 올릴 수 있는 수를 넘었습니다. 내일 다시 올려 주세요 / 今日上传次数已达上限' };
@@ -166,6 +169,7 @@ export function submitPatch(req: any, itemKey: string, { file_name = '', file_ur
       submissions: [...(req.submissions || []), sub],
       items: req.items.map((i: any) => (i.key === itemKey ? { ...i, status: 'SUBMITTED', redo_reason: i.status === 'REDO' ? i.redo_reason : '' } : i)),
       last_submitted_at: now.toISOString(),
+      ...(item.kind === 'QUOTE' ? { quote_import_pending: true } : {}),
     },
   };
 }

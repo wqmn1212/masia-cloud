@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { sha256Hex, pinHash, newToken, newPin, cleanItems, reviewPatch, effectiveStatus, DEFAULT_DAYS, MAX_DAYS } from '../../shared/factoryRequest.ts';
 
 // 직원: 공장 업로드 링크 만들기·검토.
-//  'create'  {card_id, items, days?, message_cn?} → 링크 토큰과 PIN을 이때 한 번만 돌려준다
+//  'create'  {card_id, items, days?, message_cn?, factory_name?} → 링크 토큰과 PIN을 이때 한 번만 돌려준다
 //  'review'  {request_id, item_key, decision: ACCEPT|REDO, reason?, client_visible?} → 채택하면 카드 파일·마일스톤·사전 QC에 반영
 //  'extend'  {request_id, days} · 'revoke' {request_id}
 //  'reissue' {request_id} → 새 토큰·PIN (이전 링크는 바로 막힘). 링크나 PIN을 잃어버렸을 때
@@ -33,9 +33,11 @@ export default async function (req: Request) {
       const precheckKeys = (precheck?.items || []).filter((i: any) => i.kind === 'QUESTION' && i.decision !== 'DISMISSED').map((i: any) => i.key);
       const items = cleanItems(body.items, { milestones, precheckKeys });
       if (!items.length) return Response.json({ error: '공장에 받을 항목을 하나 이상 고르세요' }, { status: 400 });
+      // 같은 카드라도 공장마다 따로 링크를 만든다 (견적을 여러 공장에서 받을 때)
+      const factoryName = typeof body.factory_name === 'string' ? body.factory_name.trim().slice(0, 200) : '';
       const token = newToken(), pin = newPin();
       const request = await svc.entities.FactoryRequest.create({
-        tenant_id: card.tenant_id, card_id: card.id, factory_id: card.factory_id || '', factory_name: card.factory_name || '',
+        tenant_id: card.tenant_id, card_id: card.id, factory_id: factoryName && factoryName !== card.factory_name ? '' : card.factory_id || '', factory_name: factoryName || card.factory_name || '',
         token_hash: await sha256Hex(token), pin_hash: await pinHash(token, pin),
         expires_at: plusDays(now.getTime(), days(body.days, DEFAULT_DAYS)), status: 'OPEN',
         message_cn: typeof body.message_cn === 'string' ? body.message_cn.trim().slice(0, 1000) : '',
@@ -61,7 +63,7 @@ export default async function (req: Request) {
         for (const s of files) {
           const att = await svc.entities.CardAttachment.create({
             tenant_id: card.tenant_id, card_id: card.id, client_visible: visible,
-            document_type: item.kind === 'DOC' ? item.doc_type || 'GENERAL' : 'GENERAL',
+            document_type: item.kind === 'DOC' || item.kind === 'QUOTE' ? item.doc_type || 'GENERAL' : 'GENERAL',
             file_name: s.file_name, file_type: (s.file_name.split('.').pop() || '').toLowerCase(), file_url: s.file_uri,
             uploader_name: `공장 · ${request.factory_name || '업로드 링크'}`, factory_request_id: request.id,
           });
