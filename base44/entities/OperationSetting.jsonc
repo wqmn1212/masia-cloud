@@ -86,6 +86,48 @@
       "type": "boolean",
       "default": false,
       "description": "\uace0\uac1d \ud655\uc778\uc744 \uc694\uccad\ud55c \ud30c\uc77c\uc740 \uace0\uac1d\uc774 \uc2b9\uc778\ud55c \ud310\ub9cc \uacf5\uc7a5 \uc804\ub2ec \uc2b9\uc778\ubcf8\uc73c\ub85c \uc9c0\uc815\ud560 \uc218 \uc788\uac8c \ud560\uc9c0"
+    },
+    "margin_default_pct": {
+      "type": "number",
+      "description": "\uacac\uc801 \uae30\uc900 \ub9c8\uc9c4 % (\ud300 \uae30\ubcf8). \ube44\uc6b0\uba74 \uc571 \uae30\ubcf8 15%"
+    },
+    "margin_min_pct": {
+      "type": "number",
+      "description": "\uacac\uc801 \ucd5c\uc18c \ub9c8\uc9c4 % (\ud300 \uae30\ubcf8). \uc774\ubcf4\ub2e4 \ub0ae\uc73c\uba74 \uc2b9\uc778 \ub54c \uc8fc\uc758. \ube44\uc6b0\uba74 \uc571 \uae30\ubcf8 10%"
+    },
+    "margin_rules": {
+      "type": "array",
+      "description": "\uace0\uac1d\uc0ac\u00b7\uce74\ud14c\uace0\ub9ac\ubcc4 \ub9c8\uc9c4 \uaddc\uce59 (\uace0\uac1d\uc0ac \u2192 \uce74\ud14c\uace0\ub9ac \u2192 \ud300 \uae30\ubcf8 \uc21c\uc73c\ub85c \uc801\uc6a9)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "CLIENT",
+              "CATEGORY"
+            ]
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "client_name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "default_pct": {
+            "type": "number"
+          },
+          "min_pct": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "required": [

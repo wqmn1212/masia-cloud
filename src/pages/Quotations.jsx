@@ -18,6 +18,7 @@ import RiskAlertPopup from '@/components/quotation/RiskAlertPopup';
 import QuotationHistoryButton from '@/components/quotation/QuotationHistoryButton';
 import ManualExchangeRates from '@/components/quotation/ManualExchangeRates';
 import CurrencyPanel from '@/components/quotation/CurrencyPanel';
+import MarginRulesPanel from '@/components/quotation/MarginRulesPanel';
 import { quotePriceLabel, calculateQuote } from '@/components/quotation/quoteCurrency';
 import saveBilingualQuotation from '@/lib/saveBilingualQuotation';
 import { findDailyQuotationRates } from '@/lib/quotationRates';
@@ -319,6 +320,7 @@ export default function Quotations() {
           </DialogContent>
         </Dialog>
       )}
+      <MarginRulesPanel />
     </div>
   );
 }

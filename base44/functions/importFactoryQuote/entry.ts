@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { extractQuotation } from '../../shared/quoteExtract.ts';
 import { pendingQuoteSubs, markSubs, sameSub, draftQuotation, draftLine } from '../../shared/factoryQuote.ts';
 import { notifyUsers, internalUsersOfTenant } from '../../shared/notify.ts';
+import { resolveMargin, fillMargins } from '../../shared/marginRule.ts';
 
 // 공장 업로드 링크로 올라온 견적서를 읽어 견적 초안(DRAFT)을 만든다.
 //  - 워크플로우(FactoryQuoteImport)가 공장 제출 직후(quote_import_pending) 로그인 없이 부른다: { request_id }
@@ -31,12 +32,17 @@ export default async function (req: Request) {
     await db.FactoryRequest.update(request.id, { submissions: markSubs(request, targets, { import_started_at: now.toISOString(), import_error: '' }), quote_import_pending: false });
 
     const rates = (await db.ExchangeRate.list('-rate_date', 1).catch(() => []))[0] || null;
+    // 팀 마진 규칙의 기준 마진을 항목마다 미리 채운다 (직원이 확인하고 고친다)
+    const setting = (await db.OperationSetting.filter({ tenant_id: card.tenant_id }, '-updated_date', 1).catch(() => []))[0] || null;
+    const rule = resolveMargin(setting, card);
     const results: { sub: any; quotation_id?: string; record?: any; error?: string }[] = [];
     for (const sub of targets) {
       try {
         const { signed_url } = await svc.integrations.Core.CreateFileSignedUrl({ file_uri: sub.file_uri, expires_in: 600 });
         const { normalized } = await extractQuotation(svc, { file_url: signed_url, file_name: sub.file_name });
         const record = draftQuotation(normalized, { card, request, sub, rates });
+        record.quote_options = fillMargins(record.quote_options, rule.default_pct);
+        record.internal_notes = `기준 마진 ${rule.default_pct}% 채움 (${rule.default_label})\n${record.internal_notes}`;
         if (!record.quote_options.length) throw new Error('견적 품목을 찾지 못했습니다');
         const created = await db.Quotation.create(record);
         results.push({ sub, quotation_id: created.id, record });

@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { notifyUsers, clientUsersOfCompany } from '../../shared/notify.ts';
 import { kstToday } from '../../shared/chinaHoliday.ts';
 import { quoteSummary, reviewChecks, canSend, isPublished, approvalQueue } from '../../shared/quoteReview.ts';
+import { resolveMargin, cleanRules } from '../../shared/marginRule.ts';
 
 // 견적 승인과 고객 발송.
 // - preview: 보내기 전 요약(고객 금액·원가·마진)과 확인 항목 (직원)
@@ -10,6 +11,8 @@ import { quoteSummary, reviewChecks, canSend, isPublished, approvalQueue } from 
 // - reject: 사유와 함께 초안으로 돌려보내고 요청자에게 알림
 // - unpublish: 고객 공개 해제 (승인됨으로 되돌림)
 // - queue: 관리자 승인함 목록 (검토 요청 + 발송됨인데 공개가 빠진 견적)
+// - margin_rule: 카드의 기준·최소 마진 (직원이 견적 작성 때) · save_margin_rules: 팀 마진 규칙 저장 (팀 관리자)
+// 최소 마진은 팀 마진 규칙(고객사 → 카테고리 → 팀 기본)을 따른다
 const STAFF = ['master', 'service', 'sub'];
 const APPROVER = ['master', 'service'];
 const CARD_REVIEW_FROM = ['TODO', 'IN_PROGRESS'];
@@ -30,6 +33,32 @@ export default async function (req: Request) {
     const today = kstToday();
     const by = user.full_name || user.account_label || user.email || '';
     const inScope = (tenantId: string) => user.account_tier === 'master' || (!!tenantId && tenantId === user.tenant_id);
+    // 팀 설정은 팀마다 한 번만 읽는다
+    const settings = new Map<string, any>();
+    const settingOf = async (tenantId: string) => {
+      if (!settings.has(tenantId)) settings.set(tenantId, (await db.OperationSetting.filter({ tenant_id: tenantId }, '-updated_date', 1).catch(() => []))[0] || null);
+      return settings.get(tenantId);
+    };
+    const ruleOf = async (card: any) => (card ? resolveMargin(await settingOf(card.tenant_id), card) : null);
+
+    if (action === 'margin_rule') {
+      const card = typeof body.card_id === 'string' ? await db.TaskCard.get(body.card_id).catch(() => null) : null;
+      if (!card || !inScope(card.tenant_id)) return Response.json({ error: '카드를 찾을 수 없습니다.' }, { status: 404 });
+      return Response.json(await ruleOf(card));
+    }
+
+    if (action === 'save_margin_rules') {
+      if (!approver) return Response.json({ error: '마진 규칙은 팀 관리자만 바꿀 수 있습니다.' }, { status: 403 });
+      const tenantId = user.account_tier === 'master' && typeof body.tenant_id === 'string' && body.tenant_id ? body.tenant_id : user.tenant_id;
+      if (!tenantId) return Response.json({ error: '소속 팀이 없습니다.' }, { status: 403 });
+      const num = (v: unknown) => (v === '' || v == null || !Number.isFinite(Number(v)) || Number(v) < 0 || Number(v) > 500 ? null : Math.round(Number(v) * 10) / 10);
+      const patch = { margin_default_pct: num(body.margin_default_pct), margin_min_pct: num(body.margin_min_pct), margin_rules: cleanRules(body.margin_rules), updated_by: by };
+      const current = await settingOf(tenantId);
+      if (current) await db.OperationSetting.update(current.id, patch);
+      else await db.OperationSetting.create({ tenant_id: tenantId, ...patch });
+      return Response.json({ ok: true, ...patch });
+    }
+
 
     if (action === 'queue') {
       if (!approver) return Response.json({ error: '견적 승인은 팀 관리자 전용입니다.' }, { status: 403 });
@@ -37,7 +66,9 @@ export default async function (req: Request) {
       const cardIds = [...new Set(quotes.map((q: any) => q.card_id).filter(Boolean))] as string[];
       const cards: Record<string, any> = {};
       for (const id of cardIds) { const c = await db.TaskCard.get(id).catch(() => null); if (c) cards[id] = c; }
-      const queue = approvalQueue(quotes, cards, today);
+      const rules: Record<string, any> = {};
+      for (const c of Object.values(cards)) rules[c.id] = await ruleOf(c);
+      const queue = approvalQueue(quotes, cards, today, (c: any) => rules[c.id]);
       // 고객사가 없는 카드의 '발송됨'은 포털 밖으로 보낸 견적이라 공개 누락이 아니다
       queue.unsent = queue.unsent.filter((r: any) => cards[r.card_id]?.client_id);
       return Response.json(queue);
@@ -48,7 +79,8 @@ export default async function (req: Request) {
     const q = await db.Quotation.get(id).catch(() => null);
     if (!q || !inScope(q.tenant_id)) return Response.json({ error: '견적서를 찾을 수 없습니다.' }, { status: 404 });
     const card = q.card_id ? await db.TaskCard.get(q.card_id).catch(() => null) : null;
-    const checks = reviewChecks(q, card, today);
+    const rule = await ruleOf(card);
+    const checks = reviewChecks(q, card, today, rule);
     const audit = async (event_type: string, details: string) => {
       if (!card) return;
       try { await db.ProjectAuditLog.create({ tenant_id: card.tenant_id, card_id: card.id, event_type, actor_id: user.id, actor_name: by, details }); } catch (_e) { /* 기록 실패가 처리를 막지 않는다 */ }
@@ -58,7 +90,7 @@ export default async function (req: Request) {
     const link = card ? `/task-board?card=${card.id}&tab=quotation` : '/quotations';
 
     if (action === 'preview') {
-      return Response.json({ summary: quoteSummary(q), checks, can_send: canSend(checks), can_approve: approver, status: q.status, published: isPublished(q), review_note: q.review_note || '', review_rejected_reason: q.review_rejected_reason || '' });
+      return Response.json({ summary: quoteSummary(q), checks, rule, can_send: canSend(checks), can_approve: approver, status: q.status, published: isPublished(q), review_note: q.review_note || '', review_rejected_reason: q.review_rejected_reason || '' });
     }
 
     if (action === 'request_review') {

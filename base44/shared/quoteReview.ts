@@ -49,7 +49,10 @@ export function quoteSummary(q: any) {
 }
 
 // 보내기 전 확인 항목. block 이 하나라도 있으면 보낼 수 없다
-export function reviewChecks(q: any, card: any, today: string) {
+// rule: 마진 규칙(marginRule.ts resolveMargin). 없으면 앱 기본 최소 마진
+export function reviewChecks(q: any, card: any, today: string, rule: any = null) {
+  const minPct = rule?.min_pct ?? MIN_MARGIN_PCT;
+  const minLabel = rule?.min_label && rule.min_source !== 'BASE' ? `${rule.min_label} ${minPct}%` : `${minPct}%`;
   const s = quoteSummary(q);
   const out: { level: 'block' | 'warn' | 'info'; code: string; text: string }[] = [];
   const push = (level: 'block' | 'warn' | 'info', code: string, text: string) => out.push({ level, code, text });
@@ -61,7 +64,7 @@ export function reviewChecks(q: any, card: any, today: string) {
   if (s.total > 0 && s.total_usd == null) push('warn', 'no_rate', '환율이 없어 원가·마진을 계산하지 못했습니다');
   else if (!s.cost_usd) push('warn', 'no_cost', '공장 원가가 비어 있어 마진을 확인할 수 없습니다');
   else if (s.margin_pct != null && s.margin_pct < 0) push('warn', 'loss', `고객 금액이 원가보다 낮습니다 (마진 ${s.margin_pct}%)`);
-  else if (s.margin_pct != null && s.margin_pct < MIN_MARGIN_PCT) push('warn', 'low_margin', `마진이 ${s.margin_pct}%로 기준(${MIN_MARGIN_PCT}%)보다 낮습니다`);
+  else if (s.margin_pct != null && s.margin_pct < minPct) push('warn', 'low_margin', `마진이 ${s.margin_pct}%로 기준(${minLabel})보다 낮습니다`);
   if (!s.lead_time_business_days && !s.shipping_days) push('warn', 'no_lead', '납기가 비어 있습니다');
   if (!s.validity_days) push('warn', 'no_validity', '견적 유효기간이 비어 있습니다');
   else if (q.factory_quote_date && addDays(q.factory_quote_date, s.validity_days) < today) push('warn', 'factory_expired', `공장 견적일(${q.factory_quote_date}) 기준 유효기간이 지났습니다. 공장에 가격을 다시 확인하세요`);
@@ -79,11 +82,12 @@ export const CLOSED_CARD = ['DONE', 'CANCELLED'];
 
 // 관리자 승인함: 검토 요청된 견적(오래된 순)과, 발송됨인데 고객 공개가 빠진 견적.
 // 카드가 없거나(지워짐) 완료·취소된 카드의 견적은 뺀다
-export function approvalQueue(quotes: any[], cards: Record<string, any>, today: string) {
+// ruleFor(card): 카드의 마진 규칙 (없으면 앱 기본 최소 마진)
+export function approvalQueue(quotes: any[], cards: Record<string, any>, today: string, ruleFor: (card: any) => any = () => null) {
   quotes = quotes.filter((q) => cards[q.card_id] && !CLOSED_CARD.includes(cards[q.card_id].status));
   const row = (q: any) => {
     const card = cards[q.card_id] || null;
-    const checks = reviewChecks(q, card, today);
+    const checks = reviewChecks(q, card, today, card ? ruleFor(card) : null);
     return {
       id: q.id, card_id: q.card_id || '', card_title: card?.title || '', client_name: card?.client_name || q.client_name || '',
       quote_title: q.quote_title || q.product_name || q.factory_name || '견적서', factory_name: q.factory_name || '', status: q.status,

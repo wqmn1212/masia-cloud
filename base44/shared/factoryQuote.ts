@@ -1,6 +1,6 @@
 // 공장 업로드 링크로 받은 견적서 → 견적 초안. 서버 함수 importFactoryQuote 가 쓴다. 검산: npm run check:factory-quote
 //  - 읽을 제출물: 견적서(QUOTE) 항목의 파일 중 아직 초안을 만들지 않았고, 실패하지 않았고, 다른 실행이 막 집어 가지 않은 것
-//  - 초안은 공장 원가 그대로(마진·수수료 없음), 상태 DRAFT. 직원이 마진을 넣고 '검토 요청' → 팀 관리자 승인으로 이어진다
+//  - 초안은 공장 원가 그대로(수수료 없음, 항목 마진은 importFactoryQuote 가 팀 마진 규칙으로 채움), 상태 DRAFT. 직원이 마진을 넣고 '검토 요청' → 팀 관리자 승인으로 이어진다
 export const CLAIM_MINUTES = 10;
 const INCOTERMS = ['EXW', 'FCA', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP', 'FAS', 'FOB', 'CFR', 'CIF'];
 const s = (v: any, n = 200) => (typeof v === 'string' ? v.trim().slice(0, n) : '');
