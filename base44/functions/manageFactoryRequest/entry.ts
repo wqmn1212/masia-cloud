@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
-import { sha256Hex, pinHash, newToken, newPin, cleanItems, reviewPatch, effectiveStatus, DEFAULT_DAYS, MAX_DAYS } from '../../shared/factoryRequest.ts';
+import { sha256Hex, pinHash, newToken, newPin, reviewPatch, effectiveStatus, DEFAULT_DAYS, MAX_DAYS } from '../../shared/factoryRequest.ts';
+import { createFactoryRequest } from '../../shared/factoryRequestServer.ts';
 
 // 직원: 공장 업로드 링크 만들기·검토.
 //  'create'  {card_id, items, days?, message_cn?, factory_name?} → 링크 토큰과 PIN을 이때 한 번만 돌려준다
@@ -28,23 +29,9 @@ export default async function (req: Request) {
     if (body.action === 'create') {
       const card = typeof body.card_id === 'string' ? await svc.entities.TaskCard.get(body.card_id).catch(() => null) : null;
       if (!staffCan(card)) return Response.json({ error: '카드에 접근할 수 없습니다' }, { status: 403 });
-      const milestones = (await svc.entities.CardMilestone.filter({ card_id: card.id }, 'seq', 100)).filter((m: any) => m.card_id === card.id);
-      const [precheck] = await svc.entities.QCPrecheck.filter({ card_id: card.id }, '-version', 1);
-      const precheckKeys = (precheck?.items || []).filter((i: any) => i.kind === 'QUESTION' && i.decision !== 'DISMISSED').map((i: any) => i.key);
-      const items = cleanItems(body.items, { milestones, precheckKeys });
-      if (!items.length) return Response.json({ error: '공장에 받을 항목을 하나 이상 고르세요' }, { status: 400 });
-      // 같은 카드라도 공장마다 따로 링크를 만든다 (견적을 여러 공장에서 받을 때)
-      const factoryName = typeof body.factory_name === 'string' ? body.factory_name.trim().slice(0, 200) : '';
-      const token = newToken(), pin = newPin();
-      const request = await svc.entities.FactoryRequest.create({
-        tenant_id: card.tenant_id, card_id: card.id, factory_id: factoryName && factoryName !== card.factory_name ? '' : card.factory_id || '', factory_name: factoryName || card.factory_name || '',
-        token_hash: await sha256Hex(token), pin_hash: await pinHash(token, pin),
-        expires_at: plusDays(now.getTime(), days(body.days, DEFAULT_DAYS)), status: 'OPEN',
-        message_cn: typeof body.message_cn === 'string' ? body.message_cn.trim().slice(0, 1000) : '',
-        items, submissions: [], failed_pin_count: 0, created_by_name: by,
-      });
-      await audit(card, 'FACTORY_REQUEST_CREATED', `공장 업로드 링크 생성 · ${items.length}개 항목`);
-      return Response.json({ ok: true, request_id: request.id, token, pin, expires_at: request.expires_at, items });
+      const out = await createFactoryRequest(svc, { card, items: body.items, days: body.days, message_cn: body.message_cn, factory_name: body.factory_name, by, actorId: user.id });
+      if (out.error) return Response.json({ error: out.error }, { status: 400 });
+      return Response.json({ ok: true, request_id: out.request.id, token: out.token, pin: out.pin, expires_at: out.request.expires_at, items: out.items });
     }
 
     const request = typeof body.request_id === 'string' ? await svc.entities.FactoryRequest.get(body.request_id).catch(() => null) : null;

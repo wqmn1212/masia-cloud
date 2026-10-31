@@ -3,6 +3,7 @@ import { notifyUsers, clientUsersOfCompany } from '../../shared/notify.ts';
 import { kstToday } from '../../shared/chinaHoliday.ts';
 import { quoteSummary, reviewChecks, canSend, isPublished, approvalQueue } from '../../shared/quoteReview.ts';
 import { resolveMargin, cleanRules } from '../../shared/marginRule.ts';
+import { requestQuoteReview } from '../../shared/quoteActions.ts';
 
 // 견적 승인과 고객 발송.
 // - preview: 보내기 전 요약(고객 금액·원가·마진)과 확인 항목 (직원)
@@ -94,22 +95,9 @@ export default async function (req: Request) {
     }
 
     if (action === 'request_review') {
-      if (isPublished(q)) return Response.json({ error: '이미 고객에게 보낸 견적입니다.' }, { status: 400 });
-      if (!['DRAFT', 'APPROVED'].includes(q.status)) return Response.json({ error: q.status === 'REVIEW' ? '이미 검토를 기다리는 견적입니다.' : '이 상태에서는 검토를 요청할 수 없습니다.' }, { status: 400 });
-      const note = clean(body?.note);
-      await db.Quotation.update(q.id, { status: 'REVIEW', review_requested_at: new Date().toISOString(), review_requested_by_id: user.id, review_requested_by_name: by, review_note: note, review_rejected_reason: '' });
-      const s = quoteSummary(q);
-      const staff = await db.User.filter({ tenant_id: q.tenant_id });
-      const masters = await db.User.filter({ account_tier: 'master' });
-      const approvers = [...staff.filter((u: any) => u.account_tier === 'service'), ...masters].filter((u: any, i: number, all: any[]) => u.id !== user.id && u.is_active !== false && all.findIndex((x: any) => x.id === u.id) === i);
-      const sent = await notifyUsers(svc, approvers, {
-        type: 'quote_review_requested',
-        title: `[견적 승인 요청] ${cardTitle}`,
-        body: [`${by} 님이 견적 승인을 요청했습니다: ${title}`, s.total ? `고객 금액 ${fmt(s.total, s.currency)}${s.margin_pct != null ? ` · 마진 ${s.margin_pct}%` : ''}` : '', note ? `메모: ${note}` : '', checks.filter((c) => c.level !== 'info').map((c) => `· ${c.text}`).join('\n')].filter(Boolean).join('\n'),
-        link: '/admin-inbox#inbox-quotes', task_card_id: card?.id || '', card_title: cardTitle,
-      });
-      await audit('QUOTE_REVIEW_REQUESTED', `견적 승인 요청: ${title}${note ? ` · ${note}` : ''}`);
-      return Response.json({ ok: true, status: 'REVIEW', notified: sent, checks });
+      const out = await requestQuoteReview(svc, user, { q, card, checks, note: clean(body?.note) });
+      if (out.error) return Response.json({ error: out.error }, { status: out.status });
+      return Response.json({ ok: true, status: 'REVIEW', notified: out.notified, checks });
     }
 
     if (!approver) return Response.json({ error: '견적 승인은 팀 관리자 전용입니다.' }, { status: 403 });

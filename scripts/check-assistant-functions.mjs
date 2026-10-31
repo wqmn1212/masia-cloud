@@ -1,4 +1,4 @@
-// AI 비서용 서버 함수 검산: 팀 범위, 미리보기는 저장 안 함, 덮어쓰기 확인, 마진·최종가 버림, 초안 중복 방지.
+// AI 비서용 서버 함수 검산: 팀 범위, 미리보기는 저장 안 함, 덮어쓰기 확인, 비서가 보낸 마진·최종가 버림(마진은 규칙 기준), 초안 중복 방지.
 // 실행: npm run check:assistant
 import assert from 'node:assert/strict';
 const R = new URL('../base44/functions/', import.meta.url).href;
@@ -59,7 +59,9 @@ assert.ok(r.data.link.endsWith(`/contracts?contract=${ct.id}`));
 // ── 견적 등록 ──
 r = await call('assistantCreateQuotation', { card_id: 'c1', factory_name: '공장 다', product_name: '상판', quote_options: [{ option_name: '상판', quantity: 500, unit_price: 140, currency: 'cny', margin_percent: 30 }], final_client_price: 99999, status: 'ACCEPTED', tenant_id: 't2' });
 const q = globalThis.__db.Quotation.at(-1);
-assert.deepEqual([q.status, q.tenant_id, q.factory_total_cost, q.final_client_price, q.quote_options[0].margin_percent, q.quote_options[0].currency], ['DRAFT', 't1', 70000, undefined, undefined, 'CNY'], '상태·팀 고정, 마진·최종가 버림');
+assert.deepEqual([q.status, q.tenant_id, q.factory_total_cost, q.final_client_price, q.quote_options[0].margin_percent, q.quote_options[0].currency], ['DRAFT', 't1', 70000, undefined, 15, 'CNY'], '상태·팀 고정, 비서가 보낸 마진(30)·최종가는 버리고 마진 규칙 기준(앱 기본 15%)');
+assert.match(q.internal_notes || '', /기준 마진 15% 채움 \(앱 기본값\) · AI 비서 등록/);
+assert.equal(r.data.margin_rule.default_pct, 15);
 r = await call('assistantCreateQuotation', { card_id: 'c9', quote_options: [{ option_name: 'x', unit_price: 1 }] });
 assert.equal(r.status, 404);
 

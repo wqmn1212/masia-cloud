@@ -21,6 +21,7 @@ const FN_LABELS = {
   assistantStatus: ['현황 확인 중', '현황 확인'],
   assistantDraft: ['초안 만드는 중', '초안 만들기'],
   assistantCreateQuotation: ['견적 등록 중', '견적 등록'],
+  assistantQuote: ['견적 처리 중', '견적 처리'],
   parseQuotationExcel: ['견적서 파일 읽는 중', '견적서 파일 읽기'],
 };
 const ENTITY_LABELS = {
@@ -35,6 +36,10 @@ const STEP_LABELS = {
   'assistantDestCost:apply': ['도착 비용 기록 중', '도착 비용 기록'],
   'assistantDraft:comparison': ['비교표 초안 만드는 중', '비교표 초안 만들기'],
   'assistantDraft:contract': ['계약서 초안 만드는 중', '계약서 초안 만들기'],
+  'assistantQuote:margin_rule': ['기준 마진 확인 중', '기준 마진 확인'],
+  'assistantQuote:check': ['견적 확인 중', '견적 확인'],
+  'assistantQuote:request_review': ['검토 요청 중', '검토 요청'],
+  'assistantQuote:factory_link': ['공장 견적 링크 만드는 중', '공장 견적 링크 만들기'],
 };
 const parseArgs = (s) => { try { return JSON.parse(s || '{}') || {}; } catch { return {}; } };
 const toolLabel = (name = '', running, argsString) => {

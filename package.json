@@ -25,6 +25,7 @@
     "check:client-documents": "node --import ./scripts/fnmock/register.mjs scripts/check-client-documents.mjs",
     "check:payment-functions": "node --import ./scripts/fnmock/register.mjs scripts/check-payment-functions.mjs",
     "check:assistant": "node --import ./scripts/fnmock/register.mjs scripts/check-assistant-functions.mjs",
+    "check:assistant-quote": "node --import ./scripts/fnmock/register.mjs scripts/check-assistant-quote.mjs",
     "check:client-roles": "node scripts/check-client-roles.mjs",
     "check:file-review": "node scripts/check-file-review.mjs",
     "check:client-approvals": "node --import ./scripts/fnmock/register.mjs scripts/check-client-approvals.mjs",
