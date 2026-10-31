@@ -15,6 +15,9 @@ import duplicateQuotation from '@/lib/duplicateQuotation';
 import DropZone from '@/components/ui/drop-zone';
 import { generateQuotationPDF } from '@/lib/generateQuotationPDF';
 import QuoteOptionsEditor, { optionToUSD } from '@/components/quotation/QuoteOptionsEditor';
+
+// 빈 마진 칸에만 기준 마진 (서버 base44/shared/marginRule.ts fillMargins 와 같은 규칙)
+const fillMargins = (options, pct) => (options || []).map((o) => (o.margin_percent === '' || o.margin_percent == null ? { ...o, margin_percent: pct } : o));
 import SettlementFields from '@/components/quotation/SettlementFields';
 import { INCOTERMS_2020, LEGACY_INCOTERMS } from '@/lib/incoterms';
 import LogisticsEstimator from '@/components/quotation/LogisticsEstimator';
@@ -104,6 +107,13 @@ export default function QuotationTab({ card, user }) {
   const { data: quotations = [], isLoading } = useQuery({
     queryKey: ['quotations-by-card', card.id],
     queryFn: () => base44.entities.Quotation.filter({ card_id: card.id }, '-created_date'),
+  });
+  // 이 카드의 기준·최소 마진 (팀 마진 규칙: 고객사 → 카테고리 → 팀 기본)
+  const { data: marginRule } = useQuery({
+    queryKey: ['margin-rule', card.id],
+    enabled: showForm && canEditIssuer,
+    queryFn: async () => (await base44.functions.invoke('quoteApproval', { action: 'margin_rule', card_id: card.id })).data,
+    staleTime: 5 * 60000,
   });
   const rateDate = getKstDate();
   const tenantId = user?.tenant_id || card.tenant_id;
@@ -213,7 +223,7 @@ export default function QuotationTab({ card, user }) {
       quote_title: f.quote_title || f0.quote_title,
       incoterms: ['EXW', 'FCA', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP', 'FAS', 'FOB', 'CFR', 'CIF'].includes(f0.incoterms) ? f0.incoterms : f.incoterms,
       logistics_cost: f0.logistics_cost || f.logistics_cost,
-      quote_options: f0.quote_options.length ? f0.quote_options.map(o => ({ ...o, margin_percent: o.margin_percent || '' })) : f.quote_options,
+      quote_options: f0.quote_options.length ? f0.quote_options.map(o => ({ ...o, margin_percent: o.margin_percent || marginRule?.default_pct || '' })) : f.quote_options,
       spec_table: f0.spec_table.length ? f0.spec_table : f.spec_table,
       remarks: [f.remarks, f0.remarks].filter(Boolean).join('\n'),
       internal_notes: [f.internal_notes, f0.internal_notes].filter(Boolean).join('\n'),
@@ -224,7 +234,7 @@ export default function QuotationTab({ card, user }) {
       factory_quote_date: f0.factory_quote_date || f.factory_quote_date,
     }));
     setImportResult(null);
-    toast({ title: '견적서 내용을 채웠습니다', description: '마진·수수료·환율을 확인하고 저장하세요.' });
+    toast({ title: '견적서 내용을 채웠습니다', description: marginRule ? `항목 마진은 기준 ${marginRule.default_pct}%로 채웠습니다. 수수료·환율을 확인하고 저장하세요.` : '마진·수수료·환율을 확인하고 저장하세요.' });
   };
 
 
@@ -450,6 +460,15 @@ export default function QuotationTab({ card, user }) {
 
           {/* 옵션 / 세부 항목 (CNY/RMB 기준) */}
           <div className="border rounded-xl p-3 bg-background">
+            {marginRule && (
+              <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-muted/40 px-2.5 py-1.5 text-[11px]">
+                <span>기준 마진 <b>{marginRule.default_pct}%</b> <span className="text-muted-foreground">({marginRule.default_label})</span></span>
+                <span>최소 <b>{marginRule.min_pct}%</b> <span className="text-muted-foreground">({marginRule.min_label})</span></span>
+                {form.quote_options.some((o) => o.margin_percent === '' || o.margin_percent == null) && (
+                  <Button type="button" size="sm" variant="outline" className="ml-auto h-6 px-2 text-[11px]" onClick={() => setForm((f) => ({ ...f, quote_options: fillMargins(f.quote_options, marginRule.default_pct) }))}>빈 마진에 기준 채우기</Button>
+                )}
+              </div>
+            )}
             <QuoteOptionsEditor
               options={form.quote_options}
               onChange={(opts) => setForm(f => ({ ...f, quote_options: opts }))}
