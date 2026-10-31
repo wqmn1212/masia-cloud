@@ -51,7 +51,7 @@ export default function DailyDigestCard({ user, cards, onOpen }) {
       })}
       {t && (
         <div className="rounded-lg bg-muted/40 p-2.5 text-caption">
-          <p className="font-medium">{zh ? `团队：进行中${t.active} · 延误${t.late.length} · 等待客户${t.client_waits} · 工厂提交待确认${t.factory_submissions}${t.no_owner ? ` · 无负责人${t.no_owner}` : ''}` : `팀 전체: 진행 ${t.active} · 지연 카드 ${t.late.length} · 고객 대기 ${t.client_waits} · 공장 제출 확인 대기 ${t.factory_submissions}${t.no_owner ? ` · 책임자 없음 ${t.no_owner}` : ''}`}</p>
+          <p className="font-medium">{zh ? `团队：进行中${t.active} · 延误${t.late.length} · 等待客户${t.client_waits} · 工厂提交待确认${t.factory_submissions}${t.no_owner ? ` · 无负责人${t.no_owner}` : ''}${t.quote_overdue ? ` · 报价逾期${t.quote_overdue}` : ''}` : `팀 전체: 진행 ${t.active} · 지연 카드 ${t.late.length} · 고객 대기 ${t.client_waits} · 공장 제출 확인 대기 ${t.factory_submissions}${t.no_owner ? ` · 책임자 없음 ${t.no_owner}` : ''}${t.quote_overdue ? ` · 견적 기한 지남 ${t.quote_overdue}` : ''}`}</p>
           {(all ? t.late : t.late.slice(0, 3)).map((c) => <button key={c.card_id} type="button" className="block w-full truncate text-left hover:underline" onClick={() => open(c.card_id)}>{zh ? c.card_title_cn : c.card_title} · {zh ? `延误${c.days}天` : `${c.days}일 지연`}{c.owner_name ? ` · ${c.owner_name}` : ''}</button>)}
         </div>
       )}
