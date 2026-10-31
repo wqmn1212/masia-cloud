@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { LEAD_STATUS } from '@/components/leads/leadMeta';
 import LeadRow from '@/components/leads/LeadRow';
 import LeadDetailDialog from '@/components/leads/LeadDetailDialog';
+import IntakeRulesPanel from '@/components/leads/IntakeRulesPanel';
 
 export default function Leads() {
   const qc = useQueryClient();
@@ -98,6 +99,7 @@ export default function Leads() {
         saving={save.isPending}
         onSave={(data) => save.mutate({ id: selected.id, data })}
       />
+      <IntakeRulesPanel />
     </div>
   );
 }

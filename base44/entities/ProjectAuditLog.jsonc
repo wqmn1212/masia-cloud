@@ -48,7 +48,8 @@
         "FACTORY_SUBMISSION_REDO",
         "FACTORY_REQUEST_REVOKED",
         "FACTORY_REQUEST_REISSUED",
-        "FACTORY_QUOTE_IMPORTED"
+        "FACTORY_QUOTE_IMPORTED",
+        "CARD_ASSIGNED"
       ]
     },
     "actor_id": {

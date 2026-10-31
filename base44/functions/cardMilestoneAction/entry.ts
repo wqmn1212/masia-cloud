@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { isWorkday, shiftDate } from '../../shared/chinaHoliday.ts';
+import { notifyUsers } from '../../shared/notify.ts';
 
 // 마일스톤 수정 단일 경로. 권한:
 // - 단계 완료·지연 사유: 그 단계 담당자 또는 master·service
@@ -27,7 +28,18 @@ Deno.serve(async (req) => {
       if (!manager) return deny('책임자는 대표·팀 관리자만 지정할 수 있습니다.');
       const owner = input.owner_id ? (await team()).find((u) => u.id === input.owner_id) : null;
       if (input.owner_id && !owner) return Response.json({ error: '팀 사용자가 아닙니다.' }, { status: 400 });
+      const prevOwner = card.owner_id || '';
       await db.TaskCard.update(card.id, { owner_id: owner?.id || null, owner_name: owner ? owner.full_name || owner.email : null });
+      // 새 책임자에게 알린다 (자기 자신을 지정했거나 그대로면 생략)
+      if (owner && owner.id !== prevOwner && owner.id !== user.id) {
+        try {
+          await notifyUsers(base44.asServiceRole, [owner], {
+            type: 'card_assigned', title: `[책임자 지정] ${card.title}`,
+            body: `${user.full_name || user.email} 님이 이 카드의 책임자로 지정했습니다.${card.quote_deadline ? `\n견적 기한 ${card.quote_deadline}` : ''}${card.next_action ? `\n다음 할 일: ${card.next_action}` : ''}`,
+            link: `/task-board?card=${card.id}`, task_card_id: card.id, card_title: card.title,
+          });
+        } catch (_e) { /* 알림 실패가 지정을 막지 않는다 */ }
+      }
       return Response.json({ saved: true });
     }
 

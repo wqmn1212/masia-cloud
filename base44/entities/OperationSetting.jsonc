@@ -128,6 +128,52 @@
           }
         }
       }
+    },
+    "intake_default_owner_id": {
+      "type": "string",
+      "description": "\uc0c8 \ubb38\uc758 \ud300 \uae30\ubcf8 \ub2f4\ub2f9\uc790 (\uaddc\uce59\uc5d0 \ub9de\ub294 \uc0ac\ub78c\uc774 \uc5c6\uc744 \ub54c)"
+    },
+    "intake_default_owner_name": {
+      "type": "string"
+    },
+    "quote_sla_days": {
+      "type": "number",
+      "description": "\uc0c8 \ubb38\uc758 \uacac\uc801 \uae30\ud55c (\uc601\uc5c5\uc77c). \ube44\uc6b0\uba74 3"
+    },
+    "quote_rush_window_days": {
+      "type": "number",
+      "description": "\ud76c\ub9dd \uc785\uace0\uc77c\uc774 \uc774 \uc77c\uc218 \uc548\uc774\uba74 \uae09\ud55c \ubb38\uc758 (\uacac\uc801 \uae30\ud55c \ub2e4\uc74c \uc601\uc5c5\uc77c, \uc6b0\uc120\uc21c\uc704 \ub192\uc74c). \ube44\uc6b0\uba74 30, 0\uc774\uba74 \ub054"
+    },
+    "intake_rules": {
+      "type": "array",
+      "description": "\uc0c8 \ubb38\uc758 \ubc30\uc815 \uaddc\uce59 (\uace0\uac1d\uc0ac \u2192 \uce74\ud14c\uace0\ub9ac \u2192 \ud300 \uae30\ubcf8 \ub2f4\ub2f9\uc790)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "CLIENT",
+              "CATEGORY"
+            ]
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "client_name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "owner_id": {
+            "type": "string"
+          },
+          "owner_name": {
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "required": [

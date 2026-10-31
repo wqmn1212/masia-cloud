@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { requireClient } from '../../shared/clientAccess.ts';
-import { FROM_NAME, notifyUsers, internalUsersOfTenant } from '../../shared/notify.ts';
+import { FROM_NAME } from '../../shared/notify.ts';
+import { applyIntake } from '../../shared/intakeServer.ts';
 import { uploadPrivateAttachments, linkCardAttachments } from '../../shared/privateAttachments.ts';
 import { cleanInquiry } from '../../shared/inquiryForm.ts';
 import { kstToday } from '../../shared/chinaHoliday.ts';
@@ -79,18 +80,10 @@ export default async function (req) {
       uploaderRole: null,
     });
 
-    // 본사 담당자에게 알림
+    // 배정 규칙으로 책임자·견적 기한을 정하고, 책임자(없으면 팀 관리자)에게 알린다
     try {
-      const recipients = await internalUsersOfTenant(svc, hqTenantId);
-      await notifyUsers(svc, recipients, {
-        type: 'card_moved',
-        title: `[신규 고객 문의] ${title}`,
-        body: `${clientName} 에서 새 문의를 접수했습니다.\n${detail.slice(0, 120)}`,
-        link: `/task-board?card=${card.id}`,
-        task_card_id: card.id,
-        card_title: title,
-      });
-    } catch (_e) { /* 알림 실패는 문의 접수를 막지 않음 */ }
+      await applyIntake(svc, card, { categories: form.details.categories || [], desiredDate: form.details.desired_date || '', summary: `${clientName} 에서 새 문의를 접수했습니다.\n${detail.slice(0, 120)}` });
+    } catch (_e) { /* 배정·알림 실패는 문의 접수를 막지 않음 */ }
 
     // 고객에게 접수 확인 메일
     if (auth.user.email) {
