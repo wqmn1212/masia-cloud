@@ -1,7 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { resolveMargin, fillMargins } from '../../shared/marginRule.ts';
 
 // AI 비서용 새 견적 등록 (엑셀 견적서 미리보기를 사용자가 승인한 뒤에만 부른다).
 // 화면의 견적 등록과 같이 서버에서 팀 범위를 고정하고, 원가 줄만 받는다: 마진·수수료·최종 고객가는 받아도 버린다.
+// 항목 마진은 팀 마진 규칙의 기준 마진으로 채우고(공장 견적 초안과 같음), 최신 환율을 넣어 견적 화면에서 바로 마진이 보이게 한다.
 // 상태는 항상 DRAFT, 기존 견적은 고치지 않는다.
 const STAFF = ['master', 'service', 'sub'];
 const CUR = ['CNY', 'USD', 'KRW'];
@@ -50,10 +52,16 @@ export default async function (req: Request) {
     if (/^\d{4}-\d{2}-\d{2}$/.test(s(body.factory_quote_date, 10))) record.factory_quote_date = s(body.factory_quote_date, 10);
     const included = options.filter((o: any) => !o.optional);
     if (allCny) { record.factory_total_cost = included.reduce((t: number, o: any) => t + o.quantity * o.unit_price, 0); record.factory_cost_currency = 'CNY'; }
+    const setting = (await db.OperationSetting.filter({ tenant_id: card.tenant_id }, '-updated_date', 1).catch(() => []))[0] || null;
+    const rule = resolveMargin(setting, card);
+    record.quote_options = fillMargins(record.quote_options, rule.default_pct);
+    record.internal_notes = [`기준 마진 ${rule.default_pct}% 채움 (${rule.default_label}) · AI 비서 등록`, record.internal_notes].filter(Boolean).join('\n');
+    const rates = (await db.ExchangeRate.list('-rate_date', 1).catch(() => []))[0];
+    if (Number(rates?.usd_cny) > 0 && Number(rates?.usd_krw) > 0) { record.exchange_rate_usd_cny = Number(rates.usd_cny); record.exchange_rate_usd = Number(rates.usd_krw); if (rates.rate_date) record.exchange_rate_date = rates.rate_date; }
     const created = await db.Quotation.create(record);
     const totals: Record<string, number> = {};
     for (const o of included) totals[o.currency] = (totals[o.currency] || 0) + o.quantity * o.unit_price;
-    return Response.json({ ok: true, quotation_id: created.id, card_title: card.title || '', factory_name: record.factory_name, items: included.length, optional_items: options.length - included.length, cost_totals: totals, next: '견적 화면에서 마진·수수료·최종가를 입력하세요.' });
+    return Response.json({ ok: true, quotation_id: created.id, card_title: card.title || '', factory_name: record.factory_name, items: included.length, optional_items: options.length - included.length, cost_totals: totals, margin_rule: { default_pct: rule.default_pct, min_pct: rule.min_pct, label: rule.default_label }, next: '견적 화면에서 기준 마진·수수료·환율을 확인해 저장한 뒤, 견적 탭 위 "견적 승인 · 고객 발송"에서 검토를 요청하세요.' });
   } catch (error) {
     return Response.json({ error: (error as Error).message }, { status: 500 });
   }
