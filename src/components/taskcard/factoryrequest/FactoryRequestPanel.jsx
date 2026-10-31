@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link2, Eye, Check, RotateCcw, Ban, CalendarPlus, KeyRound, Factory } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Link2, Eye, Check, RotateCcw, Ban, CalendarPlus, KeyRound, Factory, FileSpreadsheet, Loader2, AlertTriangle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -65,6 +66,7 @@ function RequestCard({ r, L, lang, busy, run, onShowInvite }) {
   return (
     <div className="space-y-2 rounded-lg border p-3">
       <div className="flex flex-wrap items-center gap-1.5 text-caption">
+        {r.factory_name && <span className="font-medium">{r.factory_name}</span>}
         <Badge variant="outline" className={status === 'OPEN' ? 'text-primary' : 'text-muted-foreground'}>{L(REQUEST_LABEL[status], { OPEN: '进行中', DONE: '已完成', EXPIRED: '已过期', REVOKED: '已收回' }[status])}</Badge>
         <span className="text-muted-foreground">{fmt(r.created_date)} · {r.created_by_name} · {L(`기한 ${fmt(r.expires_at)}`, `截止 ${fmt(r.expires_at)}`)}</span>
         <span className={r.last_opened_at ? 'text-muted-foreground' : 'text-warning-text'}>· {r.last_opened_at ? L(`공장 열람 ${fmt(r.last_opened_at)}`, `工厂查看 ${fmt(r.last_opened_at)}`) : L('공장이 아직 열어 보지 않음', '工厂尚未打开')}</span>
@@ -113,6 +115,7 @@ function ItemRow({ r, item, L, lang, busy, run }) {
               <span className="text-muted-foreground">{fmt(s.submitted_at)}</span>
               {s.file_uri && <button type="button" className="inline-flex items-center gap-1 text-primary hover:underline" onClick={() => open(s)}><Eye className="h-3 w-3" />{s.file_name}</button>}
               {s.answer && <span className="whitespace-pre-line">{s.answer}</span>}
+              {item.kind === 'QUOTE' && s.file_uri && <QuoteImportState r={r} s={s} L={L} />}
             </div>
           ))}
         </div>
@@ -136,3 +139,29 @@ function ItemRow({ r, item, L, lang, busy, run }) {
   );
 }
 
+
+// 견적서 제출물: 견적 초안을 만들었는지, 읽는 중인지, 실패했는지. 실패하거나 10분 넘게 멈추면 다시 읽기
+function QuoteImportState({ r, s, L }) {
+  const qc = useQueryClient();
+  const retry = useMutation({
+    mutationFn: async () => (await base44.functions.invoke('importFactoryQuote', { request_id: r.id, retry: true })).data,
+    onSuccess: (d) => {
+      qc.invalidateQueries({ queryKey: ['factory-requests', r.card_id] });
+      qc.invalidateQueries({ queryKey: ['quotations-by-card', r.card_id] });
+      qc.invalidateQueries({ queryKey: ['card-quotations-publish', r.card_id] });
+      toast({ title: d?.created ? L('견적 초안을 만들었습니다', '已生成报价草稿') : L('읽지 못했습니다', '读取失败'), description: d?.errors?.[0] || '', variant: d?.created ? undefined : 'destructive' });
+    },
+    onError: (e) => toast({ title: L('읽지 못했습니다', '读取失败'), description: e?.response?.data?.error || e.message, variant: 'destructive' }),
+  });
+  if (s.quotation_id) {
+    return <Link to={`/task-board?card=${r.card_id}&tab=quotation`} className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-primary hover:underline"><FileSpreadsheet className="h-3 w-3" />{L('견적 초안 만듦 · 견적 탭에서 보기', '已生成报价草稿')}</Link>;
+  }
+  const stuck = !s.import_error && Date.now() - Date.parse(s.import_started_at || s.submitted_at) > 10 * 60000;
+  if (!s.import_error && !stuck) return <span className="inline-flex items-center gap-1 text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" />{L('견적서 읽는 중', '正在读取报价单')}</span>;
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1.5 text-warning-text">
+      <AlertTriangle className="h-3 w-3" />{s.import_error ? `${L('읽지 못함', '读取失败')}: ${s.import_error}` : L('읽기가 멈췄습니다', '读取中断')}
+      <Button size="sm" variant="outline" className="h-6 px-2 text-micro" disabled={retry.isPending} onClick={() => retry.mutate()}>{retry.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : L('다시 읽기', '重新读取')}</Button>
+    </span>
+  );
+}

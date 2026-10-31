@@ -1,11 +1,12 @@
 // 공장 업로드 링크 (4단계 ②) 화면용 사본. 서버 base44/shared/factoryRequest.ts 와 같은 목록·상태 규칙 (토큰·PIN 만들기는 서버만).
 // 검산: npm run check:factory-request
-export const ITEM_KINDS = ['PHOTO', 'DOC', 'ANSWER', 'MILESTONE'];
+export const ITEM_KINDS = ['PHOTO', 'DOC', 'ANSWER', 'MILESTONE', 'QUOTE'];
 export const KIND_LABEL = {
   PHOTO: { ko: '진행 사진', cn: '照片' },
   DOC: { ko: '서류', cn: '文件' },
   ANSWER: { ko: '질문 답변', cn: '回答问题' },
   MILESTONE: { ko: '완료 보고', cn: '完成报告' },
+  QUOTE: { ko: '견적서', cn: '报价单' },
 };
 export const DOC_TYPES = ['GENERAL', 'INVOICE_CI', 'INVOICE_PI', 'PACKING_LIST', 'CERT_ORIGIN', 'QUOTATION', 'TEST_REPORT', 'CERTIFICATE', 'SPEC_SHEET'];
 export const DEFAULT_DAYS = 14;
@@ -21,12 +22,13 @@ export const REQUEST_LABEL = { OPEN: '진행 중', DONE: '완료', EXPIRED: '기
 
 // 자주 쓰는 항목 (서류는 문서 종류가 정해져 있어 채택하면 카드 파일에 그 종류로 들어간다)
 export const PRESETS = [
+  // 견적서는 올라오면 서버가 읽어 견적 초안을 만든다 (공장 원가 그대로)
+  { kind: 'QUOTE', label_ko: '공장 견적서', label_cn: '报价单' },
   { kind: 'PHOTO', label_ko: '생산 진행 사진', label_cn: '生产进度照片' },
   { kind: 'PHOTO', label_ko: '포장 상태 사진', label_cn: '包装照片' },
   { kind: 'DOC', label_ko: '상업 송장 (CI)', label_cn: '商业发票 (CI)', doc_type: 'INVOICE_CI' },
   { kind: 'DOC', label_ko: '패킹 리스트', label_cn: '装箱单', doc_type: 'PACKING_LIST' },
   { kind: 'DOC', label_ko: '원산지 증명서', label_cn: '原产地证明', doc_type: 'CERT_ORIGIN' },
-  { kind: 'DOC', label_ko: '견적서 파일', label_cn: '报价单', doc_type: 'QUOTATION' },
   { kind: 'DOC', label_ko: '시험 성적서', label_cn: '检测报告', doc_type: 'TEST_REPORT' },
 ];
 

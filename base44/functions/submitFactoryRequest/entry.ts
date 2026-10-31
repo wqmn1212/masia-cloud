@@ -45,7 +45,9 @@ export default async function (req: Request) {
         await notifyUsers(svc, owners.length ? owners : team, {
           type: 'factory_submission',
           title: `[공장 제출] ${card.title} · ${out.item.label_ko}`,
-          body: `${request.factory_name || '공장'}에서 업로드 링크로 "${out.item.label_ko}"을(를) 올렸습니다. 카드 업무 탭의 공장 요청에서 채택하거나 재요청해 주세요.`,
+          body: out.item.kind === 'QUOTE'
+            ? `${request.factory_name || '공장'}에서 견적서를 올렸습니다. 자동으로 읽어 견적 초안을 만들고 있습니다. 다 되면 다시 알려 드립니다.`
+            : `${request.factory_name || '공장'}에서 업로드 링크로 "${out.item.label_ko}"을(를) 올렸습니다. 카드 업무 탭의 공장 요청에서 채택하거나 재요청해 주세요.`,
           link: `/task-board?card=${card.id}&tab=tasks`,
           task_card_id: card.id,
           card_title: card.title,

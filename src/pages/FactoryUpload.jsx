@@ -12,11 +12,13 @@ const T = {
   zh: {
     title: '资料上传', pinTitle: '请输入验证码', pinHint: '验证码（6位数字）在微信消息里', open: '打开', notFound: '找不到此链接，请联系AEGIS负责人。', expired: '链接已过期，请联系AEGIS负责人重新发送。', revoked: '此链接已失效，请联系AEGIS负责人。',
     product: '产品', due: '截止日期', status: { WAITING: '未提交', SUBMITTED: '已提交，待确认', ACCEPTED: '已确认', REDO: '需要重新提交' },
+    quoteHint: '可上传 Excel、Word(.docx)、PDF 或照片。请写明单价、数量、交期、付款条件和报价有效期。', quoteNote: '补充说明（选填，例如：含税/不含税、交期）',
     photo: '拍照', file: '选择文件', answer: '填写回答', submit: '提交', uploading: '上传中', done: '已提交，谢谢！', allDone: '全部资料已确认，谢谢配合！', redo: '重新提交原因', sent: '已提交', tooBig: '文件不能超过10MB', note: '完成情况（例如：10月31日印刷完成）', failed: '提交失败', retry: '可以分多次上传，用同一个链接继续即可。', lang: '한국어',
   },
   ko: {
     title: '자료 올리기', pinTitle: 'PIN을 넣어 주세요', pinHint: 'PIN(6자리)은 위챗 메시지에 있습니다', open: '열기', notFound: '링크를 찾을 수 없습니다. AEGIS 담당자에게 문의하세요.', expired: '링크 기한이 지났습니다. AEGIS 담당자에게 다시 요청하세요.', revoked: '더 이상 쓸 수 없는 링크입니다. AEGIS 담당자에게 문의하세요.',
     product: '제품', due: '기한', status: { WAITING: '미제출', SUBMITTED: '제출함 · 확인 대기', ACCEPTED: '확인됨', REDO: '다시 올려 주세요' },
+    quoteHint: '엑셀·워드(.docx)·PDF·사진으로 올릴 수 있습니다. 단가·수량·납기·결제 조건·유효기간을 적어 주세요.', quoteNote: '덧붙일 말 (선택, 예: 세금 포함 여부, 납기)',
     photo: '사진 찍기', file: '파일 고르기', answer: '답 적기', submit: '보내기', uploading: '올리는 중', done: '보냈습니다. 감사합니다!', allDone: '모든 자료가 확인됐습니다. 감사합니다!', redo: '다시 요청한 이유', sent: '보낸 것', tooBig: '파일은 10MB 이하여야 합니다', note: '완료 내용 (예: 10월 31일 인쇄 완료)', failed: '보내지 못했습니다', retry: '여러 번에 나눠 올려도 됩니다. 같은 링크로 이어서 올리세요.', lang: '中文',
   },
 };
@@ -116,8 +118,9 @@ function ItemCard({ item, t, lang, token, pin, onView }) {
   const fileRef = useRef(null);
   const closed = item.status === 'ACCEPTED';
   const wantsFile = item.kind !== 'ANSWER';
-  const wantsText = item.kind === 'ANSWER' || item.kind === 'MILESTONE';
-  const accept = item.kind === 'DOC' ? 'image/*,.pdf,.xls,.xlsx,.csv' : 'image/*';
+  const quote = item.kind === 'QUOTE';
+  const wantsText = item.kind === 'ANSWER' || item.kind === 'MILESTONE' || quote;
+  const accept = quote ? 'image/*,.pdf,.xls,.xlsx,.csv,.docx' : item.kind === 'DOC' ? 'image/*,.pdf,.xls,.xlsx,.csv' : 'image/*';
 
   const send = async (payload) => {
     const { data } = await base44.functions.invoke('submitFactoryRequest', { token, pin, item_key: item.key, ...payload });
@@ -161,6 +164,7 @@ function ItemCard({ item, t, lang, token, pin, onView }) {
         <span className={`shrink-0 rounded-full px-2 py-0.5 text-caption font-medium ${STATUS_CLS[item.status]}`}>{t.status[item.status]}</span>
       </div>
       {item.note_cn && <p className="text-label text-muted-foreground">{item.note_cn}</p>}
+      {quote && !closed && <p className="text-label text-muted-foreground">{t.quoteHint}</p>}
       {item.status === 'REDO' && item.redo_reason && <p className="rounded-md bg-destructive/10 p-2 text-label text-destructive">{t.redo}: {item.redo_reason}</p>}
       {item.submitted?.length > 0 && (
         <div className="space-y-0.5 text-caption text-muted-foreground">
@@ -170,7 +174,7 @@ function ItemCard({ item, t, lang, token, pin, onView }) {
       )}
       {!closed && (
         <div className="space-y-2">
-          {wantsText && <Textarea rows={2} value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder={item.kind === 'MILESTONE' ? t.note : t.answer} className="text-body" />}
+          {wantsText && <Textarea rows={2} value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder={quote ? t.quoteNote : item.kind === 'MILESTONE' ? t.note : t.answer} className="text-body" />}
           <div className="grid grid-cols-2 gap-2">
             {wantsFile && (
               <>
@@ -180,7 +184,7 @@ function ItemCard({ item, t, lang, token, pin, onView }) {
                 <Button type="button" variant="outline" className="h-11 gap-1.5" disabled={!!progress} onClick={() => fileRef.current?.click()}><FileUp className="h-4 w-4" />{t.file}</Button>
               </>
             )}
-            {wantsText && <Button type="button" className="col-span-2 h-11 gap-1.5" disabled={!!progress || !answer.trim()} onClick={sendText}><Send className="h-4 w-4" />{t.submit}</Button>}
+            {wantsText && !quote && <Button type="button" className="col-span-2 h-11 gap-1.5" disabled={!!progress || !answer.trim()} onClick={sendText}><Send className="h-4 w-4" />{t.submit}</Button>}
           </div>
           {progress && <p className="flex items-center gap-1.5 text-caption text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" />{progress}</p>}
           {msg && <p role="status" className={`text-caption ${msg.ok ? 'text-primary' : 'text-destructive'}`}>{msg.text}</p>}

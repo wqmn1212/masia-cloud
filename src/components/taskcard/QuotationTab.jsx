@@ -672,6 +672,7 @@ export default function QuotationTab({ card, user }) {
                     <span className="text-sm font-medium">{q.quote_title || q.factory_name}</span>
                     {q.product_name && <span className="text-[11px] text-muted-foreground">{q.product_name}{q.model_name ? ` · ${q.model_name}` : ''}</span>}
                     {q.incoterms && <Badge variant="outline" className="text-[9px] h-4 px-1">{q.incoterms.replace('_', ' ')}</Badge>}
+                    {q.factory_request_id && <Badge variant="outline" className="text-[9px] h-4 px-1 border-primary/40 text-primary">공장 업로드</Badge>}
                   </div>
                   <div className="flex items-center gap-2">
                     <Select value={q.status} onValueChange={v => updateStatusMutation.mutate({ quote: q, status: v })}>
@@ -724,6 +725,9 @@ export default function QuotationTab({ card, user }) {
                     : <CurrencyPanel legacyCny={q.final_client_price} usdToKrw={q.exchange_rate_usd} legacyCnyToKrw={q.exchange_rate_krw} />
                   )}
                 </div>
+                {q.factory_request_id && q.status === 'DRAFT' && (
+                  <p className="text-[11px] text-muted-foreground">공장이 업로드 링크로 올린 견적서를 읽어 만든 초안입니다 (공장 원가 그대로). 수정에서 마진·수수료·환율을 확인하고 저장한 뒤 위에서 검토를 요청하세요.{/읽기 확인:/.test(q.internal_notes || '') ? ' 내부 메모에 읽기 확인 항목이 있습니다.' : ''}</p>
+                )}
                 {q.raw_file_url && (
                   <a href={q.raw_file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[10px] text-primary hover:underline">
                     <ExternalLink className="w-3 h-3" />원본 파일 보기
