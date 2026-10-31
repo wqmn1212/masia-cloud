@@ -40,7 +40,8 @@
     "check:quote-approval": "node --import ./scripts/fnmock/register.mjs scripts/check-quote-approval.mjs",
     "check:factory-quote": "node --import ./scripts/fnmock/register.mjs scripts/check-factory-quote.mjs",
     "check:margin-rule": "node --import ./scripts/fnmock/register.mjs scripts/check-margin-rule.mjs",
-    "check:inquiry-intake": "node --import ./scripts/fnmock/register.mjs scripts/check-inquiry-intake.mjs"
+    "check:inquiry-intake": "node --import ./scripts/fnmock/register.mjs scripts/check-inquiry-intake.mjs",
+    "check:quote-alerts": "node scripts/check-quote-alerts.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.57",
