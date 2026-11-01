@@ -11,7 +11,7 @@ export default function FinancialSummaryCards({ count, revenue, margin, currency
   return <div className="grid gap-4 sm:grid-cols-3">{cards.map((item) => (
     <Card key={item.label}><CardContent className="flex items-center gap-4 p-5">
       <div className="rounded-xl bg-primary/10 p-3 text-primary"><item.icon className="w-5 h-5" /></div>
-      <div><p className="text-xs text-muted-foreground">{item.label}</p><p className="text-xl font-bold mt-1">{item.value}</p></div>
+      <div><p className="text-caption text-muted-foreground">{item.label}</p><p className="text-xl font-bold mt-1">{item.value}</p></div>
     </CardContent></Card>
   ))}</div>;
 }

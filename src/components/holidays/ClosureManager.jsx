@@ -31,10 +31,10 @@ export default function ClosureManager({ user, canEdit }) {
 
   return (
     <section className="rounded-2xl border bg-card p-5 space-y-4">
-      <div><h2 className="font-semibold">공장별 휴무</h2><p className="text-xs text-muted-foreground">정전·설비 점검 등 개별 일정. 고객에게는 보이지 않습니다.</p></div>
+      <div><h2 className="font-semibold">공장별 휴무</h2><p className="text-caption text-muted-foreground">정전·설비 점검 등 개별 일정. 고객에게는 보이지 않습니다.</p></div>
       {canEdit && (
         <form onSubmit={add} className="grid sm:grid-cols-[1.2fr_1fr_1fr_1.5fr_auto] gap-2">
-          <select required value={f.factory_id} onChange={set('factory_id')} className="h-9 rounded-md border bg-transparent px-2 text-sm">
+          <select required value={f.factory_id} onChange={set('factory_id')} className="h-9 rounded-md border bg-transparent px-2 text-body">
             <option value="">공장 선택</option>
             {factories.map((x) => <option key={x.id} value={x.id}>{x.company_name}</option>)}
           </select>
@@ -44,10 +44,10 @@ export default function ClosureManager({ user, canEdit }) {
           <Button type="submit" disabled={busy}>추가</Button>
         </form>
       )}
-      {!rows.length ? <p className="text-sm text-muted-foreground py-4 text-center">등록된 공장 휴무가 없습니다.</p> : (
+      {!rows.length ? <p className="text-body text-muted-foreground py-4 text-center">등록된 공장 휴무가 없습니다.</p> : (
         <div className="divide-y">
           {rows.map((c) => (
-            <div key={c.id} className="py-2.5 flex items-center gap-3 text-sm">
+            <div key={c.id} className="py-2.5 flex items-center gap-3 text-body">
               <span className="font-medium w-40 truncate">{c.factory_name || c.factory_id}</span>
               <span>{c.start_date} ~ {c.end_date}</span>
               <span className="text-muted-foreground truncate">{c.note}</span>

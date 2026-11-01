@@ -67,8 +67,8 @@ export default function MeetingShareDialog({ log, card, user, onClose }) {
           <DialogTitle>고객에게 미팅 요약 공유</DialogTitle>
           <DialogDescription>고객 포털의 문의 탭에 담당자 메시지로 올라가고, 고객에게 알림이 갑니다.</DialogDescription>
         </DialogHeader>
-        <Textarea rows={12} value={text} maxLength={3000} onChange={(e) => setText(e.target.value)} className="text-sm" />
-        <label className="flex items-start gap-2 text-sm">
+        <Textarea rows={12} value={text} maxLength={3000} onChange={(e) => setText(e.target.value)} className="text-body" />
+        <label className="flex items-start gap-2 text-body">
           <Checkbox checked={checked} onCheckedChange={(v) => setChecked(!!v)} className="mt-0.5" />
           <span>공장 이름·연락처·공장 단가 같은 내부 정보를 지웠습니다.</span>
         </label>

@@ -155,9 +155,9 @@ export default function ClientDashboard() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-2xl font-bold tracking-tight">{client.company_name}</h1>
-                  <Badge variant="secondary" className="text-[10px]">고객사</Badge>
+                  <Badge variant="secondary" className="text-micro">고객사</Badge>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-3 text-xs text-muted-foreground">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-3 text-caption text-muted-foreground">
                   {client.address && (
                     <div className="flex items-center gap-1.5 min-w-0">
                       <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
@@ -215,7 +215,7 @@ export default function ClientDashboard() {
               <button
                 key={f.key}
                 onClick={() => setStatusFilter(f.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-caption font-medium border transition-colors ${
                   statusFilter === f.key
                     ? 'bg-primary text-primary-foreground border-primary'
                     : 'bg-card hover:bg-muted text-muted-foreground border-border'
@@ -234,10 +234,10 @@ export default function ClientDashboard() {
           ) : filteredCards.length === 0 ? (
             <Card className="p-12 text-center">
               <Inbox className="w-12 h-12 mx-auto text-muted-foreground/40" />
-              <p className="mt-4 text-lg font-semibold">
+              <p className="mt-4 text-title font-semibold">
                 {statusFilter === 'ALL' ? '연결된 태스크가 없습니다' : '해당 상태의 태스크가 없습니다'}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-body text-muted-foreground mt-1">
                 태스크 보드에서 이 고객사를 지정한 카드를 만들면 여기에 나타납니다
               </p>
             </Card>
@@ -295,7 +295,7 @@ function StatBox({ label, value }) {
   return (
     <div className="text-center">
       <div className="text-2xl font-bold tracking-tight">{value}</div>
-      <div className="text-[10px] text-muted-foreground mt-0.5">{label}</div>
+      <div className="text-micro text-muted-foreground mt-0.5">{label}</div>
     </div>
   );
 }

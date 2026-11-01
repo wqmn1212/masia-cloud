@@ -24,11 +24,11 @@ export default function ConnectionSettings({ user }) {
           <div key={pl} className="rounded-2xl border bg-card p-6 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">{label}</h3>
-              <span className={`text-xs rounded px-2 py-1 ${c.status === 'connected' ? 'bg-emerald-50 text-emerald-700' : 'bg-muted text-muted-foreground'}`}>
+              <span className={`text-caption rounded px-2 py-1 ${c.status === 'connected' ? 'bg-success/10 text-success-text' : 'bg-muted text-muted-foreground'}`}>
                 {c.status === 'connected' ? 'API 연결됨' : '미연결'}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-caption text-muted-foreground">
               {pl === 'youtube'
                 ? '공개 통계(조회·좋아요·댓글)를 API 키로 수집합니다. 도달·시청시간은 채널 분석 권한이 필요해 미제공입니다.'
                 : '연결된 계정의 좋아요·댓글을 수집합니다. 도달·조회는 인사이트 권한이 없어 미제공입니다.'}
@@ -36,7 +36,7 @@ export default function ConnectionSettings({ user }) {
             </p>
             <Input placeholder="계정명 / 핸들" defaultValue={c.account_name} disabled={!isCeo} onBlur={(e) => e.target.value !== (c.account_name || '') && saveField(pl, 'account_name', e.target.value)} />
             <Input placeholder="계정 URL" defaultValue={c.account_url} disabled={!isCeo} onBlur={(e) => e.target.value !== (c.account_url || '') && saveField(pl, 'account_url', e.target.value)} />
-            <p className="text-xs text-muted-foreground">{isCeo ? '성과 탭의 "직접 갱신"으로 데이터를 가져옵니다.' : '계정 정보 관리는 대표님만 가능합니다.'}</p>
+            <p className="text-caption text-muted-foreground">{isCeo ? '성과 탭의 "직접 갱신"으로 데이터를 가져옵니다.' : '계정 정보 관리는 대표님만 가능합니다.'}</p>
           </div>
         );
       })}

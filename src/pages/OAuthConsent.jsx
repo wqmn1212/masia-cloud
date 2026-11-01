@@ -164,7 +164,7 @@ export default function OAuthConsent() {
   if (reconnect) {
     return (
       <AuthLayout icon={ShieldCheck} title="Reconnect required">
-        <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-body">
           {reconnect}
         </div>
       </AuthLayout>
@@ -177,7 +177,7 @@ export default function OAuthConsent() {
   if (error && !info) {
     return (
       <AuthLayout icon={ShieldCheck} title="Authorize access">
-        <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-body">
           {error}
         </div>
       </AuthLayout>
@@ -193,16 +193,16 @@ export default function OAuthConsent() {
       subtitle={`${client} wants to access ${appName} on your behalf`}
     >
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-body">
           {error}
         </div>
       )}
 
-      <p className="text-sm font-medium text-foreground mb-2">
+      <p className="text-body font-medium text-foreground mb-2">
         {tools.length ? `It will be able to use these tools in ${appName}:` : "No tools requested"}
       </p>
       {tools.length > 0 && (
-        <ul className="space-y-2 text-sm mb-6">
+        <ul className="space-y-2 text-body mb-6">
           {tools.map((tool) => (
             <li key={tool.name} className="flex flex-col">
               <span className="text-foreground font-medium">

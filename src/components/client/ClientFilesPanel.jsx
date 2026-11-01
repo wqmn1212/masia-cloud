@@ -18,8 +18,8 @@ export default function ClientFilesPanel({ attachments, cardsById, onCardClick }
     return (
       <Card className="p-12 text-center">
         <Inbox className="w-12 h-12 mx-auto text-muted-foreground/40" />
-        <p className="mt-4 text-lg font-semibold">저장된 파일이 없습니다</p>
-        <p className="text-sm text-muted-foreground mt-1">태스크 카드의 파일 탭에서 파일을 업로드하면 여기에 모입니다</p>
+        <p className="mt-4 text-title font-semibold">저장된 파일이 없습니다</p>
+        <p className="text-body text-muted-foreground mt-1">태스크 카드의 파일 탭에서 파일을 업로드하면 여기에 모입니다</p>
       </Card>
     );
   }
@@ -36,16 +36,16 @@ export default function ClientFilesPanel({ attachments, cardsById, onCardClick }
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-medium text-sm truncate">{file.file_name}</span>
-                <Badge variant="secondary" className="text-[10px]">{DOCUMENT_TYPES[file.document_type] || '일반 파일'}</Badge>
-                {file.factory_approved && <Badge className="border-0 bg-primary/10 text-[10px] text-primary">공장 전달 승인본 v{file.revision || 1}</Badge>}
-                {file.client_approved_at && <Badge variant="outline" className="border-primary/40 text-[10px] text-primary">고객 승인 {format(new Date(file.client_approved_at), 'MM.dd')}</Badge>}
-                {file.superseded && <Badge variant="outline" className="text-[10px] text-muted-foreground">이전 판 · 사용 안 함</Badge>}
+                <span className="font-medium text-body truncate">{file.file_name}</span>
+                <Badge variant="secondary" className="text-micro">{DOCUMENT_TYPES[file.document_type] || '일반 파일'}</Badge>
+                {file.factory_approved && <Badge className="border-0 bg-primary/10 text-micro text-primary">공장 전달 승인본 v{file.revision || 1}</Badge>}
+                {file.client_approved_at && <Badge variant="outline" className="border-primary/40 text-micro text-primary">고객 승인 {format(new Date(file.client_approved_at), 'MM.dd')}</Badge>}
+                {file.superseded && <Badge variant="outline" className="text-micro text-muted-foreground">이전 판 · 사용 안 함</Badge>}
                 {file.file_type && (
-                  <Badge variant="outline" className="text-[10px] uppercase">{file.file_type}</Badge>
+                  <Badge variant="outline" className="text-micro uppercase">{file.file_type}</Badge>
                 )}
               </div>
-              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-muted-foreground flex-wrap">
+              <div className="flex items-center gap-2 mt-0.5 text-micro text-muted-foreground flex-wrap">
                 {card && (
                   <button
                     onClick={() => onCardClick(card)}

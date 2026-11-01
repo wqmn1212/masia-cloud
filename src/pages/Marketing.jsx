@@ -25,9 +25,9 @@ export default function Marketing() {
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       <header>
-        <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground">Marketing</p>
-        <h1 className="text-3xl font-semibold tracking-tight mt-1">마케팅 관리</h1>
-        <p className="text-sm text-muted-foreground mt-2">기본 게시 일정 월·수·금 10:00 KST · 게시 전 대표님 승인 필수</p>
+        <p className="text-caption tracking-[0.2em] uppercase text-muted-foreground">Marketing</p>
+        <h1 className="text-2xl font-bold tracking-tight">마케팅 관리</h1>
+        <p className="text-body text-muted-foreground mt-2">기본 게시 일정 월·수·금 10:00 KST · 게시 전 대표님 승인 필수</p>
       </header>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">

@@ -98,27 +98,27 @@ export default function ChatTab({ card, user, viewLang = 'KR' }) {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-3 p-1 pb-2">
         {messages.length === 0 && (
-          <div className="text-center text-sm text-muted-foreground pt-8">아직 메시지가 없습니다. 먼저 말을 걸어보세요!</div>
+          <div className="text-center text-body text-muted-foreground pt-8">아직 메시지가 없습니다. 먼저 말을 걸어보세요!</div>
         )}
         {messages.map((msg) => {
           const mine = isMyMsg(msg);
           return (
             <div key={msg.id} className={`flex items-end gap-2 ${mine ? 'flex-row-reverse' : 'flex-row'}`}>
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${ROLE_COLOR[msg.sender_role] || 'bg-muted'}`}>
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-micro font-bold flex-shrink-0 ${ROLE_COLOR[msg.sender_role] || 'bg-muted'}`}>
                 {msg.sender_name?.[0]?.toUpperCase() || '?'}
               </div>
               <div className={`max-w-[72%] space-y-1 ${mine ? 'items-end' : 'items-start'} flex flex-col`}>
-                {!mine && <p className="text-[10px] text-muted-foreground px-1">{msg.sender_name} · {msg.sender_role}</p>}
-                <div className={`px-3 py-2 rounded-2xl text-sm leading-snug ${mine ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'}`}>
+                {!mine && <p className="text-micro text-muted-foreground px-1">{msg.sender_name} · {msg.sender_role}</p>}
+                <div className={`px-3 py-2 rounded-2xl text-body leading-snug ${mine ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'}`}>
                   {cnOrKo(msg, 'message_text', viewLang === 'CN' ? 'zh' : 'ko')}
                   {msg.file_url && (
                     <a href={msg.file_url} target="_blank" rel="noopener noreferrer"
-                       className={`block text-xs mt-1 underline ${mine ? 'text-primary-foreground/80' : 'text-primary'}`}>
+                       className={`block text-caption mt-1 underline ${mine ? 'text-primary-foreground/80' : 'text-primary'}`}>
                       📎 {msg.file_name || '첨부파일'}
                     </a>
                   )}
                 </div>
-                <p className="text-[10px] text-muted-foreground px-1">
+                <p className="text-micro text-muted-foreground px-1">
                   {msg.is_client_visible && msg.sender_role !== 'CLIENT' && <span className="mr-1 rounded bg-accent/15 px-1 text-accent font-semibold">고객 공개</span>}
                   {formatTime(msg.created_date)}
                 </p>
@@ -131,7 +131,7 @@ export default function ChatTab({ card, user, viewLang = 'KR' }) {
 
       {/* Input */}
       {canSendToClient && (
-        <label className="border-t pt-2 flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+        <label className="border-t pt-2 flex items-center gap-2 text-caption text-muted-foreground cursor-pointer">
           <Switch checked={toClient} onCheckedChange={setToClient} />
           고객에게 보내기 {toClient && <span className="text-accent font-semibold">(고객 문의 탭에 표시되고 메일이 발송됩니다)</span>}
         </label>
@@ -144,7 +144,7 @@ export default function ChatTab({ card, user, viewLang = 'KR' }) {
         <BilingualField record={draft} field="message_text" disabled={sendMutation.isPending}
           onChange={(key, value) => setDraft(prev => ({ ...prev, [key]: value }))}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); handleSend(); } }}
-          placeholder={viewLang === 'CN' ? '输入消息…' : '메시지를 입력하세요…'} className="text-sm" />
+          placeholder={viewLang === 'CN' ? '输入消息…' : '메시지를 입력하세요…'} className="text-body" />
         <Button size="icon" onClick={handleSend} disabled={!(draft.message_text.trim() || draft.message_text_cn.trim()) || sendMutation.isPending} className="shrink-0">
           {sendMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </Button>

@@ -78,9 +78,9 @@ export default function TeamManagement() {
   if (!isServiceAdmin) {
     return (
       <Card className="p-12 text-center max-w-md mx-auto">
-        <AlertTriangle className="w-12 h-12 mx-auto text-amber-500" />
-        <p className="mt-4 text-lg font-semibold">접근 권한이 없습니다</p>
-        <p className="text-sm text-muted-foreground mt-1">
+        <AlertTriangle className="w-12 h-12 mx-auto text-warning-text" />
+        <p className="mt-4 text-title font-semibold">접근 권한이 없습니다</p>
+        <p className="text-body text-muted-foreground mt-1">
           서비스 관리자만 팀을 관리할 수 있습니다.
         </p>
       </Card>
@@ -101,7 +101,7 @@ export default function TeamManagement() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">팀 관리</h1>
-            <p className="text-sm text-muted-foreground">하위 계정을 초대하고 활성 상태를 관리합니다</p>
+            <p className="text-body text-muted-foreground">하위 계정을 초대하고 활성 상태를 관리합니다</p>
           </div>
         </div>
         <Button onClick={() => setInviteOpen(true)}>
@@ -117,7 +117,7 @@ export default function TeamManagement() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
+          <CardTitle className="text-title flex items-center gap-2">
             <Users className="w-4 h-4" />팀원 ({subs.length})
           </CardTitle>
         </CardHeader>
@@ -125,7 +125,7 @@ export default function TeamManagement() {
           {isLoading ? (
             <div className="p-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></div>
           ) : subs.length === 0 ? (
-            <div className="p-8 text-center text-sm text-muted-foreground">
+            <div className="p-8 text-center text-body text-muted-foreground">
               등록된 팀원이 없습니다. 우측 상단에서 초대해 보세요.
             </div>
           ) : (
@@ -145,7 +145,7 @@ export default function TeamManagement() {
       {pending.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="text-title flex items-center gap-2">
               <Mail className="w-4 h-4" />대기 중인 초대 ({pending.length})
             </CardTitle>
           </CardHeader>
@@ -154,12 +154,12 @@ export default function TeamManagement() {
               <div key={p.id} className="flex items-center gap-3 p-3">
                 <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{p.email}</p>
+                  <p className="text-body font-medium truncate">{p.email}</p>
                   {p.account_label && (
-                    <p className="text-xs text-muted-foreground truncate">{p.account_label}</p>
+                    <p className="text-caption text-muted-foreground truncate">{p.account_label}</p>
                   )}
                 </div>
-                <span className="text-xs text-amber-600 font-medium">가입 대기 중</span>
+                <span className="text-caption text-warning-text font-medium">가입 대기 중</span>
               </div>
             ))}
           </CardContent>
@@ -179,7 +179,7 @@ export default function TeamManagement() {
             className="space-y-4 pt-2"
           >
             <div>
-              <Label className="text-xs">이메일</Label>
+              <Label className="text-caption">이메일</Label>
               <Input
                 type="email"
                 required
@@ -189,7 +189,7 @@ export default function TeamManagement() {
               />
             </div>
             <div>
-              <Label className="text-xs">표시 이름 (선택)</Label>
+              <Label className="text-caption">표시 이름 (선택)</Label>
               <Input
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
@@ -197,16 +197,16 @@ export default function TeamManagement() {
               />
             </div>
             <div>
-              <Label className="text-xs">팀 역할</Label>
+              <Label className="text-caption">팀 역할</Label>
               <Select value={roleId} onValueChange={setRoleId} required>
                 <SelectTrigger><SelectValue placeholder="역할을 선택하세요" /></SelectTrigger>
                 <SelectContent>{roles.map((role) => <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>)}</SelectContent>
               </Select>
-              {roles.length === 0 && <p className="mt-1 text-xs text-destructive">사용자 권한 메뉴에서 역할을 먼저 만들어 주세요.</p>}
+              {roles.length === 0 && <p className="mt-1 text-caption text-destructive">사용자 권한 메뉴에서 역할을 먼저 만들어 주세요.</p>}
             </div>
             <div className="flex items-start gap-3 rounded-md border p-3">
               <Checkbox id="team-member-password-mail" checked={sendPasswordSetup} onCheckedChange={(checked) => setSendPasswordSetup(checked === true)} />
-              <div><Label htmlFor="team-member-password-mail" className="cursor-pointer">비밀번호 설정 메일도 함께 보내기</Label><p className="mt-1 text-xs text-muted-foreground">초대받은 사용자가 메일 링크에서 직접 비밀번호를 설정합니다.</p></div>
+              <div><Label htmlFor="team-member-password-mail" className="cursor-pointer">비밀번호 설정 메일도 함께 보내기</Label><p className="mt-1 text-caption text-muted-foreground">초대받은 사용자가 메일 링크에서 직접 비밀번호를 설정합니다.</p></div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setInviteOpen(false)}>취소</Button>
@@ -228,7 +228,7 @@ function StatBox({ label, value }) {
     <Card>
       <CardContent className="pt-5 pb-4 text-center">
         <div className="text-2xl font-bold tracking-tight">{value}</div>
-        <div className="text-xs text-muted-foreground mt-1">{label}</div>
+        <div className="text-caption text-muted-foreground mt-1">{label}</div>
       </CardContent>
     </Card>
   );

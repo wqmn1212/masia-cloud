@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { KIND_LABEL, PRESETS, DEFAULT_DAYS, MAX_ITEMS } from '@/lib/factoryRequest';
 
 const chip = (on) => `rounded-full border px-2.5 py-1 text-caption ${on ? 'border-primary bg-primary text-primary-foreground' : 'bg-background hover:bg-muted'}`;
-const sel = 'h-8 rounded-md border bg-background px-2 text-xs';
+const sel = 'h-8 rounded-md border bg-background px-2 text-caption';
 
 // 공장에 받을 항목 고르기: 견적서·자주 쓰는 사진·서류, 이 카드의 일정 단계(완료 보고), 사전 QC 공장 질문, 직접 입력. 공장 이름은 링크마다 정한다
 export default function FactoryRequestDialog({ card, open, onClose, pending, onCreate }) {
@@ -45,12 +45,12 @@ export default function FactoryRequestDialog({ card, open, onClose, pending, onC
     <Dialog open={open} onOpenChange={(o) => !o && !pending && onClose()}>
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-base">{L('공장에 요청', '向工厂索取')}</DialogTitle>
+          <DialogTitle className="text-title">{L('공장에 요청', '向工厂索取')}</DialogTitle>
           <DialogDescription className="text-label">{L('공장이 받을 항목을 고르세요. 링크와 PIN을 위챗으로 보내면 공장 담당자가 휴대폰 중국어 화면에서 올립니다.', '选择工厂需要提交的项目。通过微信发送链接和验证码，工厂负责人可在手机中文页面上传。')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <label className="block text-label">{L('공장 이름', '工厂名称')}<Input className="mt-1 h-8 text-xs" value={factory} maxLength={200} onChange={(e) => setFactory(e.target.value)} placeholder={L('예: 운용(云涌)', '例：运涌')} /><span className="mt-0.5 block text-caption text-muted-foreground">{L('견적을 여러 공장에서 받을 때는 공장마다 링크를 따로 만드세요.', '向多家工厂询价时，请为每家工厂分别生成链接。')}</span></label>
+          <label className="block text-label">{L('공장 이름', '工厂名称')}<Input className="mt-1 h-8 text-caption" value={factory} maxLength={200} onChange={(e) => setFactory(e.target.value)} placeholder={L('예: 운용(云涌)', '例：运涌')} /><span className="mt-0.5 block text-caption text-muted-foreground">{L('견적을 여러 공장에서 받을 때는 공장마다 링크를 따로 만드세요.', '向多家工厂询价时，请为每家工厂分别生成链接。')}</span></label>
           <div className="space-y-1.5">
             <p className="text-label font-medium">{L('견적서·사진·서류', '报价单·照片·文件')}</p>
             <div className="flex flex-wrap gap-1.5">{PRESETS.map((x) => <button key={id(x)} type="button" className={chip(has(x))} onClick={() => toggle(x)}>{lang === 'zh' ? x.label_cn : x.label_ko}</button>)}</div>
@@ -58,7 +58,7 @@ export default function FactoryRequestDialog({ card, open, onClose, pending, onC
           {wantsQuote && (
             <div className="flex flex-wrap items-center gap-2 rounded-lg bg-primary/5 p-2.5 text-caption">
               <span className="min-w-0 flex-1">{L('공장이 견적서를 올리면 자동으로 읽어 이 카드에 견적 초안(공장 원가 그대로)을 만들고 알려 드립니다.', '工厂上传报价单后，系统会自动读取并在此卡片生成报价草稿。')}</span>
-              {!message.trim() && <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={() => setMessage(quoteMessage())}>{L('견적 요청 문구 넣기', '填入询价说明')}</Button>}
+              {!message.trim() && <Button type="button" size="sm" variant="outline" className="h-7 text-caption" onClick={() => setMessage(quoteMessage())}>{L('견적 요청 문구 넣기', '填入询价说明')}</Button>}
             </div>
           )}
           {steps.length > 0 && (
@@ -79,15 +79,15 @@ export default function FactoryRequestDialog({ card, open, onClose, pending, onC
             <p className="text-label font-medium">{L('직접 추가', '自定义')}</p>
             <div className="grid grid-cols-[96px_1fr] gap-1.5 sm:grid-cols-[96px_1fr_1fr_auto]">
               <select className={sel} value={custom.kind} onChange={(e) => setCustom((c) => ({ ...c, kind: e.target.value }))}>{['PHOTO', 'DOC', 'ANSWER'].map((k) => <option key={k} value={k}>{KIND_LABEL[k][lang === 'zh' ? 'cn' : 'ko']}</option>)}</select>
-              <Input className="h-8 text-xs" value={custom.label_ko} onChange={(e) => setCustom((c) => ({ ...c, label_ko: e.target.value }))} placeholder={L('한국어 (예: 금형 수정 사진)', '韩语')} />
-              <Input className="col-span-2 h-8 text-xs sm:col-span-1" value={custom.label_cn} onChange={(e) => setCustom((c) => ({ ...c, label_cn: e.target.value }))} placeholder={L('중국어 (공장에 보임)', '中文（工厂可见）')} />
+              <Input className="h-8 text-caption" value={custom.label_ko} onChange={(e) => setCustom((c) => ({ ...c, label_ko: e.target.value }))} placeholder={L('한국어 (예: 금형 수정 사진)', '韩语')} />
+              <Input className="col-span-2 h-8 text-caption sm:col-span-1" value={custom.label_cn} onChange={(e) => setCustom((c) => ({ ...c, label_cn: e.target.value }))} placeholder={L('중국어 (공장에 보임)', '中文（工厂可见）')} />
               <Button type="button" size="sm" variant="outline" className="col-span-2 h-8 gap-1 sm:col-span-1" onClick={addCustom}><Plus className="h-3.5 w-3.5" />{L('추가', '添加')}</Button>
             </div>
             {customs.length > 0 && <div className="flex flex-wrap gap-1.5">{customs.map((p) => <span key={id(p)} className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-caption">{KIND_LABEL[p.kind][lang === 'zh' ? 'cn' : 'ko']} · {p.label_cn || p.label_ko}<button type="button" aria-label="remove" onClick={() => toggle(p)}><X className="h-3 w-3" /></button></span>)}</div>}
           </div>
           <div className="grid gap-2 sm:grid-cols-[120px_1fr]">
-            <label className="text-label">{L('링크 기한 (일)', '链接有效期（天）')}<Input className="mt-1 h-8 text-xs" type="number" min={1} max={60} value={days} onChange={(e) => setDays(e.target.value)} /></label>
-            <label className="text-label">{L('공장에 보일 안내 (중국어, 선택)', '给工厂的说明（选填）')}<Textarea className="mt-1 min-h-[34px] text-xs" rows={wantsQuote && message ? 4 : 1} maxLength={1000} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="例：请在11月5日前上传印刷完成的照片" /></label>
+            <label className="text-label">{L('링크 기한 (일)', '链接有效期（天）')}<Input className="mt-1 h-8 text-caption" type="number" min={1} max={60} value={days} onChange={(e) => setDays(e.target.value)} /></label>
+            <label className="text-label">{L('공장에 보일 안내 (중국어, 선택)', '给工厂的说明（选填）')}<Textarea className="mt-1 min-h-[34px] text-caption" rows={wantsQuote && message ? 4 : 1} maxLength={1000} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="例：请在11月5日前上传印刷完成的照片" /></label>
           </div>
         </div>
 

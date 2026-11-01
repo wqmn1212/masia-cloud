@@ -7,12 +7,12 @@ export default function DocChips({ docs = [], max = 3 }) {
   return (
     <span className="flex flex-wrap items-center gap-1">
       {docs.slice(0, max).map((d) => (
-        <span key={d.id} className="flex max-w-[220px] items-center rounded-md border bg-background pl-2 text-[11px]">
+        <span key={d.id} className="flex max-w-[220px] items-center rounded-md border bg-background pl-2 text-micro">
           <span className="truncate">{d.file_name}</span>
           <DocumentOpenButton document={d} />
         </span>
       ))}
-      {docs.length > max && <span className="text-[11px] text-muted-foreground">외 {docs.length - max}건</span>}
+      {docs.length > max && <span className="text-micro text-muted-foreground">외 {docs.length - max}건</span>}
     </span>
   );
 }

@@ -12,7 +12,7 @@ export default function TeamPermissionGrid({ tenantId }) {
           className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted"
         >
           <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
-          <span className="flex-1 text-sm font-medium">{item.label}</span>
+          <span className="flex-1 text-body font-medium">{item.label}</span>
           <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
         </Link>
       ))}

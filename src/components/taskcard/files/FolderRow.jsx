@@ -18,7 +18,7 @@ export default function FolderRow({ folder, onOpen, onDelete }) {
         className="flex items-center gap-2.5 flex-1 min-w-0 text-left"
       >
         <Folder className="w-4 h-4 text-primary flex-shrink-0 fill-primary/10" />
-        <span className="text-sm truncate font-medium">{folder.folder_name}</span>
+        <span className="text-body truncate font-medium">{folder.folder_name}</span>
       </button>
       <button
         onClick={handleDelete}

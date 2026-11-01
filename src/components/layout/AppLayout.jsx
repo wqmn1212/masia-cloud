@@ -47,7 +47,7 @@ export default function AppLayout() {
   });
 
   if (isLoadingUser) {
-    return <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">계정 권한을 확인하는 중...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-body text-muted-foreground">계정 권한을 확인하는 중...</div>;
   }
 
   // 비활성 계정 차단

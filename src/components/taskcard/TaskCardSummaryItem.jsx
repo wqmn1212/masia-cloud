@@ -5,15 +5,15 @@ import { format } from 'date-fns';
 const STATUS_META = {
   TODO:        { label: '대기',   color: 'bg-muted text-foreground/80 border-border' },
   IN_PROGRESS: { label: '진행중', color: 'bg-primary/10 text-primary border-primary/20' },
-  REVIEW:      { label: '검토',   color: 'bg-amber-100 text-amber-700 border-amber-200' },
-  PRODUCTION:  { label: '생산',   color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  DONE:        { label: '완료',   color: 'bg-green-100 text-green-700 border-green-200' },
-  CANCELLED:   { label: '취소',   color: 'bg-red-50 text-red-700 border-red-200' },
+  REVIEW:      { label: '검토',   color: 'bg-warning/15 text-warning-text border-warning/30' },
+  PRODUCTION:  { label: '생산',   color: 'bg-chart-4/15 text-chart-4 border-chart-4/30' },
+  DONE:        { label: '완료',   color: 'bg-success/15 text-success-text border-success/30' },
+  CANCELLED:   { label: '취소',   color: 'bg-destructive/10 text-destructive border-destructive/30' },
 };
 
 const PRIORITY_META = {
-  URGENT: { label: '긴급', color: 'text-red-600' },
-  HIGH:   { label: '높음', color: 'text-orange-600' },
+  URGENT: { label: '긴급', color: 'text-destructive' },
+  HIGH:   { label: '높음', color: 'text-warning-text' },
   MEDIUM: { label: '보통', color: 'text-primary' },
   LOW:    { label: '낮음', color: 'text-muted-foreground' },
 };
@@ -37,22 +37,22 @@ export default function TaskCardSummaryItem({
       className="w-full text-left bg-card border rounded-xl p-4 hover:shadow-md hover:border-primary/40 transition-all group"
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <h3 className="font-semibold text-sm line-clamp-2 flex-1 group-hover:text-primary transition-colors">
+        <h3 className="font-semibold text-body line-clamp-2 flex-1 group-hover:text-primary transition-colors">
           {card.title}
         </h3>
-        <Badge variant="outline" className={`${status.color} text-[10px] flex-shrink-0`}>
+        <Badge variant="outline" className={`${status.color} text-micro flex-shrink-0`}>
           {status.label}
         </Badge>
       </div>
 
       {display && (
-        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
+        <div className="flex items-center gap-1 text-caption text-muted-foreground mb-3">
           <SecIcon className="w-3 h-3" />
           <span className="truncate">{display}</span>
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2 text-xs">
+      <div className="grid grid-cols-3 gap-2 text-caption">
         <div className="flex items-center gap-1 text-muted-foreground" title="첨부 파일">
           <FileText className="w-3.5 h-3.5" />
           <span>{c.files}</span>
@@ -67,7 +67,7 @@ export default function TaskCardSummaryItem({
         </div>
       </div>
 
-      <div className="mt-3 pt-2 border-t border-dashed flex items-center justify-between text-[10px] text-muted-foreground">
+      <div className="mt-3 pt-2 border-t border-dashed flex items-center justify-between text-micro text-muted-foreground">
         {card.due_date ? (
           <span className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />

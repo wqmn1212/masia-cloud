@@ -28,13 +28,13 @@ export default function RecentQuotations({ quotations }) {
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold">{t('dashboard.recentQuotes')}</CardTitle>
-          <Link to="/quotations" className="text-xs text-primary hover:underline">{t('dashboard.viewAll')}</Link>
+          <CardTitle className="text-title font-semibold">{t('dashboard.recentQuotes')}</CardTitle>
+          <Link to="/quotations" className="text-caption text-primary hover:underline">{t('dashboard.viewAll')}</Link>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         {quotations.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">{t('quotations.empty')}</p>
+          <p className="text-body text-muted-foreground text-center py-8">{t('quotations.empty')}</p>
         ) : (
           quotations.slice(0, 5).map((q) => {
             const st = STATUS_MAP[q.status] || STATUS_MAP.DRAFT;
@@ -44,15 +44,15 @@ export default function RecentQuotations({ quotations }) {
                   <FileText className="w-4 h-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{q.factory_name || t('dashboard.unspecifiedFactory')}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-body font-medium truncate">{q.factory_name || t('dashboard.unspecifiedFactory')}</p>
+                  <p className="text-caption text-muted-foreground">
                     {t(`cat.${q.machine_category}`, CATEGORY_LABELS[q.machine_category] || q.machine_category || t('quotations.nocat'))}
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <Badge className={`${st.className} border-0 text-[10px]`}>{t(`qstatus.${q.status || 'DRAFT'}`, st.label)}</Badge>
+                  <Badge className={`${st.className} border-0 text-micro`}>{t(`qstatus.${q.status || 'DRAFT'}`, st.label)}</Badge>
                   {q.final_client_price > 0 && (
-                    <p className="text-xs font-semibold mt-1">
+                    <p className="text-caption font-semibold mt-1">
                       {quotePriceLabel(q)}
                     </p>
                   )}

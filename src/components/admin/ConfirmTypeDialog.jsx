@@ -12,11 +12,11 @@ export default function ConfirmTypeDialog({ open, onOpenChange, title, expected,
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader><DialogTitle className="text-red-600">{title}</DialogTitle></DialogHeader>
-        <div className="space-y-4 text-sm">
+        <DialogHeader><DialogTitle className="text-destructive">{title}</DialogTitle></DialogHeader>
+        <div className="space-y-4 text-body">
           {children}
           <div className="space-y-1.5">
-            <p className="text-xs text-muted-foreground">확인을 위해 <b className="text-foreground">{expected}</b> 를 그대로 입력하세요.</p>
+            <p className="text-caption text-muted-foreground">확인을 위해 <b className="text-foreground">{expected}</b> 를 그대로 입력하세요.</p>
             <Input value={value} onChange={(e) => setValue(e.target.value)} placeholder={expected} />
           </div>
           <div className="flex justify-end gap-2">

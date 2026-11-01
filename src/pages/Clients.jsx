@@ -107,7 +107,7 @@ export default function Clients() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('clients.title')}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{t('clients.subtitle')}</p>
+          <p className="text-body text-muted-foreground mt-1">{t('clients.subtitle')}</p>
         </div>
         <Button onClick={() => setOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />{t('clients.add')}
@@ -140,42 +140,42 @@ export default function Clients() {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 pt-1">
             <div>
-              <Label className="text-xs">{t('clients.form.company')}</Label>
+              <Label className="text-caption">{t('clients.form.company')}</Label>
               <Input value={form.company_name} onChange={(e) => handleChange('company_name', e.target.value)} placeholder={t('clients.form.company.placeholder')} required />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">{t('clients.form.contact')}</Label>
+                <Label className="text-caption">{t('clients.form.contact')}</Label>
                 <Input value={form.contact_person} onChange={(e) => handleChange('contact_person', e.target.value)} placeholder="홍길동" />
               </div>
               <div>
-                <Label className="text-xs">{t('clients.form.phone')}</Label>
+                <Label className="text-caption">{t('clients.form.phone')}</Label>
                 <Input value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="010-0000-0000" />
               </div>
             </div>
 
             <div>
-              <Label className="text-xs">{t('clients.form.email')}</Label>
+              <Label className="text-caption">{t('clients.form.email')}</Label>
               <Input type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="contact@company.com" />
             </div>
 
             <div>
-              <Label className="text-xs">{t('clients.form.address')}</Label>
+              <Label className="text-caption">{t('clients.form.address')}</Label>
               <Input value={form.address} onChange={(e) => handleChange('address', e.target.value)} placeholder="서울특별시 강남구 ..." />
             </div>
 
             <div>
-              <Label className="text-xs">{t('clients.form.brn')}</Label>
+              <Label className="text-caption">{t('clients.form.brn')}</Label>
               <div className="flex items-center gap-2 mt-1">
-                <label className="flex items-center gap-1.5 cursor-pointer border rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors">
+                <label className="flex items-center gap-1.5 cursor-pointer border rounded-lg px-3 py-2 text-body hover:bg-muted transition-colors">
                   {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                   {uploading ? t('common.uploading') : t('clients.form.fileselect')}
                   <input type="file" className="hidden" onChange={handleFileUpload} accept=".pdf,.jpg,.jpeg,.png" />
                 </label>
                 {form.business_registration_url && (
                   <a href={form.business_registration_url} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-xs text-primary hover:underline">
+                    className="flex items-center gap-1 text-caption text-primary hover:underline">
                     <ExternalLink className="w-3.5 h-3.5" />{t('clients.form.fileview')}
                   </a>
                 )}
@@ -183,7 +183,7 @@ export default function Clients() {
             </div>
 
             <div>
-              <Label className="text-xs">{t('clients.form.memo')}</Label>
+              <Label className="text-caption">{t('clients.form.memo')}</Label>
               <Input value={form.memo} onChange={(e) => handleChange('memo', e.target.value)} placeholder={t('clients.form.memo.placeholder')} />
             </div>
 
@@ -205,8 +205,8 @@ export default function Clients() {
       ) : clients.length === 0 ? (
         <Card className="p-12 text-center">
           <Users className="w-12 h-12 mx-auto text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-semibold">{t('clients.empty')}</p>
-          <p className="text-sm text-muted-foreground mt-1">{t('clients.empty.hint')}</p>
+          <p className="mt-4 text-title font-semibold">{t('clients.empty')}</p>
+          <p className="text-body text-muted-foreground mt-1">{t('clients.empty.hint')}</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -215,13 +215,13 @@ export default function Clients() {
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-base">{c.company_name}</CardTitle>
+                    <CardTitle className="text-title">{c.company_name}</CardTitle>
                     {c.contact_person && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{t('clients.contact')} {c.contact_person}</p>
+                      <p className="text-caption text-muted-foreground mt-0.5">{t('clients.contact')} {c.contact_person}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Badge variant="secondary" className="text-[10px]">{t('clients.badge')}</Badge>
+                    <Badge variant="secondary" className="text-micro">{t('clients.badge')}</Badge>
                     <Button size="icon" variant="ghost" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => openEdit(c)}>
                       <Pencil className="w-3 h-3" />
@@ -229,7 +229,7 @@ export default function Clients() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-1.5 text-sm text-muted-foreground">
+              <CardContent className="space-y-1.5 text-body text-muted-foreground">
                 {c.phone && (
                   <div className="flex items-center gap-2">
                     <Phone className="w-3.5 h-3.5 flex-shrink-0" />
@@ -252,13 +252,13 @@ export default function Clients() {
                   <a href={c.business_registration_url} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 text-primary hover:underline">
                     <FileText className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="text-xs">{t('clients.brn.view')}</span>
+                    <span className="text-caption">{t('clients.brn.view')}</span>
                   </a>
                 )}
                 {c.memo && (
-                  <p className="text-[11px] text-muted-foreground/70 pt-1 border-t line-clamp-2">{c.memo}</p>
+                  <p className="text-micro text-muted-foreground/70 pt-1 border-t line-clamp-2">{c.memo}</p>
                 )}
-                <Button asChild variant="outline" size="sm" className="w-full mt-2 gap-1.5 text-xs h-8">
+                <Button asChild variant="outline" size="sm" className="w-full mt-2 gap-1.5 text-caption h-8">
                   <Link to={`/clients/${c.id}/dashboard`}>
                     <LayoutDashboard className="w-3.5 h-3.5" />
                     고객사 프로필 열기
@@ -266,7 +266,7 @@ export default function Clients() {
                 </Button>
                 <CreateClientTeamButton company={c} hasTeam={clientTenants.some((t) => t.company_id === c.id)} />
                 {clientTenants.some((t) => t.company_id === c.id) && (
-                  <Button type="button" variant="ghost" size="sm" className="w-full h-8 gap-1.5 text-xs" onClick={() => setTeamOf(c)}>
+                  <Button type="button" variant="ghost" size="sm" className="w-full h-8 gap-1.5 text-caption" onClick={() => setTeamOf(c)}>
                     <Users className="w-3.5 h-3.5" />고객 계정·역할·결재 규칙
                   </Button>
                 )}

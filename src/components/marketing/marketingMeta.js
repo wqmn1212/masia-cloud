@@ -8,11 +8,11 @@ export const PLATFORMS = { instagram: '인스타그램', youtube: '유튜브' };
 export const FORMATS = { feed: '피드', carousel: '캐러셀', reel: '릴스', video: '영상', short: '쇼츠' };
 
 export const STATUS = {
-  draft: { label: '초안', cls: 'bg-slate-100 text-slate-600' },
-  pending_approval: { label: '승인 대기', cls: 'bg-amber-50 text-amber-700' },
-  approved: { label: '승인됨', cls: 'bg-blue-50 text-blue-700' },
-  scheduled: { label: '예약됨', cls: 'bg-violet-50 text-violet-700' },
-  published: { label: '게시 완료', cls: 'bg-emerald-50 text-emerald-700' },
+  draft: { label: '초안', cls: 'bg-muted text-muted-foreground' },
+  pending_approval: { label: '승인 대기', cls: 'bg-warning/10 text-warning-text' },
+  approved: { label: '승인됨', cls: 'bg-primary/10 text-primary' },
+  scheduled: { label: '예약됨', cls: 'bg-chart-4/10 text-chart-4' },
+  published: { label: '게시 완료', cls: 'bg-success/10 text-success-text' },
 };
 
 const KST = 9 * 3600 * 1000;

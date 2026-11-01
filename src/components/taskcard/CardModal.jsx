@@ -76,25 +76,25 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
       <DialogContent className="max-w-4xl w-[95vw] max-h-[92vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader className="pb-0">
           <div className="flex items-start gap-2 sm:gap-3 flex-wrap">
-            <DialogTitle className="text-base sm:text-lg flex-1 min-w-0 pr-6">
+            <DialogTitle className="text-title sm:text-title flex-1 min-w-0 pr-6">
               {content(card, 'title')}
             </DialogTitle>
             <div className="flex items-center gap-2">
 
               {card.target_machine_category && (
-                <Badge variant="outline" className="text-[10px]">{CAT_LABEL[card.target_machine_category]}</Badge>
+                <Badge variant="outline" className="text-micro">{CAT_LABEL[card.target_machine_category]}</Badge>
               )}
-              <Badge className={`${st.color} border-0 text-[10px]`}>{st.label}</Badge>
+              <Badge className={`${st.color} border-0 text-micro`}>{st.label}</Badge>
               {['master', 'service', 'sub'].includes(user?.account_tier) && (
-                <Button type="button" size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => setReorderOpen(true)}><Repeat className="h-3 w-3" />재주문</Button>
+                <Button type="button" size="sm" variant="outline" className="h-7 gap-1 text-caption" onClick={() => setReorderOpen(true)}><Repeat className="h-3 w-3" />재주문</Button>
               )}
             </div>
           </div>
           {card.reorder_of && (
-            <p className="mt-1 text-xs text-muted-foreground">🔁 재주문 프로젝트 · <a className="text-primary underline-offset-2 hover:underline" href={`/task-board?card=${card.reorder_of}`}>원 프로젝트 보기 (이전 견적·검수 기록)</a></p>
+            <p className="mt-1 text-caption text-muted-foreground">🔁 재주문 프로젝트 · <a className="text-primary underline-offset-2 hover:underline" href={`/task-board?card=${card.reorder_of}`}>원 프로젝트 보기 (이전 견적·검수 기록)</a></p>
           )}
           {(card.client_name || card.factory_name) && (
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-caption text-muted-foreground mt-1">
               {card.client_name && `🏢 ${card.client_name}`}
               {card.client_name && card.factory_name && '  ·  '}
               {card.factory_name && `🏭 ${card.factory_name}`}
@@ -107,17 +107,17 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
           <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto gap-0.5">
-            <TabsTrigger value="overview" className="text-xs sm:text-sm py-1.5">{t('card.tab.overview', '오버뷰')}</TabsTrigger>
-            <TabsTrigger value="milestones" className="text-xs sm:text-sm py-1.5">{lang === 'zh' ? '进度' : '일정'}</TabsTrigger>
-            <TabsTrigger value="tasks" className="text-xs sm:text-sm py-1.5">{t('card.tab.tasks', '업무')}</TabsTrigger>
-            <TabsTrigger value="meetings" className="text-xs sm:text-sm py-1.5">{t('card.tab.meetings', '미팅·분석')}</TabsTrigger>
-            <TabsTrigger value="quotation" className="text-xs sm:text-sm py-1.5">{t('card.tab.quotation', '견적')}</TabsTrigger>
-            <TabsTrigger value="bom" className="text-xs sm:text-sm py-1.5">BOM</TabsTrigger>
-            <TabsTrigger value="files" className="text-xs sm:text-sm py-1.5">{t('card.tab.files', '파일')}</TabsTrigger>
-            <TabsTrigger value="trade" className="text-xs sm:text-sm py-1.5">{t('card.tab.trade', '무역서류')}</TabsTrigger>
-            <TabsTrigger value="chat" className="text-xs sm:text-sm py-1.5">{t('card.tab.chat', '채팅')}</TabsTrigger>
-            <TabsTrigger value="settlement" className="text-xs sm:text-sm py-1.5">{t('card.tab.settlement', '정산')}</TabsTrigger>
-            <TabsTrigger value="decisions" className="text-xs sm:text-sm py-1.5">{t('card.tab.decisions', '결정')}</TabsTrigger>
+            <TabsTrigger value="overview" className="text-caption sm:text-body py-1.5">{t('card.tab.overview', '오버뷰')}</TabsTrigger>
+            <TabsTrigger value="milestones" className="text-caption sm:text-body py-1.5">{lang === 'zh' ? '进度' : '일정'}</TabsTrigger>
+            <TabsTrigger value="tasks" className="text-caption sm:text-body py-1.5">{t('card.tab.tasks', '업무')}</TabsTrigger>
+            <TabsTrigger value="meetings" className="text-caption sm:text-body py-1.5">{t('card.tab.meetings', '미팅·분석')}</TabsTrigger>
+            <TabsTrigger value="quotation" className="text-caption sm:text-body py-1.5">{t('card.tab.quotation', '견적')}</TabsTrigger>
+            <TabsTrigger value="bom" className="text-caption sm:text-body py-1.5">BOM</TabsTrigger>
+            <TabsTrigger value="files" className="text-caption sm:text-body py-1.5">{t('card.tab.files', '파일')}</TabsTrigger>
+            <TabsTrigger value="trade" className="text-caption sm:text-body py-1.5">{t('card.tab.trade', '무역서류')}</TabsTrigger>
+            <TabsTrigger value="chat" className="text-caption sm:text-body py-1.5">{t('card.tab.chat', '채팅')}</TabsTrigger>
+            <TabsTrigger value="settlement" className="text-caption sm:text-body py-1.5">{t('card.tab.settlement', '정산')}</TabsTrigger>
+            <TabsTrigger value="decisions" className="text-caption sm:text-body py-1.5">{t('card.tab.decisions', '결정')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="milestones" className="mt-4">

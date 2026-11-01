@@ -8,14 +8,14 @@ export default function CalendarAgenda({ grid, byDate, holidays, closuresOn = ()
     .filter((c) => c.inMonth && c.key >= today)
     .map((c) => ({ ...c, closed: closuresOn(c.key) }))
     .filter((c) => byDate[c.key]?.length || c.closed.length);
-  if (!days.length) return <p className="text-sm text-muted-foreground text-center py-6">이번 달 남은 일정이 없습니다.</p>;
+  if (!days.length) return <p className="text-body text-muted-foreground text-center py-6">이번 달 남은 일정이 없습니다.</p>;
   return (
     <div className="divide-y">
       {days.map((c) => {
         const hol = holidayOn(holidays, c.key);
         return (
           <div key={c.key} className="py-2 space-y-1">
-            <p className={`text-xs font-semibold break-keep ${c.key === today ? 'text-primary' : ''}`}>
+            <p className={`text-caption font-semibold break-keep ${c.key === today ? 'text-primary' : ''}`}>
               {c.key}{c.key === today && ' · 오늘'}
               {hol.name && <span className="text-destructive"> · {hol.name}</span>}
               {c.closed.length > 0 && <span className="text-chart-3"> · {c.closed.join(', ')} 휴무</span>}

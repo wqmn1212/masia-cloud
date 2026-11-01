@@ -15,9 +15,9 @@ const LIVE = ['DRAFT', 'ACTIVE', 'SUSPENDED'];
 function Tile({ label, value, note }) {
   return (
     <div className="rounded-xl border bg-card p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-caption text-muted-foreground">{label}</p>
       <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
-      {note && <p className="mt-0.5 text-[11px] text-muted-foreground">{note}</p>}
+      {note && <p className="mt-0.5 text-micro text-muted-foreground">{note}</p>}
     </div>
   );
 }
@@ -88,8 +88,8 @@ export default function Agreements() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10"><Handshake className="h-5 w-5 text-primary" /></div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-bold tracking-tight">월 계약 관리</h1>
-          <p className="text-xs text-muted-foreground">프로젝트별 월 계약의 기간·청구·월간 리포트를 관리합니다. 월 계약료와 페이백 비율은 대표·팀 관리자에게만 보입니다.</p>
+          <h1 className="text-2xl font-bold tracking-tight">월 계약 관리</h1>
+          <p className="text-caption text-muted-foreground">프로젝트별 월 계약의 기간·청구·월간 리포트를 관리합니다. 월 계약료와 페이백 비율은 대표·팀 관리자에게만 보입니다.</p>
         </div>
         <Button variant="outline" onClick={exportCsv} disabled={!agreements.length} className="gap-1.5"><FileSpreadsheet className="h-4 w-4" />엑셀로 내보내기</Button>
         <Button onClick={() => setDialog({ agreement: null })} className="gap-1.5"><Plus className="h-4 w-4" />새 계약</Button>
@@ -105,18 +105,18 @@ export default function Agreements() {
       <div className="flex gap-1.5" role="group" aria-label="계약 필터">
         {[['live', '진행·작성 중'], ['all', '전체']].map(([k, label]) => (
           <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)}
-            className={`rounded-full border px-3 py-1 text-xs font-semibold ${filter === k ? 'border-foreground bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}`}>{label}</button>
+            className={`rounded-full border px-3 py-1 text-caption font-semibold ${filter === k ? 'border-foreground bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}`}>{label}</button>
         ))}
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : rows.length === 0 ? (
-        <div className="rounded-xl border p-10 text-center text-sm text-muted-foreground">아직 월 계약이 없습니다. &lsquo;새 계약&rsquo;으로 첫 계약을 등록하세요.</div>
+        <div className="rounded-xl border p-10 text-center text-body text-muted-foreground">아직 월 계약이 없습니다. &lsquo;새 계약&rsquo;으로 첫 계약을 등록하세요.</div>
       ) : (
         <div className="overflow-x-auto rounded-xl border bg-card">
-          <table className="w-full min-w-[860px] text-sm">
-            <thead className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
+          <table className="w-full min-w-[860px] text-body">
+            <thead className="border-b bg-muted/40 text-left text-caption text-muted-foreground">
               <tr><th className="px-3 py-2 font-medium">고객사 · 계약</th><th className="px-3 py-2 font-medium">기간</th><th className="px-3 py-2 font-medium">상태</th><th className="px-3 py-2 text-right font-medium">월 계약료</th><th className="px-3 py-2 text-right font-medium">프로젝트</th><th className="px-3 py-2 font-medium">{Number(month.slice(5))}월 청구</th><th className="px-3 py-2 font-medium">담당</th><th className="px-3 py-2" /></tr>
             </thead>
             <tbody className="divide-y">
@@ -128,20 +128,20 @@ export default function Agreements() {
                 const canRenew = a.status === 'ENDED' || (a.status === 'ACTIVE' && d != null && d <= 30);
                 return (
                   <tr key={a.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setDialog({ agreement: a })}>
-                    <td className="px-3 py-2.5"><p className="font-medium">{a.company_name || '-'}</p><p className="text-xs text-muted-foreground">{[a.title, a.agreement_no].filter(Boolean).join(' · ') || '계약명 없음'}</p></td>
-                    <td className="px-3 py-2.5 text-xs tabular-nums">
+                    <td className="px-3 py-2.5"><p className="font-medium">{a.company_name || '-'}</p><p className="text-caption text-muted-foreground">{[a.title, a.agreement_no].filter(Boolean).join(' · ') || '계약명 없음'}</p></td>
+                    <td className="px-3 py-2.5 text-caption tabular-nums">
                       {a.start_date} ~ {a.end_date}
-                      {a.status === 'ACTIVE' && d != null && <span className={`ml-1.5 rounded px-1.5 py-0.5 text-[10px] font-semibold ${d <= 7 ? 'bg-destructive/15 text-destructive' : d <= 30 ? 'bg-chart-3/15 text-chart-3' : 'bg-muted text-muted-foreground'}`}>{d >= 0 ? `D-${d}` : '기간 지남'}</span>}
+                      {a.status === 'ACTIVE' && d != null && <span className={`ml-1.5 rounded px-1.5 py-0.5 text-micro font-semibold ${d <= 7 ? 'bg-destructive/15 text-destructive' : d <= 30 ? 'bg-chart-3/15 text-chart-3' : 'bg-muted text-muted-foreground'}`}>{d >= 0 ? `D-${d}` : '기간 지남'}</span>}
                     </td>
                     <td className="px-3 py-2.5"><Badge className={`${st.cls} border-0`}>{st.label}</Badge></td>
                     <td className="px-3 py-2.5 text-right tabular-nums">{money(a.monthly_fee, a.currency)}</td>
                     <td className="px-3 py-2.5 text-right tabular-nums">{projects}건</td>
-                    <td className="px-3 py-2.5">{a.status === 'ACTIVE' ? <button type="button" className="text-xs text-primary underline-offset-2 hover:underline" onClick={(e) => { e.stopPropagation(); setDialog({ agreement: a, tab: 'invoices' }); }}>{inv ? (INVOICE_STATUS[inv.status] || INVOICE_STATUS.PENDING).label : '기록 없음'}</button> : <span className="text-xs text-muted-foreground">-</span>}</td>
-                    <td className="max-w-[160px] truncate px-3 py-2.5 text-xs">{(a.assigned_user_ids || []).map((id) => names.get(id)).filter(Boolean).join(', ') || '-'}</td>
+                    <td className="px-3 py-2.5">{a.status === 'ACTIVE' ? <button type="button" className="text-caption text-primary underline-offset-2 hover:underline" onClick={(e) => { e.stopPropagation(); setDialog({ agreement: a, tab: 'invoices' }); }}>{inv ? (INVOICE_STATUS[inv.status] || INVOICE_STATUS.PENDING).label : '기록 없음'}</button> : <span className="text-caption text-muted-foreground">-</span>}</td>
+                    <td className="max-w-[160px] truncate px-3 py-2.5 text-caption">{(a.assigned_user_ids || []).map((id) => names.get(id)).filter(Boolean).join(', ') || '-'}</td>
                     <td className="px-3 py-2.5 text-right">
                       <div className="flex justify-end gap-1">
-                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); setDialog({ agreement: a, tab: 'reports' }); }}>리포트</Button>
-                        {canRenew && <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" disabled={renewing === a.id} onClick={(e) => { e.stopPropagation(); renew(a); }}><RotateCw className="h-3 w-3" />갱신</Button>}
+                        <Button size="sm" variant="ghost" className="h-7 text-caption" onClick={(e) => { e.stopPropagation(); setDialog({ agreement: a, tab: 'reports' }); }}>리포트</Button>
+                        {canRenew && <Button size="sm" variant="outline" className="h-7 gap-1 text-caption" disabled={renewing === a.id} onClick={(e) => { e.stopPropagation(); renew(a); }}><RotateCw className="h-3 w-3" />갱신</Button>}
                       </div>
                     </td>
                   </tr>

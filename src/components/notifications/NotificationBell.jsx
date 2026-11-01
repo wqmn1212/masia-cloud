@@ -33,7 +33,7 @@ export default function NotificationBell({ user }) {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-[18px] h-[18px]" />
           {unread.length > 0 && (
-            <span className="absolute top-0.5 right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+            <span className="absolute top-0.5 right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-micro font-bold flex items-center justify-center">
               {unread.length > 9 ? '9+' : unread.length}
             </span>
           )}
@@ -41,20 +41,20 @@ export default function NotificationBell({ user }) {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between px-3 py-2 border-b">
-          <span className="text-sm font-semibold">알림</span>
+          <span className="text-body font-semibold">알림</span>
           <div className="flex items-center gap-3">
             {unread.length > 0 && (
               <button
                 type="button"
                 onClick={() => markRead.mutate(unread.map((n) => n.id))}
-                className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                className="text-caption text-primary hover:underline inline-flex items-center gap-1"
               >
                 <CheckCheck className="w-3 h-3" />모두 읽음
               </button>
             )}
             {/* 고객 계정: 받을 메일 고르기 */}
             {user.account_tier === 'client' && (
-              <button type="button" onClick={() => setPrefsOpen(true)} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+              <button type="button" onClick={() => setPrefsOpen(true)} className="text-caption text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
                 <Settings2 className="w-3 h-3" />메일 설정
               </button>
             )}
@@ -62,7 +62,7 @@ export default function NotificationBell({ user }) {
         </div>
         <div className="max-h-[380px] overflow-y-auto divide-y">
           {items.length === 0 ? (
-            <p className="px-3 py-8 text-center text-sm text-muted-foreground">알림이 없습니다</p>
+            <p className="px-3 py-8 text-center text-body text-muted-foreground">알림이 없습니다</p>
           ) : (
             items.map((n) => (
               <NotificationItem key={n.id} item={n} onRead={(item) => !item.read && markRead.mutate([item.id])} />

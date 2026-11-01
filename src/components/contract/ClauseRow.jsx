@@ -14,10 +14,10 @@ export default function ClauseRow({ clause, checked, onToggle, onEdit, onDelete,
         <Checkbox checked={checked} onCheckedChange={() => onToggle(clause.id)} className="mt-1" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary" className="text-[10px]">{CLAUSE_CATEGORIES[clause.category] || '기타'}</Badge>
-            <p className="text-sm font-semibold truncate">{clause.title}</p>
+            <Badge variant="secondary" className="text-micro">{CLAUSE_CATEGORIES[clause.category] || '기타'}</Badge>
+            <p className="text-body font-semibold truncate">{clause.title}</p>
           </div>
-          <p className={expanded ? 'text-xs text-muted-foreground mt-1 whitespace-pre-wrap' : 'text-xs text-muted-foreground mt-1 line-clamp-1'}>
+          <p className={expanded ? 'text-caption text-muted-foreground mt-1 whitespace-pre-wrap' : 'text-caption text-muted-foreground mt-1 line-clamp-1'}>
             {clause.body}
           </p>
         </div>

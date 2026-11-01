@@ -10,7 +10,7 @@ const labels = {
   error: '원문 저장 실패 / 原文保存失败',
 };
 export default function DeferredSaveStatus({ status }) {
-  return <div className="space-y-1 text-[11px] text-muted-foreground" aria-live="polite">
+  return <div className="space-y-1 text-micro text-muted-foreground" aria-live="polite">
     <p className={status === 'error' || status === 'translationError' ? 'text-destructive' : ''}>{labels[status] || labels.saved}</p>
     <p>원문 자동저장 · 15초 입력 중단 또는 탭 이동·닫기 시 변경분만 번역 / 原文自动保存 · 停止输入15秒或离开时仅翻译变更内容</p>
   </div>;

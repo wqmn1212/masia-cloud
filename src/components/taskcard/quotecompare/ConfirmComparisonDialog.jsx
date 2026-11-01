@@ -78,7 +78,7 @@ export default function ConfirmComparisonDialog({ open, onOpenChange, cmp, card,
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-base">{t('cmp.confirmTitle')}</DialogTitle>
+          <DialogTitle className="text-title">{t('cmp.confirmTitle')}</DialogTitle>
           <DialogDescription className="text-label">{t('cmp.confirmDesc')}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">

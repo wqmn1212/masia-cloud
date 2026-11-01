@@ -141,8 +141,8 @@ export default function BomExtractor() {
           <Boxes className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-xl font-bold tracking-tight">STEP 도면 분석 · BOM 추출</h1>
-          <p className="text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">STEP 도면 분석 · BOM 추출</h1>
+          <p className="text-caption text-muted-foreground">
             STEP 파일에서 부품별 부피 · 외곽 치수를 추출하고 재질을 확정합니다
           </p>
         </div>
@@ -158,7 +158,7 @@ export default function BomExtractor() {
       {parts.length > 0 && (
         <>
           {elapsedMs != null && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-caption text-muted-foreground">
               {sourceFile?.name} · {parts.length}개 부품 · 파싱 {(elapsedMs / 1000).toFixed(1)}초
             </p>
           )}

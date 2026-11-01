@@ -8,7 +8,7 @@ export default function FactoryDocumentTabs({ factory }) {
   useEffect(() => { if (selected) target.current?.scrollIntoView({ block: 'center' }); }, [selected]);
   return <div id={`factory-${factory.id}`} ref={target} className="pt-3 mt-3 border-t">
     <Tabs defaultValue={selected ? 'documents' : ''}>
-      <TabsList className="w-full"><TabsTrigger value="documents" className="w-full text-xs">소개 자료</TabsTrigger></TabsList>
+      <TabsList className="w-full"><TabsTrigger value="documents" className="w-full text-caption">소개 자료</TabsTrigger></TabsList>
       <TabsContent value="documents"><FactoryDocumentsPanel factory={factory} /></TabsContent>
     </Tabs>
   </div>;

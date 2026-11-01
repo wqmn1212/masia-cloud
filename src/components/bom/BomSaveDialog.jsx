@@ -27,20 +27,20 @@ export default function BomSaveDialog({ open, onOpenChange, onConfirm, isSaving,
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[460px] w-[95vw]">
         <DialogHeader>
-          <DialogTitle className="text-base">BOM 저장 · 태스크카드 연결</DialogTitle>
+          <DialogTitle className="text-title">BOM 저장 · 태스크카드 연결</DialogTitle>
         </DialogHeader>
 
-        <p className="text-xs text-muted-foreground">{partCount}개 부품을 아래 업무 카드에 연결합니다.</p>
+        <p className="text-caption text-muted-foreground">{partCount}개 부품을 아래 업무 카드에 연결합니다.</p>
 
         <RadioGroup value={mode} onValueChange={setMode} className="space-y-3">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <RadioGroupItem value="existing" id="bom-existing" />
-              <Label htmlFor="bom-existing" className="text-sm">기존 카드에 추가</Label>
+              <Label htmlFor="bom-existing" className="text-body">기존 카드에 추가</Label>
             </div>
             {mode === 'existing' && (
               <Select value={cardId} onValueChange={setCardId}>
-                <SelectTrigger className="h-9 text-xs">
+                <SelectTrigger className="h-9 text-caption">
                   <SelectValue placeholder={isLoading ? '불러오는 중...' : '업무 카드 선택'} />
                 </SelectTrigger>
                 <SelectContent>
@@ -57,14 +57,14 @@ export default function BomSaveDialog({ open, onOpenChange, onConfirm, isSaving,
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <RadioGroupItem value="new" id="bom-new" />
-              <Label htmlFor="bom-new" className="text-sm">새 카드 생성</Label>
+              <Label htmlFor="bom-new" className="text-body">새 카드 생성</Label>
             </div>
             {mode === 'new' && (
               <Input
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="새 업무 카드 제목"
-                className="h-9 text-xs"
+                className="h-9 text-caption"
               />
             )}
           </div>

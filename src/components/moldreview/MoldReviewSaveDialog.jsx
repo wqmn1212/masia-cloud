@@ -27,15 +27,15 @@ export default function MoldReviewSaveDialog({ open, onOpenChange, onConfirm, is
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[460px] w-[95vw]">
         <DialogHeader>
-          <DialogTitle className="text-base">금형 검토 저장</DialogTitle>
+          <DialogTitle className="text-title">금형 검토 저장</DialogTitle>
         </DialogHeader>
-        <p className="text-xs text-muted-foreground">{partName} 검토 결과와 지시서(한·중)를 저장합니다.</p>
+        <p className="text-caption text-muted-foreground">{partName} 검토 결과와 지시서(한·중)를 저장합니다.</p>
 
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label className="text-xs">업무 카드 연결 (선택)</Label>
+            <Label className="text-caption">업무 카드 연결 (선택)</Label>
             <Select value={cardId} onValueChange={setCardId}>
-              <SelectTrigger className="h-9 text-xs">
+              <SelectTrigger className="h-9 text-caption">
                 <SelectValue placeholder={isLoading ? '불러오는 중...' : '업무 카드 선택'} />
               </SelectTrigger>
               <SelectContent>
@@ -49,10 +49,10 @@ export default function MoldReviewSaveDialog({ open, onOpenChange, onConfirm, is
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs">비고</Label>
-            <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} className="text-xs" placeholder="예: 고객 협의 전 1차 검토" />
+            <Label className="text-caption">비고</Label>
+            <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} className="text-caption" placeholder="예: 고객 협의 전 1차 검토" />
           </div>
-          <label className="flex items-center gap-2 text-xs">
+          <label className="flex items-center gap-2 text-caption">
             <Checkbox checked={withSnapshot} onCheckedChange={(v) => setWithSnapshot(!!v)} />
             지금 보이는 3D 화면을 함께 저장
           </label>

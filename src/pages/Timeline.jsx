@@ -80,7 +80,7 @@ export default function Timeline() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('timeline.title')}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{t('timeline.subtitle')}</p>
+          <p className="text-body text-muted-foreground mt-1">{t('timeline.subtitle')}</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -97,7 +97,7 @@ export default function Timeline() {
                   <SelectTrigger><SelectValue placeholder="태스크 카드 선택" /></SelectTrigger>
                   <SelectContent>
                     {cards.length === 0 ? (
-                      <div className="px-3 py-2 text-xs text-muted-foreground">등록된 태스크 카드가 없습니다</div>
+                      <div className="px-3 py-2 text-caption text-muted-foreground">등록된 태스크 카드가 없습니다</div>
                     ) : (
                       cards.map(c => (
                         <SelectItem key={c.id} value={c.id}>
@@ -111,7 +111,7 @@ export default function Timeline() {
                   const c = cardsById.get(form.card_id);
                   if (!c) return null;
                   return (
-                    <div className="text-xs text-muted-foreground mt-1.5 space-y-0.5">
+                    <div className="text-caption text-muted-foreground mt-1.5 space-y-0.5">
                       <div>고객사: {c.client_name || '-'}</div>
                       <div>공장: {c.factory_name || '-'}</div>
                     </div>
@@ -147,7 +147,7 @@ export default function Timeline() {
       {timelines.length === 0 ? (
         <Card className="p-12 text-center">
           <Clock className="w-12 h-12 mx-auto text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-semibold">{t('timeline.empty')}</p>
+          <p className="mt-4 text-title font-semibold">{t('timeline.empty')}</p>
         </Card>
       ) : (
         <div className="space-y-4">
@@ -162,14 +162,14 @@ export default function Timeline() {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <p className="font-semibold">{clientName || '-'} ← {factoryName || '-'}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{title || t('timeline.noinfo')}</p>
+                    <p className="text-caption text-muted-foreground mt-0.5">{title || t('timeline.noinfo')}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Select
                       value={tl.current_stage}
                       onValueChange={(v) => updateStageMutation.mutate({ id: tl.id, stage: v })}
                     >
-                      <SelectTrigger className="h-8 text-xs w-32">
+                      <SelectTrigger className="h-8 text-caption w-32">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -182,7 +182,7 @@ export default function Timeline() {
                 </div>
                 <TimelineStageBar currentStage={tl.current_stage} />
                 {tl.estimated_completion && (
-                  <p className="text-xs text-muted-foreground mt-3">{t('timeline.est')} {tl.estimated_completion}</p>
+                  <p className="text-caption text-muted-foreground mt-3">{t('timeline.est')} {tl.estimated_completion}</p>
                 )}
               </CardContent>
             </Card>

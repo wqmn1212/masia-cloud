@@ -23,7 +23,7 @@ export default function NewFolderDialog({ open, onClose, onCreate, parentName })
           <DialogTitle>새 폴더 만들기</DialogTitle>
         </DialogHeader>
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-caption text-muted-foreground">
             현재 위치: <span className="font-medium text-foreground">{parentName || '루트'}</span>
           </p>
           <Input

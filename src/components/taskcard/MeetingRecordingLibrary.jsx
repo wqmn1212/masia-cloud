@@ -14,13 +14,13 @@ export default function MeetingRecordingLibrary({ logs }) {
   }, {});
   const groups = Object.entries(grouped);
   return <section className="space-y-3 border-t pt-4">
-    <h4 className="flex items-center gap-2 text-sm font-semibold"><Headphones className="h-4 w-4" />녹음 보관함 ({recordings.length})</h4>
+    <h4 className="flex items-center gap-2 text-body font-semibold"><Headphones className="h-4 w-4" />녹음 보관함 ({recordings.length})</h4>
     {groups.map(([type, items]) => <div key={type} className="space-y-2">
       <Badge variant="secondary">{labels[type] || type} · {items.length}</Badge>
       {items.map(log => <div key={log.id} className="rounded-lg border p-3">
         <button type="button" className="flex w-full items-center gap-2 text-left" onClick={() => setOpen(v => ({ ...v, [log.id]: !v[log.id] }))}>
           {open[log.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          <span className="text-xs tabular-nums text-muted-foreground">{log.meeting_date}</span><span className="truncate text-sm font-medium">{log.title}</span>
+          <span className="text-caption tabular-nums text-muted-foreground">{log.meeting_date}</span><span className="truncate text-body font-medium">{log.title}</span>
         </button>
         {open[log.id] && <div className="mt-3"><MeetingAudioArchive log={log} expanded /></div>}
       </div>)}

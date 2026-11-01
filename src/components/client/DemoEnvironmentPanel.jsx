@@ -37,13 +37,13 @@ export default function DemoEnvironmentPanel() {
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <MonitorPlay className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold">영업 미팅용 데모</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <h2 className="text-body font-semibold">영업 미팅용 데모</h2>
+            <p className="mt-0.5 text-caption text-muted-foreground">
               예시 고객사 "{data?.company_name || '데모상사 (시연용)'}"의 고객 포털을 그대로 보여 줍니다. 문의 → 견적 → 발주 → 현지 검수 → 선적 → 도착 원가 → 불량 보상 → 성과 리포트까지 한 바퀴 돈 예시이고, 날짜는 초기화한 날 기준입니다. 실제 팀과 분리되어 있어 알림·메일이 아무에게도 가지 않습니다.
             </p>
-            {isLoading ? <p className="mt-1 text-xs text-muted-foreground">확인하는 중…</p> : ready ? (
-              <p className="mt-1 text-xs text-muted-foreground">카드 {data.cards}개{data.reset_at ? ` · ${new Date(data.reset_at).toLocaleString('ko-KR')} ${data.reset_by_name || ''} 초기화` : ''}</p>
-            ) : <p className="mt-1 text-xs text-muted-foreground">{canReset ? '아직 데모가 없습니다. 데모 만들기를 누르세요 (10~20초).' : '아직 데모가 없습니다. 대표·팀 관리자에게 만들어 달라고 하세요.'}</p>}
+            {isLoading ? <p className="mt-1 text-caption text-muted-foreground">확인하는 중…</p> : ready ? (
+              <p className="mt-1 text-caption text-muted-foreground">카드 {data.cards}개{data.reset_at ? ` · ${new Date(data.reset_at).toLocaleString('ko-KR')} ${data.reset_by_name || ''} 초기화` : ''}</p>
+            ) : <p className="mt-1 text-caption text-muted-foreground">{canReset ? '아직 데모가 없습니다. 데모 만들기를 누르세요 (10~20초).' : '아직 데모가 없습니다. 대표·팀 관리자에게 만들어 달라고 하세요.'}</p>}
           </div>
         </div>
         <div className="flex flex-wrap gap-1.5 sm:justify-end">

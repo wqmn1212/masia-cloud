@@ -8,7 +8,7 @@ export default function GuideIntro({ content }) {
       <div className="p-5 sm:p-8">
         <p className="flex items-center gap-2 text-label font-semibold tracking-wide text-primary"><BookOpen className="h-4 w-4" />{content.eyebrow}</p>
         <h1 className="mt-4 text-2xl sm:text-3xl font-bold tracking-tight">{content.title}</h1>
-        <p className="mt-3 text-base sm:text-lg font-medium leading-relaxed">{content.subtitle}</p>
+        <p className="mt-3 text-base sm:text-title font-medium leading-relaxed">{content.subtitle}</p>
         <p className="mt-3 max-w-3xl text-body leading-7 text-muted-foreground">{content.description}</p>
         <div className="mt-6 grid gap-3 xl:grid-cols-3">
           {content.roles.map((role, index) => { const Icon = icons[index]; return (

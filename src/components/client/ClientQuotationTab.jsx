@@ -22,8 +22,8 @@ function QuoteRow({ q, cardId, canAccept, busy, onDownload, onAccept }) {
       <div className="flex flex-wrap items-center gap-3">
         <FileText className="h-4 w-4 flex-shrink-0 text-primary" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{q.quote_title}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="truncate text-body font-medium">{q.quote_title}</p>
+          <p className="mt-0.5 text-caption text-muted-foreground">
             {q.published_at ? format(new Date(q.published_at), 'yyyy.MM.dd') : ''} · {q.final_currency}
             {q.model_name ? ` · ${q.model_name}` : ''}
           </p>
@@ -102,7 +102,7 @@ export default function ClientQuotationTab({ cardId, cardTitle = '', clientName 
       {comparison}
       <div className="py-10 text-center">
         <FileText className="w-9 h-9 mx-auto text-muted-foreground/40" />
-        <p className="mt-3 text-sm text-muted-foreground">아직 발행된 견적서가 없습니다</p>
+        <p className="mt-3 text-body text-muted-foreground">아직 발행된 견적서가 없습니다</p>
       </div>
       </div>
     );
@@ -120,7 +120,7 @@ export default function ClientQuotationTab({ cardId, cardTitle = '', clientName 
       <Dialog open={!!accepting} onOpenChange={(v) => !v && !sending && setAccepting(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-base">이 견적으로 진행</DialogTitle>
+            <DialogTitle className="text-title">이 견적으로 진행</DialogTitle>
             <DialogDescription className="text-label">
               {accepting?.q.quote_title} 견적으로 진행을 요청합니다. {accepting?.viaApproval ? viaApprovalText : '담당자가 확인한 뒤 계약서를 보내 드립니다.'} 보낸 뒤에는 바꿀 수 없으니, 바꾸시려면 담당자에게 문의해 주세요.
             </DialogDescription>

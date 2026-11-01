@@ -12,12 +12,12 @@ export default function UserAccountRow({ user, onToggle, onPermissions, onResetP
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-medium text-sm truncate">{user.full_name || user.email}</span>
+          <span className="font-medium text-body truncate">{user.full_name || user.email}</span>
           {user.account_label && (
-            <Badge variant="outline" className="text-[10px]">{user.account_label}</Badge>
+            <Badge variant="outline" className="text-micro">{user.account_label}</Badge>
           )}
         </div>
-        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+        <p className="text-caption text-muted-foreground truncate">{user.email}</p>
       </div>
       {onPermissions && (
         <Button variant="outline" size="sm" onClick={onPermissions}>
@@ -32,8 +32,8 @@ export default function UserAccountRow({ user, onToggle, onPermissions, onResetP
       <Badge
         variant="outline"
         className={active
-          ? 'bg-green-50 text-green-700 border-green-200 text-[10px]'
-          : 'bg-red-50 text-red-700 border-red-200 text-[10px]'}
+          ? 'bg-success/10 text-success-text border-success/30 text-micro'
+          : 'bg-destructive/10 text-destructive border-destructive/30 text-micro'}
       >
         {active ? '활성' : '비활성'}
       </Badge>

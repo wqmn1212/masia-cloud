@@ -22,9 +22,9 @@ export default function FinancialReport() {
 
   return <div className="space-y-6">
     <div className="flex items-center justify-between gap-4 flex-wrap">
-      <div className="flex items-center gap-3"><div className="rounded-xl bg-primary/10 p-3 text-primary"><BarChart3 className="w-5 h-5" /></div><div><h1 className="text-2xl font-bold">재무 리포트</h1><p className="text-sm text-muted-foreground">처리 견적, 누적 마진과 통화별 매출 추이를 확인합니다</p></div></div>
+      <div className="flex items-center gap-3"><div className="rounded-xl bg-primary/10 p-3 text-primary"><BarChart3 className="w-5 h-5" /></div><div><h1 className="text-2xl font-bold tracking-tight">재무 리포트</h1><p className="text-body text-muted-foreground">처리 견적, 누적 마진과 통화별 매출 추이를 확인합니다</p></div></div>
       <Select value={currency} onValueChange={setCurrency}><SelectTrigger className="w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="CNY">CNY · 위안</SelectItem><SelectItem value="USD">USD · 달러</SelectItem><SelectItem value="KRW">KRW · 원</SelectItem></SelectContent></Select>
     </div>
-    {isLoading ? <div className="py-24 text-center text-sm text-muted-foreground">재무 데이터를 집계하는 중...</div> : <><FinancialSummaryCards count={processed.length} revenue={totals.revenue} margin={totals.margin} currency={currency} /><RevenueTrendChart data={trend} currency={currency} /></>}
+    {isLoading ? <div className="py-24 text-center text-body text-muted-foreground">재무 데이터를 집계하는 중...</div> : <><FinancialSummaryCards count={processed.length} revenue={totals.revenue} margin={totals.margin} currency={currency} /><RevenueTrendChart data={trend} currency={currency} /></>}
   </div>;
 }

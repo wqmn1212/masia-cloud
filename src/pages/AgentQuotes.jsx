@@ -107,14 +107,14 @@ export default function AgentQuotes() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t('agentquotes.title')}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{t('agentquotes.subtitle')}</p>
+        <p className="text-body text-muted-foreground mt-1">{t('agentquotes.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Upload Area */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">{t('agentquotes.upload.title')}</CardTitle>
+            <CardTitle className="text-title">{t('agentquotes.upload.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <label className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center gap-3 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all">
@@ -126,10 +126,10 @@ export default function AgentQuotes() {
                 <Upload className="w-8 h-8 text-muted-foreground" />
               )}
               <div className="text-center">
-                <p className="text-sm font-medium">
+                <p className="text-body font-medium">
                   {uploadedUrl ? t('agentquotes.upload.done') : t('agentquotes.upload.hint')}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-caption text-muted-foreground mt-1">
                   .xlsx, .docx, .pdf, .jpg, .png
                 </p>
               </div>
@@ -145,7 +145,7 @@ export default function AgentQuotes() {
 
             <div className="space-y-3">
               <div>
-                <Label className="text-xs">{t('agentquotes.factory')}</Label>
+                <Label className="text-caption">{t('agentquotes.factory')}</Label>
                 <Select value={form.factory_id} onValueChange={(v) => {
                   const f = factories.find(x => x.id === v);
                   updateField('factory_id', v);
@@ -158,7 +158,7 @@ export default function AgentQuotes() {
                 </Select>
               </div>
               <div>
-                <Label className="text-xs">{t('agentquotes.category')}</Label>
+                <Label className="text-caption">{t('agentquotes.category')}</Label>
                 <Select value={form.machine_category} onValueChange={(v) => updateField('machine_category', v)}>
                   <SelectTrigger><SelectValue placeholder={t('agentquotes.category')} /></SelectTrigger>
                   <SelectContent>
@@ -176,14 +176,14 @@ export default function AgentQuotes() {
         <div className="lg:col-span-2 space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">{t('agentquotes.editor')}</CardTitle>
+              <CardTitle className="text-title">{t('agentquotes.editor')}</CardTitle>
             </CardHeader>
             <CardContent>
               <QuoteLineEditor items={form.line_items || []} onChange={(items) => updateField('line_items', items)} />
             </CardContent>
           </Card>
           <div className="flex justify-end items-center gap-3">
-            {isSub && <p className="text-xs text-muted-foreground">원가 항목 저장은 팀 관리자 전용입니다.</p>}
+            {isSub && <p className="text-caption text-muted-foreground">원가 항목 저장은 팀 관리자 전용입니다.</p>}
             <Button onClick={() => saveMutation.mutate()} disabled={isSub || saveMutation.isPending || !form.factory_id}>
               {saveMutation.isPending ? t('agentquotes.saving') : t('agentquotes.submit')}
             </Button>

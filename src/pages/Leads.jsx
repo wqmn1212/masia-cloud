@@ -44,7 +44,7 @@ export default function Leads() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">문의 접수</h1>
-        <p className="text-sm text-muted-foreground mt-1">랜딩 페이지에서 접수된 제조 문의 · 신규 {counts.new || 0}건</p>
+        <p className="text-body text-muted-foreground mt-1">랜딩 페이지에서 접수된 제조 문의 · 신규 {counts.new || 0}건</p>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
@@ -52,7 +52,7 @@ export default function Leads() {
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+            className={`px-3 py-1.5 rounded-full text-caption font-medium border transition-colors ${
               filter === f.key ? 'bg-primary text-primary-foreground border-primary' : 'bg-card hover:bg-muted text-muted-foreground border-border'
             }`}
           >
@@ -67,7 +67,7 @@ export default function Leads() {
         ) : visible.length === 0 ? (
           <div className="py-16 text-center">
             <Inbox className="w-10 h-10 mx-auto text-muted-foreground/40" />
-            <p className="mt-3 text-sm text-muted-foreground">접수된 문의가 없습니다</p>
+            <p className="mt-3 text-body text-muted-foreground">접수된 문의가 없습니다</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

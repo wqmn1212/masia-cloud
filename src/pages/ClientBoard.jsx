@@ -28,7 +28,7 @@ export default function ClientBoard() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">소싱 보드</h1>
-          <p className="text-sm text-muted-foreground mt-1">단계는 담당자가 업데이트하며, 카드를 눌러 상세 내용을 확인하실 수 있습니다</p>
+          <p className="text-body text-muted-foreground mt-1">단계는 담당자가 업데이트하며, 카드를 눌러 상세 내용을 확인하실 수 있습니다</p>
         </div>
         <div className="flex shrink-0 gap-2">
           <ClientExportButton size="default" />
@@ -48,8 +48,8 @@ export default function ClientBoard() {
               <div key={col.id} className="flex-shrink-0 w-64">
                 <div className={`flex items-center gap-2 px-3 py-2 rounded-t-xl ${col.color} border border-border border-b-0`}>
                   <div className={`w-2 h-2 rounded-full ${col.dotColor}`} />
-                  <span className="text-xs font-semibold">{col.label}</span>
-                  <Badge variant="secondary" className="ml-auto text-[10px] h-4 px-1.5">{colCards.length}</Badge>
+                  <span className="text-caption font-semibold">{col.label}</span>
+                  <Badge variant="secondary" className="ml-auto text-micro h-4 px-1.5">{colCards.length}</Badge>
                 </div>
                 <div className={`min-h-[460px] p-2 rounded-b-xl border border-border border-t-0 space-y-2 ${col.color}`}>
                   {colCards.map((c) => <ClientCardTile key={c.id} card={c} onClick={() => { setInitialTab(null); setSelectedId(c.id); }} />)}

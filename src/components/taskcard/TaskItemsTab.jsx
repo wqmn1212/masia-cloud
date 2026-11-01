@@ -105,7 +105,7 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
     <div className="space-y-4">
       {/* Summary bar */}
       {items.length > 0 && (
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/40 border text-xs">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/40 border text-caption">
           <span className="font-semibold text-muted-foreground">총 {items.length}개</span>
           <span className="text-muted-foreground">·</span>
           <span className="flex items-center gap-1"><Circle className="w-3 h-3 text-muted-foreground" /> 대기 {todoCount}</span>
@@ -122,12 +122,12 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
       )}
 
       {/* Item list */}
-      {isLoading && <p className="text-xs text-muted-foreground py-4 text-center">로딩 중...</p>}
+      {isLoading && <p className="text-caption text-muted-foreground py-4 text-center">로딩 중...</p>}
 
       {!isLoading && items.length === 0 && !showForm && (
         <div className="text-center py-10 text-muted-foreground space-y-1">
-          <p className="text-sm font-medium">등록된 세부 업무가 없습니다</p>
-          <p className="text-xs">견적 요청, 부품 확인, 도색 변경 등의 업무를 추가하세요</p>
+          <p className="text-body font-medium">등록된 세부 업무가 없습니다</p>
+          <p className="text-caption">견적 요청, 부품 확인, 도색 변경 등의 업무를 추가하세요</p>
         </div>
       )}
 
@@ -155,24 +155,24 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
                 </button>
 
                 {/* Title */}
-                <span className={`flex-1 text-sm font-medium ${item.status === 'DONE' ? 'line-through text-muted-foreground' : ''}`}>
+                <span className={`flex-1 text-body font-medium ${item.status === 'DONE' ? 'line-through text-muted-foreground' : ''}`}>
                   {cnOrKo(item, 'title', viewLang === 'CN' ? 'zh' : 'ko')}
                 </span>
 
                 {/* Meta badges */}
                 <div className="flex items-center gap-1.5 shrink-0">
                   {item.priority && item.priority !== 'MEDIUM' && (
-                    <Badge className={`${PRIORITY_META[item.priority]?.className} border-0 text-[9px] h-4 px-1`}>
+                    <Badge className={`${PRIORITY_META[item.priority]?.className} border-0 text-micro h-4 px-1`}>
                       {PRIORITY_META[item.priority]?.label}
                     </Badge>
                   )}
                   {item.due_date && (
-                    <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-0.5 text-micro text-muted-foreground">
                       <CalendarDays className="w-3 h-3" />{item.due_date}
                     </span>
                   )}
                   {item.assignee_name && (
-                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                    <span className="text-micro text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                       {item.assignee_name}
                     </span>
                   )}
@@ -192,11 +192,11 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
               {isExpanded && (
                 <div className="border-t px-3 py-3 space-y-3 bg-muted/20">
                   <div>
-                    <Label className="text-[10px]">업무 제목</Label>
+                    <Label className="text-micro">업무 제목</Label>
                     <BilingualInlineEditor record={item} field="title" required saving={updateMutation.isPending} onSave={data => updateMutation.mutate({ id: item.id, data })} />
                   </div>
                   <div>
-                    <Label className="text-[10px]">상세 내용</Label>
+                    <Label className="text-micro">상세 내용</Label>
                     <BilingualInlineEditor record={item} field="description" multiline rows={2} saving={updateMutation.isPending} onSave={data => updateMutation.mutate({ id: item.id, data })} />
                   </div>
                   {viewLang === 'CN' && <ChineseContentEditor record={item} saving={updateMutation.isPending}
@@ -204,31 +204,31 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
                     onSave={(data) => updateMutation.mutate({ id: item.id, data: { ...data, __manualChinese: true } })} />}
                   <div className="grid grid-cols-4 gap-2">
                     <div>
-                      <Label className="text-[10px]">상태</Label>
+                      <Label className="text-micro">상태</Label>
                       <Select value={item.status} onValueChange={(v) => updateMutation.mutate({ id: item.id, data: { status: v } })}>
-                        <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-7 text-caption"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {Object.entries(STATUS_META).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-[10px]">우선순위</Label>
+                      <Label className="text-micro">우선순위</Label>
                       <Select value={item.priority || 'MEDIUM'} onValueChange={(v) => updateMutation.mutate({ id: item.id, data: { priority: v } })}>
-                        <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-7 text-caption"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {Object.entries(PRIORITY_META).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-[10px]">마감일</Label>
-                      <Input type="date" defaultValue={item.due_date} className="h-7 text-xs"
+                      <Label className="text-micro">마감일</Label>
+                      <Input type="date" defaultValue={item.due_date} className="h-7 text-caption"
                         onBlur={(e) => e.target.value !== item.due_date && updateMutation.mutate({ id: item.id, data: { due_date: e.target.value } })} />
                     </div>
                     <div>
-                      <Label className="text-[10px]">담당자</Label>
-                      <Input defaultValue={item.assignee_name} placeholder="이름" className="h-7 text-xs"
+                      <Label className="text-micro">담당자</Label>
+                      <Input defaultValue={item.assignee_name} placeholder="이름" className="h-7 text-caption"
                         onBlur={(e) => e.target.value !== item.assignee_name && updateMutation.mutate({ id: item.id, data: { assignee_name: e.target.value } })} />
                     </div>
                   </div>
@@ -243,30 +243,30 @@ export default function TaskItemsTab({ card, viewLang = 'KR' }) {
       {showForm ? (
         <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
           <div>
-            <Label className="text-xs">업무 제목 *</Label>
+            <Label className="text-caption">업무 제목 *</Label>
             <BilingualField record={form} field="title" disabled={createMutation.isPending} onChange={(key, value) => setForm(p => ({ ...p, [key]: value }))} autoFocus />
           </div>
           <div>
-            <Label className="text-xs">상세 내용</Label>
+            <Label className="text-caption">상세 내용</Label>
             <BilingualField record={form} field="description" multiline rows={2} disabled={createMutation.isPending} onChange={(key, value) => setForm(p => ({ ...p, [key]: value }))} />
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <Label className="text-xs">우선순위</Label>
+              <Label className="text-caption">우선순위</Label>
               <Select value={form.priority} onValueChange={(v) => setForm(p => ({ ...p, priority: v }))}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-8 text-caption"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {Object.entries(PRIORITY_META).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs">마감일</Label>
-              <Input type="date" value={form.due_date} onChange={(e) => setForm(p => ({ ...p, due_date: e.target.value }))} className="h-8 text-xs" />
+              <Label className="text-caption">마감일</Label>
+              <Input type="date" value={form.due_date} onChange={(e) => setForm(p => ({ ...p, due_date: e.target.value }))} className="h-8 text-caption" />
             </div>
             <div>
-              <Label className="text-xs">담당자</Label>
-              <Input value={form.assignee_name} onChange={(e) => setForm(p => ({ ...p, assignee_name: e.target.value }))} placeholder="이름" className="h-8 text-xs" />
+              <Label className="text-caption">담당자</Label>
+              <Input value={form.assignee_name} onChange={(e) => setForm(p => ({ ...p, assignee_name: e.target.value }))} placeholder="이름" className="h-8 text-caption" />
             </div>
           </div>
           <div className="flex justify-end gap-2">

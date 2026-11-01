@@ -8,7 +8,7 @@ export default function GuideStep({ step, index, content, user }) {
     <section id={`guide-${step.id}`} aria-labelledby={`guide-title-${step.id}`} className="scroll-mt-44 rounded-2xl border bg-card text-card-foreground">
       <div className="p-5 sm:p-7">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-lg font-bold tabular-nums text-primary">{String(index + 1).padStart(2, '0')}</span>
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-title font-bold tabular-nums text-primary">{String(index + 1).padStart(2, '0')}</span>
           <span className="rounded-full border bg-muted/40 px-3 py-1 text-label font-semibold">{step.owner}</span>
         </div>
         <h2 id={`guide-title-${step.id}`} className="mt-4 text-xl sm:text-2xl font-bold tracking-tight leading-snug">{step.title}</h2>

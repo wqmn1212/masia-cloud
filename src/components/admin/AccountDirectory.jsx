@@ -30,24 +30,24 @@ export default function AccountDirectory({ accounts, tenants, onToggle, onDelete
           </SelectContent>
         </Select>
       </div>
-      <p className="border-b bg-muted/30 px-3 py-2 text-xs text-muted-foreground">계정을 막으려면 스위치로 비활성 처리하세요. 삭제는 되돌릴 수 없는 별도 작업입니다.</p>
+      <p className="border-b bg-muted/30 px-3 py-2 text-caption text-muted-foreground">계정을 막으려면 스위치로 비활성 처리하세요. 삭제는 되돌릴 수 없는 별도 작업입니다.</p>
       <div className="max-h-[520px] divide-y overflow-y-auto">
-        {rows.length === 0 ? <p className="p-8 text-center text-sm text-muted-foreground">검색 결과가 없습니다</p> : rows.map((a) => {
+        {rows.length === 0 ? <p className="p-8 text-center text-body text-muted-foreground">검색 결과가 없습니다</p> : rows.map((a) => {
           const active = a.is_active !== false;
           return (
             <div key={a.id} className="flex items-center gap-3 p-3 hover:bg-muted/40">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted"><User className="h-4 w-4 text-muted-foreground" /></div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="truncate text-sm font-medium">{a.full_name || a.email}</span>
-                  <Badge variant="outline" className="text-[10px]">{TIER_LABELS[a.account_tier]}</Badge>
-                  <Badge variant="secondary" className="text-[10px]">{teamName[a.tenant_id] || '소속 팀 없음'}</Badge>
+                  <span className="truncate text-body font-medium">{a.full_name || a.email}</span>
+                  <Badge variant="outline" className="text-micro">{TIER_LABELS[a.account_tier]}</Badge>
+                  <Badge variant="secondary" className="text-micro">{teamName[a.tenant_id] || '소속 팀 없음'}</Badge>
                 </div>
-                <p className="truncate text-xs text-muted-foreground">{a.email}</p>
+                <p className="truncate text-caption text-muted-foreground">{a.email}</p>
               </div>
-              <Badge variant="outline" className={active ? 'bg-green-50 text-green-700 border-green-200 text-[10px]' : 'bg-red-50 text-red-700 border-red-200 text-[10px]'}>{active ? '활성' : '비활성'}</Badge>
+              <Badge variant="outline" className={active ? 'bg-success/10 text-success-text border-success/30 text-micro' : 'bg-destructive/10 text-destructive border-destructive/30 text-micro'}>{active ? '활성' : '비활성'}</Badge>
               <Switch checked={active} onCheckedChange={(v) => onToggle(a, v)} disabled={disabled} aria-label="계정 활성 상태" />
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => onDelete(a)} aria-label="계정 삭제"><Trash2 /></Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(a)} aria-label="계정 삭제"><Trash2 /></Button>
             </div>
           );
         })}

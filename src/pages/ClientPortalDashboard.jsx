@@ -27,7 +27,7 @@ export default function ClientPortalDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">진행 현황</h1>
-        <p className="text-sm text-muted-foreground mt-1">담당자가 공개한 프로젝트의 진행 단계와 견적서를 확인하실 수 있습니다</p>
+        <p className="text-body text-muted-foreground mt-1">담당자가 공개한 프로젝트의 진행 단계와 견적서를 확인하실 수 있습니다</p>
       </div>
 
       {isLoading ? (

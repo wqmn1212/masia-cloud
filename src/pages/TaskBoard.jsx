@@ -30,7 +30,7 @@ const COLUMNS = [
   { id: 'REVIEW',      label: '견적 검토',  color: 'bg-accent/10',        dotColor: 'bg-accent' },
   { id: 'PRODUCTION',  label: '발주·제작', color: 'bg-chart-4/10',       dotColor: 'bg-chart-4' },
   { id: 'DONE',        label: '완료',       color: 'bg-primary/10',       dotColor: 'bg-primary' },
-  { id: 'CANCELLED',   label: '취소',       color: 'bg-red-50',           dotColor: 'bg-red-400' },
+  { id: 'CANCELLED',   label: '취소',       color: 'bg-destructive/10',           dotColor: 'bg-destructive/50' },
 ];
 
 const PRIORITY_META = {
@@ -178,7 +178,7 @@ export default function TaskBoard() {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <LayoutGrid className="w-6 h-6 text-primary" /> {t('taskboard.title')}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">{t('taskboard.subtitle')}</p>
+            <p className="text-body text-muted-foreground mt-1">{t('taskboard.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <ChineseBackfillButton user={user} />
@@ -186,7 +186,7 @@ export default function TaskBoard() {
           <Button variant="outline" className="gap-2" onClick={() => setInboxOpen(true)}>
             <Mail className="w-4 h-4" />가져온 메일 연동
             {pendingProposals.length > 0 && (
-              <Badge variant="secondary" className="text-[10px]">{pendingProposals.length}</Badge>
+              <Badge variant="secondary" className="text-micro">{pendingProposals.length}</Badge>
             )}
           </Button>
           <Button onClick={() => setCreateOpen(true)} className="gap-2">
@@ -216,14 +216,14 @@ export default function TaskBoard() {
           )}
         </div>
         <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-[160px] h-9 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[160px] h-9 text-caption"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">{t('taskboard.allCategories')}</SelectItem>
             {Object.entries(catMap).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
         {(search || filterCategory !== 'ALL') && (
-          <span className="text-xs text-muted-foreground">{filteredCards.length}건 표시</span>
+          <span className="text-caption text-muted-foreground">{filteredCards.length}건 표시</span>
         )}
       </div>
 
@@ -238,9 +238,9 @@ export default function TaskBoard() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <div className={`w-2 h-2 rounded-full ${col.dotColor}`} />
-                  <span className="text-xs font-medium">{t(`status.${col.id}`, col.label)}</span>
+                  <span className="text-caption font-medium">{t(`status.${col.id}`, col.label)}</span>
                 </div>
-                <span className="text-lg font-bold">{count}</span>
+                <span className="text-title font-bold">{count}</span>
               </div>
               <div className="h-1.5 bg-black/10 rounded-full overflow-hidden">
                 <div
@@ -248,7 +248,7 @@ export default function TaskBoard() {
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <p className="text-[10px] text-muted-foreground">{pct}% 점유</p>
+              <p className="text-micro text-muted-foreground">{pct}% 점유</p>
             </div>
           );
         })}
@@ -264,8 +264,8 @@ export default function TaskBoard() {
                 {/* Column header */}
                 <div className={`flex items-center gap-2 px-3 py-2 rounded-t-xl ${col.color} border border-border border-b-0`}>
                   <div className={`w-2 h-2 rounded-full ${col.dotColor}`} />
-                  <span className="text-xs font-semibold">{t(`status.${col.id}`, col.label)}</span>
-                  <Badge variant="secondary" className="ml-auto text-[10px] h-4 px-1.5">{colCards.length}</Badge>
+                  <span className="text-caption font-semibold">{t(`status.${col.id}`, col.label)}</span>
+                  <Badge variant="secondary" className="ml-auto text-micro h-4 px-1.5">{colCards.length}</Badge>
                 </div>
 
                 <Droppable droppableId={col.id}>
@@ -299,19 +299,19 @@ export default function TaskBoard() {
                               {/* Priority + category */}
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 {card.priority && card.priority !== 'MEDIUM' && (
-                                  <Badge className={`${PRIORITY_META[card.priority]?.className} border-0 text-[9px] h-4 px-1`}>
+                                  <Badge className={`${PRIORITY_META[card.priority]?.className} border-0 text-micro h-4 px-1`}>
                                     {t(`priority.${card.priority}`, PRIORITY_META[card.priority]?.label)}
                                   </Badge>
                                 )}
                                 {card.target_machine_category && (
-                                  <Badge variant="outline" className="text-[9px] h-4 px-1">{catMap[card.target_machine_category] || card.target_machine_category}</Badge>
+                                  <Badge variant="outline" className="text-micro h-4 px-1">{catMap[card.target_machine_category] || card.target_machine_category}</Badge>
                                 )}
                               </div>
 
-                              <p className="text-sm font-medium leading-snug line-clamp-2">{content(card, 'title')}</p>
+                              <p className="text-body font-medium leading-snug line-clamp-2">{content(card, 'title')}</p>
 
                               {(card.client_name || (card.candidate_factory_names?.length > 0) || card.factory_name) && (
-                                                     <p className="text-[10px] text-muted-foreground truncate">
+                                                     <p className="text-micro text-muted-foreground truncate">
                                                        {card.client_name && `🏢 ${card.client_name}`}
                                                        {card.factory_name
                                                          ? ` · 🏭 ${card.factory_name}`
@@ -322,14 +322,14 @@ export default function TaskBoard() {
                                                    )}
 
                                                    {card.current_milestone_label && (
-                                                   <div className="flex items-center gap-1.5 text-[10px]">
+                                                   <div className="flex items-center gap-1.5 text-micro">
                                                    <span className="px-1.5 py-0.5 rounded bg-muted text-foreground truncate">▸ {(lang === 'zh' && card.current_milestone_label_cn) || card.current_milestone_label}</span>
                                                    {card.delay_days > 0 && <span className="px-1.5 py-0.5 rounded bg-destructive/15 text-destructive font-semibold">+{card.delay_days}{lang === 'zh' ? '天' : '일'}</span>}
                                                    {card.overdue_steps > 0 && <span className="px-1.5 py-0.5 rounded bg-chart-3/15 text-chart-3 font-semibold">{lang === 'zh' ? '当前延误' : '지금 지연 중'}</span>}
                                                    </div>
                                                    )}
 
-                                                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground pt-0.5">
+                                                   <div className="flex items-center gap-2 text-micro text-muted-foreground pt-0.5">
                                 <MessageSquare className="w-3 h-3" />
                                 <span>채팅</span>
                                 <Paperclip className="w-3 h-3 ml-1" />
@@ -367,19 +367,19 @@ export default function TaskBoard() {
             });
           }} className="space-y-4">
             <div>
-              <Label className="text-xs">{t('taskboard.form.title')}</Label>
+              <Label className="text-caption">{t('taskboard.form.title')}</Label>
               <BilingualField record={form} field="title" disabled={createMutation.isPending} onChange={(key, value) => setForm(p => ({ ...p, [key]: value }))} placeholder={t('taskboard.form.title.placeholder')} required={!form.title?.trim() && !form.title_cn?.trim()} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">장비 카테고리</Label>
+                <Label className="text-caption">장비 카테고리</Label>
                 <CategorySelect
                   value={form.target_machine_category}
                   onValueChange={(v) => setForm(p => ({ ...p, target_machine_category: v }))}
                 />
               </div>
               <div>
-                <Label className="text-xs">우선순위</Label>
+                <Label className="text-caption">우선순위</Label>
                 <Select value={form.priority} onValueChange={(v) => setForm(p => ({ ...p, priority: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -389,19 +389,19 @@ export default function TaskBoard() {
               </div>
             </div>
             <div>
-              <Label className="text-xs">고객사</Label>
+              <Label className="text-caption">고객사</Label>
               <ClientSelect
                 value={form.client_id}
                 onChange={({ id, name }) => setForm(p => ({ ...p, client_id: id, client_name: name }))}
               />
             </div>
             <div>
-              <Label className="text-xs">견적 요청 공장 <span className="text-muted-foreground font-normal">(복수 선택 가능)</span></Label>
+              <Label className="text-caption">견적 요청 공장 <span className="text-muted-foreground font-normal">(복수 선택 가능)</span></Label>
               <FactoryMultiSelect
                 selectedFactories={candidateFactories}
                 onChange={setCandidateFactories}
               />
-              <p className="text-[10px] text-muted-foreground mt-1">* 최종 확정 공장은 카드 상세에서 나중에 지정할 수 있습니다</p>
+              <p className="text-micro text-muted-foreground mt-1">* 최종 확정 공장은 카드 상세에서 나중에 지정할 수 있습니다</p>
             </div>
             <div className="flex justify-end gap-2 pt-1">
               <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>{t('common.cancel')}</Button>

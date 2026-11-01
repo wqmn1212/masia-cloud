@@ -43,17 +43,17 @@ export default function ClientReorderDialog({ open, onOpenChange, card, onOpenCa
           <DialogDescription>&lsquo;{card.title}&rsquo;의 도면·품질 기준서·공장 정보를 그대로 가져와 새 프로젝트로 시작합니다. 수량과 날짜만 알려 주세요.</DialogDescription>
         </DialogHeader>
         {done ? (
-          <div className="space-y-3 text-sm">
+          <div className="space-y-3 text-body">
             <p>재주문 프로젝트를 만들었습니다. 담당자가 공장 일정·단가를 확인한 뒤 견적과 일정을 올려 드립니다.</p>
             {onOpenCard && <Button className="w-full" onClick={() => { onOpenChange(false); onOpenCard(done); }}>새 프로젝트 열기</Button>}
           </div>
         ) : (
           <div className="space-y-3">
-            <div><Label className="text-xs">수량</Label><Input value={f.quantity} maxLength={200} placeholder="예: 5,000개 (지난번 3,000개)" onChange={(e) => set('quantity', e.target.value)} /></div>
-            <div><Label className="text-xs">희망 입고일 (선택)</Label><Input type="date" value={f.target_date} onChange={(e) => set('target_date', e.target.value)} /></div>
-            <div><Label className="text-xs">바뀌는 점 (선택)</Label><Textarea rows={3} maxLength={3000} value={f.changes} placeholder="예: 색상 1종 추가(민트), 단상자 문구 변경. 바뀌는 게 없으면 비워 두세요." onChange={(e) => set('changes', e.target.value)} /></div>
+            <div><Label className="text-caption">수량</Label><Input value={f.quantity} maxLength={200} placeholder="예: 5,000개 (지난번 3,000개)" onChange={(e) => set('quantity', e.target.value)} /></div>
+            <div><Label className="text-caption">희망 입고일 (선택)</Label><Input type="date" value={f.target_date} onChange={(e) => set('target_date', e.target.value)} /></div>
+            <div><Label className="text-caption">바뀌는 점 (선택)</Label><Textarea rows={3} maxLength={3000} value={f.changes} placeholder="예: 색상 1종 추가(민트), 단상자 문구 변경. 바뀌는 게 없으면 비워 두세요." onChange={(e) => set('changes', e.target.value)} /></div>
             <ReorderForecastPanel input={forecast} quantityText={f.quantity} />
-            <p className="rounded-md bg-muted/60 p-2 text-[11px] text-muted-foreground">단가와 납기는 원자재 가격·공장 일정에 따라 지난번과 달라질 수 있어, 담당자가 확인 후 새 견적으로 안내드립니다.</p>
+            <p className="rounded-md bg-muted/60 p-2 text-micro text-muted-foreground">단가와 납기는 원자재 가격·공장 일정에 따라 지난번과 달라질 수 있어, 담당자가 확인 후 새 견적으로 안내드립니다.</p>
           </div>
         )}
         {!done && (

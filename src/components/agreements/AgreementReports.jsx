@@ -42,7 +42,7 @@ function ReportEditor({ report, companyName, onChanged }) {
   return (
     <div className="space-y-3 rounded-xl border p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm font-semibold">{monthLabel(report.month)} 리포트</p>
+        <p className="text-body font-semibold">{monthLabel(report.month)} 리포트</p>
         <Badge className={`border-0 ${published ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>{published ? '발행됨' : '초안'}</Badge>
         <div className="ml-auto flex gap-1.5">
           {!published && <Button size="sm" variant="ghost" className="h-8 gap-1" onClick={() => setPreview((p) => !p)}>{preview ? <><Pencil className="h-3.5 w-3.5" />편집</> : <><Eye className="h-3.5 w-3.5" />고객 화면 미리보기</>}</Button>}
@@ -54,8 +54,8 @@ function ReportEditor({ report, companyName, onChanged }) {
       ) : (
         <>
           <MonthlyReportView report={{ ...report, highlights: '', next_plan: '' }} companyName={companyName} />
-          <div><Label className="text-xs">이번 달 주요 내용 (발행에 필요)</Label><Textarea rows={4} value={text.highlights} placeholder="예: 샘플 2차 수정 완료, 양산 금형 T1 시사출. 박스 구김 재발 방지를 위해 5겹 골판지로 변경했습니다." onChange={(e) => setText((t) => ({ ...t, highlights: e.target.value }))} /></div>
-          <div><Label className="text-xs">다음 달 계획</Label><Textarea rows={3} value={text.next_plan} placeholder="예: 11/18 양산 시작, 11/25 출고 전 검수, 12/2 선적 예정" onChange={(e) => setText((t) => ({ ...t, next_plan: e.target.value }))} /></div>
+          <div><Label className="text-caption">이번 달 주요 내용 (발행에 필요)</Label><Textarea rows={4} value={text.highlights} placeholder="예: 샘플 2차 수정 완료, 양산 금형 T1 시사출. 박스 구김 재발 방지를 위해 5겹 골판지로 변경했습니다." onChange={(e) => setText((t) => ({ ...t, highlights: e.target.value }))} /></div>
+          <div><Label className="text-caption">다음 달 계획</Label><Textarea rows={3} value={text.next_plan} placeholder="예: 11/18 양산 시작, 11/25 출고 전 검수, 12/2 선적 예정" onChange={(e) => setText((t) => ({ ...t, next_plan: e.target.value }))} /></div>
         </>
       )}
       {!published && (
@@ -64,7 +64,7 @@ function ReportEditor({ report, companyName, onChanged }) {
           <Button className="gap-1.5" disabled={!!busy || !text.highlights.trim()} onClick={publish}>{busy === 'publish' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}고객에게 발행</Button>
         </div>
       )}
-      {published && <div className="flex items-center gap-2"><p className="flex-1 text-xs text-muted-foreground">{report.published_by_name} · {report.published_at ? new Date(report.published_at).toLocaleString('ko-KR') : ''} 발행</p><PdfButton generate={() => generateMonthlyReportPDF(report, companyName)} /></div>}
+      {published && <div className="flex items-center gap-2"><p className="flex-1 text-caption text-muted-foreground">{report.published_by_name} · {report.published_at ? new Date(report.published_at).toLocaleString('ko-KR') : ''} 발행</p><PdfButton generate={() => generateMonthlyReportPDF(report, companyName)} /></div>}
     </div>
   );
 }
@@ -100,23 +100,23 @@ export default function AgreementReports({ agreement }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end gap-2">
-        <label className="text-xs">대상 월
-          <select className="mt-1 block h-9 rounded-md border bg-background px-2 text-sm" value={month} onChange={(e) => setMonth(e.target.value)}>
+        <label className="text-caption">대상 월
+          <select className="mt-1 block h-9 rounded-md border bg-background px-2 text-body" value={month} onChange={(e) => setMonth(e.target.value)}>
             {months.map((m) => <option key={m} value={m}>{monthLabel(m)}</option>)}
           </select>
         </label>
         <Button variant="outline" disabled={!month || building} onClick={build} className="gap-1.5">{building && <Loader2 className="h-4 w-4 animate-spin" />}초안 만들기</Button>
-        <p className="text-[11px] text-muted-foreground">매월 1일 지난달 초안이 자동으로 만들어집니다.</p>
+        <p className="text-micro text-muted-foreground">매월 1일 지난달 초안이 자동으로 만들어집니다.</p>
       </div>
-      {isLoading ? <p className="py-4 text-center text-sm text-muted-foreground">불러오는 중…</p> : (
+      {isLoading ? <p className="py-4 text-center text-body text-muted-foreground">불러오는 중…</p> : (
         <div className="flex flex-wrap gap-1.5">
           {reports.map((r) => (
             <button key={r.id} type="button" onClick={() => setOpenId(r.id)} aria-pressed={openId === r.id}
-              className={`rounded-full border px-3 py-1 text-xs ${openId === r.id ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-muted'}`}>
+              className={`rounded-full border px-3 py-1 text-caption ${openId === r.id ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-muted'}`}>
               {monthLabel(r.month)} · {r.status === 'PUBLISHED' ? '발행됨' : '초안'}
             </button>
           ))}
-          {!reports.length && <p className="text-sm text-muted-foreground">아직 리포트가 없습니다.</p>}
+          {!reports.length && <p className="text-body text-muted-foreground">아직 리포트가 없습니다.</p>}
         </div>
       )}
       {open && <ReportEditor report={open} companyName={agreement.company_name} onChanged={changed} />}

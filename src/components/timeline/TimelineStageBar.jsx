@@ -33,11 +33,11 @@ export default function TimelineStageBar({ currentStage }) {
                 {isCompleted ? (
                   <CheckCircle className="w-4 h-4" />
                 ) : (
-                  <span className="text-[10px] font-bold">{idx + 1}</span>
+                  <span className="text-micro font-bold">{idx + 1}</span>
                 )}
               </div>
               <span className={cn(
-                "text-[10px] font-medium text-center leading-tight whitespace-nowrap",
+                "text-micro font-medium text-center leading-tight whitespace-nowrap",
                 isCurrent ? "text-primary" : isCompleted ? "text-accent" : "text-muted-foreground"
               )}>
                 {stage.label}

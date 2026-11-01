@@ -29,19 +29,19 @@ export default function CardOwnerBar({ card, user }) {
   const overdue = due && due < todayStr();
   return (
     <div className="border rounded-lg p-2.5 mt-3 space-y-2 bg-muted/20">
-      <div className="flex items-center gap-2 text-xs">
+      <div className="flex items-center gap-2 text-caption">
         <UserRound className="w-3.5 h-3.5 text-muted-foreground" />
         <span className="text-muted-foreground">{tr('책임자')}</span>
         {canAssign ? (
-          <select value={card.owner_id || ''} onChange={(e) => setOwner(e.target.value)} className="h-7 rounded-md border border-input bg-transparent text-xs px-1">
+          <select value={card.owner_id || ''} onChange={(e) => setOwner(e.target.value)} className="h-7 rounded-md border border-input bg-transparent text-caption px-1">
             <option value="">{tr('미지정')}</option>
             {team.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
           </select>
         ) : <span className="font-medium">{card.owner_name || tr('미지정')}</span>}
       </div>
       <div className="flex gap-2">
-        <Input value={next} onChange={(e) => setNext(e.target.value)} onBlur={() => next !== (card.next_action || '') && save({ next_action: next })} placeholder={tr('다음 할 일')} className="h-8 text-xs flex-1" />
-        <Input type="date" value={due} onChange={(e) => { setDue(e.target.value); save({ next_action_due: e.target.value || null }); }} className={`h-8 text-xs w-36 ${overdue ? 'text-destructive' : ''}`} />
+        <Input value={next} onChange={(e) => setNext(e.target.value)} onBlur={() => next !== (card.next_action || '') && save({ next_action: next })} placeholder={tr('다음 할 일')} className="h-8 text-caption flex-1" />
+        <Input type="date" value={due} onChange={(e) => { setDue(e.target.value); save({ next_action_due: e.target.value || null }); }} className={`h-8 text-caption w-36 ${overdue ? 'text-destructive' : ''}`} />
       </div>
     </div>
   );

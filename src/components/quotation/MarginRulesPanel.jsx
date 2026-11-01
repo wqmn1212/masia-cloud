@@ -12,7 +12,7 @@ import { INQUIRY_CATEGORIES } from '@/lib/inquiryForm';
 // 견적 마진 규칙 (대표·팀 관리자·마스터): 팀 기본 기준·최소 마진과 고객사·카테고리별 규칙.
 // 고객사 → 카테고리(카드 문의 카테고리) → 팀 기본 → 앱 기본(15%·10%) 순으로 칸마다 적용한다.
 // 기준 마진은 공장 견적 초안·견적 작성에 미리 채우고, 최소 마진보다 낮으면 승인 때 주의로 보인다. 저장·정리는 서버(quoteApproval)가 한다.
-const sel = 'h-8 rounded-md border bg-background px-2 text-xs';
+const sel = 'h-8 rounded-md border bg-background px-2 text-caption';
 const blank = () => ({ scope: 'CLIENT', client_id: '', client_name: '', category: INQUIRY_CATEGORIES[0], default_pct: '', min_pct: '', note: '' });
 const v = (n) => (n == null ? '' : String(n));
 
@@ -59,8 +59,8 @@ export default function MarginRulesPanel() {
         </div>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
-        <label className="text-label">팀 기준 마진 (%)<Input className="mt-1 h-8 text-xs" type="number" min="0" step="0.5" value={base.d} onChange={(e) => setBase((b) => ({ ...b, d: e.target.value }))} placeholder="비우면 15" /></label>
-        <label className="text-label">팀 최소 마진 (%)<Input className="mt-1 h-8 text-xs" type="number" min="0" step="0.5" value={base.m} onChange={(e) => setBase((b) => ({ ...b, m: e.target.value }))} placeholder="비우면 10" /></label>
+        <label className="text-label">팀 기준 마진 (%)<Input className="mt-1 h-8 text-caption" type="number" min="0" step="0.5" value={base.d} onChange={(e) => setBase((b) => ({ ...b, d: e.target.value }))} placeholder="비우면 15" /></label>
+        <label className="text-label">팀 최소 마진 (%)<Input className="mt-1 h-8 text-caption" type="number" min="0" step="0.5" value={base.m} onChange={(e) => setBase((b) => ({ ...b, m: e.target.value }))} placeholder="비우면 10" /></label>
       </div>
       <div className="space-y-1.5">
         <p className="text-label font-medium">고객사·카테고리별 규칙</p>
@@ -72,13 +72,13 @@ export default function MarginRulesPanel() {
             {r.scope === 'CLIENT'
               ? <select className={sel} value={r.client_id} aria-label="고객사" onChange={(e) => update(i, { client_id: e.target.value, client_name: clients.find((c) => c.id === e.target.value)?.company_name || '' })}><option value="">고객사 선택</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.company_name}</option>)}</select>
               : <select className={sel} value={r.category} aria-label="카테고리" onChange={(e) => update(i, { category: e.target.value })}>{INQUIRY_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}</select>}
-            <Input className="h-8 text-xs" type="number" min="0" step="0.5" value={r.default_pct} onChange={(e) => update(i, { default_pct: e.target.value })} placeholder="기준 %" aria-label="기준 마진" />
-            <Input className="h-8 text-xs" type="number" min="0" step="0.5" value={r.min_pct} onChange={(e) => update(i, { min_pct: e.target.value })} placeholder="최소 %" aria-label="최소 마진" />
-            <Input className="h-8 text-xs" value={r.note || ''} maxLength={200} onChange={(e) => update(i, { note: e.target.value })} placeholder="메모 (예: 연간 계약 고객)" />
+            <Input className="h-8 text-caption" type="number" min="0" step="0.5" value={r.default_pct} onChange={(e) => update(i, { default_pct: e.target.value })} placeholder="기준 %" aria-label="기준 마진" />
+            <Input className="h-8 text-caption" type="number" min="0" step="0.5" value={r.min_pct} onChange={(e) => update(i, { min_pct: e.target.value })} placeholder="최소 %" aria-label="최소 마진" />
+            <Input className="h-8 text-caption" value={r.note || ''} maxLength={200} onChange={(e) => update(i, { note: e.target.value })} placeholder="메모 (예: 연간 계약 고객)" />
             <button type="button" className="justify-self-end text-muted-foreground hover:text-destructive" aria-label="규칙 삭제" onClick={() => setRules((list) => list.filter((_, n) => n !== i))}><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
-        <Button type="button" size="sm" variant="outline" className="h-8 gap-1 text-xs" onClick={() => setRules((list) => [...list, blank()])}><Plus className="h-3.5 w-3.5" />규칙 추가</Button>
+        <Button type="button" size="sm" variant="outline" className="h-8 gap-1 text-caption" onClick={() => setRules((list) => [...list, blank()])}><Plus className="h-3.5 w-3.5" />규칙 추가</Button>
       </div>
       <div className="flex items-center justify-end gap-2 border-t pt-3">
         {setting?.updated_by && <span className="mr-auto text-caption text-muted-foreground">최근 수정 {setting.updated_by}</span>}

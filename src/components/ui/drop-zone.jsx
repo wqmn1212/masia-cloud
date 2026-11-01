@@ -73,7 +73,7 @@ export default function DropZone({
           <div className="absolute inset-0 z-20 rounded-lg border-2 border-dashed border-primary bg-primary/10 backdrop-blur-sm flex items-center justify-center pointer-events-none">
             <div className="flex items-center gap-2 text-primary">
               <Upload className="w-5 h-5" />
-              <span className="text-sm font-medium">여기에 드롭하여 업로드</span>
+              <span className="text-body font-medium">여기에 드롭하여 업로드</span>
             </div>
           </div>
         )}
@@ -103,7 +103,7 @@ export default function DropZone({
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
-        <label className={`inline-flex items-center gap-1.5 cursor-pointer border rounded-lg px-3 py-1.5 text-xs hover:bg-muted transition-colors ${isDragging ? 'border-primary bg-primary/10' : ''} ${className}`}>
+        <label className={`inline-flex items-center gap-1.5 cursor-pointer border rounded-lg px-3 py-1.5 text-caption hover:bg-muted transition-colors ${isDragging ? 'border-primary bg-primary/10' : ''} ${className}`}>
           {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
           {uploading ? '업로드 중...' : label}
           <input ref={inputRef} type="file" className="hidden" accept={accept} disabled={disabled} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
@@ -124,7 +124,7 @@ export default function DropZone({
         {uploading ? (
           <Loader2 className="w-5 h-5 animate-spin text-primary" />
         ) : (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-body text-muted-foreground">
             <Upload className="w-4 h-4" />
             <span>{label}</span>
           </div>

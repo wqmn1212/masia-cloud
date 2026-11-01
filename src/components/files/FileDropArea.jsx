@@ -30,7 +30,7 @@ export default function FileDropArea({ onFiles, disabled = false, className = ''
         <div className="absolute inset-0 z-20 rounded-lg border-2 border-dashed border-primary bg-primary/10 backdrop-blur-sm flex items-center justify-center pointer-events-none">
           <div className="flex items-center gap-2 text-primary">
             <Upload className="w-5 h-5" />
-            <span className="text-sm font-medium">여기에 드롭하여 업로드</span>
+            <span className="text-body font-medium">여기에 드롭하여 업로드</span>
           </div>
         </div>
       )}

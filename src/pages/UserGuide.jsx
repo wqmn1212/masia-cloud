@@ -18,7 +18,7 @@ export default function UserGuide() {
   return (
     <div className="max-w-6xl mx-auto space-y-5">
       <div>
-        <h1 className="text-2xl font-bold">{t(HERO.title)}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t(HERO.title)}</h1>
         <p className="text-body text-muted-foreground mt-1">{t(HERO.intro)}</p>
         <p className="text-label text-muted-foreground mt-1">{t(HERO.note)}</p>
       </div>
@@ -39,9 +39,9 @@ export default function UserGuide() {
         </React.Fragment>
       ))}
       <Card className="p-5 md:p-6">
-        <h2 className="text-lg font-bold mb-2">{zh ? '常见问题' : '자주 묻는 질문'}</h2>
+        <h2 className="text-title font-bold mb-2">{zh ? '常见问题' : '자주 묻는 질문'}</h2>
         <Accordion type="single" collapsible>
-          {FAQ.map(([q, a], i) => <AccordionItem key={i} value={`f${i}`}><AccordionTrigger className="text-sm text-left">{t(q)}</AccordionTrigger><AccordionContent className="text-sm text-muted-foreground">{t(a)}</AccordionContent></AccordionItem>)}
+          {FAQ.map(([q, a], i) => <AccordionItem key={i} value={`f${i}`}><AccordionTrigger className="text-body text-left">{t(q)}</AccordionTrigger><AccordionContent className="text-body text-muted-foreground">{t(a)}</AccordionContent></AccordionItem>)}
         </Accordion>
       </Card>
       <Card className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">

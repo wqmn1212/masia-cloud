@@ -64,28 +64,28 @@ function AegisAccountBox({ a }) {
 function FactoryPaymentBox({ payment }) {
   if (payment.pending_change) {
     return (
-      <div className="flex gap-2 rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm">
+      <div className="flex gap-2 rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-body">
         <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
-        <div><p className="font-semibold text-destructive">송금을 잠시 멈춰 주세요</p><p className="mt-1 text-xs text-muted-foreground">공장 측에서 받는 계좌를 바꾸겠다는 요청이 들어와 이지스가 공장에 직접 확인하고 있습니다. 확인되면 알림으로 알려드립니다. 그 사이 메신저·이메일로 받은 계좌로는 송금하지 마세요.</p></div>
+        <div><p className="font-semibold text-destructive">송금을 잠시 멈춰 주세요</p><p className="mt-1 text-caption text-muted-foreground">공장 측에서 받는 계좌를 바꾸겠다는 요청이 들어와 이지스가 공장에 직접 확인하고 있습니다. 확인되면 알림으로 알려드립니다. 그 사이 메신저·이메일로 받은 계좌로는 송금하지 마세요.</p></div>
       </div>
     );
   }
   if (!payment.verified) {
-    return <p className="rounded-xl border p-4 text-xs text-muted-foreground">이지스가 공장 계좌를 확인하고 있습니다. 확인된 계좌가 여기에 표시되기 전에는 송금하지 마세요.</p>;
+    return <p className="rounded-xl border p-4 text-caption text-muted-foreground">이지스가 공장 계좌를 확인하고 있습니다. 확인된 계좌가 여기에 표시되기 전에는 송금하지 마세요.</p>;
   }
   const a = payment.verified;
   return (
     <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-4">
-      <p className="flex items-center gap-1.5 text-sm font-semibold"><Landmark className="h-4 w-4 text-primary" />공장 대금 송금 계좌</p>
-      <dl className="grid grid-cols-[72px_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs">
+      <p className="flex items-center gap-1.5 text-body font-semibold"><Landmark className="h-4 w-4 text-primary" />공장 대금 송금 계좌</p>
+      <dl className="grid grid-cols-[72px_minmax(0,1fr)] gap-x-2 gap-y-1 text-caption">
         <dt className="text-muted-foreground">예금주</dt><dd className="break-all font-medium">{a.beneficiary_name}</dd>
         <dt className="text-muted-foreground">은행</dt><dd className="break-all">{a.bank_name}</dd>
         <dt className="text-muted-foreground">계좌</dt><dd className="break-all font-mono">{a.account_no} <span className="font-sans text-muted-foreground">({a.currency || 'CNY'})</span></dd>
         {a.swift_code && <><dt className="text-muted-foreground">SWIFT</dt><dd className="font-mono">{a.swift_code}</dd></>}
         {a.bank_address && <><dt className="text-muted-foreground">은행 주소</dt><dd className="break-all">{a.bank_address}</dd></>}
       </dl>
-      <p className="flex items-center gap-1 text-[11px] text-primary"><CheckCircle2 className="h-3 w-3" />이지스 {a.verify_method} · {a.verified_at ? new Date(a.verified_at).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' }) : ''}</p>
-      <p className="text-[11px] text-muted-foreground">공장이 메신저·이메일로 다른 계좌를 알려 오면 송금하지 말고 담당자에게 먼저 알려 주세요. 계좌 변경 사기는 이렇게 시작됩니다.</p>
+      <p className="flex items-center gap-1 text-micro text-primary"><CheckCircle2 className="h-3 w-3" />이지스 {a.verify_method} · {a.verified_at ? new Date(a.verified_at).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' }) : ''}</p>
+      <p className="text-micro text-muted-foreground">공장이 메신저·이메일로 다른 계좌를 알려 오면 송금하지 말고 담당자에게 먼저 알려 주세요. 계좌 변경 사기는 이렇게 시작됩니다.</p>
     </div>
   );
 }
@@ -130,7 +130,7 @@ export default function ClientSettlementPanel({ cardId, stages, factoryPayment, 
     return (
       <div className="space-y-3">
         {factoryPayment && <FactoryPaymentBox payment={factoryPayment} />}
-        <p className="text-sm text-muted-foreground text-center py-8">등록된 결제 단계가 없습니다</p>
+        <p className="text-body text-muted-foreground text-center py-8">등록된 결제 단계가 없습니다</p>
       </div>
     );
   }
@@ -142,7 +142,7 @@ export default function ClientSettlementPanel({ cardId, stages, factoryPayment, 
   return (
     <div className="space-y-3">
       <div className="rounded-xl border p-4">
-        <p className="text-xs text-muted-foreground">입금 확인 비율</p>
+        <p className="text-caption text-muted-foreground">입금 확인 비율</p>
         <p className="text-2xl font-bold mt-0.5">{collected}%</p>
         <div className="h-2 bg-muted rounded-full mt-2 overflow-hidden">
           <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.min(collected, 100)}%` }} />
@@ -155,7 +155,7 @@ export default function ClientSettlementPanel({ cardId, stages, factoryPayment, 
       <p className="flex gap-1.5 rounded-lg border border-warning/40 bg-warning/10 p-2.5 text-caption text-warning-text">
         <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />계좌가 바뀌었다는 연락은 이 화면에서만 확인해 주세요. 메일·메신저로 받은 계좌로는 송금하지 말고 담당자에게 먼저 알려 주세요.
       </p>
-      <p className="text-[11px] text-muted-foreground">* 결제 요청이 오기 전 금액은 발행된 견적서 PDF의 결제 조건을 참고해 주세요.</p>
+      <p className="text-micro text-muted-foreground">* 결제 요청이 오기 전 금액은 발행된 견적서 PDF의 결제 조건을 참고해 주세요.</p>
       <ClientPaymentReportDialog cardId={cardId} stage={reporting} onClose={() => setReporting(null)} />
     </div>
   );

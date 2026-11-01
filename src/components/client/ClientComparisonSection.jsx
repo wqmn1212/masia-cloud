@@ -79,7 +79,7 @@ export default function ClientComparisonSection({ cardId, cardTitle = '', client
       <Dialog open={!!dialog} onOpenChange={(v) => !v && setDialog(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-base">{dialog?.mode === 'choose' ? `${dialog?.option.label}으로 진행` : `${dialog?.option.label}에 대해 질문`}</DialogTitle>
+            <DialogTitle className="text-title">{dialog?.mode === 'choose' ? `${dialog?.option.label}으로 진행` : `${dialog?.option.label}에 대해 질문`}</DialogTitle>
             <DialogDescription className="text-label">{dialog?.mode === 'choose' ? (gate.viaApproval ? '결재권자가 승인하면 담당자에게 진행 요청이 갑니다. 남길 말씀이 있으면 적어 주세요 (선택).' : '진행 요청을 보내면 담당자가 확인하고 확정합니다. 남길 말씀이 있으면 적어 주세요 (선택).') : '담당자에게 보낼 질문을 적어 주세요. 문의 탭에서 답변을 받습니다.'}</DialogDescription>
           </DialogHeader>
           <Textarea rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder={dialog?.mode === 'choose' ? '예: 납기를 우선해 이 안으로 진행합니다' : '예: 보증 기간을 2년으로 늘릴 수 있나요?'} className="text-body" />

@@ -11,7 +11,7 @@ import { COMPONENT_TYPES, STAGES, SEVERITY as SEV_I18N, UNKNOWN, TASK_PRIORITY, 
 import { DEFAULT_AQL, DEFAULT_SPEC_ITEMS, SEVERITY, newItemKey } from '@/lib/qualitySpec';
 import useQCPrecheck from './useQCPrecheck';
 
-const sel = 'h-8 w-full rounded-md border bg-background px-2 text-xs';
+const sel = 'h-8 w-full rounded-md border bg-background px-2 text-caption';
 const filled = (v) => v !== undefined && v !== null && String(v).trim() !== '';
 const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric', timeZone: 'Asia/Seoul' }) : '');
 const SPEC_FIELDS = ['aql_level', 'aql_critical', 'aql_major', 'aql_minor', 'sampling_note', 'items', 'note'];
@@ -32,9 +32,9 @@ function SpecEditor({ comp, onSave, onClose }) {
   };
   return (
     <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
-      <label className="block max-w-sm space-y-1 text-[11px] text-muted-foreground">
+      <label className="block max-w-sm space-y-1 text-micro text-muted-foreground">
         <span>{def[lang] || def.ko}</span>
-        <Input className="h-8 text-xs" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input className="h-8 text-caption" value={name} onChange={(e) => setName(e.target.value)} />
       </label>
       <div className="grid gap-2.5 sm:grid-cols-3">
         {def.fields.map((f) => {
@@ -42,7 +42,7 @@ function SpecEditor({ comp, onSave, onClose }) {
           const missing = !f.optional && !filled(v);
           const ring = missing ? 'border-chart-3 bg-chart-3/5' : '';
           return (
-            <label key={f.key} className="space-y-1 text-[11px]">
+            <label key={f.key} className="space-y-1 text-micro">
               <span className="text-muted-foreground">{f[lang] || f.ko}{f.optional ? '' : ' *'}</span>
               {f.options ? (
                 <select className={`${sel} ${ring}`} value={v ?? ''} onChange={(e) => set(f.key, e.target.value)}>
@@ -52,10 +52,10 @@ function SpecEditor({ comp, onSave, onClose }) {
                 </select>
               ) : (
                 <div className="flex gap-1">
-                  <Input className={`h-8 text-xs ${ring}`} type={f.number ? 'number' : 'text'} step="any" disabled={v === UNKNOWN}
+                  <Input className={`h-8 text-caption ${ring}`} type={f.number ? 'number' : 'text'} step="any" disabled={v === UNKNOWN}
                     placeholder={v === UNKNOWN ? t('qcp.unknown') : f.unit || ''} value={v === UNKNOWN ? '' : v ?? ''}
                     onChange={(e) => set(f.key, f.number && e.target.value !== '' ? Number(e.target.value) : e.target.value)} />
-                  <Button type="button" size="sm" variant={v === UNKNOWN ? 'secondary' : 'ghost'} className="h-8 shrink-0 px-2 text-[10px]"
+                  <Button type="button" size="sm" variant={v === UNKNOWN ? 'secondary' : 'ghost'} className="h-8 shrink-0 px-2 text-micro"
                     onClick={() => set(f.key, v === UNKNOWN ? '' : UNKNOWN)}>{lang === 'zh' ? '不清楚' : '모름'}</Button>
                 </div>
               )}
@@ -81,31 +81,31 @@ function ItemRow({ item, comp, kase, onTask, onSpec, onDismiss, busy }) {
   return (
     <li className={`space-y-1.5 rounded-lg border p-3 ${decided ? 'bg-muted/30' : ''}`}>
       <div className="flex flex-wrap items-center gap-1.5">
-        <Badge className={`border-0 text-[10px] ${sev.cls}`}>{lang === 'zh' ? SEV_I18N[item.severity]?.zh : sev.label}</Badge>
-        <Badge variant="outline" className={`text-[10px] ${item.source === 'CASE' ? 'border-primary/30 text-primary' : ''}`}>{t(`qcp.source.${item.source}`)}</Badge>
-        <span className="text-[11px] text-muted-foreground">{STAGES[item.stage]?.[lang] || STAGES[item.stage]?.ko}{comp ? ` · ${comp.name}` : ''}</span>
+        <Badge className={`border-0 text-micro ${sev.cls}`}>{lang === 'zh' ? SEV_I18N[item.severity]?.zh : sev.label}</Badge>
+        <Badge variant="outline" className={`text-micro ${item.source === 'CASE' ? 'border-primary/30 text-primary' : ''}`}>{t(`qcp.source.${item.source}`)}</Badge>
+        <span className="text-micro text-muted-foreground">{STAGES[item.stage]?.[lang] || STAGES[item.stage]?.ko}{comp ? ` · ${comp.name}` : ''}</span>
         <div className="ml-auto flex flex-wrap gap-1">
           {decided ? (
-            <Badge variant="secondary" className="text-[10px]">{t(`qcp.decision.${item.decision}`)}{item.decided_by_name ? ` · ${item.decided_by_name}` : ''}</Badge>
+            <Badge variant="secondary" className="text-micro">{t(`qcp.decision.${item.decision}`)}{item.decided_by_name ? ` · ${item.decided_by_name}` : ''}</Badge>
           ) : (
             <>
-              <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" disabled={busy} onClick={onTask}>{t('qcp.toTask')}</Button>
-              {item.kind === 'RISK' && <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" disabled={busy} onClick={onSpec}>{t('qcp.toSpec')}</Button>}
-              <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px] text-muted-foreground" disabled={busy} onClick={() => setDismissing((x) => !x)}>{t('qcp.dismiss')}</Button>
+              <Button size="sm" variant="outline" className="h-7 px-2 text-micro" disabled={busy} onClick={onTask}>{t('qcp.toTask')}</Button>
+              {item.kind === 'RISK' && <Button size="sm" variant="outline" className="h-7 px-2 text-micro" disabled={busy} onClick={onSpec}>{t('qcp.toSpec')}</Button>}
+              <Button size="sm" variant="ghost" className="h-7 px-2 text-micro text-muted-foreground" disabled={busy} onClick={() => setDismissing((x) => !x)}>{t('qcp.dismiss')}</Button>
             </>
           )}
         </div>
       </div>
-      <p className={`text-sm font-medium ${decided ? 'text-muted-foreground' : ''}`}>{tx('title')}</p>
-      {tx('how') && <p className="text-xs text-muted-foreground"><span className="text-foreground/80">{t('qcp.how')}</span> · {tx('how')}</p>}
-      {tx('criteria') && <p className="text-xs text-muted-foreground"><span className="text-foreground/80">{t('qcp.criteria')}</span> · {tx('criteria')}</p>}
-      {item.question_cn && <p className="text-xs text-muted-foreground"><span className="text-foreground/80">{t('qcp.question')}</span> · {item.question_cn}</p>}
-      {item.factory_answer && <p className="whitespace-pre-line rounded bg-primary/5 px-2 py-1 text-xs"><span className="font-medium text-primary">{t('qcp.factoryAnswer')}</span> · {item.factory_answer}</p>}
-      {kase && item.rule_id && <p className="text-[11px] text-primary">{t('qcp.source.CASE')}: {kase.issue_case}{kase.trigger_decision ? ` (${kase.trigger_decision})` : ''}</p>}
-      {item.decision === 'DISMISSED' && item.dismiss_reason && <p className="text-[11px] text-muted-foreground">{item.dismiss_reason}</p>}
+      <p className={`text-body font-medium ${decided ? 'text-muted-foreground' : ''}`}>{tx('title')}</p>
+      {tx('how') && <p className="text-caption text-muted-foreground"><span className="text-foreground/80">{t('qcp.how')}</span> · {tx('how')}</p>}
+      {tx('criteria') && <p className="text-caption text-muted-foreground"><span className="text-foreground/80">{t('qcp.criteria')}</span> · {tx('criteria')}</p>}
+      {item.question_cn && <p className="text-caption text-muted-foreground"><span className="text-foreground/80">{t('qcp.question')}</span> · {item.question_cn}</p>}
+      {item.factory_answer && <p className="whitespace-pre-line rounded bg-primary/5 px-2 py-1 text-caption"><span className="font-medium text-primary">{t('qcp.factoryAnswer')}</span> · {item.factory_answer}</p>}
+      {kase && item.rule_id && <p className="text-micro text-primary">{t('qcp.source.CASE')}: {kase.issue_case}{kase.trigger_decision ? ` (${kase.trigger_decision})` : ''}</p>}
+      {item.decision === 'DISMISSED' && item.dismiss_reason && <p className="text-micro text-muted-foreground">{item.dismiss_reason}</p>}
       {dismissing && !decided && (
         <div className="flex gap-1.5 pt-1">
-          <Input className="h-8 text-xs" autoFocus value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('qcp.dismissReason')} />
+          <Input className="h-8 text-caption" autoFocus value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('qcp.dismissReason')} />
           <Button size="sm" variant="outline" className="h-8" disabled={busy} onClick={() => { onDismiss(reason.trim()); setDismissing(false); }}>{t('qcp.dismiss')}</Button>
         </div>
       )}
@@ -210,13 +210,13 @@ export default function QCPrecheckPanel({ card, user }) {
   const header = (
     <div className="flex flex-wrap items-start justify-between gap-2">
       <div className="min-w-0">
-        <h3 className="flex items-center gap-1.5 text-sm font-semibold"><ClipboardCheck className="h-4 w-4 text-primary" />{t('qcp.title')}</h3>
-        <p className="text-xs text-muted-foreground">{t('qcp.desc')}</p>
+        <h3 className="flex items-center gap-1.5 text-body font-semibold"><ClipboardCheck className="h-4 w-4 text-primary" />{t('qcp.title')}</h3>
+        <p className="text-caption text-muted-foreground">{t('qcp.desc')}</p>
       </div>
       <div className="flex items-center gap-2">
         {record && (p.quoteChanged
-          ? <span className="text-[11px] text-chart-3">{t('qcp.quoteChanged')}</span>
-          : <span className="text-[11px] text-muted-foreground">{fmtDay(record.created_date)} {record.created_by_name} {t('qcp.checked')} · v{record.version}</span>)}
+          ? <span className="text-micro text-chart-3">{t('qcp.quoteChanged')}</span>
+          : <span className="text-micro text-muted-foreground">{fmtDay(record.created_date)} {record.created_by_name} {t('qcp.checked')} · v{record.version}</span>)}
         <Button size="sm" variant={record ? 'outline' : 'default'} className="h-8 gap-1" disabled={!!busy || p.loading} onClick={() => act('run', () => p.run(by))}>
           {busy === 'run' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : record ? <RefreshCw className="h-3.5 w-3.5" /> : <ClipboardCheck className="h-3.5 w-3.5" />}
           {record ? t('qcp.rerun') : t('qcp.start')}
@@ -230,11 +230,11 @@ export default function QCPrecheckPanel({ card, user }) {
     return (
       <section id="qc-precheck" className="mt-5 space-y-3 border-t pt-5">
         {header}
-        <p className="text-xs text-muted-foreground">{t('qcp.intro')}{!p.quotation && ` ${t('qcp.noQuote')}`}</p>
+        <p className="text-caption text-muted-foreground">{t('qcp.intro')}{!p.quotation && ` ${t('qcp.noQuote')}`}</p>
         {!!pv.components.length && (
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] text-muted-foreground">{t('qcp.components')}</span>
-            {pv.components.map((c) => <span key={c.key} className="rounded-full border px-2.5 py-0.5 text-xs">{typeLabel(c.type)} · {c.name}</span>)}
+            <span className="text-micro text-muted-foreground">{t('qcp.components')}</span>
+            {pv.components.map((c) => <span key={c.key} className="rounded-full border px-2.5 py-0.5 text-caption">{typeLabel(c.type)} · {c.name}</span>)}
           </div>
         )}
       </section>
@@ -246,31 +246,31 @@ export default function QCPrecheckPanel({ card, user }) {
       {header}
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-[11px] text-muted-foreground">{t('qcp.components')}</span>
+        <span className="text-micro text-muted-foreground">{t('qcp.components')}</span>
         {components.map((c) => (
-          <span key={c.key} className="inline-flex items-center gap-1 rounded-full border py-0.5 pl-2.5 pr-1 text-xs">
+          <span key={c.key} className="inline-flex items-center gap-1 rounded-full border py-0.5 pl-2.5 pr-1 text-caption">
             <span className="text-muted-foreground">{typeLabel(c.type)}</span>{c.name !== typeLabel(c.type) && <span>· {c.name}</span>}
             <button type="button" aria-label={`${c.name} 빼기`} className="rounded-full p-0.5 text-muted-foreground hover:bg-muted" disabled={!!busy} onClick={() => removeComp(c.key)}><X className="h-3 w-3" /></button>
           </span>
         ))}
         {adding ? (
-          <select className="h-7 rounded-full border bg-background px-2 text-xs" autoFocus defaultValue="" onBlur={() => setAdding(false)} onChange={(e) => { setAdding(false); if (e.target.value) addComp(e.target.value); }}>
+          <select className="h-7 rounded-full border bg-background px-2 text-caption" autoFocus defaultValue="" onBlur={() => setAdding(false)} onChange={(e) => { setAdding(false); if (e.target.value) addComp(e.target.value); }}>
             <option value="">{t('qcp.addComponent')}</option>
             {Object.keys(COMPONENT_TYPES).map((k) => <option key={k} value={k}>{typeLabel(k)}</option>)}
           </select>
         ) : (
-          <button type="button" className="inline-flex items-center gap-0.5 rounded-full border border-dashed px-2.5 py-0.5 text-xs text-muted-foreground hover:bg-muted" onClick={() => setAdding(true)}><Plus className="h-3 w-3" />{t('qcp.addComponent')}</button>
+          <button type="button" className="inline-flex items-center gap-0.5 rounded-full border border-dashed px-2.5 py-0.5 text-caption text-muted-foreground hover:bg-muted" onClick={() => setAdding(true)}><Plus className="h-3 w-3" />{t('qcp.addComponent')}</button>
         )}
       </div>
-      {!components.length && <p className="text-xs text-muted-foreground">{t('qcp.empty')}</p>}
+      {!components.length && <p className="text-caption text-muted-foreground">{t('qcp.empty')}</p>}
 
       {(missing.length > 0 || questions.length > 0) && (
-        <div className="space-y-1.5 rounded-md bg-chart-3/10 p-3 text-xs">
+        <div className="space-y-1.5 rounded-md bg-chart-3/10 p-3 text-caption">
           {missing.length > 0 && (
             <>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-semibold text-chart-3">{t('qcp.todo')} {missing.length}</p>
-                <Button size="sm" variant="outline" className="h-7 bg-background px-2 text-[11px]" disabled={!!busy} onClick={missingToTasks}>{t('qcp.todoToTask')}</Button>
+                <Button size="sm" variant="outline" className="h-7 bg-background px-2 text-micro" disabled={!!busy} onClick={missingToTasks}>{t('qcp.todoToTask')}</Button>
               </div>
               <ul className="space-y-1">
                 {missing.map((i) => (
@@ -298,13 +298,13 @@ export default function QCPrecheckPanel({ card, user }) {
             return (
               <li key={c.key} className="space-y-2 p-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-medium">{c.name}</p>
-                  <span className="text-[11px] text-muted-foreground">{typeLabel(c.type)}{c.source_line && c.source_line !== c.name ? ` · ${c.source_line}` : ''}</span>
-                  {editing !== c.key && <Button size="sm" variant="ghost" className="ml-auto h-7 gap-1 px-2 text-[11px]" onClick={() => setEditing(c.key)}><Pencil className="h-3 w-3" />{t('qcp.editSpecs')}</Button>}
+                  <p className="text-body font-medium">{c.name}</p>
+                  <span className="text-micro text-muted-foreground">{typeLabel(c.type)}{c.source_line && c.source_line !== c.name ? ` · ${c.source_line}` : ''}</span>
+                  {editing !== c.key && <Button size="sm" variant="ghost" className="ml-auto h-7 gap-1 px-2 text-micro" onClick={() => setEditing(c.key)}><Pencil className="h-3 w-3" />{t('qcp.editSpecs')}</Button>}
                 </div>
                 {editing === c.key
                   ? <SpecEditor comp={c} onClose={() => setEditing('')} onSave={async (next) => { await p.saveComponents(components.map((x) => (x.key === c.key ? next : x))); toast({ title: t('qcp.saved') }); }} />
-                  : <p className="text-xs text-muted-foreground">{vals.length ? vals.join(' · ') : t('qcp.notSet')}</p>}
+                  : <p className="text-caption text-muted-foreground">{vals.length ? vals.join(' · ') : t('qcp.notSet')}</p>}
               </li>
             );
           })}
@@ -313,8 +313,8 @@ export default function QCPrecheckPanel({ card, user }) {
 
       {components.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold">{t('qcp.risks')} {openRisks.length > 0 && <span className="text-muted-foreground">{openRisks.length}</span>}</p>
-          {risks.length === 0 ? <p className="text-xs text-muted-foreground">{t('qcp.noRisks')}</p> : (
+          <p className="text-caption font-semibold">{t('qcp.risks')} {openRisks.length > 0 && <span className="text-muted-foreground">{openRisks.length}</span>}</p>
+          {risks.length === 0 ? <p className="text-caption text-muted-foreground">{t('qcp.noRisks')}</p> : (
             <ul className="space-y-2">
               {visible.map((i) => (
                 <ItemRow key={i.key} item={i} comp={compOf(i.component_key)} kase={caseOf(i.case_id)} busy={!!busy}
@@ -323,7 +323,7 @@ export default function QCPrecheckPanel({ card, user }) {
             </ul>
           )}
           {(hidden > 0 || (showAll && all.length > 5)) && (
-            <button type="button" className="text-xs text-primary hover:underline" onClick={() => setShowAll((x) => !x)}>{showAll ? t('qcp.less') : `${t('qcp.more')} ${hidden}`}</button>
+            <button type="button" className="text-caption text-primary hover:underline" onClick={() => setShowAll((x) => !x)}>{showAll ? t('qcp.less') : `${t('qcp.more')} ${hidden}`}</button>
           )}
         </div>
       )}
@@ -332,10 +332,10 @@ export default function QCPrecheckPanel({ card, user }) {
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <Button size="sm" variant="outline" className="h-8 gap-1" disabled={!!busy || record.ai_status === 'RUNNING'} onClick={runAI}>
             {busy === 'ai' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            {busy === 'ai' ? t('qcp.aiRunning') : t('qcp.ai')} <span className="text-[10px] text-muted-foreground">({t('qcp.aiNote')})</span>
+            {busy === 'ai' ? t('qcp.aiRunning') : t('qcp.ai')} <span className="text-micro text-muted-foreground">({t('qcp.aiNote')})</span>
           </Button>
           <Button size="sm" variant="outline" className="h-8 gap-1" disabled={!!busy || !factoryQuestions(pending).count} onClick={copyQuestions}><Copy className="h-3.5 w-3.5" />{t('qcp.copyQuestions')}</Button>
-          {record.ai_status === 'FAILED' && <span className="text-[11px] text-destructive">{t('qcp.aiFailed')}</span>}
+          {record.ai_status === 'FAILED' && <span className="text-micro text-destructive">{t('qcp.aiFailed')}</span>}
         </div>
       )}
     </section>

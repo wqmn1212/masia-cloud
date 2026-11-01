@@ -23,11 +23,11 @@ export default function MeetingLiveNotes({ log, onSaved }) {
   });
   const set = (name, value) => setForm(current => editBilingual(current, name, value));
   return <div className="space-y-2 border-t bg-muted/20 p-3">
-    <div className="flex items-center justify-between"><p className="text-xs font-semibold">미팅 내용 작성</p><DeferredSaveStatus status={status} /></div>
+    <div className="flex items-center justify-between"><p className="text-caption font-semibold">미팅 내용 작성</p><DeferredSaveStatus status={status} /></div>
     <BilingualField record={form} field="attendees" placeholder="참석자 / 参与者" onChange={set} />
     <BilingualField record={form} field="notes" multiline rows={4} placeholder="논의 내용 / 讨论内容" onChange={set} />
     <BilingualField record={form} field="decisions" multiline rows={2} placeholder="결정 사항 / 决定事项" onChange={set} />
     <BilingualField record={form} field="next_steps" multiline rows={2} placeholder="다음 액션 / 下一步" onChange={set} />
-    <p className="text-[11px] text-muted-foreground">입력 즉시 이 기기에 임시 보관되며, 서버에도 자동 저장됩니다.</p>
+    <p className="text-micro text-muted-foreground">입력 즉시 이 기기에 임시 보관되며, 서버에도 자동 저장됩니다.</p>
   </div>;
 }

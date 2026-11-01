@@ -4,15 +4,15 @@ import { Label } from '@/components/ui/label';
 
 const NumField = ({ label, value, onChange, suffix }) => (
   <div className="space-y-1">
-    <Label className="text-[11px] text-muted-foreground">{label}</Label>
+    <Label className="text-micro text-muted-foreground">{label}</Label>
     <div className="flex items-center gap-1">
       <Input
         type="number"
         value={value ?? ''}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="h-8 text-xs text-right"
+        className="h-8 text-caption text-right"
       />
-      {suffix && <span className="text-[10px] text-muted-foreground whitespace-nowrap">{suffix}</span>}
+      {suffix && <span className="text-micro text-muted-foreground whitespace-nowrap">{suffix}</span>}
     </div>
   </div>
 );

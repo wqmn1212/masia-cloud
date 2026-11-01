@@ -14,8 +14,8 @@ export default function JoinInvite() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm"><CardContent className="p-6 space-y-4">
-        <h1 className="text-lg font-bold">다른 계정으로 로그인되어 있습니다</h1>
-        <p className="text-sm text-muted-foreground">현재 {current}로 로그인되어 있습니다. 초대받은 {invited}으로 계속하려면 로그아웃하세요.</p>
+        <h1 className="text-title font-bold">다른 계정으로 로그인되어 있습니다</h1>
+        <p className="text-body text-muted-foreground">현재 {current}로 로그인되어 있습니다. 초대받은 {invited}으로 계속하려면 로그아웃하세요.</p>
         <Button className="w-full" onClick={() => base44.auth.logout(`/join${window.location.search}`)}>로그아웃하고 계속</Button>
       </CardContent></Card>
     </div>

@@ -36,14 +36,14 @@ export default function TeamAdminInviteDialog({ open, onOpenChange, tenants, def
       <DialogContent>
         <DialogHeader><DialogTitle>팀 관리자 초대</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-4 pt-2">
-          <div className="space-y-1.5"><Label className="text-xs">소속 팀</Label>
+          <div className="space-y-1.5"><Label className="text-caption">소속 팀</Label>
             <Select value={tenantId} onValueChange={setTenantId}>
               <SelectTrigger><SelectValue placeholder="팀 선택" /></SelectTrigger>
               <SelectContent>{teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}{t.is_hq ? ' (본사)' : ''}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5"><Label className="text-xs">이메일</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="colleague@company.com" /></div>
-          <div className="space-y-1.5"><Label className="text-xs">이름/표시명 (선택)</Label><Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="예: 홍길동" /></div>
+          <div className="space-y-1.5"><Label className="text-caption">이메일</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="colleague@company.com" /></div>
+          <div className="space-y-1.5"><Label className="text-caption">이름/표시명 (선택)</Label><Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="예: 홍길동" /></div>
           {email && <InviteLinkNotice email={email} />}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>닫기</Button>

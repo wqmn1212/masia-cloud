@@ -9,7 +9,7 @@ export default function AccessEditorDialog({ member, roles, onChange, onClose, o
       <DialogContent className="max-w-xl">
         <DialogHeader><DialogTitle>사용자 역할 및 권한</DialogTitle></DialogHeader>
         {member && <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">{member.email}</p>
+          <p className="text-body text-muted-foreground">{member.email}</p>
           <div>
             <Label>팀 역할</Label>
             <Select value={member.team_role_id || ''} onValueChange={(team_role_id) => onChange({ ...member, team_role_id })}>
@@ -17,7 +17,7 @@ export default function AccessEditorDialog({ member, roles, onChange, onClose, o
               <SelectContent>{roles.map((role) => <SelectItem key={role.id} value={role.id}>{role.name} · 메뉴 {(role.menu_paths || []).length}개</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">선택한 역할의 메뉴 권한이 이 팀원에게 자동으로 적용됩니다.</p>
+          <p className="rounded-lg bg-muted p-3 text-caption text-muted-foreground">선택한 역할의 메뉴 권한이 이 팀원에게 자동으로 적용됩니다.</p>
           <div className="flex justify-end gap-2"><Button variant="outline" onClick={onClose}>취소</Button><Button disabled={saving || !member.team_role_id} onClick={onSave}>저장</Button></div>
         </div>}
       </DialogContent>

@@ -48,18 +48,18 @@ export default function QCReportHistory({ card, user, reports }) {
     publish.mutate({ report, visible });
   };
 
-  if (!reports.length) return <p className="py-4 text-center text-xs text-muted-foreground">등록된 검수 이력이 없습니다</p>;
+  if (!reports.length) return <p className="py-4 text-center text-caption text-muted-foreground">등록된 검수 이력이 없습니다</p>;
   const caseInitial = (r) => {
     const failed = (r.checklist || []).filter((c) => c.status === 'FAIL');
     return { issue_case: failed.map((c) => c.label).join(', ') || (r.inspection_type === 'SAMPLE' ? '샘플 검수 불합격' : '양산 검수 불합격'), root_cause: [r.comments, ...failed.map((c) => c.note)].filter(Boolean).join('\n'), severity: r.qc_result === 'FAIL' ? 'HIGH' : 'MEDIUM', preventable_stage: '' };
   };
   return <div className="space-y-2"><CaseLogDialog open={!!caseFrom} onOpenChange={(v) => !v && setCaseFrom(null)} initial={caseFrom || {}} tenantId={card?.tenant_id} cardId={card?.id} />{reports.map(report => {
     const decision = DECISION[report.client_decision];
-    return <div key={report.id} className="rounded-lg border p-3 text-xs">
+    return <div key={report.id} className="rounded-lg border p-3 text-caption">
       <div className="flex items-center gap-2"><span className="font-medium">{report.inspection_type === 'SAMPLE' ? '샘플 검수' : '양산품 검수'}</span><Badge className={`${META[report.qc_result]?.className} border-0`}>{META[report.qc_result]?.label}</Badge>
-        {report.client_visible && <Badge variant="outline" className="text-[10px]">고객 공개 중</Badge>}
-        {report.qc_result !== 'PASS' && <Button type="button" size="sm" variant="ghost" className={`${canShare ? '' : 'ml-auto '}h-7 gap-1 text-[11px]`} onClick={() => setCaseFrom(caseInitial(report))}><BookmarkPlus className="h-3 w-3" />사례로 남기기</Button>}
-        {canShare && <Button type="button" size="sm" variant={report.client_visible ? 'ghost' : 'outline'} className="ml-auto h-7 gap-1 text-[11px]" disabled={publish.isPending} onClick={() => toggle(report)}>
+        {report.client_visible && <Badge variant="outline" className="text-micro">고객 공개 중</Badge>}
+        {report.qc_result !== 'PASS' && <Button type="button" size="sm" variant="ghost" className={`${canShare ? '' : 'ml-auto '}h-7 gap-1 text-micro`} onClick={() => setCaseFrom(caseInitial(report))}><BookmarkPlus className="h-3 w-3" />사례로 남기기</Button>}
+        {canShare && <Button type="button" size="sm" variant={report.client_visible ? 'ghost' : 'outline'} className="ml-auto h-7 gap-1 text-micro" disabled={publish.isPending} onClick={() => toggle(report)}>
           {report.client_visible ? <><EyeOff className="h-3 w-3" />공개 취소</> : <><Eye className="h-3 w-3" />고객에게 공개</>}
         </Button>}
       </div>

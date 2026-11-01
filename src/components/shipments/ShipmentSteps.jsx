@@ -10,10 +10,10 @@ export default function ShipmentSteps({ status }) {
     <ol className="flex items-start gap-1" aria-label="선적 단계">
       {STATUS_FLOW.map((k, i) => (
         <li key={k} className="flex flex-1 flex-col items-center gap-1">
-          <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${i < at ? 'bg-primary text-primary-foreground' : i === at ? 'border-2 border-primary text-primary' : 'border text-muted-foreground'}`}>
+          <span className={`flex h-5 w-5 items-center justify-center rounded-full text-micro ${i < at ? 'bg-primary text-primary-foreground' : i === at ? 'border-2 border-primary text-primary' : 'border text-muted-foreground'}`}>
             {i < at ? <Check className="h-3 w-3" /> : i + 1}
           </span>
-          <span className={`text-center text-[10px] leading-tight ${i === at ? 'font-semibold' : 'text-muted-foreground'}`}>{SHIPMENT_STATUS[k]}</span>
+          <span className={`text-center text-micro leading-tight ${i === at ? 'font-semibold' : 'text-muted-foreground'}`}>{SHIPMENT_STATUS[k]}</span>
         </li>
       ))}
     </ol>

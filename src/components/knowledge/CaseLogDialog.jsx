@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useToast } from '@/components/ui/use-toast';
 import { COMPONENT_TYPES, STAGES } from '@/lib/qcPrecheck';
 
-const sel = 'h-9 w-full rounded-md border bg-background px-2 text-sm';
+const sel = 'h-9 w-full rounded-md border bg-background px-2 text-body';
 const EMPTY = { component_type: '', severity: 'MEDIUM', issue_case: '', root_cause: '', trigger_decision: '', preventable_stage: '', prevention: '', solution_parameter: '', tags: '' };
 
 // QC 사례 등록 창. 지식 베이스 화면과 검수 불합격·불량 신고의 '사례로 남기기'가 같이 쓴다.
@@ -50,34 +50,34 @@ export default function CaseLogDialog({ open, onOpenChange, initial = {}, tenant
         <form onSubmit={(e) => { e.preventDefault(); if (ok) save.mutate(); }} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs">{t('knowledge.form.componentType')}</Label>
+              <Label className="text-caption">{t('knowledge.form.componentType')}</Label>
               <select className={sel} value={f.component_type} onChange={set('component_type')} required>
                 <option value="">—</option>
                 {Object.entries(COMPONENT_TYPES).map(([k, v]) => <option key={k} value={k}>{v[lang] || v.ko}</option>)}
               </select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{t('knowledge.form.severity')}</Label>
+              <Label className="text-caption">{t('knowledge.form.severity')}</Label>
               <select className={sel} value={f.severity} onChange={set('severity')}>
                 {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((k) => <option key={k} value={k}>{t(`severity.${k}`)}</option>)}
               </select>
             </div>
           </div>
-          <div className="space-y-1"><Label className="text-xs">{t('knowledge.form.issue')}</Label><Input value={f.issue_case} onChange={set('issue_case')} placeholder="예: 사바리 박스 접힘 주름" required /></div>
-          <div className="space-y-1"><Label className="text-xs">{t('knowledge.form.cause')}</Label><Textarea rows={2} value={f.root_cause} onChange={set('root_cause')} required /></div>
+          <div className="space-y-1"><Label className="text-caption">{t('knowledge.form.issue')}</Label><Input value={f.issue_case} onChange={set('issue_case')} placeholder="예: 사바리 박스 접힘 주름" required /></div>
+          <div className="space-y-1"><Label className="text-caption">{t('knowledge.form.cause')}</Label><Textarea rows={2} value={f.root_cause} onChange={set('root_cause')} required /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label className="text-xs">{t('knowledge.form.trigger')}</Label><Input value={f.trigger_decision} onChange={set('trigger_decision')} placeholder="예: 156g→180g, 최종 2.6T" /></div>
+            <div className="space-y-1"><Label className="text-caption">{t('knowledge.form.trigger')}</Label><Input value={f.trigger_decision} onChange={set('trigger_decision')} placeholder="예: 156g→180g, 최종 2.6T" /></div>
             <div className="space-y-1">
-              <Label className="text-xs">{t('knowledge.form.stage')}</Label>
+              <Label className="text-caption">{t('knowledge.form.stage')}</Label>
               <select className={sel} value={f.preventable_stage} onChange={set('preventable_stage')}>
                 <option value="">—</option>
                 {Object.entries(STAGES).map(([k, v]) => <option key={k} value={k}>{v[lang] || v.ko}</option>)}
               </select>
             </div>
           </div>
-          <div className="space-y-1"><Label className="text-xs">{t('knowledge.form.prevention')}</Label><Textarea rows={2} value={f.prevention} onChange={set('prevention')} placeholder="예: 괘선 폭·깊이 또는 V커팅 지정, 바뀐 종이로 접힘 더미 승인" /></div>
-          <div className="space-y-1"><Label className="text-xs">{t('knowledge.form.solution')}</Label><Textarea rows={2} value={f.solution_parameter} onChange={set('solution_parameter')} /></div>
-          <div className="space-y-1"><Label className="text-xs">{t('knowledge.form.tags')}</Label><Input value={f.tags} onChange={set('tags')} /></div>
+          <div className="space-y-1"><Label className="text-caption">{t('knowledge.form.prevention')}</Label><Textarea rows={2} value={f.prevention} onChange={set('prevention')} placeholder="예: 괘선 폭·깊이 또는 V커팅 지정, 바뀐 종이로 접힘 더미 승인" /></div>
+          <div className="space-y-1"><Label className="text-caption">{t('knowledge.form.solution')}</Label><Textarea rows={2} value={f.solution_parameter} onChange={set('solution_parameter')} /></div>
+          <div className="space-y-1"><Label className="text-caption">{t('knowledge.form.tags')}</Label><Input value={f.tags} onChange={set('tags')} /></div>
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
             <Button type="submit" disabled={!ok || save.isPending}>{save.isPending ? t('common.registering') : t('common.register')}</Button>

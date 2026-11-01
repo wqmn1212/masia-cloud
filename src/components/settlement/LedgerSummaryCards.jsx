@@ -14,9 +14,9 @@ export default function LedgerSummaryCards({ ledgers }) {
       value: `$${totalExpectedKickback.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
       sub: 'USD 기준',
       icon: DollarSign,
-      bg: 'bg-orange-50',
-      iconColor: 'text-orange-500',
-      valueColor: 'text-orange-600',
+      bg: 'bg-warning/10',
+      iconColor: 'text-warning-text',
+      valueColor: 'text-warning-text',
     },
     {
       label: '실수금 커미션 합계',
@@ -53,9 +53,9 @@ export default function LedgerSummaryCards({ ledgers }) {
         <Card key={c.label} className={`p-4 ${c.bg} border-0`}>
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium text-muted-foreground">{c.label}</p>
+              <p className="text-caption font-medium text-muted-foreground">{c.label}</p>
               <p className={`text-xl font-extrabold font-mono mt-1 ${c.valueColor}`}>{c.value}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{c.sub}</p>
+              <p className="text-micro text-muted-foreground mt-0.5">{c.sub}</p>
             </div>
             <c.icon className={`w-5 h-5 ${c.iconColor}`} />
           </div>

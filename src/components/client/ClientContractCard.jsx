@@ -32,46 +32,46 @@ export default function ClientContractCard() {
   return (
     <Card className="grid gap-5 p-5 md:grid-cols-2">
       <section>
-        <h2 className="flex items-center gap-1.5 text-sm font-semibold"><Handshake className="h-4 w-4 text-primary" />계약 정보</h2>
+        <h2 className="flex items-center gap-1.5 text-body font-semibold"><Handshake className="h-4 w-4 text-primary" />계약 정보</h2>
         <ul className="mt-2 space-y-3">
           {agreements.map((a) => {
             const d = daysLeft(a.end_date);
             const st = AGREEMENT_STATUS[a.status] || AGREEMENT_STATUS.ACTIVE;
             return (
-              <li key={a.id} className="space-y-1.5 rounded-lg border p-3 text-sm">
+              <li key={a.id} className="space-y-1.5 rounded-lg border p-3 text-body">
                 <div className="flex items-center gap-2">
                   <span className="min-w-0 flex-1 truncate font-medium">{a.title || a.agreement_no || '월 계약'}</span>
                   <Badge className={`${st.cls} border-0`}>{st.label}</Badge>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-caption text-muted-foreground">
                   {a.start_date} ~ {a.end_date}{a.status === 'ACTIVE' && d != null && d >= 0 ? ` · 종료까지 ${d}일` : ''} · 프로젝트 {a.project_count}건
                 </p>
-                {!!a.team.length && <p className="text-xs">담당 팀: {a.team.join(', ')}</p>}
+                {!!a.team.length && <p className="text-caption">담당 팀: {a.team.join(', ')}</p>}
                 {!!a.invoices.length && (
                   <div className="flex flex-wrap gap-1">
                     {a.invoices.slice(0, 6).map((i) => {
                       const s = INVOICE_STATUS[i.status] || INVOICE_STATUS.ISSUED;
-                      return <Badge key={i.id} className={`${s.cls} border-0 text-[10px]`}>{monthLabel(i.billing_month).replace(/^\d+년 /, '')} {s.label}</Badge>;
+                      return <Badge key={i.id} className={`${s.cls} border-0 text-micro`}>{monthLabel(i.billing_month).replace(/^\d+년 /, '')} {s.label}</Badge>;
                     })}
                   </div>
                 )}
               </li>
             );
           })}
-          {!agreements.length && <p className="py-2 text-sm text-muted-foreground">진행 중인 계약이 없습니다.</p>}
+          {!agreements.length && <p className="py-2 text-body text-muted-foreground">진행 중인 계약이 없습니다.</p>}
         </ul>
       </section>
       <section>
-        <h2 className="flex items-center gap-1.5 text-sm font-semibold"><FileText className="h-4 w-4 text-primary" />월간 업무 리포트</h2>
+        <h2 className="flex items-center gap-1.5 text-body font-semibold"><FileText className="h-4 w-4 text-primary" />월간 업무 리포트</h2>
         {reports.length === 0 ? (
-          <p className="py-4 text-sm text-muted-foreground">첫 리포트는 계약 다음 달 초에 발행됩니다.</p>
+          <p className="py-4 text-body text-muted-foreground">첫 리포트는 계약 다음 달 초에 발행됩니다.</p>
         ) : (
           <ul className="mt-2 space-y-0.5">
             {reports.map((r) => (
               <li key={r.id}>
-                <button type="button" onClick={() => setOpenId(r.id)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-muted">
+                <button type="button" onClick={() => setOpenId(r.id)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-body hover:bg-muted">
                   <span className="font-medium">{monthLabel(r.month)}</span>
-                  <span className="text-xs text-muted-foreground">단계 {r.metrics?.steps_done ?? 0}개 완료 · 검수 {r.metrics?.qc_reports ?? 0}건</span>
+                  <span className="text-caption text-muted-foreground">단계 {r.metrics?.steps_done ?? 0}개 완료 · 검수 {r.metrics?.qc_reports ?? 0}건</span>
                   <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground" />
                 </button>
               </li>

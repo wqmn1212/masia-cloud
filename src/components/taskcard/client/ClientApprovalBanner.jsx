@@ -18,7 +18,7 @@ export default function ClientApprovalBanner({ cardId }) {
   return (
     <div className="mt-2 space-y-1 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
       {list.map((a) => (
-        <p key={a.id} className="flex flex-wrap items-center gap-x-1.5 text-xs">
+        <p key={a.id} className="flex flex-wrap items-center gap-x-1.5 text-caption">
           <Stamp className="h-3.5 w-3.5 text-primary" />
           <b className="text-primary">고객사 결재 중</b>
           <span>{APPROVAL_KIND_LABEL[a.kind]} · {a.target_label}</span>

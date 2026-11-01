@@ -51,7 +51,7 @@ export default function FactoryMultiSelect({ selectedFactories = [], onChange })
       {selectedFactories.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {selectedFactories.map(f => (
-            <Badge key={f.id} variant="secondary" className="gap-1 pr-1 text-xs">
+            <Badge key={f.id} variant="secondary" className="gap-1 pr-1 text-caption">
               {f.name}
               <button type="button" onClick={() => removeFactory(f.id)} className="hover:text-destructive ml-0.5">
                 <X className="w-3 h-3" />
@@ -69,7 +69,7 @@ export default function FactoryMultiSelect({ selectedFactories = [], onChange })
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="공장명 입력"
-            className="h-9 text-sm"
+            className="h-9 text-body"
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (newName.trim()) createMutation.mutate(newName.trim()); } }}
           />
           <Button type="button" size="icon" className="h-9 w-9 shrink-0" onClick={() => { if (newName.trim()) createMutation.mutate(newName.trim()); }} disabled={createMutation.isPending}>
@@ -90,7 +90,7 @@ export default function FactoryMultiSelect({ selectedFactories = [], onChange })
             </SelectTrigger>
             <SelectContent>
               {availableFactories.length === 0 ? (
-                <div className="px-3 py-2 text-xs text-muted-foreground">모든 공장이 선택되었거나 등록된 공장이 없습니다</div>
+                <div className="px-3 py-2 text-caption text-muted-foreground">모든 공장이 선택되었거나 등록된 공장이 없습니다</div>
               ) : (
                 availableFactories.map(f => <SelectItem key={f.id} value={f.id}>{f.company_name}</SelectItem>)
               )}

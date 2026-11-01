@@ -13,15 +13,15 @@ export default function ClientCardTile({ card, onClick }) {
     >
       <div className="flex items-center gap-1.5 flex-wrap">
         {card.priority && card.priority !== 'MEDIUM' && (
-          <Badge className={`${p.className} border-0 text-[9px] h-4 px-1`}>{p.label}</Badge>
+          <Badge className={`${p.className} border-0 text-micro h-4 px-1`}>{p.label}</Badge>
         )}
       </div>
-      <p className="text-sm font-medium leading-snug line-clamp-2">{card.title}</p>
+      <p className="text-body font-medium leading-snug line-clamp-2">{card.title}</p>
       {(card.holiday_badges || []).map((h) => (
-        <Badge key={h.name + h.start} className="bg-amber-100 text-amber-800 border-0 text-[10px]">{h.name} 휴무 겹침 · {h.start}~{h.end}</Badge>
+        <Badge key={h.name + h.start} className="bg-warning/15 text-warning-text border-0 text-micro">{h.name} 휴무 겹침 · {h.start}~{h.end}</Badge>
       ))}
       {card.due_date && (
-        <p className="text-[10px] text-primary font-medium flex items-center gap-1">
+        <p className="text-micro text-primary font-medium flex items-center gap-1">
           <CalendarDays className="w-3 h-3" />{card.due_date}
         </p>
       )}

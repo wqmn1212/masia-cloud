@@ -45,7 +45,7 @@ function Decision({ cardId, report, canDecide: isClient }) {
 
   if (report.decision === 'APPROVED') {
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-xs">
+      <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-caption">
         <ShieldCheck className="h-4 w-4 text-primary" />
         <span className="font-semibold text-primary">{approveLabel(report)}</span>
         <span className="text-muted-foreground">{report.decided_by_name} · {when(report.decided_at)}</span>
@@ -59,7 +59,7 @@ function Decision({ cardId, report, canDecide: isClient }) {
   return (
     <div className="space-y-2 rounded-lg border border-dashed p-3">
       {report.decision === 'ON_HOLD' && (
-        <div className="flex gap-2 text-xs">
+        <div className="flex gap-2 text-caption">
           <PauseCircle className="h-4 w-4 shrink-0 text-destructive" />
           <div>
             <p><span className="font-semibold text-destructive">보류 요청함</span> <span className="text-muted-foreground">{report.decided_by_name} · {when(report.decided_at)}</span></p>
@@ -67,13 +67,13 @@ function Decision({ cardId, report, canDecide: isClient }) {
           </div>
         </div>
       )}
-      <p className="text-xs font-semibold">
+      <p className="text-caption font-semibold">
         {report.decision === 'ON_HOLD'
           ? `확인이 끝나면 ${label}을 눌러 주세요`
           : report.inspection_type === 'SAMPLE' ? '이 샘플로 양산을 진행해도 될까요?' : '이 검수 결과로 출고해도 될까요?'}
       </p>
       <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={1000} disabled={!canDecide || decide.isPending}
-        placeholder="보류하실 때는 사유를 적어 주세요 (예: 박스 구김 사진 추가 요청)" className="text-sm" />
+        placeholder="보류하실 때는 사유를 적어 주세요 (예: 박스 구김 사진 추가 요청)" className="text-body" />
       <div className="flex gap-2">
         <Button size="sm" className="flex-1 gap-1" disabled={!canDecide || decide.isPending} onClick={approve}>
           {decide.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}{label}
@@ -82,9 +82,9 @@ function Decision({ cardId, report, canDecide: isClient }) {
           <PauseCircle className="h-3.5 w-3.5" />보류 요청
         </Button>
       </div>
-      {gate.financeOnly ? <p className="text-[11px] text-muted-foreground">{financeOnlyText}</p>
-        : !canDecide ? <p className="text-[11px] text-muted-foreground">승인·보류는 고객사 계정에서만 선택할 수 있습니다.</p>
-        : gate.viaApproval && <p className="text-[11px] text-muted-foreground">{label}: {viaApprovalText} 보류는 바로 전달됩니다.</p>}
+      {gate.financeOnly ? <p className="text-micro text-muted-foreground">{financeOnlyText}</p>
+        : !canDecide ? <p className="text-micro text-muted-foreground">승인·보류는 고객사 계정에서만 선택할 수 있습니다.</p>
+        : gate.viaApproval && <p className="text-micro text-muted-foreground">{label}: {viaApprovalText} 보류는 바로 전달됩니다.</p>}
     </div>
   );
 }
@@ -94,36 +94,36 @@ export default function ClientQCPanel({ cardId, reports = [], spec = null }) {
   const { user } = useAuth();
   const canDecide = user?.account_tier === 'client';
   if (!reports.length && !spec) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">아직 공개된 품질 기준서·검수 결과가 없습니다.<br />양산 전에 기준서를, 출고 전 검수가 끝나면 사진과 함께 결과를 올려 드립니다.</p>;
+    return <p className="py-8 text-center text-body text-muted-foreground">아직 공개된 품질 기준서·검수 결과가 없습니다.<br />양산 전에 기준서를, 출고 전 검수가 끝나면 사진과 함께 결과를 올려 드립니다.</p>;
   }
   return (
     <div className="space-y-4">
       {spec && <ClientSpecSection cardId={cardId} spec={spec} canDecide={canDecide} />}
-      {!reports.length && <p className="py-4 text-center text-sm text-muted-foreground">출고 전 검수가 끝나면 사진과 함께 결과를 올려 드립니다.</p>}
+      {!reports.length && <p className="py-4 text-center text-body text-muted-foreground">출고 전 검수가 끝나면 사진과 함께 결과를 올려 드립니다.</p>}
       {reports.map((r) => {
         const result = RESULT[r.qc_result] || RESULT.PASS;
         const fails = r.checklist.filter((i) => i.status === 'FAIL').length;
         return (
           <article key={r.id} className="space-y-3 rounded-xl border p-4">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm font-semibold">{r.inspection_type === 'SAMPLE' ? '샘플 검수' : '양산품 출고 전 검수'}</p>
+              <p className="text-body font-semibold">{r.inspection_type === 'SAMPLE' ? '샘플 검수' : '양산품 출고 전 검수'}</p>
               <Badge className={`${result.cls} border-0`}>{result.label}</Badge>
-              {r.golden_compared && <Badge variant="outline" className="text-[10px]">기준 샘플과 비교함</Badge>}
-              <span className="ml-auto text-[11px] text-muted-foreground">{r.inspector_name ? `${r.inspector_name} · ` : ''}{when(r.published_at)}</span>
+              {r.golden_compared && <Badge variant="outline" className="text-micro">기준 샘플과 비교함</Badge>}
+              <span className="ml-auto text-micro text-muted-foreground">{r.inspector_name ? `${r.inspector_name} · ` : ''}{when(r.published_at)}</span>
             </div>
             {!!r.checklist.length && (
               <div>
-                <p className="mb-1.5 text-xs text-muted-foreground">검수 항목 {r.checklist.length}개{fails ? ` · 불합격 ${fails}개` : ''}</p>
+                <p className="mb-1.5 text-caption text-muted-foreground">검수 항목 {r.checklist.length}개{fails ? ` · 불합격 ${fails}개` : ''}</p>
                 <ul className="divide-y rounded-lg border">
                   {r.checklist.map((item, i) => {
                     const m = ITEM[item.status] || ITEM.PENDING;
                     const Icon = m.icon;
                     return (
-                      <li key={i} className="flex gap-2 px-3 py-2 text-sm">
+                      <li key={i} className="flex gap-2 px-3 py-2 text-body">
                         <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${m.cls}`} aria-label={m.label} />
                         <div className="min-w-0">
                           <p>{item.label}</p>
-                          {item.note && <p className="text-xs text-muted-foreground">{item.note}</p>}
+                          {item.note && <p className="text-caption text-muted-foreground">{item.note}</p>}
                         </div>
                       </li>
                     );
@@ -131,14 +131,14 @@ export default function ClientQCPanel({ cardId, reports = [], spec = null }) {
                 </ul>
               </div>
             )}
-            {r.comments && <p className="whitespace-pre-wrap rounded-lg bg-muted/50 p-3 text-sm">{r.comments}</p>}
+            {r.comments && <p className="whitespace-pre-wrap rounded-lg bg-muted/50 p-3 text-body">{r.comments}</p>}
             {!!r.media.length && (
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {r.media.map((m) => (
                   <a key={m.url} href={m.url} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-lg border" title={m.name}>
                     {IMAGE.test(m.name) || IMAGE.test(m.url)
                       ? <img src={m.url} alt={m.name} loading="lazy" className="aspect-square w-full object-cover transition group-hover:opacity-90" />
-                      : <span className="flex aspect-square items-center justify-center p-2 text-center text-[11px] text-primary underline">{m.name}</span>}
+                      : <span className="flex aspect-square items-center justify-center p-2 text-center text-micro text-primary underline">{m.name}</span>}
                   </a>
                 ))}
               </div>
@@ -147,7 +147,7 @@ export default function ClientQCPanel({ cardId, reports = [], spec = null }) {
           </article>
         );
       })}
-      {reports.length > 0 && <p className="text-[11px] text-muted-foreground">* 검수는 리포트에 적힌 항목과 수량을 기준으로 합니다. 사진은 눌러서 크게 보실 수 있습니다.</p>}
+      {reports.length > 0 && <p className="text-micro text-muted-foreground">* 검수는 리포트에 적힌 항목과 수량을 기준으로 합니다. 사진은 눌러서 크게 보실 수 있습니다.</p>}
     </div>
   );
 }

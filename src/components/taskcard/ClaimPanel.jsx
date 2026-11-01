@@ -12,7 +12,7 @@ import { CLAIM_RESOLUTION, CLAIM_STATUS, claimDocCn } from '@/lib/claims';
 import { Input } from '@/components/ui/input';
 import { factoryWait, compensationPatch, compensationState, PROMISE_KINDS, FACTORY_REPLY_DAYS } from '@/lib/claimTracking';
 
-const sel = 'h-8 w-full rounded-md border bg-background px-2 text-xs';
+const sel = 'h-8 w-full rounded-md border bg-background px-2 text-caption';
 const fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' }) : '');
 
 // 보상 약속(재생산·다음 발주 할인)과 다음 주문 반영. 반영할 카드는 같은 고객사의 다른 카드에서 고른다
@@ -40,25 +40,25 @@ function CompensationEditor({ claim, card, user, resolution, onSaved }) {
   const state = compensationState({ ...claim, resolution });
   return (
     <div className="space-y-2 rounded-md border border-dashed p-2.5">
-      <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
+      <div className="flex flex-wrap items-center gap-1.5 text-micro font-semibold">
         <Gift className="h-3.5 w-3.5 text-primary" />보상 약속 · {CLAIM_RESOLUTION[resolution]}
         <Badge variant="outline" className={state === 'APPLIED' ? 'text-primary' : 'text-warning-text'}>{state === 'APPLIED' ? `반영됨 · ${c.applied_card_title || ''}` : '다음 주문 미반영'}</Badge>
       </div>
       <div className="grid gap-2 sm:grid-cols-[1fr_88px_2fr]">
-        <Input className="h-8 text-xs" type="number" min={0} placeholder="금액 (선택)" value={v.amount} onChange={(e) => setV((x) => ({ ...x, amount: e.target.value }))} />
+        <Input className="h-8 text-caption" type="number" min={0} placeholder="금액 (선택)" value={v.amount} onChange={(e) => setV((x) => ({ ...x, amount: e.target.value }))} />
         <select className={sel} value={v.currency} onChange={(e) => setV((x) => ({ ...x, currency: e.target.value }))}>{['KRW', 'USD', 'CNY'].map((k) => <option key={k}>{k}</option>)}</select>
-        <Input className="h-8 text-xs" placeholder="약속 내용 (예: 다음 발주 5% 할인, 불량 120개 재생산)" value={v.note} onChange={(e) => setV((x) => ({ ...x, note: e.target.value }))} />
+        <Input className="h-8 text-caption" placeholder="약속 내용 (예: 다음 발주 5% 할인, 불량 120개 재생산)" value={v.note} onChange={(e) => setV((x) => ({ ...x, note: e.target.value }))} />
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
-        <label className="space-y-1 text-[11px]"><span>반영한 다음 주문</span>
+        <label className="space-y-1 text-micro"><span>반영한 다음 주문</span>
           <select className={sel} value={v.applied_card_id} onChange={(e) => setV((x) => ({ ...x, applied_card_id: e.target.value }))}>
             <option value="">아직 반영 안 함</option>
             {cards.map((x) => <option key={x.id} value={x.id}>{x.title}</option>)}
           </select>
         </label>
-        <label className="space-y-1 text-[11px]"><span>반영 내용 (예: 견적 할인 줄, 도착 원가 조정)</span><Input className="h-8 text-xs" value={v.applied_note} disabled={!v.applied_card_id} onChange={(e) => setV((x) => ({ ...x, applied_note: e.target.value }))} /></label>
+        <label className="space-y-1 text-micro"><span>반영 내용 (예: 견적 할인 줄, 도착 원가 조정)</span><Input className="h-8 text-caption" value={v.applied_note} disabled={!v.applied_card_id} onChange={(e) => setV((x) => ({ ...x, applied_note: e.target.value }))} /></label>
       </div>
-      <div className="flex justify-end"><Button size="sm" variant="outline" className="h-7 text-xs" disabled={save.isPending} onClick={() => save.mutate()}>{save.isPending ? '저장 중…' : '보상 저장'}</Button></div>
+      <div className="flex justify-end"><Button size="sm" variant="outline" className="h-7 text-caption" disabled={save.isPending} onClick={() => save.mutate()}>{save.isPending ? '저장 중…' : '보상 저장'}</Button></div>
     </div>
   );
 }
@@ -104,28 +104,28 @@ function ClaimEditor({ claim, card, user, photos, spec, qc, onSaved }) {
   return (
     <li className="space-y-2.5 rounded-lg border p-3">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="min-w-0 flex-1 text-sm font-semibold">{claim.title}</p>
+        <p className="min-w-0 flex-1 text-body font-semibold">{claim.title}</p>
         <Badge variant="outline">{CLAIM_STATUS[claim.status || 'SUBMITTED']}</Badge>
-        <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={copyCn}><Copy className="h-3 w-3" />중국어 클레임 문서</Button>
-        <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={() => setCaseOpen(true)}><BookmarkPlus className="h-3 w-3" />사례로 남기기</Button>
+        <Button size="sm" variant="outline" className="h-7 gap-1 text-caption" onClick={copyCn}><Copy className="h-3 w-3" />중국어 클레임 문서</Button>
+        <Button size="sm" variant="ghost" className="h-7 gap-1 text-caption" onClick={() => setCaseOpen(true)}><BookmarkPlus className="h-3 w-3" />사례로 남기기</Button>
       </div>
       <CaseLogDialog open={caseOpen} onOpenChange={setCaseOpen} tenantId={card.tenant_id} cardId={card.id}
         initial={{ issue_case: claim.title, root_cause: [claim.description, f.factory_response].filter(Boolean).join('\n'), solution_parameter: f.resolution ? CLAIM_RESOLUTION[f.resolution] : '', severity: 'HIGH' }} />
-      <p className="whitespace-pre-wrap text-xs">{claim.description}</p>
-      {claim.description_cn && <p className="whitespace-pre-wrap text-xs text-muted-foreground">{claim.description_cn}</p>}
-      <p className="text-[11px] text-muted-foreground">{fmtDate(claim.submitted_at || claim.created_date)} {claim.submitted_by_name} 접수{claim.defect_qty != null ? ` · 불량 ${claim.defect_qty}개${claim.received_qty ? ` / ${claim.received_qty}개` : ''}` : ''}{claim.lot_note ? ` · ${claim.lot_note}` : ''}</p>
+      <p className="whitespace-pre-wrap text-caption">{claim.description}</p>
+      {claim.description_cn && <p className="whitespace-pre-wrap text-caption text-muted-foreground">{claim.description_cn}</p>}
+      <p className="text-micro text-muted-foreground">{fmtDate(claim.submitted_at || claim.created_date)} {claim.submitted_by_name} 접수{claim.defect_qty != null ? ` · 불량 ${claim.defect_qty}개${claim.received_qty ? ` / ${claim.received_qty}개` : ''}` : ''}{claim.lot_note ? ` · ${claim.lot_note}` : ''}</p>
       {claim.factory_requested_at && (
-        <p className={`flex items-center gap-1 text-[11px] ${wait?.overdue ? 'font-medium text-warning-text' : 'text-muted-foreground'}`}>
+        <p className={`flex items-center gap-1 text-micro ${wait?.overdue ? 'font-medium text-warning-text' : 'text-muted-foreground'}`}>
           <Clock className="h-3 w-3" />공장에 보냄 {fmtDate(claim.factory_requested_at)}
           {wait ? ` · 회신 대기 ${wait.business}영업일${wait.overdue ? ` (기한 ${FACTORY_REPLY_DAYS}영업일 지남 — 고객 화면에도 '공장 회신 대기 ${wait.days}일'로 보입니다)` : ''}` : claim.factory_responded_at ? ` · 회신 기록 ${fmtDate(claim.factory_responded_at)}` : ''}
         </p>
       )}
-      {!!mine.length && <div className="flex flex-wrap gap-1">{mine.map((p) => <span key={p.id} className="flex items-center rounded-md border pl-2 text-[11px]">{p.file_name}<DocumentOpenButton document={p} /></span>)}</div>}
+      {!!mine.length && <div className="flex flex-wrap gap-1">{mine.map((p) => <span key={p.id} className="flex items-center rounded-md border pl-2 text-micro">{p.file_name}<DocumentOpenButton document={p} /></span>)}</div>}
       <div className="grid gap-2 border-t pt-2.5 sm:grid-cols-2">
-        <label className="space-y-1 text-[11px]"><span>처리 단계</span><select className={sel} value={f.status} onChange={set('status')}>{Object.entries(CLAIM_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-        <label className="space-y-1 text-[11px]"><span>처리 방법</span><select className={sel} value={f.resolution} onChange={set('resolution')}><option value="">미정</option>{Object.entries(CLAIM_RESOLUTION).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-        <label className="space-y-1 text-[11px]"><span>고객 안내 (고객에게 보임)</span><Textarea rows={2} className="text-xs" value={f.client_message} onChange={set('client_message')} placeholder="예: 공장이 원인을 확인했고, 불량 120개는 다음 선적에 재생산분으로 보냅니다." /></label>
-        <label className="space-y-1 text-[11px]"><span>공장 회신 (내부)</span><Textarea rows={2} className="text-xs" value={f.factory_response} onChange={set('factory_response')} placeholder="공장 원인 분석·대책" /></label>
+        <label className="space-y-1 text-micro"><span>처리 단계</span><select className={sel} value={f.status} onChange={set('status')}>{Object.entries(CLAIM_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+        <label className="space-y-1 text-micro"><span>처리 방법</span><select className={sel} value={f.resolution} onChange={set('resolution')}><option value="">미정</option>{Object.entries(CLAIM_RESOLUTION).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+        <label className="space-y-1 text-micro"><span>고객 안내 (고객에게 보임)</span><Textarea rows={2} className="text-caption" value={f.client_message} onChange={set('client_message')} placeholder="예: 공장이 원인을 확인했고, 불량 120개는 다음 선적에 재생산분으로 보냅니다." /></label>
+        <label className="space-y-1 text-micro"><span>공장 회신 (내부)</span><Textarea rows={2} className="text-caption" value={f.factory_response} onChange={set('factory_response')} placeholder="공장 원인 분석·대책" /></label>
       </div>
       <div className="flex justify-end"><Button size="sm" disabled={!dirty || save.isPending} onClick={() => save.mutate()}>{save.isPending ? '저장 중…' : '저장'}</Button></div>
       {PROMISE_KINDS.includes(claim.resolution) && <CompensationEditor claim={claim} card={card} user={user} resolution={claim.resolution} onSaved={onSaved} />}
@@ -147,10 +147,10 @@ export default function ClaimPanel({ card, user }) {
     <section className="mt-6 space-y-3 rounded-xl border p-3">
       <div className="flex items-center gap-2">
         <AlertOctagon className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-semibold">고객 불량 신고</h3>
+        <h3 className="text-body font-semibold">고객 불량 신고</h3>
         {open > 0 && <Badge className="border-0 bg-destructive/10 text-destructive">처리 중 {open}</Badge>}
       </div>
-      {!has ? <p className="text-xs text-muted-foreground">고객이 포털 검수 탭에서 불량을 신고하면 여기에 표시됩니다.</p> : (
+      {!has ? <p className="text-caption text-muted-foreground">고객이 포털 검수 탭에서 불량을 신고하면 여기에 표시됩니다.</p> : (
         <ul className="space-y-2">
           {claims.map((c) => <ClaimEditor key={c.id} claim={c} card={card} user={user} photos={photos} spec={specs[0]} qc={reports.find((r) => r.inspection_type !== 'SAMPLE') || reports[0]} onSaved={() => qc.invalidateQueries({ queryKey: key })} />)}
         </ul>

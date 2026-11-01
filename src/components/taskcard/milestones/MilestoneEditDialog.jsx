@@ -22,12 +22,12 @@ export default function MilestoneEditDialog({ open, milestone, onClose, onSave }
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>{tr(milestone ? '단계 수정' : '단계 추가')}</DialogTitle><DialogDescription>{tr('단계 이름·일정·공개 여부를 바꿉니다.')}</DialogDescription></DialogHeader>
         <div className="space-y-3">
-          <div><Label className="text-xs">{tr('단계 이름')}</Label><Input value={f.label || ''} onChange={(e) => set('label', e.target.value)} /></div>
-          <div><Label className="text-xs">{tr('중국어 이름')}</Label><Input value={f.label_cn || ''} onChange={(e) => set('label_cn', e.target.value)} /></div>
-          <div><Label className="text-xs">{tr('계획일')}</Label><Input type="date" value={f.planned_date || ''} onChange={(e) => set('planned_date', e.target.value)} /></div>
-          {milestone?.status === 'done' && <div><Label className="text-xs">{tr('실제 완료일')}</Label><Input type="date" value={f.actual_date || ''} onChange={(e) => set('actual_date', e.target.value)} /></div>}
-          <label className="flex items-center justify-between text-sm">{tr('고객에게 공개')}<Switch checked={!!f.client_visible} onCheckedChange={(v) => set('client_visible', v)} /></label>
-          <label className="flex items-center justify-between text-sm">{tr('완료 시 QC 보고서 필요')}<Switch checked={!!f.needs_qc_report} onCheckedChange={(v) => set('needs_qc_report', v)} /></label>
+          <div><Label className="text-caption">{tr('단계 이름')}</Label><Input value={f.label || ''} onChange={(e) => set('label', e.target.value)} /></div>
+          <div><Label className="text-caption">{tr('중국어 이름')}</Label><Input value={f.label_cn || ''} onChange={(e) => set('label_cn', e.target.value)} /></div>
+          <div><Label className="text-caption">{tr('계획일')}</Label><Input type="date" value={f.planned_date || ''} onChange={(e) => set('planned_date', e.target.value)} /></div>
+          {milestone?.status === 'done' && <div><Label className="text-caption">{tr('실제 완료일')}</Label><Input type="date" value={f.actual_date || ''} onChange={(e) => set('actual_date', e.target.value)} /></div>}
+          <label className="flex items-center justify-between text-body">{tr('고객에게 공개')}<Switch checked={!!f.client_visible} onCheckedChange={(v) => set('client_visible', v)} /></label>
+          <label className="flex items-center justify-between text-body">{tr('완료 시 QC 보고서 필요')}<Switch checked={!!f.needs_qc_report} onCheckedChange={(v) => set('needs_qc_report', v)} /></label>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{tr('취소')}</Button>

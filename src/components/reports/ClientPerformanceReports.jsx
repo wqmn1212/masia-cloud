@@ -51,9 +51,9 @@ function ReportEditor({ report, companyName, canEdit, onChanged, onDeleted }) {
   return (
     <div className="space-y-4 rounded-xl border p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm font-semibold">{report.period_label} 리포트</p>
+        <p className="text-body font-semibold">{report.period_label} 리포트</p>
         <Badge className={`border-0 ${published ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>{published ? '발행됨' : '초안'}</Badge>
-        {report.generated_at && <span className="text-[11px] text-muted-foreground">집계 {new Date(report.generated_at).toLocaleString('ko-KR')}</span>}
+        {report.generated_at && <span className="text-micro text-muted-foreground">집계 {new Date(report.generated_at).toLocaleString('ko-KR')}</span>}
         <div className="ml-auto flex flex-wrap gap-1.5">
           {editable && <Button size="sm" variant="ghost" className="h-8 gap-1 text-muted-foreground" disabled={!!busy} onClick={remove}><Trash2 className="h-3.5 w-3.5" />초안 지우기</Button>}
           {editable && <Button size="sm" variant="outline" className="h-8 gap-1" disabled={!!busy} onClick={rebuild}>{busy === 'build' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}다시 집계</Button>}
@@ -62,10 +62,10 @@ function ReportEditor({ report, companyName, canEdit, onChanged, onDeleted }) {
       </div>
       {editable && (
         <>
-          <div><Label className="text-xs">주요 성과 (발행에 필요. 자동으로 쓴 초안을 고쳐 쓰세요)</Label><Textarea rows={5} value={text.highlights} onChange={(e) => setText((t) => ({ ...t, highlights: e.target.value }))} /></div>
-          <div><Label className="text-xs">다음 기간 제안</Label><Textarea rows={3} value={text.next_plan} placeholder="예: 라벨기 재주문은 12월 첫 주 발주하면 설 연휴 전에 받을 수 있습니다. 포장재 단가 재협상을 제안드립니다." onChange={(e) => setText((t) => ({ ...t, next_plan: e.target.value }))} /></div>
-          <p className="text-[11px] text-muted-foreground">아래 미리보기에서 눈 모양 단추로 고객에게 보이지 않을 숫자를 뺄 수 있습니다. 원가·마진·공장 이름은 처음부터 들어가지 않습니다.</p>
-          {hidden.length > 0 && <p className="text-[11px] text-amber-700 dark:text-amber-400">고객 화면에서 뺀 숫자가 있습니다. 주요 성과 문장에 같은 숫자가 남아 있으면 함께 지우세요.</p>}
+          <div><Label className="text-caption">주요 성과 (발행에 필요. 자동으로 쓴 초안을 고쳐 쓰세요)</Label><Textarea rows={5} value={text.highlights} onChange={(e) => setText((t) => ({ ...t, highlights: e.target.value }))} /></div>
+          <div><Label className="text-caption">다음 기간 제안</Label><Textarea rows={3} value={text.next_plan} placeholder="예: 라벨기 재주문은 12월 첫 주 발주하면 설 연휴 전에 받을 수 있습니다. 포장재 단가 재협상을 제안드립니다." onChange={(e) => setText((t) => ({ ...t, next_plan: e.target.value }))} /></div>
+          <p className="text-micro text-muted-foreground">아래 미리보기에서 눈 모양 단추로 고객에게 보이지 않을 숫자를 뺄 수 있습니다. 원가·마진·공장 이름은 처음부터 들어가지 않습니다.</p>
+          {hidden.length > 0 && <p className="text-micro text-warning-text">고객 화면에서 뺀 숫자가 있습니다. 주요 성과 문장에 같은 숫자가 남아 있으면 함께 지우세요.</p>}
         </>
       )}
       <div className="rounded-lg border bg-background p-4">
@@ -77,7 +77,7 @@ function ReportEditor({ report, companyName, canEdit, onChanged, onDeleted }) {
           <Button className="gap-1.5" disabled={!!busy || !text.highlights.trim()} onClick={publish}>{busy === 'publish' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}고객에게 발행</Button>
         </div>
       )}
-      {published && <p className="text-xs text-muted-foreground">{report.published_by_name} · {report.published_at ? new Date(report.published_at).toLocaleString('ko-KR') : ''} 발행</p>}
+      {published && <p className="text-caption text-muted-foreground">{report.published_by_name} · {report.published_at ? new Date(report.published_at).toLocaleString('ko-KR') : ''} 발행</p>}
     </div>
   );
 }
@@ -122,37 +122,37 @@ export default function ClientPerformanceReports({ companyId, companyName }) {
         <div className="flex items-start gap-2">
           <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <div>
-            <p className="text-sm font-semibold">고객 성과 리포트</p>
-            <p className="text-xs text-muted-foreground">분기·반기·연간 단위로 진행 품목, 견적 속도, 검토한 공장 수, 비교 견적 절감률, 일정 준수, 검수·불량·보상을 숫자로 정리합니다. 재계약·추가 품목 영업 자료로 쓰세요.</p>
+            <p className="text-body font-semibold">고객 성과 리포트</p>
+            <p className="text-caption text-muted-foreground">분기·반기·연간 단위로 진행 품목, 견적 속도, 검토한 공장 수, 비교 견적 절감률, 일정 준수, 검수·불량·보상을 숫자로 정리합니다. 재계약·추가 품목 영업 자료로 쓰세요.</p>
           </div>
         </div>
         {canEdit && (
           <div className="mt-3 flex flex-wrap items-end gap-2">
-            <label className="text-xs">기간
-              <select className="mt-1 block h-9 rounded-md border bg-background px-2 text-sm" value={preset} onChange={(e) => setPreset(e.target.value)}>
+            <label className="text-caption">기간
+              <select className="mt-1 block h-9 rounded-md border bg-background px-2 text-body" value={preset} onChange={(e) => setPreset(e.target.value)}>
                 {presets.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
                 <option value="custom">직접 고르기</option>
               </select>
             </label>
             {preset === 'custom' && (
               <>
-                <label className="text-xs">시작<Input type="date" className="mt-1 h-9 w-40" value={custom.start} onChange={(e) => setCustom((c) => ({ ...c, start: e.target.value }))} /></label>
-                <label className="text-xs">끝<Input type="date" className="mt-1 h-9 w-40" value={custom.end} onChange={(e) => setCustom((c) => ({ ...c, end: e.target.value }))} /></label>
+                <label className="text-caption">시작<Input type="date" className="mt-1 h-9 w-40" value={custom.start} onChange={(e) => setCustom((c) => ({ ...c, start: e.target.value }))} /></label>
+                <label className="text-caption">끝<Input type="date" className="mt-1 h-9 w-40" value={custom.end} onChange={(e) => setCustom((c) => ({ ...c, end: e.target.value }))} /></label>
               </>
             )}
             <Button variant="outline" disabled={building || !range[0] || !range[1] || range[0] > range[1]} onClick={build} className="gap-1.5">{building && <Loader2 className="h-4 w-4 animate-spin" />}초안 만들기</Button>
           </div>
         )}
       </div>
-      {isLoading ? <p className="py-4 text-center text-sm text-muted-foreground">불러오는 중…</p> : (
+      {isLoading ? <p className="py-4 text-center text-body text-muted-foreground">불러오는 중…</p> : (
         <div className="flex flex-wrap gap-1.5">
           {reports.map((r) => (
             <button key={r.id} type="button" onClick={() => setOpenId(r.id)} aria-pressed={openId === r.id}
-              className={`rounded-full border px-3 py-1 text-xs ${openId === r.id ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-muted'}`}>
+              className={`rounded-full border px-3 py-1 text-caption ${openId === r.id ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-muted'}`}>
               {r.period_label} · {r.status === 'PUBLISHED' ? '발행됨' : '초안'}
             </button>
           ))}
-          {!reports.length && <p className="text-sm text-muted-foreground">아직 리포트가 없습니다.{canEdit ? ' 기간을 고르고 초안을 만드세요.' : ''}</p>}
+          {!reports.length && <p className="text-body text-muted-foreground">아직 리포트가 없습니다.{canEdit ? ' 기간을 고르고 초안을 만드세요.' : ''}</p>}
         </div>
       )}
       {open && <ReportEditor report={open} companyName={companyName} canEdit={canEdit} onChanged={changed} onDeleted={deleted} />}

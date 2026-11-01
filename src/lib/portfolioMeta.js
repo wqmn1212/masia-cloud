@@ -26,8 +26,8 @@ export const PORTFOLIO_TYPES = [
 
 export const PUBLISH_STATUS = {
   draft: { label: '초안', className: 'bg-muted text-muted-foreground' },
-  review: { label: '검토 요청', className: 'bg-amber-100 text-amber-700' },
-  published: { label: '발행됨', className: 'bg-emerald-100 text-emerald-700' },
+  review: { label: '검토 요청', className: 'bg-warning/15 text-warning-text' },
+  published: { label: '발행됨', className: 'bg-success/15 text-success-text' },
 };
 
 export const statusOf = (item) => item.publish_status || (item.is_published ? 'published' : 'draft');

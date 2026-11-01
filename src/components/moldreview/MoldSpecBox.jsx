@@ -31,7 +31,7 @@ export default function MoldSpecBox({ spec }) {
               type="button"
               aria-pressed={lang === v}
               onClick={() => setLang(v)}
-              className={`rounded-md px-2.5 py-1 text-xs font-semibold ${lang === v ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`rounded-md px-2.5 py-1 text-caption font-semibold ${lang === v ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}`}
             >
               {label}
             </button>
@@ -42,7 +42,7 @@ export default function MoldSpecBox({ spec }) {
           {copied ? '복사했습니다' : '지시서 복사'}
         </Button>
       </div>
-      <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-lg border bg-muted/50 p-3 font-mono text-[11.5px] leading-relaxed text-foreground/80">
+      <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-lg border bg-muted/50 p-3 font-mono text-micro leading-relaxed text-foreground/80">
         {text}
       </pre>
     </div>

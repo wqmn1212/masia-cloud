@@ -14,10 +14,10 @@ export default function ChinaHolidayNotice() {
   if (!holidays.length) return null;
   return (
     <Card className="p-5">
-      <h2 className="text-sm font-semibold flex items-center gap-1.5"><CalendarOff className="w-4 h-4 text-primary" />중국 휴무 안내 (90일 이내)</h2>
+      <h2 className="text-body font-semibold flex items-center gap-1.5"><CalendarOff className="w-4 h-4 text-primary" />중국 휴무 안내 (90일 이내)</h2>
       <div className="mt-3 divide-y">
         {holidays.map((h) => (
-          <div key={h.id} className="py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <div key={h.id} className="py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-body">
             <span className="font-medium">{h.name}</span>
             <span>{h.start_date} ~ {h.end_date}</span>
             {h.factory_start !== h.start_date && <span className="text-muted-foreground">공장 휴무 예상 {h.factory_start} ~ {h.factory_end}</span>}
@@ -25,7 +25,7 @@ export default function ChinaHolidayNotice() {
           </div>
         ))}
       </div>
-      <p className="text-xs text-muted-foreground mt-2">공장 휴무와 발주 마감일은 추정치이며 공장 사정에 따라 달라질 수 있습니다.</p>
+      <p className="text-caption text-muted-foreground mt-2">공장 휴무와 발주 마감일은 추정치이며 공장 사정에 따라 달라질 수 있습니다.</p>
     </Card>
   );
 }

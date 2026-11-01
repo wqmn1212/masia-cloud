@@ -49,8 +49,8 @@ export default function LeadProvisionPanel({ lead }) {
     <div className="border-t pt-4 space-y-2.5">
       <div className="flex items-center gap-2">
         <UserPlus className="w-4 h-4 text-primary" />
-        <span className="text-sm font-semibold">고객사 팀 발급 및 초대</span>
-        {lead.invitation_sent && <Badge variant="secondary" className="text-[10px]">발급됨</Badge>}
+        <span className="text-body font-semibold">고객사 팀 발급 및 초대</span>
+        {lead.invitation_sent && <Badge variant="secondary" className="text-micro">발급됨</Badge>}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {emails.map((e) => (
@@ -92,10 +92,10 @@ export default function LeadProvisionPanel({ lead }) {
             {resetPassword.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <KeyRound className="w-3.5 h-3.5" />}
             비밀번호 재설정 메일 발송
           </Button>
-          <span className="text-[11px] text-muted-foreground">고객 이메일({lead.email})로 재설정 링크가 발송됩니다</span>
+          <span className="text-micro text-muted-foreground">고객 이메일({lead.email})로 재설정 링크가 발송됩니다</span>
         </div>
       )}
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-micro text-muted-foreground">
         고객은 초대 메일의 링크로 가입하며 비밀번호는 본인이 설정합니다. 기존 계정은 기존 로그인 방식이나 비밀번호 재설정 링크를 사용합니다. 관리자는 비밀번호를 보관하지 않습니다.
         이메일 로그인을 사용하려면 대시보드의 인증 설정에서 이메일 및 비밀번호를 활성화해야 합니다.
         팀은 최초 1회만 생성되며 이후에는 같은 팀에 담당자 초대만 추가됩니다 (기본 좌석 2명).

@@ -38,7 +38,7 @@ export default function QuotationPublishPanel({ card }) {
     <section className="mb-4 space-y-2 rounded-xl border p-3">
       <div className="flex items-center gap-2">
         <Send className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-semibold">견적 승인 · 고객 발송</h3>
+        <h3 className="text-body font-semibold">견적 승인 · 고객 발송</h3>
       </div>
       <p className="text-label text-muted-foreground">
         {approver ? '"승인하고 보내기"를 누르면 확인 항목을 본 뒤 고객 포털에 공개하고 고객에게 알림·메일을 보냅니다.' : '견적을 다 만들면 "검토 요청"을 누르세요. 팀 관리자가 확인한 뒤 고객에게 보냅니다.'}
@@ -51,7 +51,7 @@ export default function QuotationPublishPanel({ card }) {
           <div key={q.id} className="space-y-1 rounded-lg bg-muted/30 px-3 py-2">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-medium">{q.quote_title || q.product_name || '견적서'}</p>
+                <p className="truncate text-caption font-medium">{q.quote_title || q.product_name || '견적서'}</p>
                 <p className="text-micro text-muted-foreground">
                   {published
                     ? `고객에게 보냄 ${ymd(q.client_published_at)}${q.approved_by_name ? ` · 승인 ${q.approved_by_name}` : ''}${q.client_accepted_at ? ' · 고객 진행 요청' : ''}`

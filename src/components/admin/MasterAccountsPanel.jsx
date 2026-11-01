@@ -31,7 +31,7 @@ export default function MasterAccountsPanel() {
   const accounts = data?.accounts || [];
   return (
     <Card>
-      <CardHeader><CardTitle className="flex items-center gap-2 text-base"><UserCog className="h-4 w-4" />전체 계정 관리 ({accounts.length})</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="flex items-center gap-2 text-title"><UserCog className="h-4 w-4" />전체 계정 관리 ({accounts.length})</CardTitle></CardHeader>
       <CardContent className="p-0">
         {isLoading ? <Loader2 className="mx-auto my-8 h-5 w-5 animate-spin" /> : (
           <AccountDirectory accounts={accounts} tenants={data?.tenants || []} disabled={toggle.isPending}
@@ -39,7 +39,7 @@ export default function MasterAccountsPanel() {
         )}
       </CardContent>
       <ConfirmTypeDialog open={!!target} onOpenChange={(o) => !o && setTarget(null)} title="계정 삭제" expected={target?.email} onConfirm={(v) => remove.mutate(v)} pending={remove.isPending}>
-        <div className="space-y-2 rounded-md border border-red-200 bg-red-50 p-3 text-red-800">
+        <div className="space-y-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-destructive">
           <p>접근만 막으려면 삭제 대신 <b>비활성</b> 스위치를 사용하세요.</p>
           <p>삭제하면 계정과 대기 중인 초대가 함께 사라지며 되돌릴 수 없습니다. 업무 기록의 담당자 이름 표기는 그대로 남습니다.</p>
         </div>

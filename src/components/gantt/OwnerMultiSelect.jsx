@@ -9,12 +9,12 @@ export default function OwnerMultiSelect({ value = [], team = [], onChange, plac
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" className="h-7 w-full rounded-md border border-input text-[11px] px-1 text-left truncate">{names.join(', ') || placeholder}</button>
+        <button type="button" className="h-7 w-full rounded-md border border-input text-micro px-1 text-left truncate">{names.join(', ') || placeholder}</button>
       </PopoverTrigger>
       <PopoverContent className="w-56 p-2" align="end">
-        {team.length === 0 && <p className="text-xs text-muted-foreground p-1">팀 구성원이 없습니다.</p>}
+        {team.length === 0 && <p className="text-caption text-muted-foreground p-1">팀 구성원이 없습니다.</p>}
         {team.map((u) => (
-          <label key={u.id} className="flex items-center gap-2 px-1 py-1.5 rounded hover:bg-muted cursor-pointer text-xs">
+          <label key={u.id} className="flex items-center gap-2 px-1 py-1.5 rounded hover:bg-muted cursor-pointer text-caption">
             <Checkbox checked={value.includes(u.id)} onCheckedChange={() => toggle(u.id)} />{u.name}
           </label>
         ))}
