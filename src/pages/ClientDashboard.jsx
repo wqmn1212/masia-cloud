@@ -13,6 +13,7 @@ import CompanyFilesLibrary from '@/components/files/CompanyFilesLibrary';
 import CompanyBankDocuments from '@/components/files/CompanyBankDocuments';
 import ClientQuotationsPanel from '@/components/client/ClientQuotationsPanel';
 import ClientTasksPanel from '@/components/client/ClientTasksPanel';
+import ClientPerformanceReports from '@/components/reports/ClientPerformanceReports';
 
 const STATUS_FILTERS = [
   { key: 'ALL',         label: '전체' },
@@ -199,12 +200,13 @@ export default function ClientDashboard() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="cards" className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+      <Tabs defaultValue={new URLSearchParams(window.location.search).get('tab') === 'report' ? 'report' : 'cards'} className="w-full">
+        <TabsList className="grid grid-cols-3 sm:grid-cols-5 h-auto w-full max-w-3xl">
           <TabsTrigger value="cards">태스크 카드 ({cards.length})</TabsTrigger>
           <TabsTrigger value="files">파일 관리 ({clientAttachments.length})</TabsTrigger>
           <TabsTrigger value="quotations">견적 ({clientQuotations.length})</TabsTrigger>
           <TabsTrigger value="tasks">세부 업무 ({clientTaskItems.length})</TabsTrigger>
+          <TabsTrigger value="report">성과 리포트</TabsTrigger>
         </TabsList>
 
         <TabsContent value="cards" className="space-y-4 mt-4">
@@ -273,6 +275,10 @@ export default function ClientDashboard() {
             cardsById={cardsById}
             onCardClick={setSelectedCard}
           />
+        </TabsContent>
+
+        <TabsContent value="report" className="mt-4">
+          <ClientPerformanceReports companyId={client.id} companyName={client.company_name} />
         </TabsContent>
       </Tabs>
 

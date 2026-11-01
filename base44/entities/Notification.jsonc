@@ -38,6 +38,7 @@
         "qc_decision",
         "agreement_renewal",
         "monthly_report",
+        "performance_report",
         "spec_sent",
         "spec_decision",
         "shipment_updated",

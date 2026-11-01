@@ -39,6 +39,7 @@ export const NOTIFICATION_META = {
   qc_decision: { label: '고객 출고 판단', icon: '✅' },
   agreement_renewal: { label: '계약 만료 임박', icon: '📆' },
   monthly_report: { label: '월간 리포트', icon: '📊' },
+  performance_report: { label: '성과 리포트', icon: '📈' },
   spec_sent: { label: '품질 기준서', icon: '📐' },
   spec_decision: { label: '기준서 고객 판단', icon: '📝' },
   shipment_updated: { label: '선적 상태 변경', icon: '🚢' },
