@@ -9,6 +9,7 @@ import ClientCardModal from '@/components/client/ClientCardModal';
 import ChinaHolidayNotice from '@/components/client/ChinaHolidayNotice';
 import ClientTodoCard from '@/components/client/ClientTodoCard';
 import ClientContractCard from '@/components/client/ClientContractCard';
+import ClientPerformanceCard from '@/components/client/ClientPerformanceCard';
 import ClientSignatureCard from '@/components/client/signature/ClientSignatureCard';
 import SignatureDialog from '@/components/client/signature/SignatureDialog';
 
@@ -37,6 +38,7 @@ export default function ClientPortalDashboard() {
           <ClientStatusSummary cards={cards} />
           <ClientOrderBoard cards={cards} overview={overview.data} loading={overview.isLoading} onOpen={open} />
           <ClientSignatureCard onOpen={setSignId} />
+          <ClientPerformanceCard />
           <ClientContractCard />
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="lg:col-span-2"><ChinaHolidayNotice /></div>

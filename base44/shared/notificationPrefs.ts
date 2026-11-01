@@ -5,7 +5,7 @@
 export const EMAIL_BUNDLES: Record<string, string[]> = {
   decision: ['comparison_published', 'spec_sent', 'qc_published', 'dest_cost_sent', 'contract_sent', 'file_review_requested', 'client_approval_requested', 'client_approval_decided'],
   payment: ['payment_requested', 'payment_due', 'payment_request_canceled', 'payment_confirmed', 'factory_account_changed', 'factory_account_verified'],
-  progress: ['card_moved', 'card_shared', 'file_shared', 'schedule_changed', 'chat_message', 'quote_published', 'holiday_conflict', 'holiday_notice', 'monthly_report', 'reorder_due'],
+  progress: ['card_moved', 'card_shared', 'file_shared', 'schedule_changed', 'chat_message', 'quote_published', 'holiday_conflict', 'holiday_notice', 'monthly_report', 'performance_report', 'reorder_due'],
   shipment: ['shipment_updated', 'landed_cost_confirmed'],
   quality: ['claim_updated'],
 };

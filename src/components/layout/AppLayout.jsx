@@ -10,6 +10,8 @@ import { base44 } from '@/api/base44Client';
 import AccountInactive from '@/components/AccountInactive';
 import AccessDenied from '@/components/AccessDenied';
 import { canAccessPath } from '@/lib/menuPermissions';
+import { getViewCompanyId, isDemoView } from '@/lib/clientView';
+import ClientViewBanner from '@/components/layout/ClientViewBanner';
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -56,6 +58,10 @@ export default function AppLayout() {
     return <AccountInactive teamSuspended />;
   }
 
+  // 직원의 고객 포털 열람 (마스터: 모든 고객사, 팀 관리자·팀원: 데모 고객사만 — 서버도 같은 규칙으로 막는다)
+  const viewingClient = ['master', 'service', 'sub'].includes(user?.account_tier) && location.pathname.startsWith('/client/') && !!getViewCompanyId()
+    && (user.account_tier === 'master' || isDemoView());
+
   return (
     <LanguageProvider user={user}>
       <SearchProvider>
@@ -73,7 +79,8 @@ export default function AppLayout() {
         )}>
           <TopBar onMenuClick={() => setMobileOpen(true)} user={user} />
           <main className="p-3 md:p-6">
-            {canAccessPath(user, location.pathname) ? (
+            {viewingClient && <ClientViewBanner />}
+            {canAccessPath(user, location.pathname) || viewingClient ? (
               <Suspense fallback={<div className="flex justify-center py-20"><div className="w-6 h-6 border-4 border-border border-t-foreground rounded-full animate-spin" /></div>}>
                 <Outlet />
               </Suspense>

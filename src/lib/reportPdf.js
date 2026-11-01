@@ -4,6 +4,7 @@ import { REPORT_METRICS, monthLabel } from '@/lib/agreements';
 import { SEVERITY, SPEC_DECISION } from '@/lib/qualitySpec';
 import { MODES, SHIPMENT_STATUS } from '@/lib/shipments';
 import { fileDate, safeName } from '@/lib/csv';
+import { perfSections, wonText } from '@/lib/performanceReport';
 
 // 고객 사내 보고용 PDF (텍스트 기반, 한글 폰트 포함). 고객에게 보이는 데이터만 받아서 그린다.
 const BLUE = [37, 99, 235], INK = [15, 23, 42], MUTED = [100, 116, 139], LINE = [229, 231, 235], SOFT = [241, 245, 249];
@@ -115,6 +116,30 @@ export async function generateMonthlyReportPDF(report, companyName = '') {
   }
   if (report.next_plan) { heading(d, '다음 달 계획'); paragraph(d, report.next_plan); }
   finish(d, `AEGIS_MonthlyReport_${companyName ? `${safeName(companyName)}_` : ''}${report.month}.pdf`);
+}
+
+// 고객 성과 리포트. hidden: 담당자가 뺀 숫자·구역 (고객 응답은 이미 지워져 와서 비어 있다)
+export async function generatePerformanceReportPDF(report, companyName = '', hidden = []) {
+  const off = new Set(hidden);
+  const d = await createDoc(`${report.period_label} 성과 리포트`, [companyName, `${report.period_start} ~ ${report.period_end}`].filter(Boolean).join(' · '));
+  if (report.highlights) { heading(d, '주요 성과'); paragraph(d, report.highlights); }
+  for (const s of perfSections(report.metrics || {}, hidden)) {
+    d.ensure(36); // 제목만 페이지 끝에 남지 않게 첫 줄 숫자 칸까지 함께
+    heading(d, s.title);
+    metricGrid(d, s.items.map((it) => ({ label: it.label, value: it.value, note: it.note })));
+  }
+  if (report.trends?.length && !off.has('section_trends')) {
+    heading(d, '재주문 개당 원가 변화');
+    table(d, [{ label: '상품', width: 60 }, { label: '처음 주문', width: 45 }, { label: '이번 주문', width: 45 }, { label: '변화', width: 30, align: 'right' }],
+      report.trends.map((t) => [t.product_name || '상품', `${t.first_date} ${wonText(t.first_krw)}`, `${t.last_date} ${wonText(t.last_krw)}`, `${t.change_pct > 0 ? '+' : ''}${t.change_pct}%`]));
+  }
+  if (report.products?.length && !off.has('section_products')) {
+    heading(d, '품목별 요약');
+    table(d, [{ label: '품목', width: 56 }, { label: '단계', width: 24 }, { label: '견적', width: 30 }, { label: '검수', width: 24 }, { label: '도착', width: 22 }, { label: '개당 도착 원가', width: 24, align: 'right' }],
+      report.products.map((p) => [p.title, p.status, p.quotes_sent ? `${p.quotes_sent}건${p.first_quote_days != null ? ` · ${p.first_quote_days}일` : ''}` : '-', p.qc || '-', p.arrived || '-', p.per_unit_krw ? wonText(p.per_unit_krw) : '-']));
+  }
+  if (report.next_plan) { heading(d, '다음 기간 제안'); paragraph(d, report.next_plan); }
+  finish(d, `AEGIS_PerformanceReport_${companyName ? `${safeName(companyName)}_` : ''}${report.period_start}_${report.period_end}.pdf`);
 }
 
 // detail = getClientCardDetail 응답 (고객에게 공개된 데이터만 들어 있다)

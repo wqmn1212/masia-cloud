@@ -1,0 +1,188 @@
+{
+  "name": "PerformanceReport",
+  "type": "object",
+  "required": [
+    "company_id",
+    "period_start",
+    "period_end"
+  ],
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac Company ID"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac \uc774\ub984 (\ub9cc\ub4e0 \uc2dc\uc810)"
+    },
+    "period_start": {
+      "type": "string",
+      "description": "\uae30\uac04 \uc2dc\uc791 YYYY-MM-DD (\ud55c\uad6d \ub0a0\uc9dc)"
+    },
+    "period_end": {
+      "type": "string",
+      "description": "\uae30\uac04 \ub05d YYYY-MM-DD (\ud55c\uad6d \ub0a0\uc9dc)"
+    },
+    "period_label": {
+      "type": "string",
+      "description": "\uae30\uac04 \uc774\ub984 (\uc608: 2026\ub144 3\ubd84\uae30)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "PUBLISHED"
+      ],
+      "default": "DRAFT",
+      "description": "\ucd08\uc548 / \uace0\uac1d\uc5d0\uac8c \ubc1c\ud589"
+    },
+    "metrics": {
+      "type": "object",
+      "description": "\uc790\ub3d9 \uc9d1\uacc4 \uc22b\uc790 (\uace0\uac1d\uc5d0\uac8c \ubcf4\uc5ec\ub3c4 \ub418\ub294 \ube44\uc728\u00b7\uac1c\uc218\ub9cc. \uc6d0\uac00\u00b7\ub9c8\uc9c4\u00b7\uacf5\uc7a5 \uc774\ub984 \uc5c6\uc74c)"
+    },
+    "trends": {
+      "type": "array",
+      "description": "\uac19\uc740 \uc0c1\ud488 \uc7ac\uc8fc\ubb38 \ub54c \uac1c\ub2f9 \ub3c4\ucc29 \uc6d0\uac00 \ubcc0\ud654 [{product_name, first_date, last_date, first_krw, last_krw, change_pct}]",
+      "items": {
+        "type": "object"
+      }
+    },
+    "products": {
+      "type": "array",
+      "description": "\ud488\ubaa9\ubcc4 \uc694\uc57d [{card_id, title, status, quotes_sent, first_quote_days, qc, arrived, per_unit_krw}]",
+      "items": {
+        "type": "object"
+      }
+    },
+    "hidden_metrics": {
+      "type": "array",
+      "description": "\ub2f4\ub2f9\uc790\uac00 \uace0\uac1d \ud654\uba74\uc5d0\uc11c \ube80 \uc22b\uc790 key",
+      "items": {
+        "type": "string"
+      }
+    },
+    "highlights": {
+      "type": "string",
+      "description": "\uc8fc\uc694 \uc131\uacfc (\ub2f4\ub2f9\uc790 \uc791\uc131, \ucc98\uc74c\uc5d4 \uc790\ub3d9 \ucd08\uc548)"
+    },
+    "next_plan": {
+      "type": "string",
+      "description": "\ub2e4\uc74c \uae30\uac04 \uc81c\uc548\u00b7\uacc4\ud68d (\ub2f4\ub2f9\uc790 \uc791\uc131)"
+    },
+    "generated_at": {
+      "type": "string",
+      "description": "\uc22b\uc790\ub97c \ub9c8\uc9c0\ub9c9\uc73c\ub85c \uc9d1\uacc4\ud55c \uc2dc\uac01"
+    },
+    "published_at": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc5d0\uac8c \ubc1c\ud589\ud55c \uc2dc\uac01"
+    },
+    "published_by_name": {
+      "type": "string",
+      "description": "\ubc1c\ud589\ud55c \uc9c1\uc6d0"
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "\ub9cc\ub4e0 \uc9c1\uc6d0"
+    }
+  },
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
