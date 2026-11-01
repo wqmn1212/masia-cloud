@@ -14,8 +14,8 @@ export default function JoinPasswordStep({ email, setEmail, emailLocked, mode, b
     <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (!mismatch) onSubmit(password); }}>
       <div className="space-y-1.5"><Label>이메일</Label><Input type="email" required value={email} readOnly={emailLocked} className={emailLocked ? 'bg-muted' : ''} onChange={(e) => setEmail(e.target.value)} /></div>
       <div className="space-y-1.5"><Label>{isSignup ? '새 비밀번호' : '비밀번호'}</Label><Input type="password" required minLength={isSignup ? 8 : undefined} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={isSignup ? '8자 이상' : ''} /></div>
-      {isSignup && <div className="space-y-1.5"><Label>비밀번호 확인</Label><Input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} />{mismatch && <p className="text-xs text-destructive">비밀번호가 일치하지 않습니다.</p>}</div>}
-      {isSignup && <p className="text-xs text-muted-foreground">비밀번호를 정하면 6자리 인증 코드가 메일로 갑니다. 스팸함도 확인해 주세요.</p>}
+      {isSignup && <div className="space-y-1.5"><Label>비밀번호 확인</Label><Input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} />{mismatch && <p className="text-caption text-destructive">비밀번호가 일치하지 않습니다.</p>}</div>}
+      {isSignup && <p className="text-caption text-muted-foreground">비밀번호를 정하면 6자리 인증 코드가 메일로 갑니다. 스팸함도 확인해 주세요.</p>}
       <Button type="submit" className="w-full" disabled={busy || mismatch}>{busy && <Loader2 className="animate-spin" />}{isSignup ? '비밀번호 설정하고 시작하기' : '로그인'}</Button>
     </form>
   );

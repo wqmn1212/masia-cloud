@@ -31,12 +31,12 @@ function PhotoSlot({ url, label, onChange, disabled }) {
           {!disabled && <button type="button" aria-label={`${label} 사진 지우기`} onClick={() => onChange('')} className="absolute -right-1.5 -top-1.5 rounded-full border bg-background p-0.5"><X className="h-3 w-3" /></button>}
         </div>
       ) : (
-        <label className={`flex aspect-square w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed text-[10px] text-muted-foreground ${disabled ? 'pointer-events-none opacity-50' : 'hover:bg-muted'}`}>
+        <label className={`flex aspect-square w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed text-micro text-muted-foreground ${disabled ? 'pointer-events-none opacity-50' : 'hover:bg-muted'}`}>
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
           <input type="file" accept="image/*" className="hidden" disabled={disabled || busy} onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ''; }} />
         </label>
       )}
-      <p className={`mt-0.5 text-[10px] ${label === '허용' ? 'text-primary' : 'text-destructive'}`}>{label}</p>
+      <p className={`mt-0.5 text-micro ${label === '허용' ? 'text-primary' : 'text-destructive'}`}>{label}</p>
     </div>
   );
 }
@@ -95,21 +95,21 @@ export default function QualitySpecPanel({ card, user }) {
     <section className="mt-5 space-y-3 border-t pt-5">
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold">품질 기준서 {spec && <span className="text-xs font-normal text-muted-foreground">v{spec.version || 1}</span>}</h3>
-          <p className="text-xs text-muted-foreground">양산 전에 불량 기준을 고객·공장과 문서로 정합니다. 출고 전 검수는 이 기준으로 합니다.</p>
+          <h3 className="text-body font-semibold">품질 기준서 {spec && <span className="text-caption font-normal text-muted-foreground">v{spec.version || 1}</span>}</h3>
+          <p className="text-caption text-muted-foreground">양산 전에 불량 기준을 고객·공장과 문서로 정합니다. 출고 전 검수는 이 기준으로 합니다.</p>
         </div>
         {spec?.status === 'SENT' && <Badge className={`border-0 ${(SPEC_DECISION[spec.client_decision] || SPEC_DECISION.PENDING).cls}`}>{(SPEC_DECISION[spec.client_decision] || SPEC_DECISION.PENDING).label}</Badge>}
-        {spec?.factory_confirmed_at && <Badge variant="outline" className="text-[10px]">공장 확인 {new Date(spec.factory_confirmed_at).toLocaleDateString('ko-KR')}</Badge>}
-        {editing && <Badge variant="outline" className="text-[10px]">작성 중</Badge>}
+        {spec?.factory_confirmed_at && <Badge variant="outline" className="text-micro">공장 확인 {new Date(spec.factory_confirmed_at).toLocaleDateString('ko-KR')}</Badge>}
+        {editing && <Badge variant="outline" className="text-micro">작성 중</Badge>}
       </div>
 
       {!spec && <Button variant="outline" size="sm" disabled={!!busy} onClick={create} className="gap-1"><Plus className="h-3.5 w-3.5" />기준서 만들기 (기본 항목 6개)</Button>}
 
       {spec?.status === 'SENT' && (
         <div className="space-y-2">
-          {spec.client_decision === 'REVISION_REQUESTED' && spec.client_comment && <p className="whitespace-pre-wrap rounded-md bg-destructive/10 p-2 text-xs"><b>고객 수정 요청</b> · {spec.client_decided_by_name}: {spec.client_comment}</p>}
-          <p className="text-xs text-muted-foreground">{aqlLine(spec)}{spec.sampling_note ? ` · ${spec.sampling_note}` : ''}</p>
-          <ul className="divide-y rounded-lg border text-xs">
+          {spec.client_decision === 'REVISION_REQUESTED' && spec.client_comment && <p className="whitespace-pre-wrap rounded-md bg-destructive/10 p-2 text-caption"><b>고객 수정 요청</b> · {spec.client_decided_by_name}: {spec.client_comment}</p>}
+          <p className="text-caption text-muted-foreground">{aqlLine(spec)}{spec.sampling_note ? ` · ${spec.sampling_note}` : ''}</p>
+          <ul className="divide-y rounded-lg border text-caption">
             {spec.items.map((i) => (
               <li key={i.key} className="flex gap-2 p-2">
                 <Badge className={`h-5 shrink-0 border-0 ${SEVERITY[i.severity]?.cls}`}>{SEVERITY[i.severity]?.label}</Badge>
@@ -118,7 +118,7 @@ export default function QualitySpecPanel({ card, user }) {
               </li>
             ))}
           </ul>
-          <p className="text-[11px] text-muted-foreground">{spec.sent_by_name} · {spec.sent_at ? new Date(spec.sent_at).toLocaleString('ko-KR') : ''} 보냄{spec.client_decided_at ? ` · 고객 ${spec.client_decided_by_name} ${new Date(spec.client_decided_at).toLocaleString('ko-KR')}` : ''}</p>
+          <p className="text-micro text-muted-foreground">{spec.sent_by_name} · {spec.sent_at ? new Date(spec.sent_at).toLocaleString('ko-KR') : ''} 보냄{spec.client_decided_at ? ` · 고객 ${spec.client_decided_by_name} ${new Date(spec.client_decided_at).toLocaleString('ko-KR')}` : ''}</p>
           <div className="flex flex-wrap gap-2">
             {!spec.factory_confirmed_at && <Button size="sm" variant="outline" className="gap-1" disabled={!!busy} onClick={confirmFactory}><Factory className="h-3.5 w-3.5" />공장 확인 기록</Button>}
             <Button size="sm" variant="outline" className="gap-1" disabled={!!busy} onClick={revise}><Copy className="h-3.5 w-3.5" />고쳐서 새 버전 만들기</Button>
@@ -129,27 +129,27 @@ export default function QualitySpecPanel({ card, user }) {
       {editing && (
         <div className="space-y-3">
           <div className="grid gap-2 sm:grid-cols-4">
-            <div className="sm:col-span-1"><Label className="text-[11px]">검사 수준</Label><Input className="h-8 text-xs" value={draft.aql_level} onChange={(e) => set('aql_level', e.target.value)} /></div>
+            <div className="sm:col-span-1"><Label className="text-micro">검사 수준</Label><Input className="h-8 text-caption" value={draft.aql_level} onChange={(e) => set('aql_level', e.target.value)} /></div>
             {[['aql_critical', '치명 AQL'], ['aql_major', '중결함 AQL'], ['aql_minor', '경결함 AQL']].map(([k, l]) => (
-              <div key={k}><Label className="text-[11px]">{l}</Label><Input className="h-8 text-xs" type="number" step="0.1" min={0} value={draft[k]} onChange={(e) => set(k, e.target.value === '' ? '' : Number(e.target.value))} /></div>
+              <div key={k}><Label className="text-micro">{l}</Label><Input className="h-8 text-caption" type="number" step="0.1" min={0} value={draft[k]} onChange={(e) => set(k, e.target.value === '' ? '' : Number(e.target.value))} /></div>
             ))}
           </div>
-          <div><Label className="text-[11px]">표본·검사 방법</Label><Input className="h-8 text-xs" value={draft.sampling_note} placeholder="예: 로트 3,000개 → 표본 125개, 박스는 마스터 박스 전수 외관 확인" onChange={(e) => set('sampling_note', e.target.value)} /></div>
+          <div><Label className="text-micro">표본·검사 방법</Label><Input className="h-8 text-caption" value={draft.sampling_note} placeholder="예: 로트 3,000개 → 표본 125개, 박스는 마스터 박스 전수 외관 확인" onChange={(e) => set('sampling_note', e.target.value)} /></div>
           <ul className="space-y-2">
             {draft.items.map((i, n) => (
               <li key={i.key} className="space-y-2 rounded-lg border p-2.5">
                 <div className="grid grid-cols-[1fr_96px_32px] gap-2">
-                  <Input className="h-8 text-xs" value={i.label} placeholder="항목 이름" onChange={(e) => setItem(n, { label: e.target.value })} />
-                  <select aria-label="결함 등급" className="h-8 rounded-md border bg-background px-1.5 text-xs" value={i.severity} onChange={(e) => setItem(n, { severity: e.target.value })}>
+                  <Input className="h-8 text-caption" value={i.label} placeholder="항목 이름" onChange={(e) => setItem(n, { label: e.target.value })} />
+                  <select aria-label="결함 등급" className="h-8 rounded-md border bg-background px-1.5 text-caption" value={i.severity} onChange={(e) => setItem(n, { severity: e.target.value })}>
                     {Object.entries(SEVERITY).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                   </select>
                   <Button type="button" size="icon" variant="ghost" className="h-8 w-8" aria-label="항목 삭제" onClick={() => set('items', draft.items.filter((_, k) => k !== n))}><Trash2 className="h-3.5 w-3.5" /></Button>
                 </div>
                 <div className="flex gap-2">
                   <div className="min-w-0 flex-1 space-y-1.5">
-                    <Textarea rows={2} className="text-xs" value={i.standard} placeholder="합격 기준 (고객이 읽는 문장)" onChange={(e) => setItem(n, { standard: e.target.value })} />
-                    <Input className="h-7 text-[11px]" value={i.label_cn} placeholder="项目名称 (공장용 중국어)" onChange={(e) => setItem(n, { label_cn: e.target.value })} />
-                    <Input className="h-7 text-[11px]" value={i.standard_cn} placeholder="合格标准 (공장용 중국어)" onChange={(e) => setItem(n, { standard_cn: e.target.value })} />
+                    <Textarea rows={2} className="text-caption" value={i.standard} placeholder="합격 기준 (고객이 읽는 문장)" onChange={(e) => setItem(n, { standard: e.target.value })} />
+                    <Input className="h-7 text-micro" value={i.label_cn} placeholder="项目名称 (공장용 중국어)" onChange={(e) => setItem(n, { label_cn: e.target.value })} />
+                    <Input className="h-7 text-micro" value={i.standard_cn} placeholder="合格标准 (공장용 중국어)" onChange={(e) => setItem(n, { standard_cn: e.target.value })} />
                   </div>
                   <PhotoSlot url={i.ok_photo_url} label="허용" onChange={(u) => setItem(n, { ok_photo_url: u })} disabled={!!busy} />
                   <PhotoSlot url={i.ng_photo_url} label="불허" onChange={(u) => setItem(n, { ng_photo_url: u })} disabled={!!busy} />
@@ -157,17 +157,17 @@ export default function QualitySpecPanel({ card, user }) {
               </li>
             ))}
           </ul>
-          <Button type="button" variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => set('items', [...draft.items, { key: newItemKey(), label: '', label_cn: '', standard: '', standard_cn: '', severity: 'MINOR', ok_photo_url: '', ng_photo_url: '' }])}><Plus className="h-3 w-3" />항목 추가</Button>
-          <div><Label className="text-[11px]">기준서 메모 (고객에게 보임)</Label><Textarea rows={2} className="text-xs" value={draft.note} onChange={(e) => set('note', e.target.value)} /></div>
+          <Button type="button" variant="outline" size="sm" className="h-7 gap-1 text-caption" onClick={() => set('items', [...draft.items, { key: newItemKey(), label: '', label_cn: '', standard: '', standard_cn: '', severity: 'MINOR', ok_photo_url: '', ng_photo_url: '' }])}><Plus className="h-3 w-3" />항목 추가</Button>
+          <div><Label className="text-micro">기준서 메모 (고객에게 보임)</Label><Textarea rows={2} className="text-caption" value={draft.note} onChange={(e) => set('note', e.target.value)} /></div>
           <div className="flex flex-wrap justify-end gap-2">
             <Button size="sm" variant="ghost" className="gap-1" disabled={!!busy} onClick={fillChinese}>{busy === 'translate' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Languages className="h-3.5 w-3.5" />}빈 중국어 채우기</Button>
             <Button size="sm" variant="outline" disabled={!!busy || !dirty} onClick={save}>저장</Button>
             <Button size="sm" className="gap-1" disabled={!!busy || !canShare} title={canShare ? '' : '고객 공개 카드에서만 보낼 수 있습니다'} onClick={send}><Send className="h-3.5 w-3.5" />고객에게 승인 요청</Button>
           </div>
-          {!canShare && <p className="text-right text-[11px] text-muted-foreground">카드를 고객에게 공개해야 승인 요청을 보낼 수 있습니다.</p>}
+          {!canShare && <p className="text-right text-micro text-muted-foreground">카드를 고객에게 공개해야 승인 요청을 보낼 수 있습니다.</p>}
         </div>
       )}
-      {specs.length > 1 && <p className="text-[11px] text-muted-foreground">이전 버전: {specs.slice(1).map((s) => `v${s.version || 1} ${(SPEC_DECISION[s.client_decision] || { label: s.status === 'SENT' ? '확인 대기' : '작성 중' }).label}`).join(' · ')}</p>}
+      {specs.length > 1 && <p className="text-micro text-muted-foreground">이전 버전: {specs.slice(1).map((s) => `v${s.version || 1} ${(SPEC_DECISION[s.client_decision] || { label: s.status === 'SENT' ? '확인 대기' : '작성 중' }).label}`).join(' · ')}</p>}
     </section>
   );
 }

@@ -11,10 +11,10 @@ export default function ClientImportRequirements({ list = [] }) {
     <div className="mb-4 space-y-2 rounded-lg border p-3">
       <div className="flex flex-wrap items-center gap-2">
         <FileCheck2 className="h-4 w-4 text-primary" />
-        <p className="text-sm font-semibold">수입 요건 (인증·신고)</p>
+        <p className="text-body font-semibold">수입 요건 (인증·신고)</p>
         {left ? <Badge className="border-0 bg-chart-3/15 text-chart-3">남은 요건 {left}</Badge> : <Badge className="border-0 bg-primary/10 text-primary">모두 완료</Badge>}
       </div>
-      <ul className="divide-y rounded-md border text-xs">
+      <ul className="divide-y rounded-md border text-caption">
         {list.map((r) => (
           <li key={r.key} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-2.5 py-1.5">
             <span className={`h-2 w-2 shrink-0 rounded-full ${reqDone(r) ? 'bg-primary' : 'bg-chart-3'}`} />
@@ -24,7 +24,7 @@ export default function ClientImportRequirements({ list = [] }) {
           </li>
         ))}
       </ul>
-      <p className="text-[11px] text-muted-foreground">인증·신고가 끝나야 통관이 막히지 않습니다. 고객사 명의로 받아야 하는 인증은 담당자가 따로 안내드립니다.</p>
+      <p className="text-micro text-muted-foreground">인증·신고가 끝나야 통관이 막히지 않습니다. 고객사 명의로 받아야 하는 인증은 담당자가 따로 안내드립니다.</p>
     </div>
   );
 }

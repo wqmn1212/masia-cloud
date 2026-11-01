@@ -51,8 +51,8 @@ export default function FileCenter() {
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">파일 센터</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">모든 태스크 카드의 파일을 고객사별로 모아 봅니다.</p>
+          <h1 className="text-2xl font-bold tracking-tight">파일 센터</h1>
+          <p className="text-caption text-muted-foreground mt-0.5">모든 태스크 카드의 파일을 고객사별로 모아 봅니다.</p>
         </div>
         <Button onClick={() => setUploadOpen(true)} className="gap-2">
           <Sparkles className="w-4 h-4" /> AI 파일 자동 분류
@@ -70,7 +70,7 @@ export default function FileCenter() {
         <Card className="p-12 text-center">
           <Inbox className="w-12 h-12 mx-auto text-muted-foreground/40" />
           <p className="mt-4 font-semibold">표시할 파일이 없습니다</p>
-          <p className="text-sm text-muted-foreground mt-1">AI 파일 자동 분류로 파일을 업로드해 보세요.</p>
+          <p className="text-body text-muted-foreground mt-1">AI 파일 자동 분류로 파일을 업로드해 보세요.</p>
         </Card>
       ) : (
         <div className="space-y-3">

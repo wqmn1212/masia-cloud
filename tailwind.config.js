@@ -4,8 +4,11 @@ module.exports = {
     content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
   	extend: {
-      // 글자 역할: 공개 사이트(랜딩)와 같은 크기 체계. 새 화면은 임의 px 대신 이 이름을 쓴다.
-      //  micro 11 — 배지·칩만 / caption 12.5 — 보조 설명·메타 / label 13 — 입력 이름·표·작은 버튼 / body 14.5 — 본문·값 / title 18 — 구역·창 제목
+      // 글자 역할: 공개 사이트(랜딩)와 같은 크기 체계. 앱 화면은 임의 px·text-xs/sm/lg 대신 이 이름만 쓴다 (npm run check:design-tokens).
+      //  micro 11 — 배지·칩·아주 작은 메타 / caption 12.5 — 보조 설명·메타 / label 13 — 입력 이름·표·작은 버튼·왼쪽 메뉴
+      //  body 14.5 — 본문·값·기본 버튼 / title 18 — 구역·카드·창 제목 / 화면 제목(h1)은 text-2xl font-bold tracking-tight
+      //  입력칸은 휴대폰 확대를 막으려고 text-base(16) 를 유지한다.
+      // 색: 원색 팔레트 대신 primary · warning(text) · success(text) · destructive · chart-1~5 · muted 토큰만 쓴다.
       fontSize: {
         micro: ['11px', { lineHeight: '16px' }],
         caption: ['12.5px', { lineHeight: '18px' }],
@@ -58,6 +61,11 @@ module.exports = {
   			warning: {
   				DEFAULT: 'hsl(var(--warning))',
   				text: 'hsl(var(--warning-text))'
+  			},
+  			// 완료·합격·절감: success 는 아이콘·옅은 배경, success-text 는 흰 바탕에서 읽히는 글자색
+  			success: {
+  				DEFAULT: 'hsl(var(--success))',
+  				text: 'hsl(var(--success-text))'
   			},
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',

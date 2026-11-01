@@ -40,10 +40,10 @@ export default function GoldenSamplePanel({ card, user }) {
     <section className="mt-5 space-y-3 rounded-xl border p-3">
       <div className="flex flex-wrap items-center gap-2">
         <Star className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-semibold">기준 샘플 (골든 샘플)</h3>
+        <h3 className="text-body font-semibold">기준 샘플 (골든 샘플)</h3>
         {hasGoldenSample(card.golden_sample) ? <Badge className="border-0 bg-primary/10 text-primary">등록됨</Badge> : <Badge variant="outline">미등록</Badge>}
       </div>
-      <p className="text-xs text-muted-foreground">고객이 승인한 샘플을 같은 것으로 여러 개 남겨 고객사·공장·이지스가 나눠 보관합니다. 양산 검수 때 이 샘플과 나란히 찍은 사진을 함께 올려 주세요.</p>
+      <p className="text-caption text-muted-foreground">고객이 승인한 샘플을 같은 것으로 여러 개 남겨 고객사·공장·이지스가 나눠 보관합니다. 양산 검수 때 이 샘플과 나란히 찍은 사진을 함께 올려 주세요.</p>
       <div className="flex flex-wrap gap-2">
         {g.photos.map((p, i) => (
           <div key={p.url} className="relative h-20 w-20 overflow-hidden rounded-md border">
@@ -52,23 +52,23 @@ export default function GoldenSamplePanel({ card, user }) {
           </div>
         ))}
         {g.photos.length < 8 && (
-          <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed text-[11px] text-muted-foreground hover:border-primary/50">
+          <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed text-micro text-muted-foreground hover:border-primary/50">
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}사진 추가
             <input type="file" accept="image/*" multiple className="hidden" disabled={uploading} onChange={(e) => { if (e.target.files?.length) addPhotos(e.target.files); e.target.value = ''; }} />
           </label>
         )}
       </div>
       <div className="grid gap-2 sm:grid-cols-3">
-        <label className="space-y-1 text-[11px]"><span>고객 승인일</span><Input type="date" className="h-8 text-xs" value={g.approved_at} onChange={set('approved_at')} /></label>
-        <label className="space-y-1 text-[11px]"><span>승인한 분</span><Input className="h-8 text-xs" value={g.approved_by} onChange={set('approved_by')} placeholder="고객사 담당자" /></label>
-        <label className="space-y-1 text-[11px]"><span>봉인·라벨 번호</span><Input className="h-8 text-xs" value={g.seal_no} onChange={set('seal_no')} placeholder="예: GS-2610-01" /></label>
+        <label className="space-y-1 text-micro"><span>고객 승인일</span><Input type="date" className="h-8 text-caption" value={g.approved_at} onChange={set('approved_at')} /></label>
+        <label className="space-y-1 text-micro"><span>승인한 분</span><Input className="h-8 text-caption" value={g.approved_by} onChange={set('approved_by')} placeholder="고객사 담당자" /></label>
+        <label className="space-y-1 text-micro"><span>봉인·라벨 번호</span><Input className="h-8 text-caption" value={g.seal_no} onChange={set('seal_no')} placeholder="예: GS-2610-01" /></label>
       </div>
-      <div className="flex flex-wrap gap-3 text-[11px]">
+      <div className="flex flex-wrap gap-3 text-micro">
         {Object.entries(SAMPLE_LOCATIONS).map(([k, v]) => (
-          <label key={k} className="flex items-center gap-1.5">{v}<Input type="number" min="0" className="h-7 w-16 text-xs" value={g.locations[k] ?? ''} onChange={(e) => setLoc(k, e.target.value)} />개</label>
+          <label key={k} className="flex items-center gap-1.5">{v}<Input type="number" min="0" className="h-7 w-16 text-caption" value={g.locations[k] ?? ''} onChange={(e) => setLoc(k, e.target.value)} />개</label>
         ))}
       </div>
-      <Input className="h-8 text-xs" value={g.note} onChange={set('note')} placeholder="메모 (예: 색상 한도견본 2종 포함)" />
+      <Input className="h-8 text-caption" value={g.note} onChange={set('note')} placeholder="메모 (예: 색상 한도견본 2종 포함)" />
       <div className="flex justify-end"><Button size="sm" disabled={!dirty || save.isPending || uploading} onClick={() => save.mutate()}>{save.isPending ? '저장 중…' : '저장'}</Button></div>
     </section>
   );

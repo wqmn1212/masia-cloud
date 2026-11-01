@@ -30,7 +30,7 @@ export function CalendarMock() {
             <div className="text-muted-foreground">{d}</div>
             {d === 18 && <Mark n={2}><div className="rounded border border-primary/40 px-0.5 text-primary truncate">🚢 선풍기</div></Mark>}
             {d === 24 && <Mark n={3}><div className="rounded bg-muted px-0.5 truncate">양산</div></Mark>}
-            {d === 21 && <Mark n={4}><div className="text-[9px] text-amber-700">휴무</div></Mark>}
+            {d === 21 && <Mark n={4}><div className="text-[9px] text-warning-text">휴무</div></Mark>}
           </div>
         ))}
       </div>
@@ -47,7 +47,7 @@ export function PayMock() {
         <Mark n={3}><div className="rounded bg-primary/5 p-1.5"><div className="font-medium">이지스 USD 계좌</div><div>예금주 AEGIS TRADE · 계좌 1005-123-456789 📋</div></div></Mark>
         <Mark n={4} inline><Btn primary>송금했어요</Btn></Mark>
       </div>
-      <div className="mt-1.5"><Mark n={5}><div className="p-1 text-amber-700">계좌가 바뀌었다는 연락은 이 화면에서만 확인하세요.</div></Mark></div>
+      <div className="mt-1.5"><Mark n={5}><div className="p-1 text-warning-text">계좌가 바뀌었다는 연락은 이 화면에서만 확인하세요.</div></Mark></div>
     </Frame>
   );
 }

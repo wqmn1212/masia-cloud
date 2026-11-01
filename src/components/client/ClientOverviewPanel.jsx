@@ -40,13 +40,13 @@ export default function ClientOverviewPanel({ card }) {
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="secondary">{CLIENT_STATUS_LABEL[card.status] || card.status}</Badge>
         <Badge className={`${p.className} border-0`}>{p.label}</Badge>
-        {card.due_date && <span className="text-xs text-muted-foreground">목표일 {card.due_date}</span>}
+        {card.due_date && <span className="text-caption text-muted-foreground">목표일 {card.due_date}</span>}
       </div>
 
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label className="text-xs font-semibold">요구사항</label>
-          <span className="text-[11px] text-muted-foreground">이 항목만 수정할 수 있습니다</span>
+          <label className="text-caption font-semibold">요구사항</label>
+          <span className="text-micro text-muted-foreground">이 항목만 수정할 수 있습니다</span>
         </div>
         <BilingualField record={draft} field="hq_requirements" multiline rows={10} disabled={save.isPending} onChange={(key, value) => setDraft(prev => editBilingual(prev, key, value))} />
         <div className="flex justify-end mt-2">

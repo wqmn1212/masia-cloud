@@ -48,18 +48,18 @@ export default function TopBar({ onMenuClick, user }) {
           <span className="hidden md:inline">{lang === 'zh' ? '主页' : '메인페이지'}</span>
         </Button>
         <NotificationBell user={user} />
-        {translationPaused && <span className="hidden lg:inline text-[10px] text-chart-3 font-medium">{lang === 'zh' ? '自动翻译暂停' : '자동 번역 일시 중지'}</span>}
+        {translationPaused && <span className="hidden lg:inline text-micro text-chart-3 font-medium">{lang === 'zh' ? '自动翻译暂停' : '자동 번역 일시 중지'}</span>}
         <div className="flex h-8 rounded-md border bg-muted/40 p-0.5" aria-label="Language">
-          <button onClick={() => setLang('ko')} className={`rounded px-2 text-[11px] font-bold transition-colors ${lang === 'ko' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground'}`}>KR</button>
-          <button onClick={() => setLang('zh')} className={`rounded px-2 text-[11px] font-bold transition-colors ${lang === 'zh' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground'}`}>中文</button>
+          <button onClick={() => setLang('ko')} className={`rounded px-2 text-micro font-bold transition-colors ${lang === 'ko' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground'}`}>KR</button>
+          <button onClick={() => setLang('zh')} className={`rounded px-2 text-micro font-bold transition-colors ${lang === 'zh' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground'}`}>中文</button>
         </div>
         <div className="flex items-center gap-2.5 pl-2 md:pl-3 md:border-l md:border-border">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-caption font-bold">
             {initial}
           </div>
           <div className="hidden md:block min-w-0">
-            <p className="text-sm font-semibold leading-none truncate max-w-[160px]">{displayName}</p>
-            <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[160px]">{tierLabel}</p>
+            <p className="text-body font-semibold leading-none truncate max-w-[160px]">{displayName}</p>
+            <p className="text-caption text-muted-foreground mt-0.5 truncate max-w-[160px]">{tierLabel}</p>
           </div>
           <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => { clearPersistedQueries(); base44.auth.logout('/'); }}>
             <LogOut className="w-4 h-4" />

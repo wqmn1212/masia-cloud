@@ -9,9 +9,9 @@ export default function StatCard({ title, value, subtitle, icon: Icon, trend, tr
     <Card className="p-5 relative overflow-hidden group hover:shadow-lg transition-shadow duration-300">
       <div className="flex justify-between items-start">
         <div className="space-y-1">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
+          <p className="text-caption font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
           <p className="text-2xl font-bold tracking-tight">{value}</p>
-          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+          {subtitle && <p className="text-caption text-muted-foreground">{subtitle}</p>}
         </div>
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
           <Icon className="w-5 h-5 text-primary" />
@@ -20,12 +20,12 @@ export default function StatCard({ title, value, subtitle, icon: Icon, trend, tr
       {trend && (
         <div className="mt-3 flex items-center gap-1">
           <span className={cn(
-            "text-xs font-semibold",
+            "text-caption font-semibold",
             trendUp ? "text-accent" : "text-destructive"
           )}>
             {trendUp ? '↑' : '↓'} {trend}
           </span>
-          <span className="text-xs text-muted-foreground">{t('dashboard.vsLastMonth')}</span>
+          <span className="text-caption text-muted-foreground">{t('dashboard.vsLastMonth')}</span>
         </div>
       )}
     </Card>

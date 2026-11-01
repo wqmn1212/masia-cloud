@@ -32,25 +32,25 @@ export default function AgreementInvoices({ agreement }) {
     onError: (e) => toast({ title: '변경하지 못했습니다', description: e.message, variant: 'destructive' }),
   });
 
-  if (isLoading) return <p className="py-6 text-center text-sm text-muted-foreground">불러오는 중…</p>;
+  if (isLoading) return <p className="py-6 text-center text-body text-muted-foreground">불러오는 중…</p>;
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <p className="text-xs text-muted-foreground">고객 포털에는 월별 청구 상태만 보이고 금액은 보이지 않습니다.</p>
+        <p className="text-caption text-muted-foreground">고객 포털에는 월별 청구 상태만 보이고 금액은 보이지 않습니다.</p>
         {missing.length > 0 && <Button size="sm" variant="outline" className="ml-auto" disabled={fill.isPending} onClick={() => fill.mutate()}>빠진 달 {missing.length}건 만들기</Button>}
       </div>
       {invoices.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">청구 기록이 없습니다.</p>
+        <p className="py-6 text-center text-body text-muted-foreground">청구 기록이 없습니다.</p>
       ) : (
         <ul className="divide-y rounded-lg border">
           {invoices.map((inv) => {
             const s = INVOICE_STATUS[inv.status] || INVOICE_STATUS.PENDING;
             return (
-              <li key={inv.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm">
+              <li key={inv.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-body">
                 <span className="w-24 font-medium">{monthLabel(inv.billing_month)}</span>
                 <span className="text-muted-foreground">{money(inv.amount, inv.currency)}</span>
                 <Badge className={`${s.cls} border-0`}>{s.label}</Badge>
-                <select aria-label={`${inv.billing_month} 청구 상태`} className="ml-auto h-8 rounded-md border bg-background px-2 text-xs" value={inv.status || 'PENDING'} disabled={setStatus.isPending}
+                <select aria-label={`${inv.billing_month} 청구 상태`} className="ml-auto h-8 rounded-md border bg-background px-2 text-caption" value={inv.status || 'PENDING'} disabled={setStatus.isPending}
                   onChange={(e) => setStatus.mutate({ inv, status: e.target.value })}>
                   {Object.entries(INVOICE_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>

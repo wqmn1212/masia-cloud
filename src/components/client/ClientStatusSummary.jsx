@@ -10,7 +10,7 @@ export default function ClientStatusSummary({ cards }) {
           <div key={col.id} className={`rounded-xl border p-3 ${col.color}`}>
             <div className="flex items-center gap-1.5">
               <div className={`w-2 h-2 rounded-full ${col.dotColor}`} />
-              <span className="text-xs font-medium">{col.label}</span>
+              <span className="text-caption font-medium">{col.label}</span>
             </div>
             <p className="text-2xl font-bold mt-1">{count}</p>
           </div>

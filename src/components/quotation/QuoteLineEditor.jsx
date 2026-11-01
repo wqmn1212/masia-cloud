@@ -36,22 +36,22 @@ export default function QuoteLineEditor({ items, onChange }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">견적 항목</h3>
+        <h3 className="text-body font-semibold">견적 항목</h3>
         <Button type="button" variant="outline" size="sm" onClick={addRow}>
           <Plus className="w-3 h-3 mr-1" />행 추가
         </Button>
       </div>
 
       <div className="overflow-x-auto border rounded-lg">
-        <table className="w-full text-sm">
+        <table className="w-full text-body">
           <thead>
             <tr className="bg-muted/50">
-              <th colSpan={2} className="text-left p-2 font-medium text-xs">품목 / 品名 (KR · CN)</th>
-              <th className="text-left p-2 font-medium text-xs">사양</th>
-              <th className="text-right p-2 font-medium text-xs w-20">수량</th>
-              <th className="text-center p-2 font-medium text-xs w-20">통화</th>
-              <th className="text-right p-2 font-medium text-xs w-28">단가</th>
-              <th className="text-right p-2 font-medium text-xs w-28">소계</th>
+              <th colSpan={2} className="text-left p-2 font-medium text-caption">품목 / 品名 (KR · CN)</th>
+              <th className="text-left p-2 font-medium text-caption">사양</th>
+              <th className="text-right p-2 font-medium text-caption w-20">수량</th>
+              <th className="text-center p-2 font-medium text-caption w-20">통화</th>
+              <th className="text-right p-2 font-medium text-caption w-28">단가</th>
+              <th className="text-right p-2 font-medium text-caption w-28">소계</th>
               <th className="w-10 p-2"></th>
             </tr>
           </thead>
@@ -61,17 +61,17 @@ export default function QuoteLineEditor({ items, onChange }) {
               return (
               <tr key={idx} className="border-t">
                 <td colSpan={2} className="p-1.5">
-                  <BilingualField record={item} field="item_name_ko" chineseField="item_name_cn" onChange={(key, value) => updateRow(idx, key, value)} className="h-8 text-xs" />
+                  <BilingualField record={item} field="item_name_ko" chineseField="item_name_cn" onChange={(key, value) => updateRow(idx, key, value)} className="h-8 text-caption" />
                 </td>
                 <td className="p-1.5">
-                  <Input className="h-8 text-xs" value={item.specification} onChange={(e) => updateRow(idx, 'specification', e.target.value)} />
+                  <Input className="h-8 text-caption" value={item.specification} onChange={(e) => updateRow(idx, 'specification', e.target.value)} />
                 </td>
                 <td className="p-1.5">
-                  <Input className="h-8 text-xs text-right" type="number" value={item.quantity} onChange={(e) => updateRow(idx, 'quantity', Number(e.target.value))} />
+                  <Input className="h-8 text-caption text-right" type="number" value={item.quantity} onChange={(e) => updateRow(idx, 'quantity', Number(e.target.value))} />
                 </td>
                 <td className="p-1.5">
                   <Select value={item.currency || 'CNY'} onValueChange={(v) => updateRow(idx, 'currency', v)}>
-                    <SelectTrigger className="h-8 text-xs">
+                    <SelectTrigger className="h-8 text-caption">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -80,9 +80,9 @@ export default function QuoteLineEditor({ items, onChange }) {
                   </Select>
                 </td>
                 <td className="p-1.5">
-                  <Input className="h-8 text-xs text-right" type="number" step="0.00001" value={item.unit_price_cny} onChange={(e) => updateRow(idx, 'unit_price_cny', Number(e.target.value))} />
+                  <Input className="h-8 text-caption text-right" type="number" step="0.00001" value={item.unit_price_cny} onChange={(e) => updateRow(idx, 'unit_price_cny', Number(e.target.value))} />
                 </td>
-                <td className="p-1.5 text-right text-xs font-medium">
+                <td className="p-1.5 text-right text-caption font-medium">
                   {sym}{(item.total_cny || 0).toLocaleString()}
                 </td>
                 <td className="p-1.5">
@@ -95,7 +95,7 @@ export default function QuoteLineEditor({ items, onChange }) {
             })}
             {items.length === 0 && (
               <tr>
-                <td colSpan={8} className="text-center py-8 text-muted-foreground text-xs">
+                <td colSpan={8} className="text-center py-8 text-muted-foreground text-caption">
                   항목이 없습니다. '행 추가' 버튼을 클릭해 주세요.
                 </td>
               </tr>
@@ -104,8 +104,8 @@ export default function QuoteLineEditor({ items, onChange }) {
           <tfoot>
             {Object.entries(totals).map(([cur, amt]) => (
               <tr key={cur} className="border-t bg-muted/30">
-                <td colSpan={6} className="p-2 text-right font-semibold text-xs">{cur} 합계</td>
-                <td className="p-2 text-right font-bold text-sm">{CURRENCY_SYMBOL[cur]}{amt.toLocaleString()}</td>
+                <td colSpan={6} className="p-2 text-right font-semibold text-caption">{cur} 합계</td>
+                <td className="p-2 text-right font-bold text-body">{CURRENCY_SYMBOL[cur]}{amt.toLocaleString()}</td>
                 <td></td>
               </tr>
             ))}

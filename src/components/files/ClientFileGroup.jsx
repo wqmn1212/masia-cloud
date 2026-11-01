@@ -24,7 +24,7 @@ export default function ClientFileGroup({ clientName, files, cardsById, defaultO
           <Building2 className="w-4 h-4" />
         </div>
         <span className="font-semibold flex-1 truncate">{clientName}</span>
-        <Badge variant="outline" className="text-[11px]">파일 {files.length}개</Badge>
+        <Badge variant="outline" className="text-micro">파일 {files.length}개</Badge>
       </button>
 
       {open && (
@@ -36,8 +36,8 @@ export default function ClientFileGroup({ clientName, files, cardsById, defaultO
               <div key={file.id} className="flex items-center gap-3 px-4 py-2.5">
                 <Icon className="w-4 h-4 text-accent flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{file.file_name}</p>
-                  <p className="text-[11px] text-muted-foreground truncate">
+                  <p className="text-body font-medium truncate">{file.file_name}</p>
+                  <p className="text-micro text-muted-foreground truncate">
                     {card ? `📋 ${card.title}` : '카드 없음'}
                     {file.uploader_name ? ` · ${file.uploader_name}` : ''}
                     {file.created_date ? ` · ${format(new Date(file.created_date), 'yyyy-MM-dd')}` : ''}

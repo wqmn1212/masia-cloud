@@ -18,7 +18,7 @@ export default function QCPrecheckSummary({ card, onOpen }) {
   ].filter(Boolean);
   return (
     <button type="button" onClick={onOpen}
-      className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs ${warn ? 'bg-chart-3/10 text-chart-3' : 'bg-muted/50 text-muted-foreground'}`}>
+      className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-caption ${warn ? 'bg-chart-3/10 text-chart-3' : 'bg-muted/50 text-muted-foreground'}`}>
       <ClipboardCheck className="h-3.5 w-3.5 shrink-0" />
       <span className="font-semibold">{t('qcp.summary')}</span>
       <span className="min-w-0 flex-1 truncate">{parts.join(' · ')}</span>

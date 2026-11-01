@@ -24,7 +24,7 @@ export default function QuoteImportDialog({ result, onClose, onApply }) {
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-base">견적서 읽기 결과 확인</DialogTitle>
+          <DialogTitle className="text-title">견적서 읽기 결과 확인</DialogTitle>
           <DialogDescription className="text-label">{result.file_name} · {KIND[result.kind] || result.kind} · 공장 원가 그대로 채웁니다 (마진·수수료는 적용 뒤 입력)</DialogDescription>
         </DialogHeader>
 

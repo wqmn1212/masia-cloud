@@ -18,7 +18,7 @@ export default function FactoryInviteDialog({ invite, onClose, onReissue }) {
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-1.5 text-base"><KeyRound className="h-4 w-4 text-primary" />{invite.reissueOnly ? L('링크·PIN 다시 만들기', '重新生成链接和验证码') : L('공장에 보낼 링크와 PIN', '发给工厂的链接和验证码')}</DialogTitle>
+          <DialogTitle className="flex items-center gap-1.5 text-title"><KeyRound className="h-4 w-4 text-primary" />{invite.reissueOnly ? L('링크·PIN 다시 만들기', '重新生成链接和验证码') : L('공장에 보낼 링크와 PIN', '发给工厂的链接和验证码')}</DialogTitle>
           <DialogDescription className="text-label">
             {invite.reissueOnly
               ? L('링크와 PIN은 보안을 위해 만들 때 한 번만 보여 드립니다. 다시 만들면 이전 링크는 바로 막히고, 공장이 올린 내용은 그대로 남습니다.', '为安全起见，链接和验证码只在生成时显示一次。重新生成后旧链接立即失效，工厂已上传的内容保留。')
@@ -28,10 +28,10 @@ export default function FactoryInviteDialog({ invite, onClose, onReissue }) {
         {!invite.reissueOnly && (
           <>
             <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1 rounded-lg bg-muted/50 p-3 text-label">
-              <span className="text-muted-foreground">PIN</span><span className="font-mono text-lg font-semibold tracking-[0.3em]">{invite.pin}</span>
+              <span className="text-muted-foreground">PIN</span><span className="font-mono text-title font-semibold tracking-[0.3em]">{invite.pin}</span>
               <span className="text-muted-foreground">{L('링크', '链接')}</span><span className="break-all font-mono text-caption">{invite.link}</span>
             </div>
-            <Textarea readOnly rows={8} className="text-xs" value={text} />
+            <Textarea readOnly rows={8} className="text-caption" value={text} />
           </>
         )}
         <DialogFooter>

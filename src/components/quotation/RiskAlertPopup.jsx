@@ -20,10 +20,10 @@ export default function RiskAlertPopup({ alerts, open, onClose }) {
             <div className="space-y-3 mt-3">
               {alerts.map((alert, idx) => (
                 <div key={idx} className="p-3 rounded-lg bg-destructive/5 border border-destructive/20">
-                  <p className="text-sm font-semibold text-destructive">{alert.issue_case}</p>
-                  <p className="text-xs text-foreground mt-1.5 leading-relaxed">{alert.root_cause}</p>
+                  <p className="text-body font-semibold text-destructive">{alert.issue_case}</p>
+                  <p className="text-caption text-foreground mt-1.5 leading-relaxed">{alert.root_cause}</p>
                   {alert.solution_parameter && (
-                    <p className="text-xs text-primary mt-1.5 font-medium">💡 {alert.solution_parameter}</p>
+                    <p className="text-caption text-primary mt-1.5 font-medium">💡 {alert.solution_parameter}</p>
                   )}
                 </div>
               ))}

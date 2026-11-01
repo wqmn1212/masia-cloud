@@ -67,18 +67,18 @@ export default function OverviewTab({ card, viewLang = 'KR', user, onOpenTab }) 
 
       <div className="grid grid-cols-2 gap-3">
       <div>
-        <Label className="text-xs">업무 제목 *</Label>
+        <Label className="text-caption">업무 제목 *</Label>
         <BilingualField record={form} field="title" onChange={(key, value) => setForm(p => editBilingual(p, key, value))} />
       </div>
       <div>
-        <Label className="text-xs">장비 카테고리</Label>
+        <Label className="text-caption">장비 카테고리</Label>
         <CategorySelect
           value={form.target_machine_category}
           onValueChange={(v) => setForm(p => ({ ...p, target_machine_category: v }))}
         />
       </div>
       <div>
-        <Label className="text-xs flex items-center gap-1"><CalendarDays className="w-3 h-3" /> 마감일</Label>
+        <Label className="text-caption flex items-center gap-1"><CalendarDays className="w-3 h-3" /> 마감일</Label>
         <Input
           type="date"
           value={form.due_date}
@@ -86,7 +86,7 @@ export default function OverviewTab({ card, viewLang = 'KR', user, onOpenTab }) 
         />
       </div>
       <div>
-        <Label className="text-xs">우선순위</Label>
+        <Label className="text-caption">우선순위</Label>
         <Select value={form.priority} onValueChange={(v) => setForm(p => ({ ...p, priority: v }))}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -98,7 +98,7 @@ export default function OverviewTab({ card, viewLang = 'KR', user, onOpenTab }) 
         </Select>
       </div>
       <div className="col-span-2">
-        <Label className="text-xs">고객사</Label>
+        <Label className="text-caption">고객사</Label>
           <ClientSelect
             value={form.client_id}
             onChange={({ id, name }) => setForm(p => ({ ...p, client_id: id, client_name: name }))}
@@ -107,18 +107,18 @@ export default function OverviewTab({ card, viewLang = 'KR', user, onOpenTab }) 
       </div>
 
       <div>
-        <Label className="text-xs">HQ 요구사항</Label>
+        <Label className="text-caption">HQ 요구사항</Label>
         <BilingualField record={form} field="hq_requirements" multiline rows={5} onChange={(key, value) => setForm(p => editBilingual(p, key, value))} />
       </div>
 
       <div>
-        <Label className="text-xs">에이전트 미팅 노트 / 공장 특이사항</Label>
+        <Label className="text-caption">에이전트 미팅 노트 / 공장 특이사항</Label>
         <BilingualField record={form} field="agent_meeting_notes" multiline rows={4} onChange={(key, value) => setForm(p => editBilingual(p, key, value))} />
       </div>
 
       {/* 후보 공장 목록 */}
       <div>
-        <Label className="text-xs">견적 요청 후보 공장 <span className="text-muted-foreground font-normal">(복수 선택)</span></Label>
+        <Label className="text-caption">견적 요청 후보 공장 <span className="text-muted-foreground font-normal">(복수 선택)</span></Label>
         <FactoryMultiSelect
           selectedFactories={candidateFactories}
           onChange={setCandidateFactories}
@@ -127,7 +127,7 @@ export default function OverviewTab({ card, viewLang = 'KR', user, onOpenTab }) 
 
       {/* 최종 확정 공장 */}
       <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
-        <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
+        <p className="text-caption font-semibold text-primary flex items-center gap-1.5">
           <CheckCircle2 className="w-3.5 h-3.5" /> 최종 확정 공장
         </p>
         {candidateFactories.length > 0 ? (
@@ -148,10 +148,10 @@ export default function OverviewTab({ card, viewLang = 'KR', user, onOpenTab }) 
             </SelectContent>
           </Select>
         ) : (
-          <p className="text-xs text-muted-foreground">위에서 후보 공장을 먼저 추가하세요</p>
+          <p className="text-caption text-muted-foreground">위에서 후보 공장을 먼저 추가하세요</p>
         )}
         {form.factory_name && (
-          <p className="text-xs text-primary font-medium">✓ {form.factory_name} 확정됨</p>
+          <p className="text-caption text-primary font-medium">✓ {form.factory_name} 확정됨</p>
         )}
       </div>
 

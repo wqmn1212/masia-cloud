@@ -6,11 +6,11 @@ import { quotePriceLabel } from '@/components/quotation/quoteCurrency';
 
 const STATUS_META = {
   DRAFT:    { label: '초안',   color: 'bg-muted text-foreground/80 border-border' },
-  REVIEW:   { label: '검토',   color: 'bg-amber-100 text-amber-700 border-amber-200' },
+  REVIEW:   { label: '검토',   color: 'bg-warning/15 text-warning-text border-warning/30' },
   APPROVED: { label: '승인',   color: 'bg-primary/10 text-primary border-primary/20' },
-  SENT:     { label: '발송',   color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  ACCEPTED: { label: '수락',   color: 'bg-green-100 text-green-700 border-green-200' },
-  REJECTED: { label: '거절',   color: 'bg-red-100 text-red-700 border-red-200' },
+  SENT:     { label: '발송',   color: 'bg-chart-4/15 text-chart-4 border-chart-4/30' },
+  ACCEPTED: { label: '수락',   color: 'bg-success/15 text-success-text border-success/30' },
+  REJECTED: { label: '거절',   color: 'bg-destructive/15 text-destructive border-destructive/30' },
 };
 
 const CATEGORY_LABEL = {
@@ -22,8 +22,8 @@ export default function ClientQuotationsPanel({ quotations, cardsById, onCardCli
     return (
       <Card className="p-12 text-center">
         <Inbox className="w-12 h-12 mx-auto text-muted-foreground/40" />
-        <p className="mt-4 text-lg font-semibold">등록된 견적이 없습니다</p>
-        <p className="text-sm text-muted-foreground mt-1">태스크 카드의 견적 탭에서 견적을 등록하면 여기에 모입니다</p>
+        <p className="mt-4 text-title font-semibold">등록된 견적이 없습니다</p>
+        <p className="text-body text-muted-foreground mt-1">태스크 카드의 견적 탭에서 견적을 등록하면 여기에 모입니다</p>
       </Card>
     );
   }
@@ -40,17 +40,17 @@ export default function ClientQuotationsPanel({ quotations, cardsById, onCardCli
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-medium text-sm flex items-center gap-1">
+                <span className="font-medium text-body flex items-center gap-1">
                   <Factory className="w-3.5 h-3.5" />
                   {q.factory_name || '미지정 공장'}
                 </span>
-                <Badge variant="outline" className={`${status.color} text-[10px]`}>{status.label}</Badge>
+                <Badge variant="outline" className={`${status.color} text-micro`}>{status.label}</Badge>
                 {q.machine_category && (
-                  <Badge variant="secondary" className="text-[10px]">{CATEGORY_LABEL[q.machine_category]}</Badge>
+                  <Badge variant="secondary" className="text-micro">{CATEGORY_LABEL[q.machine_category]}</Badge>
                 )}
-                {q.incoterms && <Badge variant="outline" className="text-[10px]">{q.incoterms}</Badge>}
+                {q.incoterms && <Badge variant="outline" className="text-micro">{q.incoterms}</Badge>}
               </div>
-              <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground flex-wrap">
+              <div className="flex items-center gap-2 mt-1 text-micro text-muted-foreground flex-wrap">
                 {card && (
                   <button
                     onClick={() => onCardClick(card)}
@@ -66,10 +66,10 @@ export default function ClientQuotationsPanel({ quotations, cardsById, onCardCli
             </div>
             {q.final_client_price ? (
               <div className="text-right flex-shrink-0">
-                <div className="text-sm font-semibold tabular-nums">
+                <div className="text-body font-semibold tabular-nums">
                   {quotePriceLabel(q)}
                 </div>
-                <div className="text-[10px] text-muted-foreground">고객 제안가</div>
+                <div className="text-micro text-muted-foreground">고객 제안가</div>
               </div>
             ) : null}
           </div>

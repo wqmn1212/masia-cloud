@@ -9,9 +9,9 @@ const HEAD = [
 export default function BomPartTable({ parts, onPartChange, onViewPart }) {
   return (
     <div className="border rounded-xl overflow-x-auto bg-card">
-      <table className="w-full text-sm">
+      <table className="w-full text-body">
         <thead>
-          <tr className="bg-muted/60 text-[11px] uppercase tracking-wide text-muted-foreground">
+          <tr className="bg-muted/60 text-micro uppercase tracking-wide text-muted-foreground">
             {HEAD.map((h, i) => (
               <th key={i} className="p-2 text-left font-semibold whitespace-nowrap">{h}</th>
             ))}

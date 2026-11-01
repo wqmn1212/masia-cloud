@@ -59,10 +59,10 @@ export default function AIProposalPanel({ card, user }) {
   return (
     <Card className="mt-4 border-primary/30">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2">
+        <CardTitle className="text-body flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-primary" />
           AI 추천 작업 (이메일 기반)
-          <Badge variant="secondary" className="text-[10px]">{proposals.length}건 승인 대기</Badge>
+          <Badge variant="secondary" className="text-micro">{proposals.length}건 승인 대기</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -71,31 +71,31 @@ export default function AIProposalPanel({ card, user }) {
             <div className="flex items-start gap-2">
               <Mail className="w-3.5 h-3.5 mt-0.5 text-muted-foreground shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold truncate">{p.email_subject || '(제목 없음)'}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{p.email_from} · {p.email_date}</p>
+                <p className="text-caption font-semibold truncate">{p.email_subject || '(제목 없음)'}</p>
+                <p className="text-micro text-muted-foreground truncate">{p.email_from} · {p.email_date}</p>
               </div>
             </div>
 
-            {p.summary && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{p.summary}</p>}
+            {p.summary && <p className="text-caption text-muted-foreground whitespace-pre-wrap">{p.summary}</p>}
 
             {p.client_requirements && (
               <div>
-                <p className="text-[11px] font-semibold">고객 요구사항</p>
-                <p className="text-[11px] whitespace-pre-wrap text-muted-foreground">{p.client_requirements}</p>
+                <p className="text-micro font-semibold">고객 요구사항</p>
+                <p className="text-micro whitespace-pre-wrap text-muted-foreground">{p.client_requirements}</p>
               </div>
             )}
             {p.our_commitments && (
               <div>
-                <p className="text-[11px] font-semibold">회신/약속 내용</p>
-                <p className="text-[11px] whitespace-pre-wrap text-muted-foreground">{p.our_commitments}</p>
+                <p className="text-micro font-semibold">회신/약속 내용</p>
+                <p className="text-micro whitespace-pre-wrap text-muted-foreground">{p.our_commitments}</p>
               </div>
             )}
 
             {(p.suggested_tasks || []).length > 0 && (
               <div className="space-y-1">
-                <p className="text-[11px] font-semibold">추천 세부 작업 {p.suggested_tasks.length}개</p>
+                <p className="text-micro font-semibold">추천 세부 작업 {p.suggested_tasks.length}개</p>
                 {p.suggested_tasks.map((t, i) => (
-                  <div key={i} className="text-[11px] rounded-md bg-background border px-2 py-1">
+                  <div key={i} className="text-micro rounded-md bg-background border px-2 py-1">
                     <span className="font-medium">{t.title}</span>
                     {t.due_date && <span className="text-muted-foreground"> · {t.due_date}</span>}
                     {t.description && <p className="text-muted-foreground">{t.description}</p>}

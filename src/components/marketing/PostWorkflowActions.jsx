@@ -12,10 +12,10 @@ export default function PostWorkflowActions({ post, user, errors, saving, save, 
 
   if (post.status === 'published') {
     return (
-      <div className="rounded-xl bg-emerald-50 p-4 text-sm space-y-1">
-        <p className="font-medium text-emerald-800">게시 완료 · {post.published_at && formatKst(post.published_at)}</p>
+      <div className="rounded-xl bg-success/10 p-4 text-body space-y-1">
+        <p className="font-medium text-success-text">게시 완료 · {post.published_at && formatKst(post.published_at)}</p>
         {(post.published_urls || []).map((u) => (
-          <a key={u.url} href={u.url} target="_blank" rel="noreferrer" className="block text-emerald-700 underline truncate">{PLATFORMS[u.platform]}: {u.url}</a>
+          <a key={u.url} href={u.url} target="_blank" rel="noreferrer" className="block text-success-text underline truncate">{PLATFORMS[u.platform]}: {u.url}</a>
         ))}
       </div>
     );
@@ -30,19 +30,19 @@ export default function PostWorkflowActions({ post, user, errors, saving, save, 
           <Button disabled={saving || !ok} onClick={() => run('approve')}>대표 승인</Button>
           <Button variant="ghost" disabled={saving} onClick={() => run('reject')}>반려</Button>
         </>}
-        {post.status === 'pending_approval' && !isCeo && <span className="text-xs text-muted-foreground self-center">대표님 승인을 기다리는 중입니다.</span>}
+        {post.status === 'pending_approval' && !isCeo && <span className="text-caption text-muted-foreground self-center">대표님 승인을 기다리는 중입니다.</span>}
       </div>
       {['approved', 'scheduled'].includes(post.status) && (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
-            <select className="h-9 rounded-md border bg-transparent px-2 text-sm" value={slot} onChange={(e) => setSlot(e.target.value)}>
+            <select className="h-9 rounded-md border bg-transparent px-2 text-body" value={slot} onChange={(e) => setSlot(e.target.value)}>
               {slots.map((s) => <option key={s} value={s}>{formatKst(s)}</option>)}
             </select>
             <Button variant="outline" disabled={saving} onClick={() => run('schedule', { scheduled_at: slot })}>예약</Button>
           </div>
-          <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">자동 게시는 준비 중입니다. 예약 시각에 직접 올리고 게시 완료로 표시하세요.</p>
+          <p className="text-caption text-warning-text bg-warning/10 rounded-lg px-3 py-2">자동 게시는 준비 중입니다. 예약 시각에 직접 올리고 게시 완료로 표시하세요.</p>
           <div className="rounded-xl bg-muted/50 p-4 space-y-2">
-            <p className="text-sm font-medium">수동 게시 완료 처리</p>
+            <p className="text-body font-medium">수동 게시 완료 처리</p>
             {(post.platforms || []).map((pl) => (
               <Input key={pl} placeholder={`${PLATFORMS[pl]} 게시물 URL`} value={urls[pl] || ''} onChange={(e) => setUrls({ ...urls, [pl]: e.target.value })} />
             ))}

@@ -45,9 +45,9 @@ export default function Factories() {
   });
   const accountBadge = (id) => {
     const rows = accounts.filter((a) => a.factory_id === id);
-    if (rows.some((a) => a.status === 'PENDING')) return <Badge className="border-0 bg-chart-3/15 text-[10px] text-chart-3">계좌 확인 대기</Badge>;
-    if (rows.some((a) => a.status === 'VERIFIED')) return <Badge className="border-0 bg-primary/10 text-[10px] text-primary">계좌 확인됨</Badge>;
-    return <Badge className="border-0 bg-destructive/10 text-[10px] text-destructive">계좌 미확인</Badge>;
+    if (rows.some((a) => a.status === 'PENDING')) return <Badge className="border-0 bg-chart-3/15 text-micro text-chart-3">계좌 확인 대기</Badge>;
+    if (rows.some((a) => a.status === 'VERIFIED')) return <Badge className="border-0 bg-primary/10 text-micro text-primary">계좌 확인됨</Badge>;
+    return <Badge className="border-0 bg-destructive/10 text-micro text-destructive">계좌 미확인</Badge>;
   };
 
   const createMutation = useMutation({
@@ -74,7 +74,7 @@ export default function Factories() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">공장 관리</h1>
-          <p className="text-sm text-muted-foreground mt-1">중국 현지 공장 마스터 프로필 관리</p>
+          <p className="text-body text-muted-foreground mt-1">중국 현지 공장 마스터 프로필 관리</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -145,8 +145,8 @@ export default function Factories() {
       ) : factories.length === 0 ? (
         <Card className="p-12 text-center">
           <Factory className="w-12 h-12 mx-auto text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-semibold">등록된 공장이 없습니다</p>
-          <p className="text-sm text-muted-foreground mt-1">신규 공장을 등록해 주세요</p>
+          <p className="mt-4 text-title font-semibold">등록된 공장이 없습니다</p>
+          <p className="text-body text-muted-foreground mt-1">신규 공장을 등록해 주세요</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -154,15 +154,15 @@ export default function Factories() {
             <Card key={f.id} className="hover:shadow-lg transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                  <CardTitle className="text-base">{f.company_name}</CardTitle>
+                  <CardTitle className="text-title">{f.company_name}</CardTitle>
                   <div className="flex shrink-0 flex-wrap justify-end gap-1">
-                    <Badge className={`border-0 text-[10px] ${FACTORY_CHECK_STATE[f.verification_status || 'NONE'].cls}`}>{FACTORY_CHECK_STATE[f.verification_status || 'NONE'].label}</Badge>
+                    <Badge className={`border-0 text-micro ${FACTORY_CHECK_STATE[f.verification_status || 'NONE'].cls}`}>{FACTORY_CHECK_STATE[f.verification_status || 'NONE'].label}</Badge>
                     {accountBadge(f.id)}
-                    <Badge variant="secondary" className="text-[10px]">공장</Badge>
+                    <Badge variant="secondary" className="text-micro">공장</Badge>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2.5 text-sm">
+              <CardContent className="space-y-2.5 text-body">
                 {f.factory_address && (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
@@ -188,11 +188,11 @@ export default function Factories() {
                   </div>
                 )}
                 {f.contact_person && (
-                  <p className="text-xs text-muted-foreground pt-1 border-t border-border">
+                  <p className="text-caption text-muted-foreground pt-1 border-t border-border">
                     담당: {f.contact_person} {f.wechat_id && `(WeChat: ${f.wechat_id})`}
                   </p>
                 )}
-                <Button asChild variant="outline" size="sm" className="w-full mt-2 gap-1.5 text-xs h-8">
+                <Button asChild variant="outline" size="sm" className="w-full mt-2 gap-1.5 text-caption h-8">
                   <Link to={`/factories/${f.id}/dashboard`}>
                     <LayoutDashboard className="w-3.5 h-3.5" />
                     팭토리 대시보드 열기

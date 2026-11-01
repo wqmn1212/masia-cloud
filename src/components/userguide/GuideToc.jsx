@@ -25,7 +25,7 @@ export default function GuideToc({ items }) {
       <div ref={bar} className="flex gap-2 overflow-x-auto pb-1">
         {items.map((it, i) => (
           <button key={it.id} data-id={it.id} onClick={() => go(it.id)}
-            className={`shrink-0 px-3 py-1 rounded-full text-xs border ${active === it.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-card hover:bg-muted'}`}>
+            className={`shrink-0 px-3 py-1 rounded-full text-caption border ${active === it.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-card hover:bg-muted'}`}>
             {i + 1}. {it.label}
           </button>
         ))}

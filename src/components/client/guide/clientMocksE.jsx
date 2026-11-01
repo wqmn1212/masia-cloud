@@ -22,8 +22,8 @@ export function ClaimMock() {
     <Frame title="프로젝트 → 검수 → 불량 신고">
       <Mark n={1}><div className="flex items-center gap-1 p-1"><b className="flex-1">버튼이 눌린 채 돌아오지 않음</b><span className="text-muted-foreground">불량 120 / 3,000개 · 사진 2장</span></div></Mark>
       <Mark n={2} className="mt-1"><div className="flex items-center gap-1 p-1 text-[10px]">{['접수', '확인 중', '공장 확인', '처리 완료'].map((k, i) => <span key={k} className={`rounded-full px-1.5 py-0.5 ${i <= 1 ? 'bg-primary text-primary-foreground' : 'border text-muted-foreground'}`}>{k}</span>)}</div></Mark>
-      <Mark n={3} className="mt-1"><div className="p-1 text-[10px] text-amber-700">공장 회신 대기 4일 · 이지스가 공장에 원인과 처리 방안을 요청했습니다 (기한 3영업일)</div></Mark>
-      <Mark n={4} className="mt-1"><div className="rounded border border-dashed p-1 text-[10px]"><b>보상 약속</b>: 다음 발주 할인 · KRW 150,000 — <span className="text-amber-700">다음 주문에 반영 예정</span></div></Mark>
+      <Mark n={3} className="mt-1"><div className="p-1 text-[10px] text-warning-text">공장 회신 대기 4일 · 이지스가 공장에 원인과 처리 방안을 요청했습니다 (기한 3영업일)</div></Mark>
+      <Mark n={4} className="mt-1"><div className="rounded border border-dashed p-1 text-[10px]"><b>보상 약속</b>: 다음 발주 할인 · KRW 150,000 — <span className="text-warning-text">다음 주문에 반영 예정</span></div></Mark>
     </Frame>
   );
 }

@@ -21,12 +21,12 @@ export default function MoldSummary({ result, report, cavitiesManual }) {
       <div className="grid grid-cols-2 overflow-hidden rounded-lg border bg-border gap-px">
         {rows.map(([k, v]) => (
           <div key={k} className="bg-card px-3 py-2">
-            <span className="block text-[11px] text-muted-foreground">{k}</span>
-            <b className="block text-sm tabular-nums">{v}</b>
+            <span className="block text-micro text-muted-foreground">{k}</span>
+            <b className="block text-body tabular-nums">{v}</b>
           </div>
         ))}
       </div>
-      <p className="mt-2 text-[11px] text-muted-foreground">
+      <p className="mt-2 text-micro text-muted-foreground">
         삼각형 {s.nt.toLocaleString()}개 · 검토 {fmt(s.ms / 1000, 1)}초 · 엔진 {result.version}
       </p>
     </div>

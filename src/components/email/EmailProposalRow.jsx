@@ -16,32 +16,32 @@ export default function EmailProposalRow({ proposal, cards, onApply, onReject, b
         </Button>
         <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold truncate">{proposal.email_subject || '(제목 없음)'}</p>
-          <p className="text-[10px] text-muted-foreground truncate">{proposal.email_from} · {proposal.email_date}</p>
+          <p className="text-caption font-semibold truncate">{proposal.email_subject || '(제목 없음)'}</p>
+          <p className="text-micro text-muted-foreground truncate">{proposal.email_from} · {proposal.email_date}</p>
         </div>
-        {proposal.client_name && <Badge variant="outline" className="text-[10px] shrink-0">{proposal.client_name}</Badge>}
+        {proposal.client_name && <Badge variant="outline" className="text-micro shrink-0">{proposal.client_name}</Badge>}
         {(proposal.suggested_tasks || []).length > 0 && (
-          <Badge variant="secondary" className="text-[10px] shrink-0">작업 {proposal.suggested_tasks.length}</Badge>
+          <Badge variant="secondary" className="text-micro shrink-0">작업 {proposal.suggested_tasks.length}</Badge>
         )}
       </div>
 
       {open && (
         <div className="space-y-2 pl-8">
-          {proposal.summary && <p className="text-[11px] text-muted-foreground whitespace-pre-wrap">{proposal.summary}</p>}
+          {proposal.summary && <p className="text-micro text-muted-foreground whitespace-pre-wrap">{proposal.summary}</p>}
           {proposal.client_requirements && (
             <div>
-              <p className="text-[11px] font-semibold">고객 요구사항</p>
-              <p className="text-[11px] whitespace-pre-wrap text-muted-foreground">{proposal.client_requirements}</p>
+              <p className="text-micro font-semibold">고객 요구사항</p>
+              <p className="text-micro whitespace-pre-wrap text-muted-foreground">{proposal.client_requirements}</p>
             </div>
           )}
           {proposal.our_commitments && (
             <div>
-              <p className="text-[11px] font-semibold">회신/약속 내용</p>
-              <p className="text-[11px] whitespace-pre-wrap text-muted-foreground">{proposal.our_commitments}</p>
+              <p className="text-micro font-semibold">회신/약속 내용</p>
+              <p className="text-micro whitespace-pre-wrap text-muted-foreground">{proposal.our_commitments}</p>
             </div>
           )}
           {(proposal.suggested_tasks || []).map((t, i) => (
-            <div key={i} className="text-[11px] rounded-md bg-background border px-2 py-1">
+            <div key={i} className="text-micro rounded-md bg-background border px-2 py-1">
               <span className="font-medium">{t.title}</span>
               {t.due_date && <span className="text-muted-foreground"> · {t.due_date}</span>}
               {t.description && <p className="text-muted-foreground">{t.description}</p>}

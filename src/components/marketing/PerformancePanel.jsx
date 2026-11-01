@@ -37,29 +37,29 @@ export default function PerformancePanel({ posts }) {
   return (
     <div className="rounded-2xl border bg-card p-6">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <h2 className="text-lg font-semibold">게시 완료 {published.length}건</h2>
+        <h2 className="text-title font-semibold">게시 완료 {published.length}건</h2>
         <Button size="sm" onClick={refresh} disabled={busy}><RefreshCw className={busy ? 'animate-spin' : ''} /> 직접 갱신</Button>
       </div>
       {result && (
-        <div className="mb-5 grid sm:grid-cols-2 gap-2 text-xs">
+        <div className="mb-5 grid sm:grid-cols-2 gap-2 text-caption">
           {Object.entries(PLATFORMS).map(([k, l]) => (
-            <div key={k} className={`rounded-lg px-3 py-2 ${result[k]?.ok ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{l}: {result[k]?.message}</div>
+            <div key={k} className={`rounded-lg px-3 py-2 ${result[k]?.ok ? 'bg-success/10 text-success-text' : 'bg-warning/10 text-warning-text'}`}>{l}: {result[k]?.message}</div>
           ))}
         </div>
       )}
-      {!published.length && <p className="text-sm text-muted-foreground py-10 text-center">아직 게시 완료된 게시물이 없습니다.</p>}
+      {!published.length && <p className="text-body text-muted-foreground py-10 text-center">아직 게시 완료된 게시물이 없습니다.</p>}
       <div className="divide-y">
         {published.map((p) => (
           <div key={p.id} className="py-4 grid md:grid-cols-[1fr_auto] gap-3 items-center">
             <div className="min-w-0">
               <p className="font-medium truncate">{p.title}</p>
-              <p className="text-xs text-muted-foreground">{p.published_at && formatKst(p.published_at)} · {p.utm_campaign || '캠페인 미지정'}</p>
-              {(p.published_urls || []).map((u) => <a key={u.url} href={u.url} target="_blank" rel="noreferrer" className="text-xs text-primary block truncate">{PLATFORMS[u.platform]} 열기</a>)}
+              <p className="text-caption text-muted-foreground">{p.published_at && formatKst(p.published_at)} · {p.utm_campaign || '캠페인 미지정'}</p>
+              {(p.published_urls || []).map((u) => <a key={u.url} href={u.url} target="_blank" rel="noreferrer" className="text-caption text-primary block truncate">{PLATFORMS[u.platform]} 열기</a>)}
             </div>
-            <div className="flex gap-5 text-sm tabular-nums">
+            <div className="flex gap-5 text-body tabular-nums">
               {COLS.map(([k, l]) => {
                 const v = value(p, k);
-                return <div key={k} className="text-center"><p className={typeof v === 'number' ? 'font-semibold' : 'text-xs text-muted-foreground'}>{v}</p><p className="text-[11px] text-muted-foreground">{l}</p></div>;
+                return <div key={k} className="text-center"><p className={typeof v === 'number' ? 'font-semibold' : 'text-caption text-muted-foreground'}>{v}</p><p className="text-micro text-muted-foreground">{l}</p></div>;
               })}
             </div>
           </div>

@@ -24,13 +24,13 @@ export default function CurrencyPanel({ usd, usdToKrw, usdToCny, legacyCny, lega
     <div className="grid grid-cols-3 gap-2 mt-2">
       {cells.map(([cur, v]) => (
         <div key={cur} className={pick === cur ? ON : OFF}>
-          <p className={`text-[10px] ${pick === cur ? 'text-primary' : 'text-muted-foreground'}`}>{cur} {pick === cur ? '최종 표기' : '참고'}</p>
-          <p className={`text-sm ${pick === cur ? 'font-bold text-primary' : 'font-semibold'}`}>
+          <p className={`text-micro ${pick === cur ? 'text-primary' : 'text-muted-foreground'}`}>{cur} {pick === cur ? '최종 표기' : '참고'}</p>
+          <p className={`text-body ${pick === cur ? 'font-bold text-primary' : 'font-semibold'}`}>
             {modern ? (v == null ? '—' : formatMoney(v, cur)) : money(v == null ? null : cur === 'KRW' ? ceilToUnit(v, 'KRW') : v, cur === 'USD' ? '$' : cur === 'CNY' ? '¥' : '₩', cur === 'KRW' ? 0 : 2)}
           </p>
         </div>
       ))}
     </div>
-    {legacy && <p className="text-[10px] text-muted-foreground">기존 CNY 견적입니다. 수정 저장 전까지 기존 금액을 보존합니다.</p>}
+    {legacy && <p className="text-micro text-muted-foreground">기존 CNY 견적입니다. 수정 저장 전까지 기존 금액을 보존합니다.</p>}
   </div>;
 }

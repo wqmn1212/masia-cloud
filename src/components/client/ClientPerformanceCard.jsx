@@ -28,13 +28,13 @@ export default function ClientPerformanceCard() {
 
   return (
     <Card className="p-4">
-      <h2 className="flex items-center gap-1.5 text-sm font-semibold"><TrendingUp className="h-4 w-4 text-primary" />성과 리포트</h2>
+      <h2 className="flex items-center gap-1.5 text-body font-semibold"><TrendingUp className="h-4 w-4 text-primary" />성과 리포트</h2>
       <ul className="mt-2 space-y-0.5">
         {reports.map((r) => (
           <li key={r.id}>
-            <button type="button" onClick={() => setOpenId(r.id)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-muted">
+            <button type="button" onClick={() => setOpenId(r.id)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-body hover:bg-muted">
               <span className="shrink-0 font-medium">{r.period_label}</span>
-              <span className="min-w-0 truncate text-xs text-muted-foreground">{headline(r.metrics)}</span>
+              <span className="min-w-0 truncate text-caption text-muted-foreground">{headline(r.metrics)}</span>
               <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
             </button>
           </li>

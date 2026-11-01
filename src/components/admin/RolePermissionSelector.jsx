@@ -30,7 +30,7 @@ export default function RolePermissionSelector({ tenantId, roleId, paths, onChan
     onChange(roleId, nextPaths);
   };
   return <div className="space-y-4">
-    <div><Label>팀 역할 (선택)</Label><Select value={roleId || 'none'} onValueChange={selectRole}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">역할 미지정</SelectItem>{roles.map((role) => <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>)}</SelectContent></Select>{roles.length === 0 && <p className="mt-1 text-xs text-muted-foreground">등록된 역할이 없어 기능 권한만 직접 선택할 수 있습니다.</p>}</div>
+    <div><Label>팀 역할 (선택)</Label><Select value={roleId || 'none'} onValueChange={selectRole}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">역할 미지정</SelectItem>{roles.map((role) => <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>)}</SelectContent></Select>{roles.length === 0 && <p className="mt-1 text-caption text-muted-foreground">등록된 역할이 없어 기능 권한만 직접 선택할 수 있습니다.</p>}</div>
     <InvitePermissionPicker value={paths} onChange={changePaths} />
   </div>;
 }

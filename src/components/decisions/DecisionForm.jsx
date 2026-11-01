@@ -40,11 +40,11 @@ export default function DecisionForm({ open, onClose, onSave, initial, cards = [
         <div className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">결정 주제 *</Label>
+              <Label className="text-caption">결정 주제 *</Label>
               <BilingualField key={`topic-${initial?.id || 'new'}-${open}`} record={form} field="topic" onChange={set} disabled={saving} />
             </div>
             <div>
-              <Label className="text-xs">분류</Label>
+              <Label className="text-caption">분류</Label>
               <Select value={form.category} onValueChange={v => set('category', v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -56,7 +56,7 @@ export default function DecisionForm({ open, onClose, onSave, initial, cards = [
 
           {!fixedCardId && (
             <div>
-              <Label className="text-xs">연결 카드 (선택)</Label>
+              <Label className="text-caption">연결 카드 (선택)</Label>
               <Select value={form.card_id || 'none'} onValueChange={v => set('card_id', v === 'none' ? '' : v)}>
                 <SelectTrigger><SelectValue placeholder="없음" /></SelectTrigger>
                 <SelectContent>
@@ -68,18 +68,18 @@ export default function DecisionForm({ open, onClose, onSave, initial, cards = [
           )}
 
           <div>
-            <Label className="text-xs">확정 내용 *</Label>
+            <Label className="text-caption">확정 내용 *</Label>
             <BilingualField key={`decision-${initial?.id || 'new'}-${open}`} record={form} field="decision" multiline rows={2} onChange={set} disabled={saving} />
           </div>
           <div>
-            <Label className="text-xs">근거</Label>
+            <Label className="text-caption">근거</Label>
             <BilingualField key={`rationale-${initial?.id || 'new'}-${open}`} record={form} field="rationale" multiline rows={2} onChange={set} disabled={saving} />
           </div>
 
           <div>
             <div className="flex items-center justify-between">
-              <Label className="text-xs">기각된 대안</Label>
-              <Button type="button" variant="outline" size="sm" className="h-7 text-xs"
+              <Label className="text-caption">기각된 대안</Label>
+              <Button type="button" variant="outline" size="sm" className="h-7 text-caption"
                 onClick={() => setForm(f => ({ ...f, alternatives: [...f.alternatives, { option: '', reject_reason: '' }] }))}>
                 <Plus className="w-3 h-3 mr-1" />대안 추가
               </Button>
@@ -91,8 +91,8 @@ export default function DecisionForm({ open, onClose, onSave, initial, cards = [
                     onClick={() => setForm(f => ({ ...f, alternatives: f.alternatives.filter((_, idx) => idx !== i) }))}>
                     <X className="w-3.5 h-3.5" />
                   </button>
-                  <Input className="h-8 text-xs pr-8" placeholder="대안 내용" value={alt.option} onChange={e => setAlt(i, 'option', e.target.value)} />
-                  <Textarea rows={2} className="text-xs" placeholder="기각 사유" value={alt.reject_reason} onChange={e => setAlt(i, 'reject_reason', e.target.value)} />
+                  <Input className="h-8 text-caption pr-8" placeholder="대안 내용" value={alt.option} onChange={e => setAlt(i, 'option', e.target.value)} />
+                  <Textarea rows={2} className="text-caption" placeholder="기각 사유" value={alt.reject_reason} onChange={e => setAlt(i, 'reject_reason', e.target.value)} />
                 </div>
               ))}
             </div>
@@ -100,7 +100,7 @@ export default function DecisionForm({ open, onClose, onSave, initial, cards = [
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">상태</Label>
+              <Label className="text-caption">상태</Label>
               <Select value={form.status} onValueChange={v => set('status', v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -109,29 +109,29 @@ export default function DecisionForm({ open, onClose, onSave, initial, cards = [
               </Select>
             </div>
             <div>
-              <Label className="text-xs">결정일</Label>
+              <Label className="text-caption">결정일</Label>
               <Input type="date" value={form.decided_at} onChange={e => set('decided_at', e.target.value)} />
             </div>
           </div>
 
           {(form.status === 'REVERSED' || form.status === 'SUPERSEDED') && (
             <div>
-              <Label className="text-xs">번복 사유</Label>
+              <Label className="text-caption">번복 사유</Label>
               <Textarea rows={2} value={form.reverse_reason} onChange={e => set('reverse_reason', e.target.value)} />
             </div>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <Label className="text-xs">결정자</Label>
+              <Label className="text-caption">결정자</Label>
               <Input value={form.decided_by} onChange={e => set('decided_by', e.target.value)} />
             </div>
             <div>
-              <Label className="text-xs">근거 문서·회의록</Label>
+              <Label className="text-caption">근거 문서·회의록</Label>
               <Input value={form.source_ref} onChange={e => set('source_ref', e.target.value)} />
             </div>
             <div>
-              <Label className="text-xs">영향 (원가·납기·인증)</Label>
+              <Label className="text-caption">영향 (원가·납기·인증)</Label>
               <Input value={form.impact_note} onChange={e => set('impact_note', e.target.value)} />
             </div>
           </div>

@@ -125,7 +125,7 @@ export default function Requirements() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">3자 요구사항 트래커</h1>
-          <p className="text-sm text-muted-foreground mt-1">고객 → HQ 승인 → 에이전트 세팅 → 실물 검증 4단계 추적</p>
+          <p className="text-body text-muted-foreground mt-1">고객 → HQ 승인 → 에이전트 세팅 → 실물 검증 4단계 추적</p>
         </div>
         <Button onClick={() => { setEditItem(null); setForm(emptyForm); setCreateOpen(true); }}>
           <Plus className="w-4 h-4 mr-2" />요구사항 등록
@@ -138,7 +138,7 @@ export default function Requirements() {
           <button
             key={s}
             onClick={() => setFilterStatus(s)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-full text-caption font-medium transition-colors ${
               filterStatus === s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }`}
           >
@@ -183,31 +183,31 @@ export default function Requirements() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 flex-wrap">
                         <div>
-                          <p className="font-semibold text-sm">{req.title}</p>
-                          {req.project_label && <p className="text-xs text-muted-foreground">{req.project_label}</p>}
+                          <p className="font-semibold text-body">{req.title}</p>
+                          {req.project_label && <p className="text-caption text-muted-foreground">{req.project_label}</p>}
                         </div>
                         <div className="flex items-center gap-2">
                           {req.machine_category && (
-                            <Badge variant="outline" className="text-[10px]">{CATEGORY_LABELS[req.machine_category] || req.machine_category}</Badge>
+                            <Badge variant="outline" className="text-micro">{CATEGORY_LABELS[req.machine_category] || req.machine_category}</Badge>
                           )}
-                          <Badge className={`${meta.color} border-0 text-[10px]`}>{meta.label}</Badge>
+                          <Badge className={`${meta.color} border-0 text-micro`}>{meta.label}</Badge>
                         </div>
                       </div>
 
-                      <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{req.description_kr}</p>
+                      <p className="text-body text-muted-foreground mt-2 line-clamp-2">{req.description_kr}</p>
 
                       {req.description_cn && (
                         <div className="mt-2 p-2 rounded-lg bg-muted/50 border border-border">
-                          <p className="text-[10px] font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+                          <p className="text-micro font-semibold text-muted-foreground mb-1 flex items-center gap-1">
                             <Languages className="w-3 h-3" /> 중문 기술 지시서
                           </p>
-                          <p className="text-xs text-foreground/80">{req.description_cn}</p>
+                          <p className="text-caption text-foreground/80">{req.description_cn}</p>
                         </div>
                       )}
 
                       {req.evidence_file_url && (
                         <a href={req.evidence_file_url} target="_blank" rel="noopener noreferrer"
-                           className="inline-flex items-center gap-1.5 mt-2 text-xs text-primary hover:underline">
+                           className="inline-flex items-center gap-1.5 mt-2 text-caption text-primary hover:underline">
                           <ShieldCheck className="w-3 h-3" /> 실물 증빙 파일 확인
                         </a>
                       )}
@@ -215,7 +215,7 @@ export default function Requirements() {
 
                     <div className="flex flex-row md:flex-col items-center gap-2 md:w-36">
                       {canAdvance && (
-                        <Button size="sm" className="w-full text-xs h-8" onClick={() => handleAdvanceStatus(req)}
+                        <Button size="sm" className="w-full text-caption h-8" onClick={() => handleAdvanceStatus(req)}
                           disabled={updateMutation.isPending}>
                           {req.status === 'PENDING' ? '승인하기' : '완료 처리'}
                         </Button>
@@ -232,7 +232,7 @@ export default function Requirements() {
                         />
                       )}
 
-                      <Button size="sm" variant="outline" className="w-full text-xs h-8" onClick={() => openEdit(req)}>수정</Button>
+                      <Button size="sm" variant="outline" className="w-full text-caption h-8" onClick={() => openEdit(req)}>수정</Button>
                     </div>
                   </div>
                 </CardContent>
@@ -251,11 +251,11 @@ export default function Requirements() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">프로젝트 (공장명/고객사)</Label>
+                <Label className="text-caption">프로젝트 (공장명/고객사)</Label>
                 <Input value={form.project_label || ''} onChange={(e) => setForm(p => ({ ...p, project_label: e.target.value }))} placeholder="예: DBM-5000 / (주)카페로스팅" />
               </div>
               <div>
-                <Label className="text-xs">장비 카테고리</Label>
+                <Label className="text-caption">장비 카테고리</Label>
                 <Select value={form.machine_category || ''} onValueChange={(v) => setForm(p => ({ ...p, machine_category: v }))}>
                   <SelectTrigger><SelectValue placeholder="선택" /></SelectTrigger>
                   <SelectContent>
@@ -266,19 +266,19 @@ export default function Requirements() {
             </div>
 
             <div>
-              <Label className="text-xs">요구사항 제목 *</Label>
+              <Label className="text-caption">요구사항 제목 *</Label>
               <Input value={form.title} onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))} required placeholder="예: 단차 구간 스펀지 압착 모듈 추가" />
             </div>
 
             <div>
-              <Label className="text-xs">한국어 요구사항 상세 *</Label>
+              <Label className="text-caption">한국어 요구사항 상세 *</Label>
               <Textarea value={form.description_kr} onChange={(e) => setForm(p => ({ ...p, description_kr: e.target.value }))} required rows={3} placeholder="고객사 요구사항을 한국어로 상세 작성하세요" />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <Label className="text-xs">중문 기술 지시서 (AI 번역)</Label>
-                <Button type="button" size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleTranslate} disabled={translating || !form.description_kr}>
+                <Label className="text-caption">중문 기술 지시서 (AI 번역)</Label>
+                <Button type="button" size="sm" variant="outline" className="h-7 text-caption gap-1" onClick={handleTranslate} disabled={translating || !form.description_kr}>
                   {translating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Languages className="w-3 h-3" />}
                   AI 자동 번역
                 </Button>
@@ -288,7 +288,7 @@ export default function Requirements() {
 
             {editItem && (
               <div>
-                <Label className="text-xs">상태</Label>
+                <Label className="text-caption">상태</Label>
                 <Select value={form.status} onValueChange={(v) => setForm(p => ({ ...p, status: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>

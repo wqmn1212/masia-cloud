@@ -134,7 +134,7 @@ export default function Quotations() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('quotations.title')}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{t('quotations.subtitle')}</p>
+          <p className="text-body text-muted-foreground mt-1">{t('quotations.subtitle')}</p>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
@@ -228,7 +228,7 @@ export default function Quotations() {
         {quotations.length === 0 ? (
           <Card className="p-12 text-center">
             <FileText className="w-12 h-12 mx-auto text-muted-foreground/40" />
-            <p className="mt-4 text-lg font-semibold">{t('quotations.empty')}</p>
+            <p className="mt-4 text-title font-semibold">{t('quotations.empty')}</p>
           </Card>
         ) : (
           quotations.map((q) => {
@@ -241,14 +241,14 @@ export default function Quotations() {
                       <FileText className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-semibold text-sm">{q.factory_name || t('quotations.unspecified')} → {q.client_name || t('quotations.unspecified')}</p>
-                      <p className="text-xs text-muted-foreground">{q.machine_category ? t(`cat.${q.machine_category}`) : t('quotations.nocat')}</p>
+                      <p className="font-semibold text-body">{q.factory_name || t('quotations.unspecified')} → {q.client_name || t('quotations.unspecified')}</p>
+                      <p className="text-caption text-muted-foreground">{q.machine_category ? t(`cat.${q.machine_category}`) : t('quotations.nocat')}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
                     <Badge className={`${st.className} border-0`}>{t(`qstatus.${q.status}`)}</Badge>
                     {q.final_client_price > 0 && (
-                      <p className="text-sm font-bold">{quotePriceLabel(q)}</p>
+                      <p className="text-body font-bold">{quotePriceLabel(q)}</p>
                     )}
                     <Eye className="w-4 h-4 text-muted-foreground" />
                   </div>
@@ -269,36 +269,36 @@ export default function Quotations() {
               <DialogTitle>{t('quotations.detail')}</DialogTitle>
               {['master', 'service', 'sub'].includes(me?.account_tier) && <div className="flex items-center gap-2">
                 <QuotationHistoryButton quotation={detailQuote} />
-                <Button type="button" variant="outline" size="sm" className="h-7 text-xs" disabled={duplicateMutation.isPending} onClick={() => duplicateMutation.mutate(detailQuote)}><Copy className="w-3.5 h-3.5" />견적서 복사</Button>
+                <Button type="button" variant="outline" size="sm" className="h-7 text-caption" disabled={duplicateMutation.isPending} onClick={() => duplicateMutation.mutate(detailQuote)}><Copy className="w-3.5 h-3.5" />견적서 복사</Button>
               </div>}
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div><p className="text-xs text-muted-foreground">{t('quotations.detail.factory')}</p><p className="font-semibold">{detailQuote.factory_name}</p></div>
-                <div><p className="text-xs text-muted-foreground">{t('quotations.detail.client')}</p><p className="font-semibold">{detailQuote.client_name}</p></div>
-                <div><p className="text-xs text-muted-foreground">{t('quotations.detail.category')}</p><p className="font-semibold">{detailQuote.machine_category ? t(`cat.${detailQuote.machine_category}`) : '-'}</p></div>
-                <div><p className="text-xs text-muted-foreground">{t('quotations.detail.status')}</p><Badge className={`${(STATUS_MAP[detailQuote.status] || STATUS_MAP.DRAFT).className} border-0`}>{t(`qstatus.${detailQuote.status}`)}</Badge></div>
+                <div><p className="text-caption text-muted-foreground">{t('quotations.detail.factory')}</p><p className="font-semibold">{detailQuote.factory_name}</p></div>
+                <div><p className="text-caption text-muted-foreground">{t('quotations.detail.client')}</p><p className="font-semibold">{detailQuote.client_name}</p></div>
+                <div><p className="text-caption text-muted-foreground">{t('quotations.detail.category')}</p><p className="font-semibold">{detailQuote.machine_category ? t(`cat.${detailQuote.machine_category}`) : '-'}</p></div>
+                <div><p className="text-caption text-muted-foreground">{t('quotations.detail.status')}</p><Badge className={`${(STATUS_MAP[detailQuote.status] || STATUS_MAP.DRAFT).className} border-0`}>{t(`qstatus.${detailQuote.status}`)}</Badge></div>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="p-3 rounded-lg bg-muted">
-                  <p className="text-xs text-muted-foreground">{t('quotations.detail.factorycost')}</p>
-                  <p className="text-lg font-bold">¥{(detailQuote.factory_total_cost || 0).toLocaleString()}</p>
+                  <p className="text-caption text-muted-foreground">{t('quotations.detail.factorycost')}</p>
+                  <p className="text-title font-bold">¥{(detailQuote.factory_total_cost || 0).toLocaleString()}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-muted">
-                  <p className="text-xs text-muted-foreground">{t('quotations.detail.logistics')}</p>
-                  <p className="text-lg font-bold">¥{(detailQuote.logistics_cost || 0).toLocaleString()}</p>
+                  <p className="text-caption text-muted-foreground">{t('quotations.detail.logistics')}</p>
+                  <p className="text-title font-bold">¥{(detailQuote.logistics_cost || 0).toLocaleString()}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-primary/10">
-                  <p className="text-xs text-primary">{t('quotations.detail.finalprice')}</p>
-                  <p className="text-lg font-bold text-primary">{quotePriceLabel(detailQuote)}</p>
+                  <p className="text-caption text-primary">{t('quotations.detail.finalprice')}</p>
+                  <p className="text-title font-bold text-primary">{quotePriceLabel(detailQuote)}</p>
                 </div>
               </div>
               {detailQuote.final_client_price > 0 && <CurrencyPanel {...(detailQuote.rounding_version === 2 && detailQuote.final_total != null ? { total: detailQuote.final_total, currency: detailQuote.final_currency || 'USD', usdToCny: detailQuote.exchange_rate_usd_cny, usdToKrw: detailQuote.exchange_rate_usd } : detailQuote.exchange_rate_usd_cny ? { usd: detailQuote.final_client_price, usdToCny: detailQuote.exchange_rate_usd_cny, usdToKrw: detailQuote.exchange_rate_usd } : { legacyCny: detailQuote.final_client_price, usdToKrw: detailQuote.exchange_rate_usd, legacyCnyToKrw: detailQuote.exchange_rate_krw })} />}
               {detailQuote.line_items?.length > 0 && (
                 <div>
-                  <p className="text-sm font-semibold mb-2">{t('quotations.detail.items')}</p>
+                  <p className="text-body font-semibold mb-2">{t('quotations.detail.items')}</p>
                   <div className="border rounded-lg overflow-hidden">
-                    <table className="w-full text-xs">
+                    <table className="w-full text-caption">
                       <thead><tr className="bg-muted/50">
                         <th className="text-left p-2">{t('quotations.col.item')}</th><th className="text-right p-2">{t('quotations.col.qty')}</th><th className="text-right p-2">{t('quotations.col.unit')}</th><th className="text-right p-2">{t('quotations.col.sub')}</th>
                       </tr></thead>

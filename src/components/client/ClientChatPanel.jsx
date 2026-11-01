@@ -40,15 +40,15 @@ export default function ClientChatPanel({ cardId, chats }) {
     <div className="space-y-3">
       <div className="max-h-[320px] overflow-y-auto space-y-2 pr-1">
         {chats.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">아직 대화가 없습니다. 문의를 남겨보세요.</p>
+          <p className="text-body text-muted-foreground text-center py-8">아직 대화가 없습니다. 문의를 남겨보세요.</p>
         ) : (
           chats.map((c) => {
             const mine = c.sender_role === 'CLIENT';
             return (
               <div key={c.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
                 <div className={cn('max-w-[80%] rounded-xl px-3 py-2', mine ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                  <p className="text-[10px] opacity-70">{c.sender_name} · {c.created_date ? format(new Date(c.created_date), 'MM.dd HH:mm') : ''}</p>
-                  <p className="text-sm whitespace-pre-wrap mt-0.5 leading-relaxed">{content(c, 'message_text')}</p>
+                  <p className="text-micro opacity-70">{c.sender_name} · {c.created_date ? format(new Date(c.created_date), 'MM.dd HH:mm') : ''}</p>
+                  <p className="text-body whitespace-pre-wrap mt-0.5 leading-relaxed">{content(c, 'message_text')}</p>
                 </div>
               </div>
             );
@@ -59,7 +59,7 @@ export default function ClientChatPanel({ cardId, chats }) {
         {files.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {files.map((f, i) => (
-              <span key={i} className="inline-flex items-center gap-1 bg-muted rounded-full pl-2.5 pr-1 py-1 text-xs">
+              <span key={i} className="inline-flex items-center gap-1 bg-muted rounded-full pl-2.5 pr-1 py-1 text-caption">
                 {f.name}
                 <button type="button" onClick={() => setFiles((p) => p.filter((_, idx) => idx !== i))}><X className="w-3 h-3" /></button>
               </span>

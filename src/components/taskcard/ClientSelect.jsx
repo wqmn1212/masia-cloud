@@ -38,7 +38,7 @@ export default function ClientSelect({ value, onChange }) {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="고객사명 입력"
-          className="h-9 text-sm"
+          className="h-9 text-body"
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (newName.trim()) createMutation.mutate(newName.trim()); } }}
         />
         <Button type="button" size="icon" className="h-9 w-9 shrink-0" onClick={() => { if (newName.trim()) createMutation.mutate(newName.trim()); }} disabled={createMutation.isPending}>

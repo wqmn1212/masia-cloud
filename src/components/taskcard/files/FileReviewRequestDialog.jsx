@@ -19,7 +19,7 @@ export default function FileReviewRequestDialog({ file, files, open, pending, on
     <Dialog open={open} onOpenChange={(o) => !o && !pending && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-base">고객 확인 요청</DialogTitle>
+          <DialogTitle className="text-title">고객 확인 요청</DialogTitle>
           <DialogDescription className="text-label">
             <b>{file.file_name}</b> 을 고객에게 공개하고 확인을 요청합니다. 고객은 이전 판과 나란히 보고, 고칠 위치에 핀 의견을 남겨 승인 또는 수정 요청을 고릅니다.
           </DialogDescription>

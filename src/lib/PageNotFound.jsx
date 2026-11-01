@@ -43,12 +43,12 @@ export default function PageNotFound({}) {
                     {isFetched && authData.isAuthenticated && authData.user?.role === 'admin' && (
                         <div className="mt-8 p-4 bg-muted rounded-lg border border-border">
                             <div className="flex items-start space-x-3">
-                                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center mt-0.5">
-                                    <div className="w-2 h-2 rounded-full bg-orange-400"></div>
+                                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-warning/15 flex items-center justify-center mt-0.5">
+                                    <div className="w-2 h-2 rounded-full bg-warning/50"></div>
                                 </div>
                                 <div className="text-left space-y-1">
-                                    <p className="text-sm font-medium text-foreground/80">Admin Note</p>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                    <p className="text-body font-medium text-foreground/80">Admin Note</p>
+                                    <p className="text-body text-muted-foreground leading-relaxed">
                                         This could mean that the AI hasn't implemented this page yet. Ask it to implement it in the chat.
                                     </p>
                                 </div>
@@ -60,7 +60,7 @@ export default function PageNotFound({}) {
                     <div className="pt-6">
                         <button 
                             onClick={() => window.location.href = '/'} 
-                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-foreground/80 bg-white border border-border rounded-lg hover:bg-muted hover:border-slate-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
+                            className="inline-flex items-center px-4 py-2 text-body font-medium text-foreground/80 bg-white border border-border rounded-lg hover:bg-muted hover:border-border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-border"
                         >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />

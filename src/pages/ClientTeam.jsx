@@ -16,7 +16,7 @@ export default function ClientTeam() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">팀·결재</h1>
-        <p className="mt-1 text-sm text-muted-foreground">동료를 초대하고 역할을 나누면, 실무자가 고른 결정을 결재권자가 승인한 뒤 이지스에 전달할 수 있습니다.</p>
+        <p className="mt-1 text-body text-muted-foreground">동료를 초대하고 역할을 나누면, 실무자가 고른 결정을 결재권자가 승인한 뒤 이지스에 전달할 수 있습니다.</p>
       </div>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>

@@ -113,7 +113,7 @@ export function ClaimTrackStaffMock({ zh }) {
     <Frame title={L(zh, '카드 → 업무 → 불량 신고', '卡片 → 任务 → 不良投诉')} badge={L(zh, '예시 화면', '示例画面')}>
       <Mark n={1}><div className="p-1 text-[10px] text-muted-foreground">{L(zh, '공장에 보냄 10/24 · 회신 대기 2영업일', '已发工厂 10/24 · 等待回复 2 个工作日')}</div></Mark>
       <Mark n={2} className="mt-1.5"><div className="grid grid-cols-[1fr_auto] items-end gap-1 p-0.5"><Field label={L(zh, '공장 회신 (내부용)', '工厂回复（内部）')} value={L(zh, '스프링 불량 · 재생산 동의', '弹簧不良 · 同意重新生产')} /><Btn>{L(zh, '저장', '保存')}</Btn></div></Mark>
-      <Mark n={3} className="mt-1.5"><div className="p-1 text-[10px] text-amber-700">{L(zh, '관리자 할 일: 공장 회신 기한(3영업일)이 지났습니다. 공장에 독촉하고 회신을 기록하세요.', '管理员待办：已超过工厂回复期限（3 个工作日），请催促工厂并记录回复。')}</div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="p-1 text-[10px] text-warning-text">{L(zh, '관리자 할 일: 공장 회신 기한(3영업일)이 지났습니다. 공장에 독촉하고 회신을 기록하세요.', '管理员待办：已超过工厂回复期限（3 个工作日），请催促工厂并记录回复。')}</div></Mark>
       <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><b>{L(zh, '보상 약속', '补偿承诺')}</b> KRW 150,000 · {L(zh, '반영할 다음 주문', '兑现的下一订单')}: <span className="rounded border px-1">{L(zh, '휴대용 선풍기 2차', '便携风扇 第2批')}</span> <Badge tone="blue">{L(zh, '반영됨', '已兑现')}</Badge></div></Mark>
     </Frame>
   );

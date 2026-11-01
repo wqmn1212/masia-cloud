@@ -15,8 +15,8 @@ const QUOTE_TERMS = TERMS.filter((t) => t.value !== 'FCA'); // 견적 엔티티 
 
 const Pick = ({ value, onChange, options }) => (
   <Select value={value} onValueChange={onChange}>
-    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-    <SelectContent className="max-w-[420px]">{options.map((o) => <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>)}</SelectContent>
+    <SelectTrigger className="h-8 text-caption"><SelectValue /></SelectTrigger>
+    <SelectContent className="max-w-[420px]">{options.map((o) => <SelectItem key={o.value} value={o.value} className="text-caption">{o.label}</SelectItem>)}</SelectContent>
   </Select>
 );
 
@@ -45,43 +45,43 @@ export default function LogisticsEstimator({ cargo, onCargoChange, cargoValueUsd
     <div className="space-y-3 rounded-xl border bg-muted/20 p-3">
       <div className="flex items-center gap-2">
         <Ship className="h-4 w-4 text-primary" />
-        <p className="text-xs font-semibold">물류비 자동 추정 (중국 → 한국)</p>
-        <a href="/logistics-rates" className="ml-auto text-[10px] text-primary hover:underline">요율 관리</a>
+        <p className="text-caption font-semibold">물류비 자동 추정 (중국 → 한국)</p>
+        <a href="/logistics-rates" className="ml-auto text-micro text-primary hover:underline">요율 관리</a>
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <div><Label className="text-[10px]">운송 방식</Label><Pick value={mode} onChange={(v) => set('shipping_mode', MODE_TO_QUOTE[v] || v)} options={MODES} /></div>
-        <div><Label className="text-[10px]">공장과의 거래 조건</Label><Pick value={cargo.shipping_term || 'FOB'} onChange={(v) => set('shipping_term', v)} options={QUOTE_TERMS} /></div>
-        <div><Label className="text-[10px]">출발 지역</Label><Pick value={region} onChange={setRegion} options={REGIONS} /></div>
-        <div><Label className="text-[10px]">도착 지역</Label><Pick value={destArea} onChange={setDestArea} options={DEST_AREAS} /></div>
+        <div><Label className="text-micro">운송 방식</Label><Pick value={mode} onChange={(v) => set('shipping_mode', MODE_TO_QUOTE[v] || v)} options={MODES} /></div>
+        <div><Label className="text-micro">공장과의 거래 조건</Label><Pick value={cargo.shipping_term || 'FOB'} onChange={(v) => set('shipping_term', v)} options={QUOTE_TERMS} /></div>
+        <div><Label className="text-micro">출발 지역</Label><Pick value={region} onChange={setRegion} options={REGIONS} /></div>
+        <div><Label className="text-micro">도착 지역</Label><Pick value={destArea} onChange={setDestArea} options={DEST_AREAS} /></div>
       </div>
 
       <div className="grid grid-cols-5 gap-2">
         {[['cargo_length_cm', '가로(cm)'], ['cargo_width_cm', '세로(cm)'], ['cargo_height_cm', '높이(cm)'], ['cargo_weight_kg', '박스당 kg'], ['cargo_quantity', '박스 수']].map(([k, label]) => (
-          <div key={k}><Label className="text-[10px]">{label}</Label><Input type="number" className="h-8 text-xs" value={cargo[k] ?? ''} onChange={(e) => set(k, e.target.value)} /></div>
+          <div key={k}><Label className="text-micro">{label}</Label><Input type="number" className="h-8 text-caption" value={cargo[k] ?? ''} onChange={(e) => set(k, e.target.value)} /></div>
         ))}
       </div>
-      <label className="flex cursor-pointer items-center gap-2 text-[11px]">
+      <label className="flex cursor-pointer items-center gap-2 text-micro">
         <input type="checkbox" checked={includeDutyVat} onChange={(e) => setIncludeDutyVat(e.target.checked)} />
         관세(8%)·부가세(10%)까지 물류비에 포함
       </label>
 
       <div className="rounded-lg border bg-background p-2.5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <span className="text-xs text-muted-foreground">{result.basis.text}</span>
-          <span className="text-base font-extrabold text-primary">${usdTotal.toLocaleString()} <span className="text-xs font-semibold text-muted-foreground">({fmtWon(appliedKrw)})</span></span>
+          <span className="text-caption text-muted-foreground">{result.basis.text}</span>
+          <span className="text-base font-extrabold text-primary">${usdTotal.toLocaleString()} <span className="text-caption font-semibold text-muted-foreground">({fmtWon(appliedKrw)})</span></span>
         </div>
-        {result.needsCargo && <p className="mt-1 text-[11px] font-semibold text-destructive">박스 치수와 박스 수(또는 무게)를 넣어야 계산됩니다.</p>}
-        <p className="mt-1 text-[10px] text-muted-foreground">
+        {result.needsCargo && <p className="mt-1 text-micro font-semibold text-destructive">박스 치수와 박스 수(또는 무게)를 넣어야 계산됩니다.</p>}
+        <p className="mt-1 text-micro text-muted-foreground">
           {result.input.term} 조건에서 구매자가 따로 내는 물류비{includeDutyVat ? '·세금' : ''} · 환율 {fx.toLocaleString('ko-KR')}원/$ · 실제 청구서 기준 요율 {Math.round(result.totals.verifiedShare * 100)}%
         </p>
-        <button type="button" className="mt-1 text-[11px] font-semibold text-primary" onClick={() => setOpen((o) => !o)}>{open ? '자세히 닫기' : '구간별 내역·안내 문구 보기'}</button>
+        <button type="button" className="mt-1 text-micro font-semibold text-primary" onClick={() => setOpen((o) => !o)}>{open ? '자세히 닫기' : '구간별 내역·안내 문구 보기'}</button>
         {open && <div className="mt-3"><LandedCostResult result={result} /></div>}
       </div>
 
       {onApply && (
         <div className="flex justify-end">
-          <Button type="button" size="sm" className="h-7 gap-1 text-xs" disabled={result.needsCargo} onClick={() => onApply(usdTotal, {
+          <Button type="button" size="sm" className="h-7 gap-1 text-caption" disabled={result.needsCargo} onClick={() => onApply(usdTotal, {
             ...result,
             cbm: result.cbm,
             chargeableKg: Math.round(result.basis.kg ?? result.kg),

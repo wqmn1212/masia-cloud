@@ -56,7 +56,7 @@ export default function PostEditor({ post, user, onSaved, onNew }) {
     <div className="grid lg:grid-cols-[1fr_360px] gap-6">
       <div className="rounded-2xl border bg-card p-6 space-y-5">
         <div className="flex items-center justify-between">
-          <span className={cn('text-xs rounded px-2 py-1', STATUS[p.status]?.cls)}>{STATUS[p.status]?.label}</span>
+          <span className={cn('text-caption rounded px-2 py-1', STATUS[p.status]?.cls)}>{STATUS[p.status]?.label}</span>
           <Button variant="ghost" size="sm" onClick={onNew}>새 게시물</Button>
         </div>
         <fieldset disabled={locked} className="space-y-5">
@@ -65,7 +65,7 @@ export default function PostEditor({ post, user, onSaved, onNew }) {
             {Object.entries(PLATFORMS).map(([k, v]) => (
               <Button key={k} type="button" size="sm" variant={has(k) ? 'default' : 'outline'} onClick={() => toggle(k)}>{v}</Button>
             ))}
-            <select className="h-8 rounded-md border bg-transparent px-2 text-sm" value={p.post_format} onChange={(e) => set('post_format')(e.target.value)}>
+            <select className="h-8 rounded-md border bg-transparent px-2 text-body" value={p.post_format} onChange={(e) => set('post_format')(e.target.value)}>
               {Object.entries(FORMATS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </div>
@@ -82,7 +82,7 @@ export default function PostEditor({ post, user, onSaved, onNew }) {
           <div><Label>UTM 캠페인 (링크 추적용)</Label><Input className="mt-1.5" placeholder="예: 2026-10-machine-case" value={p.utm_campaign || ''} onChange={(e) => set('utm_campaign')(e.target.value)} /></div>
         </fieldset>
         {errors.length > 0 && !locked && (
-          <ul className="text-xs text-destructive space-y-1">{errors.map((e) => <li key={e}>· {e}</li>)}</ul>
+          <ul className="text-caption text-destructive space-y-1">{errors.map((e) => <li key={e}>· {e}</li>)}</ul>
         )}
         <PostWorkflowActions post={p} user={user} errors={errors} saving={saving} save={save} run={run} />
       </div>

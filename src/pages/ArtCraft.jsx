@@ -36,7 +36,7 @@ function Section({ title, icon: Icon, children, action }) {
     <section className="rounded-xl border bg-card p-4">
       <div className="mb-3 flex items-center gap-2">
         {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
-        <h2 className="text-sm font-bold">{title}</h2>
+        <h2 className="text-body font-bold">{title}</h2>
         {action && <div className="ml-auto">{action}</div>}
       </div>
       {children}
@@ -45,12 +45,12 @@ function Section({ title, icon: Icon, children, action }) {
 }
 
 function Loading() {
-  return <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" />GitHub에서 불러오는 중...</div>;
+  return <div className="flex items-center gap-2 text-caption text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" />GitHub에서 불러오는 중...</div>;
 }
 
 function Failed({ error }) {
   return (
-    <p className="text-xs text-muted-foreground">
+    <p className="text-caption text-muted-foreground">
       {error.message} <a href={`${REPO_URL}/releases`} target="_blank" rel="noreferrer" className="font-semibold text-primary underline">GitHub에서 직접 보기</a>
     </p>
   );
@@ -66,7 +66,7 @@ function LatestRelease() {
   if (isLoading) return <Loading />;
   if (error) return <Failed error={error} />;
   const release = (data || []).find((r) => !r.draft);
-  if (!release) return <p className="text-xs text-muted-foreground">공개된 릴리스가 없습니다.</p>;
+  if (!release) return <p className="text-caption text-muted-foreground">공개된 릴리스가 없습니다.</p>;
 
   const groups = {};
   for (const a of release.assets || []) {
@@ -78,19 +78,19 @@ function LatestRelease() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-lg font-bold">{release.name || release.tag_name}</span>
+        <span className="text-title font-bold">{release.name || release.tag_name}</span>
         {release.prerelease && <Badge variant="secondary">미리보기</Badge>}
-        <span className="text-xs text-muted-foreground">{release.tag_name} · {fmtDate(release.published_at)}</span>
+        <span className="text-caption text-muted-foreground">{release.tag_name} · {fmtDate(release.published_at)}</span>
       </div>
 
       {Object.keys(groups).length ? (
         <div className="grid gap-3 sm:grid-cols-3">
           {['Windows', 'macOS', 'Linux'].filter((os) => groups[os]).map((os) => (
             <div key={os} className="rounded-lg border p-3">
-              <p className="mb-2 text-xs font-semibold text-muted-foreground">{os}</p>
+              <p className="mb-2 text-caption font-semibold text-muted-foreground">{os}</p>
               <div className="space-y-1.5">
                 {groups[os].map((a) => (
-                  <Button key={a.id} asChild variant="outline" size="sm" className="h-auto w-full justify-start py-1.5 text-left text-xs">
+                  <Button key={a.id} asChild variant="outline" size="sm" className="h-auto w-full justify-start py-1.5 text-left text-caption">
                     <a href={a.browser_download_url} target="_blank" rel="noreferrer">
                       <Download className="h-3.5 w-3.5 flex-none" />
                       <span className="min-w-0 flex-1 truncate">{a.name}</span>
@@ -103,19 +103,19 @@ function LatestRelease() {
           ))}
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-caption text-muted-foreground">
           이 릴리스에는 설치 파일이 없습니다. <a href={SITE_URL} target="_blank" rel="noreferrer" className="font-semibold text-primary underline">공식 사이트</a>에서 안정 버전을 받으세요.
         </p>
       )}
 
       {notes && (
         <div>
-          <p className="mb-1 text-xs font-semibold text-muted-foreground">변경 내용 (원문)</p>
-          <pre className={`overflow-hidden whitespace-pre-wrap rounded-lg border bg-muted/40 p-3 font-sans text-xs leading-relaxed text-foreground/80 ${expanded ? '' : 'max-h-40'}`}>
+          <p className="mb-1 text-caption font-semibold text-muted-foreground">변경 내용 (원문)</p>
+          <pre className={`overflow-hidden whitespace-pre-wrap rounded-lg border bg-muted/40 p-3 font-sans text-caption leading-relaxed text-foreground/80 ${expanded ? '' : 'max-h-40'}`}>
             {notes}
           </pre>
           {notes.length > 400 && (
-            <button type="button" onClick={() => setExpanded((v) => !v)} className="mt-1 text-xs font-semibold text-primary">
+            <button type="button" onClick={() => setExpanded((v) => !v)} className="mt-1 text-caption font-semibold text-primary">
               {expanded ? '접기' : '더 보기'}
             </button>
           )}
@@ -133,7 +133,7 @@ function RepoStatus() {
   const r = repo.data;
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
+      <div className="flex flex-wrap gap-x-5 gap-y-1 text-caption text-muted-foreground">
         <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5" />별 {Number(r.stargazers_count || 0).toLocaleString()}</span>
         <span className="flex items-center gap-1"><CircleDot className="h-3.5 w-3.5" />열린 이슈·PR {Number(r.open_issues_count || 0).toLocaleString()}</span>
         <span>마지막 반영 {fmtDate(r.pushed_at)}</span>
@@ -143,7 +143,7 @@ function RepoStatus() {
         <ul className="divide-y rounded-lg border">
           {commits.data.map((c) => (
             <li key={c.sha}>
-              <a href={c.html_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted/50">
+              <a href={c.html_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 text-caption hover:bg-muted/50">
                 <GitCommit className="h-3.5 w-3.5 flex-none text-muted-foreground" />
                 <span className="min-w-0 flex-1 truncate">{(c.commit?.message || '').split('\n')[0]}</span>
                 <span className="flex-none text-muted-foreground">{fmtDate(c.commit?.author?.date)}</span>
@@ -164,8 +164,8 @@ export default function ArtCraft() {
           <Palette className="h-5 w-5 text-primary" />
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-bold tracking-tight">ArtCraft</h1>
-          <p className="text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">ArtCraft</h1>
+          <p className="text-caption text-muted-foreground">
             AI 이미지 · 영상 · 3D 제작 프로그램(오픈소스). PC에 설치해서 쓰며, 이 화면에서 최신 버전과 설치 파일을 확인합니다
           </p>
         </div>
@@ -180,7 +180,7 @@ export default function ArtCraft() {
       </div>
 
       <Section title="비용 안내" icon={Info}>
-        <ul className="list-disc space-y-1.5 pl-5 text-xs leading-relaxed text-muted-foreground">
+        <ul className="list-disc space-y-1.5 pl-5 text-caption leading-relaxed text-muted-foreground">
           <li><b className="text-foreground">프로그램 자체는 무료</b>입니다. 소스가 공개된 오픈소스(Apache-2.0 · MIT)라 내려받아 설치하는 데 비용이 들지 않습니다.</li>
           <li><b className="text-foreground">이미지 · 영상 · 3D 생성은 비용이 들 수 있습니다.</b> 생성은 ArtCraft 계정의 크레딧(잔액이 없으면 생성 불가)이나, 연결한 외부 서비스(Grok, Midjourney, Sora 등)의 유료 계정으로 실행됩니다.</li>
           <li>회사 계정으로 쓸 때는 크레딧 충전 · 외부 서비스 구독을 누가 관리할지 먼저 정해 두세요. 요금은 공식 사이트에서 확인합니다.</li>
@@ -194,7 +194,7 @@ export default function ArtCraft() {
       <Section
         title="저장소 현황"
         icon={Github}
-        action={<a href={`${REPO_URL}/commits`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-primary">전체 변경 내역</a>}
+        action={<a href={`${REPO_URL}/commits`} target="_blank" rel="noreferrer" className="text-caption font-semibold text-primary">전체 변경 내역</a>}
       >
         <RepoStatus />
       </Section>

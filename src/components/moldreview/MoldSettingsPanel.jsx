@@ -28,9 +28,9 @@ const COSMETIC_OPTIONS = [
 function Field({ label, children, hint }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-semibold text-muted-foreground">{label}</Label>
+      <Label className="text-caption font-semibold text-muted-foreground">{label}</Label>
       {children}
-      {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
+      {hint && <p className="text-micro text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -47,7 +47,7 @@ export default function MoldSettingsPanel({ analysis, onAnalysisChange, settings
       <div className="grid grid-cols-2 gap-3">
         <Field label="재질">
           <Select disabled={disabled} value={settings.materialKey} onValueChange={(v) => setS({ materialKey: v })}>
-            <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-9 text-caption"><SelectValue /></SelectTrigger>
             <SelectContent>
               {MOLD_MATERIALS.map((m) => <SelectItem key={m.key} value={m.key}>{m.name}</SelectItem>)}
             </SelectContent>
@@ -55,7 +55,7 @@ export default function MoldSettingsPanel({ analysis, onAnalysisChange, settings
         </Field>
         <Field label="캐비티 수">
           <Input
-            disabled={disabled} type="number" min={1} max={32} step={1} className="h-9 text-xs"
+            disabled={disabled} type="number" min={1} max={32} step={1} className="h-9 text-caption"
             value={settings.cavities ?? ''}
             placeholder={cavitiesAuto ? `자동 (${cavitiesAuto}개)` : '자동'}
             onChange={(e) => setS({ cavities: e.target.value ? Number(e.target.value) : null })}
@@ -63,14 +63,14 @@ export default function MoldSettingsPanel({ analysis, onAnalysisChange, settings
         </Field>
         <Field label="최소 구배 (°)">
           <Input
-            disabled={disabled} type="number" min={0.25} max={5} step={0.25} className="h-9 text-xs"
+            disabled={disabled} type="number" min={0.25} max={5} step={0.25} className="h-9 text-caption"
             value={settings.draftMin}
             onChange={(e) => setS({ draftMin: Math.max(0.25, Number(e.target.value) || 1) })}
           />
         </Field>
         <Field label="외관 부식(텍스처)">
           <Select disabled={disabled} value={String(settings.textureDepth)} onValueChange={(v) => setS({ textureDepth: Number(v) })}>
-            <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-9 text-caption"><SelectValue /></SelectTrigger>
             <SelectContent>
               {TEXTURE_OPTIONS.map((o) => <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>)}
             </SelectContent>
@@ -79,11 +79,11 @@ export default function MoldSettingsPanel({ analysis, onAnalysisChange, settings
       </div>
 
       <div className="rounded-lg border border-dashed p-3 space-y-3">
-        <p className="text-[11px] font-semibold text-muted-foreground">형상 조건 — 바꾸면 다시 검토합니다</p>
+        <p className="text-micro font-semibold text-muted-foreground">형상 조건 — 바꾸면 다시 검토합니다</p>
         <div className="grid grid-cols-2 gap-3">
           <Field label="빼기 방향">
             <Select disabled={disabled} value={analysis.pull} onValueChange={(v) => setA({ pull: v })}>
-              <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 text-caption"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {PULL_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
@@ -91,7 +91,7 @@ export default function MoldSettingsPanel({ analysis, onAnalysisChange, settings
           </Field>
           <Field label="외관면">
             <Select disabled={disabled} value={analysis.cosmetic} onValueChange={(v) => setA({ cosmetic: v })}>
-              <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 text-caption"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {COSMETIC_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
@@ -99,7 +99,7 @@ export default function MoldSettingsPanel({ analysis, onAnalysisChange, settings
           </Field>
           <Field label="두꺼움 기준 (기본 두께의 배)">
             <Input
-              disabled={disabled} type="number" min={1.1} max={2} step={0.05} className="h-9 text-xs"
+              disabled={disabled} type="number" min={1.1} max={2} step={0.05} className="h-9 text-caption"
               value={analysis.sinkRatio}
               onChange={(e) => setA({ sinkRatio: Math.min(2, Math.max(1.1, Number(e.target.value) || 1.25)) })}
             />

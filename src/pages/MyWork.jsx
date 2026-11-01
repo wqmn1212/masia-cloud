@@ -26,24 +26,24 @@ export default function MyWork() {
   return (
     <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-5">
       <div>
-        <h1 className="text-xl font-bold">{tr('내 업무')}</h1>
-        <p className="text-sm text-muted-foreground">{tr('내가 책임자인 진행 중 카드')} {active.length}{tr('건')}</p>
+        <h1 className="text-2xl font-bold tracking-tight">{tr('내 업무')}</h1>
+        <p className="text-body text-muted-foreground">{tr('내가 책임자인 진행 중 카드')} {active.length}{tr('건')}</p>
       </div>
       {user && ['service', 'sub'].includes(user.account_tier) && <DailyDigestCard user={user} cards={cards} onOpen={setSelected} />}
       {isLoading || !user ? (
         <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
       ) : !active.length ? (
-        <p className="text-sm text-muted-foreground text-center py-12 border rounded-lg">{tr('맡은 카드가 없습니다. 카드 상세에서 책임자로 지정되면 여기에 보입니다.')}</p>
+        <p className="text-body text-muted-foreground text-center py-12 border rounded-lg">{tr('맡은 카드가 없습니다. 카드 상세에서 책임자로 지정되면 여기에 보입니다.')}</p>
       ) : (
         <>
           {overdue.length > 0 && (
             <section className="space-y-2">
-              <p className="text-sm font-semibold text-destructive">{tr('기한 지남 · 지연')} {overdue.length}</p>
+              <p className="text-body font-semibold text-destructive">{tr('기한 지남 · 지연')} {overdue.length}</p>
               {overdue.map((c) => <MyWorkCardRow key={c.id} card={c} onOpen={setSelected} />)}
             </section>
           )}
           <section className="space-y-2">
-            <p className="text-sm font-semibold">{tr('진행 중')} {rest.length}</p>
+            <p className="text-body font-semibold">{tr('진행 중')} {rest.length}</p>
             {rest.map((c) => <MyWorkCardRow key={c.id} card={c} onOpen={setSelected} />)}
           </section>
         </>

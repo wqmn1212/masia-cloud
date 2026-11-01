@@ -16,25 +16,25 @@ export default function MilestoneRow({ m, confirmed, onChange, onComplete, onEdi
   return (
     <div className={`border rounded-lg p-2.5 space-y-2 ${done ? 'bg-muted/30' : ''}`}>
       <div className="flex items-center gap-2">
-        <span className="text-[10px] text-muted-foreground w-5">{m.seq + 1}</span>
-        <p className={`text-sm font-medium flex-1 min-w-0 truncate ${done ? 'line-through text-muted-foreground' : ''}`}>{label(m)}</p>
+        <span className="text-micro text-muted-foreground w-5">{m.seq + 1}</span>
+        <p className={`text-body font-medium flex-1 min-w-0 truncate ${done ? 'line-through text-muted-foreground' : ''}`}>{label(m)}</p>
         {!m.client_visible && <EyeOff className="w-3.5 h-3.5 text-muted-foreground" title={tr('고객 비공개')} />}
         {m.needs_qc_report && <ClipboardCheck className="w-3.5 h-3.5 text-muted-foreground" title={tr('QC 보고서 필요')} />}
-        {delay > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-destructive/15 text-destructive">+{delay}{tr('일')}</span>}
-        {overdue && <span className="text-[10px] px-1.5 py-0.5 rounded bg-chart-3/15 text-chart-3">{tr('기한 지남')}</span>}
+        {delay > 0 && <span className="text-micro font-semibold px-1.5 py-0.5 rounded bg-destructive/15 text-destructive">+{delay}{tr('일')}</span>}
+        {overdue && <span className="text-micro px-1.5 py-0.5 rounded bg-chart-3/15 text-chart-3">{tr('기한 지남')}</span>}
         {done
-          ? <span className="text-[10px] text-primary">{tr('완료')} {m.actual_date}</span>
-          : canComplete && <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => onComplete(m)}><Check className="w-3 h-3" />{tr('완료')}</Button>}
+          ? <span className="text-micro text-primary">{tr('완료')} {m.actual_date}</span>
+          : canComplete && <Button size="sm" variant="outline" className="h-7 text-caption gap-1" onClick={() => onComplete(m)}><Check className="w-3 h-3" />{tr('완료')}</Button>}
         {canManage && done && <Button size="icon" variant="ghost" className="h-7 w-7" title={tr('완료 취소')} onClick={() => window.confirm(tr('완료를 취소할까요?')) && onReopen(m)}><Undo2 className="w-3.5 h-3.5" /></Button>}
         {canManage && <Button size="icon" variant="ghost" className="h-7 w-7" title={tr('단계 수정')} onClick={() => onEdit(m)}><Pencil className="w-3.5 h-3.5" /></Button>}
         {canManage && <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" title={tr('단계 삭제')} onClick={() => window.confirm(tr('이 단계를 삭제할까요?')) && onRemove(m)}><Trash2 className="w-3.5 h-3.5" /></Button>}
       </div>
-      {m.factory_reported_at && !done && <p className="whitespace-pre-line rounded bg-primary/5 px-2 py-1 text-[11px]"><span className="font-medium text-primary">{tr('공장 완료 보고')} {String(m.factory_reported_at).slice(5, 10).replace('-', '/')}</span> · {m.factory_report_note}</p>}
-      <div className="grid grid-cols-3 gap-2 text-[11px]">
+      {m.factory_reported_at && !done && <p className="whitespace-pre-line rounded bg-primary/5 px-2 py-1 text-micro"><span className="font-medium text-primary">{tr('공장 완료 보고')} {String(m.factory_reported_at).slice(5, 10).replace('-', '/')}</span> · {m.factory_report_note}</p>}
+      <div className="grid grid-cols-3 gap-2 text-micro">
         <div><p className="text-muted-foreground">{tr('기준일')}</p><p>{m.baseline_date || tr('미확정')}</p></div>
         <div>
           <p className="text-muted-foreground">{tr('계획일')}</p>
-          <Input key={m.planned_date || ''} type="date" disabled={!canManage} defaultValue={m.planned_date || ''} onBlur={(e) => e.target.value && e.target.value !== (m.planned_date || '') && onChange(m, { planned_date: e.target.value })} className="h-7 text-[11px] px-1" />
+          <Input key={m.planned_date || ''} type="date" disabled={!canManage} defaultValue={m.planned_date || ''} onBlur={(e) => e.target.value && e.target.value !== (m.planned_date || '') && onChange(m, { planned_date: e.target.value })} className="h-7 text-micro px-1" />
         </div>
         <div>
           <p className="text-muted-foreground">{tr('담당')}</p>
@@ -45,8 +45,8 @@ export default function MilestoneRow({ m, confirmed, onChange, onComplete, onEdi
       </div>
       {confirmed && delay > 0 && canComplete && (
         <div className="flex items-center gap-2">
-          <Input defaultValue={m.delay_reason || ''} onBlur={(e) => e.target.value !== (m.delay_reason || '') && onChange(m, { delay_reason: e.target.value })} className="h-7 text-[11px]" placeholder={tr('지연 사유')} />
-          <label className="flex items-center gap-1 text-[10px] whitespace-nowrap">
+          <Input defaultValue={m.delay_reason || ''} onBlur={(e) => e.target.value !== (m.delay_reason || '') && onChange(m, { delay_reason: e.target.value })} className="h-7 text-micro" placeholder={tr('지연 사유')} />
+          <label className="flex items-center gap-1 text-micro whitespace-nowrap">
             <input type="checkbox" checked={!!m.delay_reason_public} onChange={(e) => onChange(m, { delay_reason_public: e.target.checked })} />{tr('고객 공개')}
           </label>
         </div>

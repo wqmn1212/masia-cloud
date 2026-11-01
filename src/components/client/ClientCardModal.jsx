@@ -44,19 +44,19 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl w-[95vw] max-h-[92vh] overflow-y-auto grid-cols-[minmax(0,1fr)]">
-        {isError ? <div className="py-8 space-y-3"><p role="alert" className="text-sm text-destructive">카드 정보를 불러오지 못했습니다.</p><button type="button" onClick={() => refetch()} disabled={isFetching} className="text-sm text-primary">다시 불러오기</button></div> : isLoading || !data?.card ? (
+        {isError ? <div className="py-8 space-y-3"><p role="alert" className="text-body text-destructive">카드 정보를 불러오지 못했습니다.</p><button type="button" onClick={() => refetch()} disabled={isFetching} className="text-body text-primary">다시 불러오기</button></div> : isLoading || !data?.card ? (
           <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle className="text-base pr-6">{data.card.title}</DialogTitle>
+              <DialogTitle className="text-title pr-6">{data.card.title}</DialogTitle>
               {data.pm && (
                 <p className="flex flex-wrap items-center gap-x-1.5 text-label text-muted-foreground">
                   <UserRound className="h-3.5 w-3.5" />담당 PM <span className="font-medium text-foreground">{data.pm.name}</span>{data.pm.reply_hours && <span>· 답변 {data.pm.reply_hours}</span>}<span>· 문의 탭에 남기시면 담당 PM이 답합니다</span>
                 </p>
               )}
               <div className="flex flex-wrap items-center gap-2">
-                <button type="button" className="mr-auto text-xs text-primary" disabled={isFetching} onClick={() => refetch()}>{isFetching ? '불러오는 중...' : '최신 일정·입금 상태 새로고침'}</button>
+                <button type="button" className="mr-auto text-caption text-primary" disabled={isFetching} onClick={() => refetch()}>{isFetching ? '불러오는 중...' : '최신 일정·입금 상태 새로고침'}</button>
                 <PdfButton generate={() => generateProjectSummaryPDF(data)} label="보고용 PDF" className="h-8" />
                 {user?.account_tier === 'client' && ['PRODUCTION', 'DONE'].includes(data.card.status) && (
                   <Button type="button" size="sm" className="h-8 gap-1.5" onClick={() => setReorderOpen(true)}><Repeat className="h-3.5 w-3.5" />재주문 요청</Button>
@@ -67,18 +67,18 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
             <ClientDecisionProvider cardId={data.card.id} approvals={data.approvals || []} team={data.team || null}>
             <Tabs key={`${cardId}-${initialTab || ''}`} defaultValue={TABS.includes(initialTab) ? initialTab : 'overview'} className="mt-3">
               <TabsList className="flex w-full justify-start overflow-x-auto sm:grid sm:grid-cols-6">
-                <TabsTrigger value="overview" className="text-xs sm:text-sm">진행 정보</TabsTrigger>
-                <TabsTrigger value="quotation" className="text-xs sm:text-sm">견적서</TabsTrigger>
-                <TabsTrigger value="qc" className="relative text-xs sm:text-sm">
+                <TabsTrigger value="overview" className="text-caption sm:text-body">진행 정보</TabsTrigger>
+                <TabsTrigger value="quotation" className="text-caption sm:text-body">견적서</TabsTrigger>
+                <TabsTrigger value="qc" className="relative text-caption sm:text-body">
                   검수
                   {((data.qc_reports || []).some((r) => r.decision !== 'APPROVED') || data.quality_spec?.decision === 'PENDING') && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" aria-label="확인할 검수 결과 있음" />}
                 </TabsTrigger>
-                <TabsTrigger value="chat" className="text-xs sm:text-sm">문의</TabsTrigger>
-                <TabsTrigger value="settlement" className="relative text-xs sm:text-sm">
+                <TabsTrigger value="chat" className="text-caption sm:text-body">문의</TabsTrigger>
+                <TabsTrigger value="settlement" className="relative text-caption sm:text-body">
                   결제
                   {(data.payment_stages || []).some((st) => st.request_state === 'REQUESTED') && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" aria-label="결제 요청 있음" />}
                 </TabsTrigger>
-                <TabsTrigger value="files" className="relative text-xs sm:text-sm">
+                <TabsTrigger value="files" className="relative text-caption sm:text-body">
                   파일
                   {(data.file_reviews || []).some((r) => r.status === 'PENDING') && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" aria-label="확인할 디자인 있음" />}
                 </TabsTrigger>

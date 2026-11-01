@@ -13,8 +13,8 @@ import LeadProvisionPanel from './LeadProvisionPanel';
 
 const Field = ({ label, children }) => (
   <div>
-    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
-    <div className="text-sm mt-0.5">{children || '-'}</div>
+    <div className="text-micro font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+    <div className="text-body mt-0.5">{children || '-'}</div>
   </div>
 );
 
@@ -39,7 +39,7 @@ export default function LeadDetailDialog({ lead, open, onClose, onSave, saving }
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {lead.company}
-            <span className="text-sm font-normal text-muted-foreground">
+            <span className="text-body font-normal text-muted-foreground">
               {lead.created_date ? format(new Date(lead.created_date), 'yyyy.MM.dd HH:mm') : ''}
             </span>
           </DialogTitle>
@@ -73,7 +73,7 @@ export default function LeadDetailDialog({ lead, open, onClose, onSave, saving }
         </Field>
 
         <Field label="요구사항">
-          <p className="whitespace-pre-wrap bg-muted/40 rounded-md p-3 text-sm leading-relaxed">{lead.detail || '-'}</p>
+          <p className="whitespace-pre-wrap bg-muted/40 rounded-md p-3 text-body leading-relaxed">{lead.detail || '-'}</p>
         </Field>
 
         <Field label="첨부 (NNN 적용 · 비공개 저장)">

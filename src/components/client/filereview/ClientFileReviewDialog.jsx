@@ -106,7 +106,7 @@ export default function ClientFileReviewDialog({ cardId, review, onClose }) {
         {review && (
           <>
             <DialogHeader>
-              <DialogTitle className="flex flex-wrap items-center gap-2 pr-6 text-base">
+              <DialogTitle className="flex flex-wrap items-center gap-2 pr-6 text-title">
                 {review.file_name}
                 <Badge className={cn('border-0', STATUS_CLS[review.status])}>{REVIEW_LABEL[review.status]}</Badge>
               </DialogTitle>

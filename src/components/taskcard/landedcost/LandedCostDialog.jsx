@@ -175,7 +175,7 @@ export default function LandedCostDialog({ open, onOpenChange, card, user, lc })
           <div><p className="text-caption text-muted-foreground">{t('lc.sum.goods')}</p><p className="tabular-nums">{won(sum.goods_krw)}</p></div>
           <div><p className="text-caption text-muted-foreground">{t('lc.sum.logistics')}</p><p className="tabular-nums">{won(sum.logistics_krw)}</p></div>
           <div><p className="text-caption text-muted-foreground">{t('lc.sum.total')}</p><p className="font-semibold tabular-nums">{won(sum.total_krw)}</p></div>
-          <div><p className="text-caption text-muted-foreground">{t('lc.sum.perUnit').replace('{unit}', d.unit_label || '개')}</p><p className="text-lg font-bold tabular-nums text-primary">{won(sum.per_unit_krw)}</p></div>
+          <div><p className="text-caption text-muted-foreground">{t('lc.sum.perUnit').replace('{unit}', d.unit_label || '개')}</p><p className="text-title font-bold tabular-nums text-primary">{won(sum.per_unit_krw)}</p></div>
           <p className="text-caption text-muted-foreground sm:col-span-4">
             {sum.other_krw > 0 && `${t('lc.sum.other')} ${won(sum.other_krw)} · `}
             {sum.one_time_krw > 0 && `${t('lc.sum.oneTime')} ${won(sum.one_time_krw)} · `}

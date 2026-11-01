@@ -7,7 +7,7 @@ export default function SettlementQuoteLines({ lines = [] }) {
   if (!lines.length) return null;
   return (
     <div className="overflow-x-auto border-t pt-2">
-      <table className="w-full text-xs">
+      <table className="w-full text-caption">
         <thead className="text-muted-foreground">
           <tr className="text-left">
             <th className="py-1 pr-2">항목</th><th className="pr-2 text-right">수량</th><th className="pr-2 text-right">단가</th>

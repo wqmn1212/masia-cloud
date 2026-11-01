@@ -36,18 +36,18 @@ export default function DecisionsTab({ card, user }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold flex items-center gap-1.5"><BookMarked className="w-4 h-4" />결정 기록</h3>
+        <h3 className="text-body font-semibold flex items-center gap-1.5"><BookMarked className="w-4 h-4" />결정 기록</h3>
         {canEdit && (
-          <Button size="sm" className="h-8 text-xs" onClick={() => { setEditing(null); setFormOpen(true); }}>
+          <Button size="sm" className="h-8 text-caption" onClick={() => { setEditing(null); setFormOpen(true); }}>
             <Plus className="w-3.5 h-3.5 mr-1" />결정 추가
           </Button>
         )}
       </div>
 
       {isLoading ? (
-        <p className="text-xs text-muted-foreground py-6 text-center">불러오는 중...</p>
+        <p className="text-caption text-muted-foreground py-6 text-center">불러오는 중...</p>
       ) : decisions.length === 0 ? (
-        <p className="text-xs text-muted-foreground py-6 text-center">기록된 결정이 없습니다.</p>
+        <p className="text-caption text-muted-foreground py-6 text-center">기록된 결정이 없습니다.</p>
       ) : (
         <div className="space-y-3">
           {decisions.map(d => (

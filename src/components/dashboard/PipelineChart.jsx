@@ -22,7 +22,7 @@ export default function PipelineChart({ timelines }) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">{t('dashboard.pipeline')}</CardTitle>
+        <CardTitle className="text-title font-semibold">{t('dashboard.pipeline')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[220px]">

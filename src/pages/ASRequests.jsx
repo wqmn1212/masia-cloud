@@ -80,7 +80,7 @@ export default function ASRequests() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">AS 접수</h1>
-          <p className="text-sm text-muted-foreground mt-1">고객사 AS 인테이크 및 처리 관리</p>
+          <p className="text-body text-muted-foreground mt-1">고객사 AS 인테이크 및 처리 관리</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -158,7 +158,7 @@ export default function ASRequests() {
       {requests.length === 0 ? (
         <Card className="p-12 text-center">
           <Wrench className="w-12 h-12 mx-auto text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-semibold">AS 접수 내역이 없습니다</p>
+          <p className="mt-4 text-title font-semibold">AS 접수 내역이 없습니다</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -174,20 +174,20 @@ export default function ASRequests() {
                         <Wrench className="w-4 h-4 text-destructive" />
                       </div>
                       <div>
-                        <p className="font-semibold text-sm">{r.issue_title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{r.client_name} · {CATEGORY_LABELS[r.machine_category] || '-'}</p>
+                        <p className="font-semibold text-body">{r.issue_title}</p>
+                        <p className="text-caption text-muted-foreground mt-0.5">{r.client_name} · {CATEGORY_LABELS[r.machine_category] || '-'}</p>
                         {r.issue_description && (
-                          <p className="text-xs text-muted-foreground mt-1.5 max-w-md">{r.issue_description}</p>
+                          <p className="text-caption text-muted-foreground mt-1.5 max-w-md">{r.issue_description}</p>
                         )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge className={`${pr.className} border-0 text-[10px]`}>{pr.label}</Badge>
+                      <Badge className={`${pr.className} border-0 text-micro`}>{pr.label}</Badge>
                       <Select
                         value={r.status}
                         onValueChange={(v) => updateMutation.mutate({ id: r.id, data: { status: v } })}
                       >
-                        <SelectTrigger className="h-7 text-xs w-24">
+                        <SelectTrigger className="h-7 text-caption w-24">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

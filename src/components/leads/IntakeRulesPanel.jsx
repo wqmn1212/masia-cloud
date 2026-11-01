@@ -11,7 +11,7 @@ import { INQUIRY_CATEGORIES } from '@/lib/inquiryForm';
 
 // 새 문의 배정 규칙 (대표·팀 관리자·마스터): 고객사 → 카테고리 → 팀 기본 담당자 순으로 책임자를 자동 배정하고,
 // 견적 기한(영업일)과 급한 문의 기준(희망 입고일까지 남은 일수)을 정한다. 읽기·저장·검증은 서버(inquiryIntake)가 한다.
-const sel = 'h-8 rounded-md border bg-background px-2 text-xs';
+const sel = 'h-8 rounded-md border bg-background px-2 text-caption';
 const blank = () => ({ scope: 'CATEGORY', client_id: '', client_name: '', category: INQUIRY_CATEGORIES[0], owner_id: '' });
 
 export default function IntakeRulesPanel() {
@@ -56,8 +56,8 @@ export default function IntakeRulesPanel() {
         <label className="text-label">팀 기본 담당자
           <select className={`${sel} mt-1 w-full`} value={form.owner} onChange={(e) => setForm((f) => ({ ...f, owner: e.target.value }))}><option value="">없음 (배정 필요로 알림)</option>{team.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select>
         </label>
-        <label className="text-label">견적 기한 (영업일)<Input className="mt-1 h-8 text-xs" type="number" min="1" max="30" value={form.sla} onChange={(e) => setForm((f) => ({ ...f, sla: e.target.value }))} placeholder={`비우면 ${data.base?.sla_days ?? 3}`} /></label>
-        <label className="text-label">급한 문의 (희망 입고일까지 일수)<Input className="mt-1 h-8 text-xs" type="number" min="0" max="365" value={form.rush} onChange={(e) => setForm((f) => ({ ...f, rush: e.target.value }))} placeholder={`비우면 ${data.base?.rush_window_days ?? 30} · 0이면 끔`} /></label>
+        <label className="text-label">견적 기한 (영업일)<Input className="mt-1 h-8 text-caption" type="number" min="1" max="30" value={form.sla} onChange={(e) => setForm((f) => ({ ...f, sla: e.target.value }))} placeholder={`비우면 ${data.base?.sla_days ?? 3}`} /></label>
+        <label className="text-label">급한 문의 (희망 입고일까지 일수)<Input className="mt-1 h-8 text-caption" type="number" min="0" max="365" value={form.rush} onChange={(e) => setForm((f) => ({ ...f, rush: e.target.value }))} placeholder={`비우면 ${data.base?.rush_window_days ?? 30} · 0이면 끔`} /></label>
       </div>
       <p className="text-caption text-muted-foreground">급한 문의는 견적 기한이 다음 영업일이 되고 우선순위가 '높음'으로 올라갑니다.</p>
       <div className="space-y-1.5">
@@ -74,7 +74,7 @@ export default function IntakeRulesPanel() {
             <button type="button" className="justify-self-end text-muted-foreground hover:text-destructive" aria-label="규칙 삭제" onClick={() => setRules((list) => list.filter((_, n) => n !== i))}><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
-        <Button type="button" size="sm" variant="outline" className="h-8 gap-1 text-xs" onClick={() => setRules((list) => [...list, blank()])}><Plus className="h-3.5 w-3.5" />규칙 추가</Button>
+        <Button type="button" size="sm" variant="outline" className="h-8 gap-1 text-caption" onClick={() => setRules((list) => [...list, blank()])}><Plus className="h-3.5 w-3.5" />규칙 추가</Button>
       </div>
       <div className="flex justify-end border-t pt-3">
         <Button size="sm" className="h-8" disabled={busy} onClick={save}>{busy && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}저장</Button>

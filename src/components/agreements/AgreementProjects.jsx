@@ -23,22 +23,22 @@ export default function AgreementProjects({ agreement }) {
   };
   const active = cards.filter((c) => c.agreement_id === agreement.id && !['DONE', 'CANCELLED'].includes(c.status)).length;
 
-  if (isLoading) return <p className="py-6 text-center text-sm text-muted-foreground">불러오는 중…</p>;
-  if (!cards.length) return <p className="py-6 text-center text-sm text-muted-foreground">이 고객사의 프로젝트 카드가 없습니다.</p>;
+  if (isLoading) return <p className="py-6 text-center text-body text-muted-foreground">불러오는 중…</p>;
+  if (!cards.length) return <p className="py-6 text-center text-body text-muted-foreground">이 고객사의 프로젝트 카드가 없습니다.</p>;
   return (
     <div className="space-y-2">
-      <p className="text-xs text-muted-foreground">이 계약으로 진행 중인 프로젝트 {active}건. 월간 리포트는 여기 묶인 카드 기준으로 집계합니다 (없으면 계약 없는 공개 카드 전체).</p>
+      <p className="text-caption text-muted-foreground">이 계약으로 진행 중인 프로젝트 {active}건. 월간 리포트는 여기 묶인 카드 기준으로 집계합니다 (없으면 계약 없는 공개 카드 전체).</p>
       <ul className="divide-y rounded-lg border">
         {cards.map((c) => {
           const mine = c.agreement_id === agreement.id;
           const other = c.agreement_id && !mine;
           return (
-            <li key={c.id} className="flex items-center gap-2 px-3 py-2 text-sm">
+            <li key={c.id} className="flex items-center gap-2 px-3 py-2 text-body">
               <Checkbox checked={mine} disabled={link.isPending} onCheckedChange={(v) => toggle(c, !!v)} aria-label={`${c.title} 계약에 포함`} />
               <span className="min-w-0 flex-1 truncate">{c.title}</span>
-              {other && <Badge variant="outline" className="text-[10px]">다른 계약</Badge>}
-              {!c.client_visible && <Badge variant="outline" className="text-[10px]">고객 비공개</Badge>}
-              <span className="shrink-0 text-xs text-muted-foreground">{STATUS[c.status] || c.status}</span>
+              {other && <Badge variant="outline" className="text-micro">다른 계약</Badge>}
+              {!c.client_visible && <Badge variant="outline" className="text-micro">고객 비공개</Badge>}
+              <span className="shrink-0 text-caption text-muted-foreground">{STATUS[c.status] || c.status}</span>
             </li>
           );
         })}

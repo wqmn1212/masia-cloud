@@ -43,11 +43,11 @@ export default function EmailProposalDialog({ open, onClose, cards = [], user })
         </DialogHeader>
 
         {isLoading ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">불러오는 중…</p>
+          <p className="text-body text-muted-foreground py-8 text-center">불러오는 중…</p>
         ) : proposals.length === 0 ? (
           <div className="py-12 text-center">
             <Inbox className="w-10 h-10 mx-auto text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground mt-3">대기 중인 이메일 추천이 없습니다</p>
+            <p className="text-body text-muted-foreground mt-3">대기 중인 이메일 추천이 없습니다</p>
           </div>
         ) : (
           <div className="space-y-3">

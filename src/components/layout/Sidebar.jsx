@@ -117,8 +117,8 @@ export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobil
         <Cloud className="w-7 h-7 text-sidebar-primary flex-shrink-0" />
         {!collapsed && (
           <div className="ml-3 overflow-hidden">
-            <h1 className="text-base font-bold tracking-tight text-sidebar-foreground">{t('brand.name')}</h1>
-            <p className="text-[10px] text-sidebar-foreground/50 tracking-widest uppercase">AEGIS Cloud</p>
+            <h1 className="text-title font-bold tracking-tight text-sidebar-foreground">{t('brand.name')}</h1>
+            <p className="text-micro text-sidebar-foreground/50 tracking-widest uppercase">AEGIS Cloud</p>
           </div>
         )}
       </div>
@@ -128,7 +128,7 @@ export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobil
         {navSections.map((section) => (
           <div key={section.labelKey || section.label} className="mb-5">
             {!collapsed && (
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40 px-3 mb-2">
+              <p className="text-micro font-semibold uppercase tracking-widest text-sidebar-foreground/40 px-3 mb-2">
                 {section.labelKey ? t(section.labelKey) : section.label}
               </p>
             )}
@@ -141,7 +141,7 @@ export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobil
                     to={item.path}
                     onClick={onMobileClose}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-label transition-all duration-200",
                       isActive
                         ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/20"
                         : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"

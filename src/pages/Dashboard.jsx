@@ -64,7 +64,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t('dashboard.title')}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{t('dashboard.subtitle')}</p>
+        <p className="text-body text-muted-foreground mt-1">{t('dashboard.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

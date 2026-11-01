@@ -98,7 +98,7 @@ export default function Assistant() {
           <Bot className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-title font-bold">AI 업무 비서</h1>
+          <h1 className="text-2xl font-bold tracking-tight">AI 업무 비서</h1>
           <p className="text-label text-muted-foreground">진행 중인 업무 카드와 파일을 분석하고, 첨부 파일을 알맞은 카드에 등록합니다.</p>
         </div>
       </div>

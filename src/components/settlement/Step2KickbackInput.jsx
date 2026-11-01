@@ -15,13 +15,13 @@ export default function Step2KickbackInput({ data, onChange }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-3">
-        <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">2</span>
-        <h3 className="font-semibold text-sm">공장 → 에이전트 커미션 수금 단계</h3>
+        <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-caption font-bold flex items-center justify-center">2</span>
+        <h3 className="font-semibold text-body">공장 → 에이전트 커미션 수금 단계</h3>
       </div>
 
       <div className="grid grid-cols-1 gap-3">
         <div>
-          <Label className="text-xs text-muted-foreground">실제 수금된 커미션 (RMB ¥)</Label>
+          <Label className="text-caption text-muted-foreground">실제 수금된 커미션 (RMB ¥)</Label>
           <Input
             type="number"
             step="0.01"
@@ -32,7 +32,7 @@ export default function Step2KickbackInput({ data, onChange }) {
           />
         </div>
         <div>
-          <Label className="text-xs text-muted-foreground">당일 환율 (1 USD = ? RMB)</Label>
+          <Label className="text-caption text-muted-foreground">당일 환율 (1 USD = ? RMB)</Label>
           <Input
             type="number"
             step="0.0001"
@@ -43,7 +43,7 @@ export default function Step2KickbackInput({ data, onChange }) {
           />
         </div>
         <div>
-          <Label className="text-xs text-muted-foreground">물류/통관 비용 (USD)</Label>
+          <Label className="text-caption text-muted-foreground">물류/통관 비용 (USD)</Label>
           <Input
             type="number"
             step="0.01"
@@ -59,11 +59,11 @@ export default function Step2KickbackInput({ data, onChange }) {
         <div className="p-3 rounded-xl bg-accent/10 border border-accent/30">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-accent" />
-            <span className="text-xs font-semibold text-accent">마진 풀 적립액</span>
+            <span className="text-caption font-semibold text-accent">마진 풀 적립액</span>
           </div>
-          <p className="text-lg font-bold font-mono mt-1">¥{actualKickback.toLocaleString()} RMB</p>
+          <p className="text-title font-bold font-mono mt-1">¥{actualKickback.toLocaleString()} RMB</p>
           {kickbackUsd > 0 && (
-            <p className="text-xs text-muted-foreground">≈ ${kickbackUsd.toFixed(2)} USD</p>
+            <p className="text-caption text-muted-foreground">≈ ${kickbackUsd.toFixed(2)} USD</p>
           )}
         </div>
       )}

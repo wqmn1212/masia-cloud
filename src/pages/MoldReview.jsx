@@ -41,7 +41,7 @@ function Section({ title, children, action }) {
   return (
     <section className="rounded-xl border bg-card p-4">
       <div className="mb-3 flex items-center gap-2">
-        <h2 className="text-sm font-bold">{title}</h2>
+        <h2 className="text-body font-bold">{title}</h2>
         {action && <div className="ml-auto">{action}</div>}
       </div>
       {children}
@@ -254,8 +254,8 @@ export default function MoldReview() {
           <ScanSearch className="h-5 w-5 text-primary" />
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-bold tracking-tight">금형 사전 검토</h1>
-          <p className="text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">금형 사전 검토</h1>
+          <p className="text-caption text-muted-foreground">
             STEP · STL 형상으로 구배 · 언더컷 · 살 두께 · 파팅라인 · 게이트 · 웰드라인을 미리 보고, 공장에 보낼 금형 설계 지시서(한 · 중)를 만듭니다
           </p>
         </div>
@@ -268,7 +268,7 @@ export default function MoldReview() {
       <div className="rounded-xl border bg-card p-4">
         <DropZone onFile={handleFile} accept=".stp,.step,.stl" disabled={busy}>
           <div className="flex flex-wrap items-center gap-3">
-            <label className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed px-4 py-3 text-sm text-muted-foreground hover:border-primary/50 ${busy ? 'pointer-events-none opacity-50' : ''}`}>
+            <label className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed px-4 py-3 text-body text-muted-foreground hover:border-primary/50 ${busy ? 'pointer-events-none opacity-50' : ''}`}>
               <Upload className="h-4 w-4" />
               STEP(.stp/.step) · STL 을 끌어놓거나 클릭해 선택
               <input
@@ -283,10 +283,10 @@ export default function MoldReview() {
                 }}
               />
             </label>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-caption text-muted-foreground">
               STL 단위
               <Select value={stlUnit} onValueChange={setStlUnit} disabled={busy}>
-                <SelectTrigger className="h-8 w-[88px] text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-8 w-[88px] text-caption"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {STL_UNITS.map((u) => <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>)}
                 </SelectContent>
@@ -300,16 +300,16 @@ export default function MoldReview() {
           </div>
         </DropZone>
         {parsing && (
-          <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="mt-3 flex items-center gap-3 text-caption text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
             {parsing.label}
             <Progress value={parsing.percent} className="max-w-xs" />
           </div>
         )}
-        {part?.note && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">{part.note}</p>}
-        {part && !part.molded && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">이 부품은 {part.reason}으로 보여 사출 검토 대상이 아닐 수 있습니다.</p>}
-        {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
-        <p className="mt-2 text-[11px] text-muted-foreground">
+        {part?.note && <p className="mt-2 text-caption text-warning-text">{part.note}</p>}
+        {part && !part.molded && <p className="mt-2 text-caption text-warning-text">이 부품은 {part.reason}으로 보여 사출 검토 대상이 아닐 수 있습니다.</p>}
+        {error && <p className="mt-2 text-caption text-destructive">{error}</p>}
+        <p className="mt-2 text-micro text-muted-foreground">
           파일은 서버로 보내지 않고 이 브라우저 안에서 계산합니다. 형상만 보는 추정이므로 최종 판단은 금형 설계자와 모류분석(模流分析)으로 확정합니다.
         </p>
       </div>
@@ -327,7 +327,7 @@ export default function MoldReview() {
                   setMode(m);
                   if (m === 'flow' && mode !== 'flow') setFocus({ view: 'bottom', at: Date.now() });
                 }}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-40 ${mode === m ? 'border-foreground bg-foreground text-background' : 'bg-card text-muted-foreground hover:text-foreground'}`}
+                className={`rounded-full border px-3 py-1.5 text-caption font-semibold disabled:opacity-40 ${mode === m ? 'border-foreground bg-foreground text-background' : 'bg-card text-muted-foreground hover:text-foreground'}`}
               >
                 {label}
               </button>
@@ -336,17 +336,17 @@ export default function MoldReview() {
           <div className="relative">
             <MoldViewer ref={viewerRef} result={result} report={report} mode={mode} focus={focus} className="h-[58vh] min-h-[380px] lg:h-[calc(100vh-11rem)]" />
             {!result && !running && (
-              <div className="absolute inset-0 grid place-items-center p-6 text-center text-sm text-muted-foreground">
+              <div className="absolute inset-0 grid place-items-center p-6 text-center text-body text-muted-foreground">
                 <div>
                   <p className="font-semibold text-foreground/80">부품을 불러오면 검토가 시작됩니다</p>
-                  <p className="mt-1 text-xs">위에서 STEP · STL 을 올리거나 &lsquo;샘플로 해 보기&rsquo;를 눌러 주세요.</p>
+                  <p className="mt-1 text-caption">위에서 STEP · STL 을 올리거나 &lsquo;샘플로 해 보기&rsquo;를 눌러 주세요.</p>
                 </div>
               </div>
             )}
             {running && (
               <div className="absolute inset-0 z-30 grid place-items-center rounded-xl bg-background/60 backdrop-blur-[1px]">
                 <div className="w-[min(320px,85%)] space-y-3 rounded-xl border bg-card p-4 shadow-sm">
-                  <div className="flex items-center gap-2 text-sm font-semibold">
+                  <div className="flex items-center gap-2 text-body font-semibold">
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
                     {running.label}
                   </div>
@@ -387,7 +387,7 @@ export default function MoldReview() {
                 action={(
                   <div className="inline-flex rounded-lg border p-0.5">
                     {[['ko', '한국어'], ['zh', '中文']].map(([v, label]) => (
-                      <button key={v} type="button" aria-pressed={lang === v} onClick={() => setLang(v)} className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${lang === v ? 'bg-foreground text-background' : 'text-muted-foreground'}`}>
+                      <button key={v} type="button" aria-pressed={lang === v} onClick={() => setLang(v)} className={`rounded-md px-2 py-0.5 text-micro font-semibold ${lang === v ? 'bg-foreground text-background' : 'text-muted-foreground'}`}>
                         {label}
                       </button>
                     ))}
@@ -409,8 +409,8 @@ export default function MoldReview() {
               )}
               {isClient && (
                 <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-4">
-                  <p className="text-sm font-semibold">자동 검토 결과를 이지스 담당자에게 확인받으세요</p>
-                  <p className="text-xs text-muted-foreground">담당자가 결과를 다시 검토하고, 공장 금형 설계자와 함께 보완점을 정리해 드립니다.</p>
+                  <p className="text-body font-semibold">자동 검토 결과를 이지스 담당자에게 확인받으세요</p>
+                  <p className="text-caption text-muted-foreground">담당자가 결과를 다시 검토하고, 공장 금형 설계자와 함께 보완점을 정리해 드립니다.</p>
                   <Button type="button" className="w-full" onClick={() => setRequestOpen(true)} disabled={busy}>
                     <Send className="h-4 w-4" />
                     이지스 검토 요청

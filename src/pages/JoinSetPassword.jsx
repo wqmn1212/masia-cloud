@@ -35,13 +35,13 @@ export default function JoinSetPassword() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardContent className="p-6 space-y-5">
-          <div><h1 className="text-xl font-bold tracking-tight">{mode === 'login' ? '로그인' : '비밀번호 설정'}</h1><p className="mt-1 text-sm text-muted-foreground">{mode === 'login' ? '초대받은 계정으로 로그인하세요.' : '초대받은 이메일로 사용할 비밀번호를 정하면 바로 시작할 수 있습니다.'}</p></div>
-          {error && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>}
-          {info && <p className="rounded-md bg-primary/10 px-3 py-2 text-xs text-primary">{info}</p>}
+          <div><h1 className="text-xl font-bold tracking-tight">{mode === 'login' ? '로그인' : '비밀번호 설정'}</h1><p className="mt-1 text-body text-muted-foreground">{mode === 'login' ? '초대받은 계정으로 로그인하세요.' : '초대받은 이메일로 사용할 비밀번호를 정하면 바로 시작할 수 있습니다.'}</p></div>
+          {error && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-caption text-destructive">{error}</p>}
+          {info && <p className="rounded-md bg-primary/10 px-3 py-2 text-caption text-primary">{info}</p>}
           {mode === 'otp'
             ? <JoinOtpStep email={email} busy={busy} onSubmit={verify} onResend={resend} />
             : <JoinPasswordStep key={mode} email={email} setEmail={setEmail} emailLocked={!!lockedEmail} mode={mode} busy={busy} onSubmit={mode === 'login' ? login : signup} />}
-          <div className="flex justify-between text-xs text-muted-foreground">
+          <div className="flex justify-between text-caption text-muted-foreground">
             {mode === 'login' ? <button type="button" onClick={() => setMode('signup')} className="hover:text-foreground">처음이신가요? 비밀번호 설정</button> : <button type="button" onClick={() => setMode('login')} className="hover:text-foreground">이미 비밀번호가 있어요</button>}
             {mode === 'login' && <button type="button" onClick={forgot} disabled={busy || !email} className="hover:text-foreground">비밀번호 재설정</button>}
           </div>

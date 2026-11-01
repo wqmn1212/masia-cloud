@@ -123,7 +123,7 @@ export default function Settlement() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">정산 대시보드</h1>
-          <p className="text-sm text-muted-foreground mt-1">페이백 기반 3단계 수익 정산 원장</p>
+          <p className="text-body text-muted-foreground mt-1">페이백 기반 3단계 수익 정산 원장</p>
         </div>
         <Button onClick={() => { setEditItem(null); setForm(emptyForm); setCreateOpen(true); }}>
           <Plus className="w-4 h-4 mr-2" />신규 정산 등록
@@ -138,24 +138,24 @@ export default function Settlement() {
           <CardContent className="p-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-xs text-muted-foreground">전체 총 마진 풀</p>
+                <p className="text-caption text-muted-foreground">전체 총 마진 풀</p>
                 <p className="text-2xl font-extrabold font-mono text-primary">
                   ¥{totalMarginPool.toLocaleString(undefined, { minimumFractionDigits: 2 })} RMB
                 </p>
               </div>
-              <div className="flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-3 text-body">
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground">에이전트 고정비 차감</p>
+                  <p className="text-caption text-muted-foreground">에이전트 고정비 차감</p>
                   <p className="font-mono font-bold text-destructive">− ¥50,000</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground">순 마진</p>
+                  <p className="text-caption text-muted-foreground">순 마진</p>
                   <p className="font-mono font-bold">¥{Math.max(0, totalMarginPool - BASE_ACTIVITY_FEE).toLocaleString()}</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 <div className="text-center p-2 rounded-lg bg-primary text-primary-foreground">
-                  <p className="text-[10px]">본사 수령 (50%)</p>
+                  <p className="text-micro">본사 수령 (50%)</p>
                   <p className="font-mono font-extrabold">¥{Math.max(0, (totalMarginPool - BASE_ACTIVITY_FEE) / 2).toLocaleString()}</p>
                 </div>
               </div>
@@ -167,21 +167,21 @@ export default function Settlement() {
       {/* Ledger Table */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">정산 원장</CardTitle>
+          <CardTitle className="text-title">정산 원장</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-body">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left p-3 font-medium text-xs">날짜</th>
-                  <th className="text-left p-3 font-medium text-xs">공장 → 고객사</th>
-                  <th className="text-right p-3 font-medium text-xs">직송금 (USD)</th>
-                  <th className="text-right p-3 font-medium text-xs">원가 (USD)</th>
-                  <th className="text-right p-3 font-medium text-xs text-orange-600">예상마진 (USD)</th>
-                  <th className="text-right p-3 font-medium text-xs text-accent">실수금 (RMB)</th>
-                  <th className="text-right p-3 font-medium text-xs text-primary">본사몫 (RMB)</th>
-                  <th className="text-center p-3 font-medium text-xs">상태</th>
+                  <th className="text-left p-3 font-medium text-caption">날짜</th>
+                  <th className="text-left p-3 font-medium text-caption">공장 → 고객사</th>
+                  <th className="text-right p-3 font-medium text-caption">직송금 (USD)</th>
+                  <th className="text-right p-3 font-medium text-caption">원가 (USD)</th>
+                  <th className="text-right p-3 font-medium text-caption text-warning-text">예상마진 (USD)</th>
+                  <th className="text-right p-3 font-medium text-caption text-accent">실수금 (RMB)</th>
+                  <th className="text-right p-3 font-medium text-caption text-primary">본사몫 (RMB)</th>
+                  <th className="text-center p-3 font-medium text-caption">상태</th>
                   <th className="p-3 w-12"></th>
                 </tr>
               </thead>
@@ -197,33 +197,33 @@ export default function Settlement() {
                     const st = STATUS_MAP[l.status] || STATUS_MAP.PENDING;
                     return (
                       <tr key={l.id} className="border-b hover:bg-muted/30 transition-colors">
-                        <td className="p-3 text-xs text-muted-foreground whitespace-nowrap">{l.project_date}</td>
+                        <td className="p-3 text-caption text-muted-foreground whitespace-nowrap">{l.project_date}</td>
                         <td className="p-3">
-                          <p className="font-medium text-xs truncate max-w-[160px]">{l.factory_name}</p>
-                          <p className="text-[10px] text-muted-foreground truncate max-w-[160px]">{l.client_name}</p>
+                          <p className="font-medium text-caption truncate max-w-[160px]">{l.factory_name}</p>
+                          <p className="text-micro text-muted-foreground truncate max-w-[160px]">{l.client_name}</p>
                           {l.card_id && (
-                            <Badge variant="outline" className="mt-1 max-w-[160px] truncate text-[10px] font-normal" title={l.note_2 || ''}>
+                            <Badge variant="outline" className="mt-1 max-w-[160px] truncate text-micro font-normal" title={l.note_2 || ''}>
                               카드 연동 · {cardTitles[l.card_id] || '카드'}
                             </Badge>
                           )}
                         </td>
-                        <td className="p-3 text-right font-mono text-xs">
+                        <td className="p-3 text-right font-mono text-caption">
                           ${(Number(l.client_to_factory_usd) || 0).toLocaleString()}
                         </td>
-                        <td className="p-3 text-right font-mono text-xs">
+                        <td className="p-3 text-right font-mono text-caption">
                           ${(Number(l.factory_base_cost_usd) || 0).toLocaleString()}
                         </td>
-                        <td className="p-3 text-right font-mono text-xs font-bold text-orange-600">
+                        <td className="p-3 text-right font-mono text-caption font-bold text-warning-text">
                           ${(Number(l.expected_kickback_usd) || 0).toLocaleString()}
                         </td>
-                        <td className="p-3 text-right font-mono text-xs font-bold text-accent">
+                        <td className="p-3 text-right font-mono text-caption font-bold text-accent">
                           ¥{(Number(l.actual_kickback_rmb) || 0).toLocaleString()}
                         </td>
-                        <td className="p-3 text-right font-mono text-xs font-bold text-primary">
+                        <td className="p-3 text-right font-mono text-caption font-bold text-primary">
                           ¥{(Number(l.hq_final_share_rmb) || 0).toLocaleString()}
                         </td>
                         <td className="p-3 text-center">
-                          <Badge className={`${st.className} border-0 text-[10px]`}>{st.label}</Badge>
+                          <Badge className={`${st.className} border-0 text-micro`}>{st.label}</Badge>
                         </td>
                         <td className="p-3">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(l)}>
@@ -250,11 +250,11 @@ export default function Settlement() {
             {/* Header info */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
-                <Label className="text-xs">프로젝트 날짜 *</Label>
+                <Label className="text-caption">프로젝트 날짜 *</Label>
                 <Input type="date" value={form.project_date} onChange={(e) => setForm(p => ({ ...p, project_date: e.target.value }))} required />
               </div>
               <div>
-                <Label className="text-xs">공장 선택</Label>
+                <Label className="text-caption">공장 선택</Label>
                 <Select value={form.factory_name} onValueChange={(v) => setForm(p => ({ ...p, factory_name: v }))}>
                   <SelectTrigger><SelectValue placeholder="공장 선택" /></SelectTrigger>
                   <SelectContent>
@@ -263,11 +263,11 @@ export default function Settlement() {
                   </SelectContent>
                 </Select>
                 {(!form.factory_name || form.factory_name === '__custom') && (
-                  <Input className="mt-1 text-xs h-8" placeholder="공장명 직접 입력" value={form.factory_name === '__custom' ? '' : form.factory_name} onChange={(e) => setForm(p => ({ ...p, factory_name: e.target.value }))} />
+                  <Input className="mt-1 text-caption h-8" placeholder="공장명 직접 입력" value={form.factory_name === '__custom' ? '' : form.factory_name} onChange={(e) => setForm(p => ({ ...p, factory_name: e.target.value }))} />
                 )}
               </div>
               <div>
-                <Label className="text-xs">고객사 선택</Label>
+                <Label className="text-caption">고객사 선택</Label>
                 <Select value={form.client_name} onValueChange={(v) => setForm(p => ({ ...p, client_name: v }))}>
                   <SelectTrigger><SelectValue placeholder="고객사 선택" /></SelectTrigger>
                   <SelectContent>
@@ -276,11 +276,11 @@ export default function Settlement() {
                   </SelectContent>
                 </Select>
                 {(!form.client_name || form.client_name === '__custom') && (
-                  <Input className="mt-1 text-xs h-8" placeholder="고객사명 직접 입력" value={form.client_name === '__custom' ? '' : form.client_name} onChange={(e) => setForm(p => ({ ...p, client_name: e.target.value }))} />
+                  <Input className="mt-1 text-caption h-8" placeholder="고객사명 직접 입력" value={form.client_name === '__custom' ? '' : form.client_name} onChange={(e) => setForm(p => ({ ...p, client_name: e.target.value }))} />
                 )}
               </div>
               <div>
-                <Label className="text-xs">상태</Label>
+                <Label className="text-caption">상태</Label>
                 <Select value={form.status} onValueChange={(v) => setForm(p => ({ ...p, status: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -293,13 +293,13 @@ export default function Settlement() {
             </div>
 
             <div>
-              <Label className="text-xs">장비 설명</Label>
+              <Label className="text-caption">장비 설명</Label>
               <Input value={form.machine_description || ''} onChange={(e) => setForm(p => ({ ...p, machine_description: e.target.value }))} placeholder="예: 드립백 포장기 DBM-5000" />
             </div>
 
             {/* 3-step columns */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-4 rounded-xl border bg-orange-50/50 border-orange-200">
+              <div className="p-4 rounded-xl border bg-warning/5 border-warning/30">
                 <Step1DirectPayment data={computedForm} onChange={(updated) => setForm(prev => ({ ...prev, ...updated }))} />
               </div>
               <div className="p-4 rounded-xl border bg-accent/5 border-accent/20">

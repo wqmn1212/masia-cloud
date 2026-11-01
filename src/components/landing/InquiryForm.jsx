@@ -144,9 +144,9 @@ export default function InquiryForm({ lang }) {
       </div>
 
       <FileDropArea className="mt-3.5" onFiles={addFiles} disabled={status === 'sending'}>
-      <label className="border border-dashed border-landing-tint-border bg-[#F8FAFF] rounded-[10px] p-4 flex items-center gap-3 cursor-pointer">
+      <label className="border border-dashed border-landing-tint-border bg-landing-tint-soft rounded-[10px] p-4 flex items-center gap-3 cursor-pointer">
         <input type="file" multiple accept={ACCEPT} className="hidden" onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
-        <div className="w-[34px] h-[34px] rounded-lg bg-[#DCE9FE] flex items-center justify-center font-mono font-bold text-xs text-landing-brand flex-none">＋</div>
+        <div className="w-[34px] h-[34px] rounded-lg bg-landing-tint flex items-center justify-center font-mono font-bold text-xs text-landing-brand flex-none">＋</div>
         <div className="min-w-0">
           <div className="text-sm font-bold text-landing-ink">{tx(form.attach, lang)}</div>
           <div className="text-[12.5px] text-landing-muted2 mt-0.5 truncate">

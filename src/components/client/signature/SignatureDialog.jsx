@@ -98,7 +98,7 @@ export default function SignatureDialog({ requestId, open, onOpenChange }) {
       return (
         <div className="space-y-4 py-6 text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
-          <div><p className="text-lg font-semibold">{done.completed ? '계약이 체결되었습니다' : '서명을 마쳤습니다'}</p>
+          <div><p className="text-title font-semibold">{done.completed ? '계약이 체결되었습니다' : '서명을 마쳤습니다'}</p>
             <p className="mt-1 text-body text-muted-foreground">{done.completed ? '서명 확인서와 감사 추적이 붙은 완료본을 내려받아 보관하세요. 담당자에게도 알림이 갔습니다.' : '완료본을 만드는 중입니다. 잠시 뒤 다시 열어 주세요.'}</p></div>
           {done.completed && <Button className="gap-1.5" onClick={() => download(requestId).catch((e) => toast({ title: errText(e), variant: 'destructive' }))}><Download className="h-4 w-4" />완료본 내려받기</Button>}
           <p className="text-label text-muted-foreground">다음 단계: 프로젝트의 결제 탭에서 선금 안내를 확인해 주세요.</p>
@@ -162,7 +162,7 @@ export default function SignatureDialog({ requestId, open, onOpenChange }) {
             <div className="text-center"><MailCheck className="mx-auto h-9 w-9 text-primary" /><p className="mt-2 font-semibold">계정 이메일로 본인 확인</p>
               <p className="mt-1 text-body text-muted-foreground">{sentTo || r.my?.email_masked}으로 인증번호 6자리를 보내 드립니다.</p></div>
             <Button variant="outline" className="w-full" disabled={busy === 'otp'} onClick={sendOtp}>{busy === 'otp' && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{sentTo || r.otp?.sent_at ? '인증번호 다시 받기' : '인증번호 받기'}</Button>
-            <Input inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="인증번호 6자리" className="text-center text-lg tracking-[0.4em]" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
+            <Input inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="인증번호 6자리" className="text-center text-title tracking-[0.4em]" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
             <Button className="w-full" disabled={code.length !== 6 || busy === 'verify'} onClick={verify}>{busy === 'verify' && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}확인</Button>
             <p className="text-center text-caption text-muted-foreground">10분 동안 유효하고, 5번 틀리면 30분 동안 잠깁니다. 이지스 직원은 인증번호를 묻지 않습니다.</p>
             <Button variant="ghost" size="sm" className="w-full text-label" onClick={() => setStep('read')}>계약서 다시 보기</Button>
@@ -180,7 +180,7 @@ export default function SignatureDialog({ requestId, open, onOpenChange }) {
               {METHODS.map(([k, label]) => <button key={k} type="button" onClick={() => setMethod(k)} className={`flex-1 rounded-md px-2 py-1.5 text-label font-medium ${method === k ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}>{label}</button>)}
             </div>
             {method === 'DRAW' && <SignaturePad ref={pad} onChange={setDrawn} />}
-            {method === 'TYPE' && <div className="flex h-36 items-center justify-center rounded-lg border-2 border-dashed bg-white text-4xl font-bold text-gray-900">{f.name.trim() || <span className="text-body font-normal text-muted-foreground">이름을 입력하면 서명으로 쓰입니다</span>}</div>}
+            {method === 'TYPE' && <div className="flex h-36 items-center justify-center rounded-lg border-2 border-dashed bg-white text-4xl font-bold text-foreground">{f.name.trim() || <span className="text-body font-normal text-muted-foreground">이름을 입력하면 서명으로 쓰입니다</span>}</div>}
             {method === 'SEAL' && (
               <label className="flex h-36 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed bg-white">
                 {seal ? <img src={seal} alt="직인" className="max-h-32 object-contain" /> : <span className="text-body text-muted-foreground">회사 직인 이미지 올리기 (PNG·JPG, 600KB 이하)</span>}
@@ -205,7 +205,7 @@ export default function SignatureDialog({ requestId, open, onOpenChange }) {
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
       <DialogContent className="max-h-[96vh] max-w-3xl overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 pr-6 text-base"><FileSignature className="h-4 w-4 shrink-0 text-primary" /><span className="truncate">{r?.document_title || '계약서'}</span></DialogTitle>
+          <DialogTitle className="flex items-center gap-2 pr-6 text-title"><FileSignature className="h-4 w-4 shrink-0 text-primary" /><span className="truncate">{r?.document_title || '계약서'}</span></DialogTitle>
           <DialogDescription asChild><div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-label">
             {r ? <>
               <span>{r.document_no}{r.version > 1 ? ` · ${r.version}번째 버전` : ''}</span>

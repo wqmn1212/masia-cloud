@@ -7,7 +7,7 @@ import FileVisibilitySwitch from '@/components/files/FileVisibilitySwitch';
 export default function FactoryDocumentRow({ doc, index, count, canManage, busy, onAction }) {
   const input = useRef(null);
   return <div className="group flex items-center gap-2 flex-wrap border-t py-2">
-    <div className="min-w-0 flex-1"><p className="text-sm truncate" title={doc.file_name}>{doc.file_name}</p><p className="text-xs text-muted-foreground">{doc.uploader_name || '등록자 미기재'} · {doc.client_visible === true ? '연결된 고객 카드에 공개' : '비공개'}</p></div>
+    <div className="min-w-0 flex-1"><p className="text-body truncate" title={doc.file_name}>{doc.file_name}</p><p className="text-caption text-muted-foreground">{doc.uploader_name || '등록자 미기재'} · {doc.client_visible === true ? '연결된 고객 카드에 공개' : '비공개'}</p></div>
     <div className="flex items-center gap-0.5">
       <FileVisibilitySwitch visible={doc.client_visible} disabled={!canManage || busy} onChange={() => onAction({ action: 'visibility', doc })} />
       <DocumentOpenButton document={doc} kind="factory" />

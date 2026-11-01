@@ -11,9 +11,9 @@ export default function NotificationItem({ item, onRead }) {
     <div className={cn('flex gap-2.5 px-3 py-2.5 hover:bg-muted/60 transition-colors', !item.read && 'bg-primary/5')}>
       <span className="text-base leading-none mt-0.5">{meta.icon}</span>
       <div className="min-w-0 flex-1">
-        <p className={cn('text-sm leading-snug truncate', !item.read && 'font-semibold')}>{item.title}</p>
-        {item.body && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.body}</p>}
-        <p className="text-[10px] text-muted-foreground mt-1">
+        <p className={cn('text-body leading-snug truncate', !item.read && 'font-semibold')}>{item.title}</p>
+        {item.body && <p className="text-caption text-muted-foreground mt-0.5 line-clamp-2">{item.body}</p>}
+        <p className="text-micro text-muted-foreground mt-1">
           {item.created_date ? formatDistanceToNow(new Date(item.created_date), { addSuffix: true, locale: ko }) : ''}
         </p>
       </div>

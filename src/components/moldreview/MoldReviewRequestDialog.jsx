@@ -69,7 +69,7 @@ export default function MoldReviewRequestDialog({ open, onOpenChange, partName, 
           <DialogDescription>자동 검토 결과를 담당자가 다시 확인하고, 공장 금형 설계자와 함께 보완점을 정리해 드립니다.</DialogDescription>
         </DialogHeader>
         {sentCardId ? (
-          <div className="space-y-3 py-2 text-sm">
+          <div className="space-y-3 py-2 text-body">
             <p>요청을 접수했습니다. 진행 상황은 소싱 보드의 새 카드에서 확인하실 수 있습니다.</p>
             <Button asChild variant="outline" className="w-full">
               <Link to={sentCardId === 'sent' ? '/client/board' : `/client/board?card=${sentCardId}`}>소싱 보드에서 보기</Link>
@@ -77,18 +77,18 @@ export default function MoldReviewRequestDialog({ open, onOpenChange, partName, 
           </div>
         ) : (
           <div className="space-y-3">
-            <div><Label className="text-xs">제목</Label><Input value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} /></div>
-            <div><Label className="text-xs">예상 수량 (선택)</Label><Input value={quantity} maxLength={200} placeholder="예: 초도 3,000개" onChange={(e) => setQuantity(e.target.value)} /></div>
-            <div><Label className="text-xs">요청 사항 (선택)</Label><Textarea rows={3} value={message} maxLength={2000} placeholder="예: 외관면은 무광, 언더컷 없이 가능한지 봐 주세요" onChange={(e) => setMessage(e.target.value)} /></div>
+            <div><Label className="text-caption">제목</Label><Input value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} /></div>
+            <div><Label className="text-caption">예상 수량 (선택)</Label><Input value={quantity} maxLength={200} placeholder="예: 초도 3,000개" onChange={(e) => setQuantity(e.target.value)} /></div>
+            <div><Label className="text-caption">요청 사항 (선택)</Label><Textarea rows={3} value={message} maxLength={2000} placeholder="예: 외관면은 무광, 언더컷 없이 가능한지 봐 주세요" onChange={(e) => setMessage(e.target.value)} /></div>
             <div>
-              <Label className="text-xs">함께 보내는 자동 검토 요약</Label>
-              <pre className="mt-1 max-h-36 overflow-y-auto whitespace-pre-wrap rounded-lg bg-muted/60 p-2 text-[11px] leading-relaxed">{summary}</pre>
+              <Label className="text-caption">함께 보내는 자동 검토 요약</Label>
+              <pre className="mt-1 max-h-36 overflow-y-auto whitespace-pre-wrap rounded-lg bg-muted/60 p-2 text-micro leading-relaxed">{summary}</pre>
             </div>
-            <label className={`flex items-start gap-2 text-sm ${canAttach ? '' : 'opacity-60'}`}>
+            <label className={`flex items-start gap-2 text-body ${canAttach ? '' : 'opacity-60'}`}>
               <Checkbox checked={attach && canAttach} disabled={!canAttach} onCheckedChange={(v) => setAttach(!!v)} className="mt-0.5" />
               <span>
                 원본 도면 파일 함께 보내기{sourceFile ? ` (${sourceFile.name})` : ''}
-                <span className="block text-[11px] text-muted-foreground">
+                <span className="block text-micro text-muted-foreground">
                   {!sourceFile ? '샘플 부품은 보낼 파일이 없습니다.' : tooBig ? '10MB를 넘는 파일은 접수 후 문의 탭으로 보내 주세요.' : '비공개 저장소에 올라가며 담당자만 열어 봅니다.'}
                 </span>
               </span>

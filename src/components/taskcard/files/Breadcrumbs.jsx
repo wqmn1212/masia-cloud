@@ -2,7 +2,7 @@ import { Home, ChevronRight } from 'lucide-react';
 
 export default function Breadcrumbs({ path, onNavigate }) {
   return (
-    <div className="flex items-center gap-1 text-xs flex-wrap min-w-0">
+    <div className="flex items-center gap-1 text-caption flex-wrap min-w-0">
       <button
         onClick={() => onNavigate(-1)}
         className="flex items-center gap-1 hover:text-primary text-muted-foreground px-2 py-1 rounded hover:bg-muted"

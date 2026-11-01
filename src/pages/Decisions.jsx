@@ -57,8 +57,8 @@ export default function Decisions() {
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2"><BookMarked className="w-5 h-5" />결정 기록</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">기술적·상업적 결정과 기각된 대안의 이력</p>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><BookMarked className="w-5 h-5" />결정 기록</h1>
+          <p className="text-caption text-muted-foreground mt-0.5">기술적·상업적 결정과 기각된 대안의 이력</p>
         </div>
         {canEdit && (
           <Button size="sm" onClick={() => { setEditing(null); setFormOpen(true); }}>
@@ -69,21 +69,21 @@ export default function Decisions() {
 
       <div className="flex flex-wrap gap-2 mb-4">
         <Select value={catFilter} onValueChange={setCatFilter}>
-          <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[140px] h-8 text-caption"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체 분류</SelectItem>
             {Object.entries(CATEGORY_LABELS).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[140px] h-8 text-caption"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체 상태</SelectItem>
             {Object.entries(STATUS_META).map(([k, m]) => <SelectItem key={k} value={k}>{m.label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={cardFilter} onValueChange={setCardFilter}>
-          <SelectTrigger className="w-[200px] h-8 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[200px] h-8 text-caption"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체 카드</SelectItem>
             {cards.map(c => <SelectItem key={c.id} value={c.id}>{content(c, 'title')}</SelectItem>) }
@@ -92,9 +92,9 @@ export default function Decisions() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground py-10 text-center">불러오는 중...</p>
+        <p className="text-body text-muted-foreground py-10 text-center">불러오는 중...</p>
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-10 text-center">결정 기록이 없습니다.</p>
+        <p className="text-body text-muted-foreground py-10 text-center">결정 기록이 없습니다.</p>
       ) : (
         <div className="space-y-3">
           {filtered.map(d => (

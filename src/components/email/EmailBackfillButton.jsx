@@ -65,23 +65,23 @@ export default function EmailBackfillButton() {
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold">
+        <div className="flex items-center gap-2 text-body font-semibold">
           <CalendarRange className="w-4 h-4 text-primary" />
           가져올 기간 선택
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">시작일</Label>
+            <Label className="text-caption text-muted-foreground">시작일</Label>
             <Input type="date" value={after} max={before} onChange={(e) => setAfter(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">종료일</Label>
+            <Label className="text-caption text-muted-foreground">종료일</Label>
             <Input type="date" value={before} min={after} max={today()} onChange={(e) => setBefore(e.target.value)} />
           </div>
         </div>
         <div className="flex gap-1.5">
           {[7, 30, 90].map((d) => (
-            <Button key={d} size="sm" variant="outline" className="flex-1 text-xs"
+            <Button key={d} size="sm" variant="outline" className="flex-1 text-caption"
               onClick={() => { setAfter(daysAgo(d)); setBefore(today()); }}>
               최근 {d}일
             </Button>

@@ -293,7 +293,7 @@ const MoldViewer = forwardRef(function MoldViewer({ result, report, mode, focus,
                 key={v}
                 type="button"
                 onClick={() => ctxRef.current && viewFrom(ctxRef.current, v)}
-                className="rounded-md px-2 py-1 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="rounded-md px-2 py-1 text-caption font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 {label}
               </button>
@@ -301,7 +301,7 @@ const MoldViewer = forwardRef(function MoldViewer({ result, report, mode, focus,
           </div>
         )}
         {tip && (
-          <div className="pointer-events-none absolute z-20 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-xs text-background tabular-nums" style={{ left: tip.x, top: tip.y }}>
+          <div className="pointer-events-none absolute z-20 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-caption text-background tabular-nums" style={{ left: tip.x, top: tip.y }}>
             {tip.text}
           </div>
         )}
@@ -509,7 +509,7 @@ function Legend({ mode, result, report, inline = false }) {
   }[mode];
   if (!L) return null;
   return (
-    <div className={inline ? 'flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]' : 'grid gap-1 text-xs'}>
+    <div className={inline ? 'flex flex-wrap items-center gap-x-3 gap-y-1 text-micro' : 'grid gap-1 text-caption'}>
       <b className="text-foreground">{L[0]}</b>
       {L[1]}
     </div>

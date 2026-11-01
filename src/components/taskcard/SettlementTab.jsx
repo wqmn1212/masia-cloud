@@ -74,7 +74,7 @@ export default function SettlementTab({ card, user }) {
 
   if (user?.role !== 'admin') {
     return (
-      <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
+      <div className="flex items-center justify-center h-40 text-muted-foreground text-body">
         🔒 정산 탭은 HQ 전용입니다
       </div>
     );
@@ -161,8 +161,8 @@ export default function SettlementTab({ card, user }) {
     return (
       <div className="flex flex-col items-center justify-center py-10 gap-3">
         <TrendingUp className="w-10 h-10 text-muted-foreground opacity-30" />
-        <p className="text-sm text-muted-foreground">이 카드에 연결된 정산 원장이 없습니다</p>
-        <p className="text-xs text-muted-foreground">생성 즉시 정산 대시보드와 동기화됩니다</p>
+        <p className="text-body text-muted-foreground">이 카드에 연결된 정산 원장이 없습니다</p>
+        <p className="text-caption text-muted-foreground">생성 즉시 정산 대시보드와 동기화됩니다</p>
         <Button size="sm" className="gap-1.5 mt-1" onClick={startNew}>
           <Plus className="w-4 h-4" />정산 원장 생성
         </Button>
@@ -175,21 +175,21 @@ export default function SettlementTab({ card, user }) {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <p className="text-xs font-semibold">정산 원장</p>
+          <p className="text-caption font-semibold">정산 원장</p>
           {activeLedger && (
             <Select value={form.status} onValueChange={v => setF('status', v)}>
-              <SelectTrigger className={`h-6 text-[10px] border-0 px-2 w-auto ${STATUS_META[form.status]?.color}`}>
+              <SelectTrigger className={`h-6 text-micro border-0 px-2 w-auto ${STATUS_META[form.status]?.color}`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(STATUS_META).map(([k, v]) => (
-                  <SelectItem key={k} value={k} className="text-xs">{v.label}</SelectItem>
+                  <SelectItem key={k} value={k} className="text-caption">{v.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           )}
         </div>
-        <Button size="sm" className="h-7 text-xs gap-1" onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
+        <Button size="sm" className="h-7 text-caption gap-1" onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
           <Save className="w-3 h-3" />저장
         </Button>
       </div>
@@ -198,16 +198,16 @@ export default function SettlementTab({ card, user }) {
       {activeLedger && (
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-muted/30 rounded-lg p-2 text-center">
-            <p className="text-[10px] text-muted-foreground">예상 마진</p>
-            <p className="text-sm font-bold">${expectedKickback}</p>
+            <p className="text-micro text-muted-foreground">예상 마진</p>
+            <p className="text-body font-bold">${expectedKickback}</p>
           </div>
           <div className="bg-accent/10 rounded-lg p-2 text-center">
-            <p className="text-[10px] text-muted-foreground">실제 마진 (RMB)</p>
-            <p className="text-sm font-bold text-accent">¥{Number(form.actual_margin_rmb || 0).toLocaleString()}</p>
+            <p className="text-micro text-muted-foreground">실제 마진 (RMB)</p>
+            <p className="text-body font-bold text-accent">¥{Number(form.actual_margin_rmb || 0).toLocaleString()}</p>
           </div>
           <div className="bg-primary/10 rounded-lg p-2 text-center">
-            <p className="text-[10px] text-muted-foreground">HQ 몫 (RMB)</p>
-            <p className="text-sm font-bold text-primary">¥{Number(hqShare).toLocaleString()}</p>
+            <p className="text-micro text-muted-foreground">HQ 몫 (RMB)</p>
+            <p className="text-body font-bold text-primary">¥{Number(hqShare).toLocaleString()}</p>
           </div>
         </div>
       )}
@@ -217,16 +217,16 @@ export default function SettlementTab({ card, user }) {
 
       {/* STEP 1 */}
       <div className="space-y-2">
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Step 1 — 직접 송금</p>
+        <p className="text-micro font-semibold text-muted-foreground uppercase tracking-wider">Step 1 — 직접 송금</p>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-xs">프로젝트 일자</Label>
-            <Input type="date" value={form.project_date || ''} onChange={e => setF('project_date', e.target.value)} className="h-8 text-xs" />
+            <Label className="text-caption">프로젝트 일자</Label>
+            <Input type="date" value={form.project_date || ''} onChange={e => setF('project_date', e.target.value)} className="h-8 text-caption" />
           </div>
           <div>
-            <Label className="text-xs">인코텀즈</Label>
+            <Label className="text-caption">인코텀즈</Label>
             <Select value={form.incoterms || 'EXW'} onValueChange={v => setF('incoterms', v)}>
-              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8 text-caption"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {['EXW', 'FOB_SHANGHAI', 'FOB_GUANGZHOU', 'CIF'].map(v => <SelectItem key={v} value={v}>{v.replace('_', ' ')}</SelectItem>)}
               </SelectContent>
@@ -235,15 +235,15 @@ export default function SettlementTab({ card, user }) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-xs">고객→공장 직송금 (USD)</Label>
-            <Input type="number" value={form.client_to_factory_usd || ''} onChange={e => setF('client_to_factory_usd', e.target.value)} className="h-8 text-xs" />
+            <Label className="text-caption">고객→공장 직송금 (USD)</Label>
+            <Input type="number" value={form.client_to_factory_usd || ''} onChange={e => setF('client_to_factory_usd', e.target.value)} className="h-8 text-caption" />
           </div>
           <div>
-            <Label className="text-xs">공장 원가 (USD)</Label>
-            <Input type="number" value={form.factory_base_cost_usd || ''} onChange={e => setF('factory_base_cost_usd', e.target.value)} className="h-8 text-xs" />
+            <Label className="text-caption">공장 원가 (USD)</Label>
+            <Input type="number" value={form.factory_base_cost_usd || ''} onChange={e => setF('factory_base_cost_usd', e.target.value)} className="h-8 text-caption" />
           </div>
         </div>
-        <div className="flex items-center gap-2 px-2 py-1.5 bg-muted/40 rounded-lg text-xs">
+        <div className="flex items-center gap-2 px-2 py-1.5 bg-muted/40 rounded-lg text-caption">
           <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
           <span className="text-muted-foreground">예상 마진:</span>
           <span className="font-bold">${expectedKickback}</span>
@@ -252,52 +252,52 @@ export default function SettlementTab({ card, user }) {
 
       {/* STEP 2 */}
       <div className="space-y-2">
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Step 2 — 커미션 수금</p>
+        <p className="text-micro font-semibold text-muted-foreground uppercase tracking-wider">Step 2 — 커미션 수금</p>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-xs">실제 커미션 수금 (RMB)</Label>
-            <Input type="number" value={form.actual_kickback_rmb || ''} onChange={e => setF('actual_kickback_rmb', e.target.value)} className="h-8 text-xs" />
+            <Label className="text-caption">실제 커미션 수금 (RMB)</Label>
+            <Input type="number" value={form.actual_kickback_rmb || ''} onChange={e => setF('actual_kickback_rmb', e.target.value)} className="h-8 text-caption" />
           </div>
           <div>
-            <Label className="text-xs">적용 환율 (USD/RMB)</Label>
-            <Input type="number" value={form.exchange_rate || ''} onChange={e => setF('exchange_rate', e.target.value)} className="h-8 text-xs" />
+            <Label className="text-caption">적용 환율 (USD/RMB)</Label>
+            <Input type="number" value={form.exchange_rate || ''} onChange={e => setF('exchange_rate', e.target.value)} className="h-8 text-caption" />
           </div>
         </div>
         <div>
-          <Label className="text-xs">물류/통관 비용 (USD)</Label>
-          <Input type="number" value={form.logistics_cost_usd || ''} onChange={e => setF('logistics_cost_usd', e.target.value)} className="h-8 text-xs" />
+          <Label className="text-caption">물류/통관 비용 (USD)</Label>
+          <Input type="number" value={form.logistics_cost_usd || ''} onChange={e => setF('logistics_cost_usd', e.target.value)} className="h-8 text-caption" />
         </div>
       </div>
 
       {/* STEP 3 */}
       <div className="space-y-2">
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Step 3 — HQ 정산</p>
+        <p className="text-micro font-semibold text-muted-foreground uppercase tracking-wider">Step 3 — HQ 정산</p>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-xs">실제 마진 총합 (RMB)</Label>
-            <Input type="number" value={form.actual_margin_rmb || ''} onChange={e => setF('actual_margin_rmb', e.target.value)} className="h-8 text-xs" />
+            <Label className="text-caption">실제 마진 총합 (RMB)</Label>
+            <Input type="number" value={form.actual_margin_rmb || ''} onChange={e => setF('actual_margin_rmb', e.target.value)} className="h-8 text-caption" />
           </div>
           <div>
-            <Label className="text-xs">HQ 정산 비율 (%)</Label>
-            <Input type="number" min="0" max="100" value={form.hq_share_percent ?? 50} onChange={e => setF('hq_share_percent', e.target.value)} className="h-8 text-xs" />
+            <Label className="text-caption">HQ 정산 비율 (%)</Label>
+            <Input type="number" min="0" max="100" value={form.hq_share_percent ?? 50} onChange={e => setF('hq_share_percent', e.target.value)} className="h-8 text-caption" />
           </div>
           <div>
-            <Label className="text-xs">조율 금액 (RMB, +/-)</Label>
-            <Input type="number" value={form.adjustment_rmb || ''} onChange={e => setF('adjustment_rmb', e.target.value)} className="h-8 text-xs" />
+            <Label className="text-caption">조율 금액 (RMB, +/-)</Label>
+            <Input type="number" value={form.adjustment_rmb || ''} onChange={e => setF('adjustment_rmb', e.target.value)} className="h-8 text-caption" />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-xs">정산 전달일</Label>
-            <Input type="date" value={form.payout_date || ''} onChange={e => setF('payout_date', e.target.value)} className="h-8 text-xs" />
+            <Label className="text-caption">정산 전달일</Label>
+            <Input type="date" value={form.payout_date || ''} onChange={e => setF('payout_date', e.target.value)} className="h-8 text-caption" />
           </div>
           <div>
-            <Label className="text-xs">비고</Label>
-            <Input value={form.note_1 || ''} onChange={e => setF('note_1', e.target.value)} className="h-8 text-xs" placeholder="비고" />
+            <Label className="text-caption">비고</Label>
+            <Input value={form.note_1 || ''} onChange={e => setF('note_1', e.target.value)} className="h-8 text-caption" placeholder="비고" />
           </div>
         </div>
         {(form.actual_margin_rmb > 0) && (
-          <div className="flex items-center gap-2 px-2 py-1.5 bg-primary/10 rounded-lg text-xs">
+          <div className="flex items-center gap-2 px-2 py-1.5 bg-primary/10 rounded-lg text-caption">
             <TrendingUp className="w-3.5 h-3.5 text-primary" />
             <span className="text-muted-foreground">HQ 최종 수령 ({sharePct}% + 조율):</span>
             <span className="font-bold text-primary">¥{Number(hqShare).toLocaleString()}</span>

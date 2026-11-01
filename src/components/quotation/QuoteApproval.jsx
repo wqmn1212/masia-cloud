@@ -74,7 +74,7 @@ export function QuoteSendDialog({ quote, cardId, mode, onClose }) {
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-base">{mode === 'send' ? '승인하고 고객에게 보내기' : '견적 승인 요청'}</DialogTitle>
+          <DialogTitle className="text-title">{mode === 'send' ? '승인하고 고객에게 보내기' : '견적 승인 요청'}</DialogTitle>
           <DialogDescription className="text-label">
             {quote.quote_title || quote.product_name || quote.factory_name || '견적서'} · {mode === 'send' ? '고객 포털에 공개하고 고객에게 알림·메일을 보냅니다' : '팀 관리자가 확인한 뒤 고객에게 보냅니다'}
           </DialogDescription>
@@ -113,7 +113,7 @@ export function QuoteRejectDialog({ quote, cardId, onClose }) {
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-base">견적 반려</DialogTitle>
+          <DialogTitle className="text-title">견적 반려</DialogTitle>
           <DialogDescription className="text-label">초안으로 돌아가고, 요청한 직원에게 사유가 전달됩니다.</DialogDescription>
         </DialogHeader>
         <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} maxLength={500} className="text-label" placeholder="예: 마진 15% 이상으로, 납기 공장에 다시 확인" autoFocus />

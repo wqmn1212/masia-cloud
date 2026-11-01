@@ -63,16 +63,16 @@ function CalcDialog({ shipment, open, onClose, onSave }) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[92vh] w-[95vw] max-w-5xl overflow-y-auto">
-        <DialogHeader><DialogTitle className="text-base">{shipment.label || '선적'} · 한국 도착 후 따로 낼 돈 계산</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="text-title">{shipment.label || '선적'} · 한국 도착 후 따로 낼 돈 계산</DialogTitle></DialogHeader>
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)]">
           <LandedCostForm value={form} onChange={setForm} defaultUsdKrw={usdKrw} />
           <div className="min-w-0 space-y-3">
             <LandedCostResult result={result} compare={compare} showNotice={false} />
-            {fxStale && <p className="rounded-md bg-chart-3/10 px-3 py-2 text-xs text-chart-3">환율이 {rateDate} 기준입니다. 받은 견적의 환율이 있으면 직접 넣어 주세요.</p>}
+            {fxStale && <p className="rounded-md bg-chart-3/10 px-3 py-2 text-caption text-chart-3">환율이 {rateDate} 기준입니다. 받은 견적의 환율이 있으면 직접 넣어 주세요.</p>}
           </div>
         </div>
         <DialogFooter className="items-center gap-2 sm:justify-between">
-          <p className="text-xs text-muted-foreground">{resend ? '이미 고객에게 보낸 금액입니다. 저장하면 고객 확인이 취소되고, 새 금액을 다시 보내야 합니다.' : '저장한 금액은 \'고객에게 확인 요청\'을 눌러야 고객에게 보입니다.'}</p>
+          <p className="text-caption text-muted-foreground">{resend ? '이미 고객에게 보낸 금액입니다. 저장하면 고객 확인이 취소되고, 새 금액을 다시 보내야 합니다.' : '저장한 금액은 \'고객에게 확인 요청\'을 눌러야 고객에게 보입니다.'}</p>
           <Button disabled={saving || result.needsCargo} onClick={save}>{saving ? '저장 중…' : '이 금액으로 저장'}</Button>
         </DialogFooter>
       </DialogContent>
@@ -144,12 +144,12 @@ export default function DestCostSection({ shipment, card, onSaved }) {
     <div className="space-y-2 border-t pt-3">
       <div className="flex flex-wrap items-center gap-2">
         <Receipt className="h-4 w-4 text-primary" />
-        <p className="text-xs font-semibold">도착 후 따로 낼 돈</p>
-        <Badge className={`border-0 text-[10px] ${STATE_STYLE[state]}`}>{DEST_COST_STATE[state]}</Badge>
+        <p className="text-caption font-semibold">도착 후 따로 낼 돈</p>
+        <Badge className={`border-0 text-micro ${STATE_STYLE[state]}`}>{DEST_COST_STATE[state]}</Badge>
         <div className="ml-auto flex flex-wrap gap-1.5">
-          <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => setCalcOpen(true)}><Calculator className="h-3 w-3" />{est ? '다시 계산' : '계산하기'}</Button>
+          <Button size="sm" variant="outline" className="h-7 gap-1 text-caption" onClick={() => setCalcOpen(true)}><Calculator className="h-3 w-3" />{est ? '다시 계산' : '계산하기'}</Button>
           {est && state !== 'ACKNOWLEDGED' && (
-            <Button size="sm" className="h-7 gap-1 text-xs" disabled={busy || !canSend} title={canSend ? '' : (!card.client_visible ? '고객에게 공개된 카드에서만 보낼 수 있습니다' : "'고객 포털에 보이기'를 켜고 저장한 뒤 보낼 수 있습니다")} onClick={send}>
+            <Button size="sm" className="h-7 gap-1 text-caption" disabled={busy || !canSend} title={canSend ? '' : (!card.client_visible ? '고객에게 공개된 카드에서만 보낼 수 있습니다' : "'고객 포털에 보이기'를 켜고 저장한 뒤 보낼 수 있습니다")} onClick={send}>
               <Send className="h-3 w-3" />{state === 'DRAFT' ? '고객에게 확인 요청' : '다시 보내기'}
             </Button>
           )}
@@ -157,19 +157,19 @@ export default function DestCostSection({ shipment, card, onSaved }) {
       </div>
 
       {!est ? (
-        <p className="text-xs text-muted-foreground">거래 조건(CIF·FOB·EXW 등)과 화물로 고객이 한국에서 따로 낼 돈을 계산해 출항 전에 확인받습니다.</p>
+        <p className="text-caption text-muted-foreground">거래 조건(CIF·FOB·EXW 등)과 화물로 고객이 한국에서 따로 낼 돈을 계산해 출항 전에 확인받습니다.</p>
       ) : (
         <>
-          <p className="text-xs"><b className="text-sm tabular-nums">{fmtWon(est.buyer_ex_vat)}</b> <span className="text-muted-foreground">부가세 제외 · 범위 {fmtWon(est.range_low)} ~ {fmtWon(est.range_high)}{est.buyer_vat > 0 ? ` · 수입 부가세 ${fmtWon(est.buyer_vat)} 별도` : ''}</span></p>
-          {!!est.segments?.length && <p className="text-xs text-muted-foreground">{est.segments.map((g) => `${g.short || g.label} ${fmtWon(g.amount)}`).join(' · ')}</p>}
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-caption"><b className="text-body tabular-nums">{fmtWon(est.buyer_ex_vat)}</b> <span className="text-muted-foreground">부가세 제외 · 범위 {fmtWon(est.range_low)} ~ {fmtWon(est.range_high)}{est.buyer_vat > 0 ? ` · 수입 부가세 ${fmtWon(est.buyer_vat)} 별도` : ''}</span></p>
+          {!!est.segments?.length && <p className="text-caption text-muted-foreground">{est.segments.map((g) => `${g.short || g.label} ${fmtWon(g.amount)}`).join(' · ')}</p>}
+          <p className="text-micro text-muted-foreground">
             {est.term_label} · {est.mode_label} · 환율 {Number(est.usd_krw).toLocaleString('ko-KR')}원 · {fmtAt(est.computed_at)} 계산
             {state === 'SENT' && ` · ${fmtAt(shipment.dest_cost_sent_at)} 고객에게 보냄`}
             {!canSend && state === 'DRAFT' && ` · ${!card.client_visible ? '카드를 고객에게 공개해야 보낼 수 있습니다' : "'고객 포털에 보이기'를 켜야 보낼 수 있습니다"}`}
           </p>
-          {state === 'ACKNOWLEDGED' && <p className="flex items-center gap-1 text-xs text-primary"><CheckCircle2 className="h-3.5 w-3.5" />{shipment.dest_cost_decided_by_name} 님이 {fmtAt(shipment.dest_cost_decided_at)}에 확인</p>}
+          {state === 'ACKNOWLEDGED' && <p className="flex items-center gap-1 text-caption text-primary"><CheckCircle2 className="h-3.5 w-3.5" />{shipment.dest_cost_decided_by_name} 님이 {fmtAt(shipment.dest_cost_decided_at)}에 확인</p>}
           {state === 'QUESTION' && (
-            <div className="rounded-md bg-muted/50 p-2 text-xs">
+            <div className="rounded-md bg-muted/50 p-2 text-caption">
               <p className="flex items-center gap-1 font-semibold"><MessageCircleQuestion className="h-3.5 w-3.5 text-destructive" />{shipment.dest_cost_decided_by_name} 님 문의 · {fmtAt(shipment.dest_cost_decided_at)}</p>
               <p className="mt-1 whitespace-pre-wrap">{shipment.dest_cost_client_note}</p>
               <p className="mt-1 text-muted-foreground">답변은 문의 탭에 남기고, 금액을 고쳤다면 다시 계산해서 보내 주세요.</p>
@@ -177,24 +177,24 @@ export default function DestCostSection({ shipment, card, onSaved }) {
           )}
 
           {!showActual ? (
-            <button type="button" className="text-xs text-primary hover:underline" onClick={() => setActualOpen(true)}>실제 청구 금액 입력</button>
+            <button type="button" className="text-caption text-primary hover:underline" onClick={() => setActualOpen(true)}>실제 청구 금액 입력</button>
           ) : (
             <div className="space-y-2 rounded-md bg-muted/40 p-2.5">
               <div className="grid gap-2 sm:grid-cols-[1fr_1fr_2fr]">
-                <label className="space-y-1 text-[11px]"><span>실제 청구 (부가세 제외, 원)</span><Input type="number" min="0" className="h-8 bg-background text-xs" value={actual.amount} onChange={(e) => setActual((a) => ({ ...a, amount: e.target.value }))} /></label>
-                <label className="space-y-1 text-[11px]"><span>실제 수입 부가세 (원)</span><Input type="number" min="0" className="h-8 bg-background text-xs" value={actual.vat} onChange={(e) => setActual((a) => ({ ...a, vat: e.target.value }))} /></label>
-                <label className="space-y-1 text-[11px]"><span>예상과 다른 이유 (고객에게 보임)</span><Input className="h-8 bg-background text-xs" value={actual.note} placeholder="예: 실측 부피 10.2CBM, 세관 검사 지정" onChange={(e) => setActual((a) => ({ ...a, note: e.target.value }))} /></label>
+                <label className="space-y-1 text-micro"><span>실제 청구 (부가세 제외, 원)</span><Input type="number" min="0" className="h-8 bg-background text-caption" value={actual.amount} onChange={(e) => setActual((a) => ({ ...a, amount: e.target.value }))} /></label>
+                <label className="space-y-1 text-micro"><span>실제 수입 부가세 (원)</span><Input type="number" min="0" className="h-8 bg-background text-caption" value={actual.vat} onChange={(e) => setActual((a) => ({ ...a, vat: e.target.value }))} /></label>
+                <label className="space-y-1 text-micro"><span>예상과 다른 이유 (고객에게 보임)</span><Input className="h-8 bg-background text-caption" value={actual.note} placeholder="예: 실측 부피 10.2CBM, 세관 검사 지정" onChange={(e) => setActual((a) => ({ ...a, note: e.target.value }))} /></label>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {diff && (
-                  <span className={`text-xs ${diff.inRange ? 'text-muted-foreground' : 'font-semibold text-destructive'}`}>
+                  <span className={`text-caption ${diff.inRange ? 'text-muted-foreground' : 'font-semibold text-destructive'}`}>
                     예상 대비 {diff.diff >= 0 ? '+' : ''}{fmtWon(diff.diff)}{diff.pct != null ? ` (${pct(diff.pct)})` : ''}{diff.inRange ? ' · 안내한 범위 안' : ' · 안내한 범위 밖, 이유를 적어 주세요'}
                   </span>
                 )}
-                {invoices.length ? <DocChips docs={invoices} max={2} /> : <span className="text-[11px] text-muted-foreground">청구서는 무역서류에 &lsquo;물류비 청구서&rsquo;로 올려 주세요</span>}
-                <Button size="sm" variant="outline" className="ml-auto h-7 text-xs" disabled={busy || !actualDirty} onClick={saveActual}>실제 금액 저장</Button>
+                {invoices.length ? <DocChips docs={invoices} max={2} /> : <span className="text-micro text-muted-foreground">청구서는 무역서류에 &lsquo;물류비 청구서&rsquo;로 올려 주세요</span>}
+                <Button size="sm" variant="outline" className="ml-auto h-7 text-caption" disabled={busy || !actualDirty} onClick={saveActual}>실제 금액 저장</Button>
               </div>
-              {shipment.dest_cost_actual_by_name && <p className="text-[11px] text-muted-foreground">기록: {shipment.dest_cost_actual_by_name}{shipment.dest_cost_actual_at ? ` · ${new Date(shipment.dest_cost_actual_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}{shipment.dest_cost_actual_source && shipment.dest_cost_actual_source !== '직접 입력' ? ` · 근거 ${shipment.dest_cost_actual_source}` : ''}</p>}
+              {shipment.dest_cost_actual_by_name && <p className="text-micro text-muted-foreground">기록: {shipment.dest_cost_actual_by_name}{shipment.dest_cost_actual_at ? ` · ${new Date(shipment.dest_cost_actual_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}{shipment.dest_cost_actual_source && shipment.dest_cost_actual_source !== '직접 입력' ? ` · 근거 ${shipment.dest_cost_actual_source}` : ''}</p>}
             </div>
           )}
         </>

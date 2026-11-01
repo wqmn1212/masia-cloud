@@ -20,7 +20,7 @@ export default function CreateClientTeamButton({ company, hasTeam }) {
   });
   return (
     <>
-      <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs h-8" onClick={() => { setEmail(company.email || ''); setOpen(true); }}>
+      <Button variant="outline" size="sm" className="w-full gap-1.5 text-caption h-8" onClick={() => { setEmail(company.email || ''); setOpen(true); }}>
         <UserPlus className="w-3.5 h-3.5" />{hasTeam ? '팀 담당자 초대' : '고객사 팀 생성'}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>

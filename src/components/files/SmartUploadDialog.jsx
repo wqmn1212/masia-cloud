@@ -57,7 +57,7 @@ export default function SmartUploadDialog({ open, onClose, cards, clients, user 
     <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onClose(); } }}>
       <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base">
+          <DialogTitle className="flex items-center gap-2 text-title">
             <Sparkles className="h-4 w-4 text-primary" /> AI 파일 자동 분류
           </DialogTitle>
         </DialogHeader>
@@ -68,11 +68,11 @@ export default function SmartUploadDialog({ open, onClose, cards, clients, user 
         {items.length === 0 && !analyzing && (
           <div className="text-center py-8 space-y-3">
             {savedCount > 0 && (
-              <p className="flex items-center justify-center gap-1.5 text-sm text-primary font-medium">
+              <p className="flex items-center justify-center gap-1.5 text-body text-primary font-medium">
                 <CheckCircle2 className="h-4 w-4" /> {savedCount}개 파일을 등록했습니다.
               </p>
             )}
-            <p className="text-sm text-muted-foreground">파일을 올리면 AI가 내용을 읽고 적합한 태스크 카드를 찾아줍니다.</p>
+            <p className="text-body text-muted-foreground">파일을 올리면 AI가 내용을 읽고 적합한 태스크 카드를 찾아줍니다.</p>
             <Button onClick={() => inputRef.current?.click()} className="gap-2">
               <Upload className="h-4 w-4" /> 파일 선택
             </Button>
@@ -80,7 +80,7 @@ export default function SmartUploadDialog({ open, onClose, cards, clients, user 
         )}
 
         {analyzing && (
-          <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+          <div className="flex items-center justify-center gap-2 py-8 text-body text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> 파일 분석 중 {progress.current}/{progress.total}
           </div>
         )}
@@ -90,15 +90,15 @@ export default function SmartUploadDialog({ open, onClose, cards, clients, user 
             {items.map((it, idx) => (
               <div key={it.file_url} className="border rounded-lg p-3 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium truncate">{it.file_name}</span>
+                  <span className="text-body font-medium truncate">{it.file_name}</span>
                   {it.matched_card
-                    ? <Badge variant="outline" className="text-[10px]">기존 카드 매칭</Badge>
-                    : <Badge className="text-[10px] gap-1"><FilePlus2 className="h-3 w-3" /> 새 카드 생성</Badge>}
+                    ? <Badge variant="outline" className="text-micro">기존 카드 매칭</Badge>
+                    : <Badge className="text-micro gap-1"><FilePlus2 className="h-3 w-3" /> 새 카드 생성</Badge>}
                 </div>
-                {it.summary && <p className="text-xs text-muted-foreground">{it.summary}</p>}
-                {it.reason && <p className="text-[11px] text-muted-foreground">근거: {it.reason}</p>}
+                {it.summary && <p className="text-caption text-muted-foreground">{it.summary}</p>}
+                {it.reason && <p className="text-micro text-muted-foreground">근거: {it.reason}</p>}
                 <Select value={it.matched_card?.id || NEW_CARD} onValueChange={(v) => setTarget(idx, v)}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-8 text-caption"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value={NEW_CARD}>+ 새 카드 생성: {it.new_card_title}</SelectItem>
                     {cards.map(c => (

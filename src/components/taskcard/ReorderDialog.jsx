@@ -50,27 +50,27 @@ export default function ReorderDialog({ open, onOpenChange, card }) {
           <DialogDescription>공장·요구사항·책임자를 이어받은 새 카드를 만듭니다. 견적·결제·일정·검수·선적은 새로 시작합니다.</DialogDescription>
         </DialogHeader>
         {done ? (
-          <div className="space-y-3 text-sm">
+          <div className="space-y-3 text-body">
             <p>새 카드를 만들었습니다. 서류 {done.copied?.docs ?? 0}건{done.copied?.spec ? ', 품질 기준서 초안' : ''}{done.copied?.bom ? `, BOM ${done.copied.bom}개` : ''}를 복사했습니다.</p>
             <Button className="w-full" onClick={() => window.location.assign(`/task-board?card=${done.card_id}`)}>새 카드 열기</Button>
           </div>
         ) : (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
-              <div><Label className="text-xs">수량</Label><Input value={f.quantity || ''} maxLength={200} onChange={(e) => set('quantity', e.target.value)} /></div>
-              <div><Label className="text-xs">희망 납기</Label><Input type="date" value={f.target_date || ''} onChange={(e) => set('target_date', e.target.value)} /></div>
+              <div><Label className="text-caption">수량</Label><Input value={f.quantity || ''} maxLength={200} onChange={(e) => set('quantity', e.target.value)} /></div>
+              <div><Label className="text-caption">희망 납기</Label><Input type="date" value={f.target_date || ''} onChange={(e) => set('target_date', e.target.value)} /></div>
             </div>
-            <div><Label className="text-xs">바뀌는 점</Label><Textarea rows={2} maxLength={3000} value={f.changes || ''} onChange={(e) => set('changes', e.target.value)} /></div>
+            <div><Label className="text-caption">바뀌는 점</Label><Textarea rows={2} maxLength={3000} value={f.changes || ''} onChange={(e) => set('changes', e.target.value)} /></div>
             <div className="space-y-2 rounded-lg border p-2.5">
-              <p className="text-xs font-semibold">함께 복사</p>
+              <p className="text-caption font-semibold">함께 복사</p>
               {COPY.map(([k, label, hint]) => (
-                <label key={k} className="flex items-start gap-2 text-sm">
+                <label key={k} className="flex items-start gap-2 text-body">
                   <Checkbox className="mt-0.5" checked={!!f.copy?.[k]} onCheckedChange={(v) => set('copy', { ...f.copy, [k]: !!v })} />
-                  <span>{label}<span className="block text-[11px] text-muted-foreground">{hint}</span></span>
+                  <span>{label}<span className="block text-micro text-muted-foreground">{hint}</span></span>
                 </label>
               ))}
             </div>
-            <label className="flex items-center gap-2 text-sm"><Checkbox checked={!!f.client_visible} onCheckedChange={(v) => set('client_visible', !!v)} />고객 포털에 바로 공개</label>
+            <label className="flex items-center gap-2 text-body"><Checkbox checked={!!f.client_visible} onCheckedChange={(v) => set('client_visible', !!v)} />고객 포털에 바로 공개</label>
           </div>
         )}
         {!done && (

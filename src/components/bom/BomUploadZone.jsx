@@ -9,9 +9,9 @@ export default function BomUploadZone({ onFile, isParsing, progress, phaseLabel 
     return (
       <div className="border border-dashed rounded-xl p-8 text-center bg-card">
         <Loader2 className="w-7 h-7 mx-auto mb-3 animate-spin text-primary" />
-        <p className="text-sm font-medium mb-3">{phaseLabel || 'STEP 파일 파싱 중...'}</p>
+        <p className="text-body font-medium mb-3">{phaseLabel || 'STEP 파일 파싱 중...'}</p>
         <Progress value={progress} className="max-w-sm mx-auto" />
-        <p className="text-xs text-muted-foreground mt-2">{progress}%</p>
+        <p className="text-caption text-muted-foreground mt-2">{progress}%</p>
       </div>
     );
   }
@@ -24,7 +24,7 @@ export default function BomUploadZone({ onFile, isParsing, progress, phaseLabel 
         label="STEP 도면(.stp / .step)을 끌어놓거나 클릭해 선택"
         className="py-4"
       />
-      <p className="text-xs text-muted-foreground mt-3 text-center">
+      <p className="text-caption text-muted-foreground mt-3 text-center">
         최대 {MAX_FILE_SIZE_MB}MB · 부품 {MAX_PART_COUNT}개 이하 · 브라우저에서 직접 파싱합니다
       </p>
     </div>

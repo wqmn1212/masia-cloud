@@ -414,8 +414,8 @@ export default function QuotationTab({ card, user }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">이 카드에 연결된 견적서 — 등록 즉시 견적관리 페이지와 동기화됩니다</p>
-        <Button size="sm" className="h-7 text-xs gap-1" onClick={() => { if (showForm) { resetForm(); } else { setShowForm(true); } }}>
+        <p className="text-caption text-muted-foreground">이 카드에 연결된 견적서 — 등록 즉시 견적관리 페이지와 동기화됩니다</p>
+        <Button size="sm" className="h-7 text-caption gap-1" onClick={() => { if (showForm) { resetForm(); } else { setShowForm(true); } }}>
           <Plus className="w-3 h-3" />{editingId ? '수정 중' : '견적 추가'}
         </Button>
       </div>
@@ -423,12 +423,12 @@ export default function QuotationTab({ card, user }) {
       {/* 견적 추가 폼 */}
       {showForm && (
         <form onSubmit={handleSubmit} className="border rounded-xl p-4 space-y-3 bg-muted/20">
-          <p className="text-xs font-semibold">{editingId ? '견적 수정' : '신규 견적 등록'}</p>
-          {editingId && updateMutation.isError && <p role="alert" className="text-xs text-destructive">{updateMutation.error?.response?.data?.error || '수정 저장에 실패했습니다. 다시 시도해주세요.'}</p>}
+          <p className="text-caption font-semibold">{editingId ? '견적 수정' : '신규 견적 등록'}</p>
+          {editingId && updateMutation.isError && <p role="alert" className="text-caption text-destructive">{updateMutation.error?.response?.data?.error || '수정 저장에 실패했습니다. 다시 시도해주세요.'}</p>}
 
           {/* 파일 업로드 */}
           <div>
-            <Label className="text-xs">공장 견적서 파일 (엑셀·워드·PDF·사진 — AI 가 읽어 우리 양식으로 정리)</Label>
+            <Label className="text-caption">공장 견적서 파일 (엑셀·워드·PDF·사진 — AI 가 읽어 우리 양식으로 정리)</Label>
             <div className="flex gap-2 mt-1">
               <DropZone
                 onFile={handleFileUpload}
@@ -437,35 +437,35 @@ export default function QuotationTab({ card, user }) {
                 compact
                 label={parsing ? 'AI 분석 중...' : '파일 선택'}
               />
-              {form.raw_file_url && <span className="text-[10px] text-accent self-center">✓ 업로드 완료</span>}
+              {form.raw_file_url && <span className="text-micro text-accent self-center">✓ 업로드 완료</span>}
             </div>
           </div>
           <QuoteImportDialog result={importResult} onClose={() => setImportResult(null)} onApply={applyImport} />
 
           <div>
-            <Label className="text-xs">견적서 제목</Label>
-            <Input value={form.quote_title} onChange={e => setForm(f => ({ ...f, quote_title: e.target.value }))} placeholder="예: 드립백 포장기 공급 견적" className="h-8 text-xs" />
+            <Label className="text-caption">견적서 제목</Label>
+            <Input value={form.quote_title} onChange={e => setForm(f => ({ ...f, quote_title: e.target.value }))} placeholder="예: 드립백 포장기 공급 견적" className="h-8 text-caption" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">제품명</Label>
-              <Input value={form.product_name} onChange={e => setForm(f => ({ ...f, product_name: e.target.value }))} placeholder="예: 드립백 포장기" className="h-8 text-xs" />
+              <Label className="text-caption">제품명</Label>
+              <Input value={form.product_name} onChange={e => setForm(f => ({ ...f, product_name: e.target.value }))} placeholder="예: 드립백 포장기" className="h-8 text-caption" />
             </div>
             <div>
-              <Label className="text-xs">모델명</Label>
-              <Input value={form.model_name} onChange={e => setForm(f => ({ ...f, model_name: e.target.value }))} placeholder="예: DBM-5000" className="h-8 text-xs" />
+              <Label className="text-caption">모델명</Label>
+              <Input value={form.model_name} onChange={e => setForm(f => ({ ...f, model_name: e.target.value }))} placeholder="예: DBM-5000" className="h-8 text-caption" />
             </div>
           </div>
 
           {/* 옵션 / 세부 항목 (CNY/RMB 기준) */}
           <div className="border rounded-xl p-3 bg-background">
             {marginRule && (
-              <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-muted/40 px-2.5 py-1.5 text-[11px]">
+              <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-muted/40 px-2.5 py-1.5 text-micro">
                 <span>기준 마진 <b>{marginRule.default_pct}%</b> <span className="text-muted-foreground">({marginRule.default_label})</span></span>
                 <span>최소 <b>{marginRule.min_pct}%</b> <span className="text-muted-foreground">({marginRule.min_label})</span></span>
                 {form.quote_options.some((o) => o.margin_percent === '' || o.margin_percent == null) && (
-                  <Button type="button" size="sm" variant="outline" className="ml-auto h-6 px-2 text-[11px]" onClick={() => setForm((f) => ({ ...f, quote_options: fillMargins(f.quote_options, marginRule.default_pct) }))}>빈 마진에 기준 채우기</Button>
+                  <Button type="button" size="sm" variant="outline" className="ml-auto h-6 px-2 text-micro" onClick={() => setForm((f) => ({ ...f, quote_options: fillMargins(f.quote_options, marginRule.default_pct) }))}>빈 마진에 기준 채우기</Button>
                 )}
               </div>
             )}
@@ -480,38 +480,38 @@ export default function QuotationTab({ card, user }) {
           </div>
 
           <div className="rounded-lg border bg-primary/5 px-3 py-2 flex items-center justify-between gap-3">
-            <div><p className="text-xs font-semibold text-primary">최종 견적 통화 (PDF 표기)</p><p className="text-[10px] text-muted-foreground">작성 통화와 다르면 입력한 환율로 환산해 표기합니다.</p></div>
+            <div><p className="text-caption font-semibold text-primary">최종 견적 통화 (PDF 표기)</p><p className="text-micro text-muted-foreground">작성 통화와 다르면 입력한 환율로 환산해 표기합니다.</p></div>
             <Select value={form.final_currency || 'USD'} onValueChange={v => setForm(f => ({ ...f, final_currency: v }))}>
-              <SelectTrigger className="h-8 w-[110px] text-xs bg-background"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8 w-[110px] text-caption bg-background"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="USD" className="text-xs">$ USD</SelectItem>
-                <SelectItem value="CNY" className="text-xs">¥ CNY</SelectItem>
-                <SelectItem value="KRW" className="text-xs">₩ KRW</SelectItem>
+                <SelectItem value="USD" className="text-caption">$ USD</SelectItem>
+                <SelectItem value="CNY" className="text-caption">¥ CNY</SelectItem>
+                <SelectItem value="KRW" className="text-caption">₩ KRW</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">공장명 *</Label>
-              <Input value={form.factory_name} onChange={e => setForm(f => ({ ...f, factory_name: e.target.value }))} placeholder="공장명" required className="h-8 text-xs" />
+              <Label className="text-caption">공장명 *</Label>
+              <Input value={form.factory_name} onChange={e => setForm(f => ({ ...f, factory_name: e.target.value }))} placeholder="공장명" required className="h-8 text-caption" />
             </div>
             <div>
-              <Label className="text-xs">인코텀즈</Label>
+              <Label className="text-caption">인코텀즈</Label>
               <Select value={form.incoterms} onValueChange={v => setForm(f => ({ ...f, incoterms: v }))}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-8 text-caption"><SelectValue /></SelectTrigger>
                 <SelectContent className="max-h-72">
-                  <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground">모든 운송 수단 (Incoterms 2020)</div>
+                  <div className="px-2 py-1 text-micro font-semibold text-muted-foreground">모든 운송 수단 (Incoterms 2020)</div>
                   {INCOTERMS_2020.filter(t => t.group === '모든 운송 수단').map(t => (
-                    <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>
+                    <SelectItem key={t.value} value={t.value} className="text-caption">{t.label}</SelectItem>
                   ))}
-                  <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground">해상 운송 전용</div>
+                  <div className="px-2 py-1 text-micro font-semibold text-muted-foreground">해상 운송 전용</div>
                   {INCOTERMS_2020.filter(t => t.group === '해상 운송 전용').map(t => (
-                    <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>
+                    <SelectItem key={t.value} value={t.value} className="text-caption">{t.label}</SelectItem>
                   ))}
-                  <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground">항구 지정 (레거시)</div>
+                  <div className="px-2 py-1 text-micro font-semibold text-muted-foreground">항구 지정 (레거시)</div>
                   {LEGACY_INCOTERMS.map(t => (
-                    <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>
+                    <SelectItem key={t.value} value={t.value} className="text-caption">{t.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -528,46 +528,46 @@ export default function QuotationTab({ card, user }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">공장 원가 {optionsTotalUSD > 0 && <span className="text-[10px] text-primary font-semibold">(옵션 합산 자동 반영)</span>}</Label>
+              <Label className="text-caption">공장 원가 {optionsTotalUSD > 0 && <span className="text-micro text-primary font-semibold">(옵션 합산 자동 반영)</span>}</Label>
               {optionsTotalUSD > 0 ? (
-                <div className="h-8 flex items-center px-3 rounded-md border bg-muted/40 text-xs font-semibold">
+                <div className="h-8 flex items-center px-3 rounded-md border bg-muted/40 text-caption font-semibold">
                   ${optionsTotalUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                   <span className="text-muted-foreground font-normal ml-2">≈ ¥{Math.round(factoryCNY).toLocaleString()}</span>
                 </div>
               ) : (
               <>
               <div className="flex gap-1">
-                <Input type="number" value={form.factory_total_cost} onChange={e => setForm(f => ({ ...f, factory_total_cost: e.target.value }))} className="h-8 text-xs flex-1" placeholder={form.factory_cost_currency === 'KRW' ? '₩' : form.factory_cost_currency === 'USD' ? '$' : '¥'} />
+                <Input type="number" value={form.factory_total_cost} onChange={e => setForm(f => ({ ...f, factory_total_cost: e.target.value }))} className="h-8 text-caption flex-1" placeholder={form.factory_cost_currency === 'KRW' ? '₩' : form.factory_cost_currency === 'USD' ? '$' : '¥'} />
                 <Select value={form.factory_cost_currency} onValueChange={v => setForm(f => ({ ...f, factory_cost_currency: v }))}>
-                  <SelectTrigger className="h-8 w-[78px] text-xs px-2"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-8 w-[78px] text-caption px-2"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CNY" className="text-xs">¥ CNY</SelectItem>
-                    <SelectItem value="USD" className="text-xs">$ USD</SelectItem>
-                    <SelectItem value="KRW" className="text-xs">₩ KRW</SelectItem>
+                    <SelectItem value="CNY" className="text-caption">¥ CNY</SelectItem>
+                    <SelectItem value="USD" className="text-caption">$ USD</SelectItem>
+                    <SelectItem value="KRW" className="text-caption">₩ KRW</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {form.factory_cost_currency !== 'CNY' && factoryCNY > 0 && (
-                <p className="text-[10px] text-muted-foreground mt-0.5">≈ ¥{Math.round(factoryCNY).toLocaleString()} CNY</p>
+                <p className="text-micro text-muted-foreground mt-0.5">≈ ¥{Math.round(factoryCNY).toLocaleString()} CNY</p>
               )}
               </>
               )}
             </div>
             <div>
-              <Label className="text-xs">물류비</Label>
+              <Label className="text-caption">물류비</Label>
               <div className="flex gap-1">
-                <Input type="number" value={form.logistics_cost} onChange={e => setForm(f => ({ ...f, logistics_cost: e.target.value }))} className="h-8 text-xs flex-1" placeholder={form.logistics_cost_currency === 'KRW' ? '₩' : form.logistics_cost_currency === 'USD' ? '$' : '¥'} />
+                <Input type="number" value={form.logistics_cost} onChange={e => setForm(f => ({ ...f, logistics_cost: e.target.value }))} className="h-8 text-caption flex-1" placeholder={form.logistics_cost_currency === 'KRW' ? '₩' : form.logistics_cost_currency === 'USD' ? '$' : '¥'} />
                 <Select value={form.logistics_cost_currency} onValueChange={v => setForm(f => ({ ...f, logistics_cost_currency: v }))}>
-                  <SelectTrigger className="h-8 w-[78px] text-xs px-2"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-8 w-[78px] text-caption px-2"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CNY" className="text-xs">¥ CNY</SelectItem>
-                    <SelectItem value="USD" className="text-xs">$ USD</SelectItem>
-                    <SelectItem value="KRW" className="text-xs">₩ KRW</SelectItem>
+                    <SelectItem value="CNY" className="text-caption">¥ CNY</SelectItem>
+                    <SelectItem value="USD" className="text-caption">$ USD</SelectItem>
+                    <SelectItem value="KRW" className="text-caption">₩ KRW</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {form.logistics_cost_currency !== 'CNY' && logisticsCNY > 0 && (
-                <p className="text-[10px] text-muted-foreground mt-0.5">≈ ¥{Math.round(logisticsCNY).toLocaleString()} CNY</p>
+                <p className="text-micro text-muted-foreground mt-0.5">≈ ¥{Math.round(logisticsCNY).toLocaleString()} CNY</p>
               )}
             </div>
           </div>
@@ -593,9 +593,9 @@ export default function QuotationTab({ card, user }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">이지스 수수료 유형</Label>
+              <Label className="text-caption">이지스 수수료 유형</Label>
               <Select value={form.masir_fee_type} onValueChange={v => setForm(f => ({ ...f, masir_fee_type: v }))}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-8 text-caption"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="PERCENT">% (원가+물류비 기준)</SelectItem>
                   <SelectItem value="FIXED">고정 (USD $)</SelectItem>
@@ -603,8 +603,8 @@ export default function QuotationTab({ card, user }) {
               </Select>
             </div>
             <div>
-              <Label className="text-xs">수수료 {form.masir_fee_type === 'PERCENT' ? '(%)' : '(USD $)'}</Label>
-              <Input type="number" value={form.masir_fee_value} onChange={e => setForm(f => ({ ...f, masir_fee_value: e.target.value }))} className="h-8 text-xs" />
+              <Label className="text-caption">수수료 {form.masir_fee_type === 'PERCENT' ? '(%)' : '(USD $)'}</Label>
+              <Input type="number" value={form.masir_fee_value} onChange={e => setForm(f => ({ ...f, masir_fee_value: e.target.value }))} className="h-8 text-caption" />
             </div>
           </div>
 
@@ -612,7 +612,7 @@ export default function QuotationTab({ card, user }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">제품 사진 (PDF에 표시)</Label>
+              <Label className="text-caption">제품 사진 (PDF에 표시)</Label>
               <div className="flex items-center gap-2 mt-1">
                 <DropZone onFile={handleImageUpload} uploading={uploadingImage} accept="image/*" compact label="사진 업로드" />
                 {form.product_image_url && (
@@ -631,30 +631,30 @@ export default function QuotationTab({ card, user }) {
               </div>
             </div>
             <div>
-              <Label className="text-xs">비고 (PDF에 표시)</Label>
-              <Textarea value={form.remarks} onChange={e => setForm(f => ({ ...f, remarks: e.target.value }))} rows={2} className="text-xs" placeholder="특이사항, 포함/불포함 내역 등" />
+              <Label className="text-caption">비고 (PDF에 표시)</Label>
+              <Textarea value={form.remarks} onChange={e => setForm(f => ({ ...f, remarks: e.target.value }))} rows={2} className="text-caption" placeholder="특이사항, 포함/불포함 내역 등" />
             </div>
           </div>
 
           {/* 자동 계산 요약 */}
           {(baseUSD > 0 || feeUSD > 0 || optionsMarginUSD > 0) && (
             <div className="rounded-xl border bg-muted/30 p-3 space-y-2">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">고객 제안가 자동 계산 (USD 거래 기준)</p>
-              <div className="grid grid-cols-4 gap-2 text-xs">
-                <div className="text-center"><p className="text-muted-foreground text-[10px]">원가 + 물류</p><p className="font-semibold">${baseUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p></div>
-                <div className="text-center"><p className="text-muted-foreground text-[10px]">항목별 마진</p><p className="font-semibold text-accent">${optionsMarginUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p></div>
-                <div className="text-center"><p className="text-muted-foreground text-[10px]">수수료</p><p className="font-semibold text-accent">${feeUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p></div>
-                <div className="text-center"><p className="text-muted-foreground text-[10px]">최종 거래가</p><p className="font-bold text-primary">{formatMoney(quoteCalc.total, quoteCalc.currency)}</p></div>
+              <p className="text-micro font-semibold text-muted-foreground uppercase tracking-wide">고객 제안가 자동 계산 (USD 거래 기준)</p>
+              <div className="grid grid-cols-4 gap-2 text-caption">
+                <div className="text-center"><p className="text-muted-foreground text-micro">원가 + 물류</p><p className="font-semibold">${baseUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p></div>
+                <div className="text-center"><p className="text-muted-foreground text-micro">항목별 마진</p><p className="font-semibold text-accent">${optionsMarginUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p></div>
+                <div className="text-center"><p className="text-muted-foreground text-micro">수수료</p><p className="font-semibold text-accent">${feeUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p></div>
+                <div className="text-center"><p className="text-muted-foreground text-micro">최종 거래가</p><p className="font-bold text-primary">{formatMoney(quoteCalc.total, quoteCalc.currency)}</p></div>
               </div>
               <CurrencyPanel total={quoteCalc.total} currency={quoteCalc.currency} usdToCny={Number(form.exchange_rate_usd_cny)} usdToKrw={Number(form.exchange_rate_usd)} />
               <ManualTotalField calc={quoteCalc} value={form.manual_total} reason={form.manual_reason} onChange={(field, value) => setForm(f => ({ ...f, [field]: value }))} />
             </div>
           )}
-          {formError && <p role="alert" className="text-xs text-destructive">{formError}</p>}
+          {formError && <p role="alert" className="text-caption text-destructive">{formError}</p>}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={resetForm}>취소</Button>
-            <Button type="submit" size="sm" className="h-7 text-xs" disabled={createMutation.isPending || updateMutation.isPending}>{editingId ? '수정 저장' : '등록'}</Button>
+            <Button type="button" variant="outline" size="sm" className="h-7 text-caption" onClick={resetForm}>취소</Button>
+            <Button type="submit" size="sm" className="h-7 text-caption" disabled={createMutation.isPending || updateMutation.isPending}>{editingId ? '수정 저장' : '등록'}</Button>
           </div>
         </form>
       )}
@@ -667,7 +667,7 @@ export default function QuotationTab({ card, user }) {
       ) : quotations.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
           <FileText className="w-8 h-8 opacity-30" />
-          <p className="text-sm">등록된 견적이 없습니다</p>
+          <p className="text-body">등록된 견적이 없습니다</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -676,32 +676,32 @@ export default function QuotationTab({ card, user }) {
             return (
               <div key={q.id} className="border rounded-xl p-3 space-y-2 hover:bg-muted/20 transition-colors">
                 {q.client_accepted_at && (
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-primary/10 px-2.5 py-1.5 text-caption">
                     <b className="text-primary">고객이 이 견적으로 진행 요청</b>
                     <span className="text-muted-foreground">{q.client_accepted_by_name} · {new Date(q.client_accepted_at).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' })}{q.client_accept_note ? ` · ${q.client_accept_note}` : ''}</span>
                     <span className="ml-auto flex gap-1.5">
-                      {q.status !== 'ACCEPTED' && <Button type="button" size="sm" variant="outline" className="h-6 px-2 text-[11px]" disabled={updateStatusMutation.isPending} onClick={() => updateStatusMutation.mutate({ quote: q, status: 'ACCEPTED' })}>수주 완료로 바꾸기</Button>}
-                      <Button asChild size="sm" className="h-6 px-2 text-[11px]"><Link to={`/contracts?quotation=${q.id}`}>계약서 만들기</Link></Button>
+                      {q.status !== 'ACCEPTED' && <Button type="button" size="sm" variant="outline" className="h-6 px-2 text-micro" disabled={updateStatusMutation.isPending} onClick={() => updateStatusMutation.mutate({ quote: q, status: 'ACCEPTED' })}>수주 완료로 바꾸기</Button>}
+                      <Button asChild size="sm" className="h-6 px-2 text-micro"><Link to={`/contracts?quotation=${q.id}`}>계약서 만들기</Link></Button>
                     </span>
                   </div>
                 )}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">{q.quote_title || q.factory_name}</span>
-                    {q.product_name && <span className="text-[11px] text-muted-foreground">{q.product_name}{q.model_name ? ` · ${q.model_name}` : ''}</span>}
-                    {q.incoterms && <Badge variant="outline" className="text-[9px] h-4 px-1">{q.incoterms.replace('_', ' ')}</Badge>}
-                    {q.factory_request_id && <Badge variant="outline" className="text-[9px] h-4 px-1 border-primary/40 text-primary">공장 업로드</Badge>}
+                    <span className="text-body font-medium">{q.quote_title || q.factory_name}</span>
+                    {q.product_name && <span className="text-micro text-muted-foreground">{q.product_name}{q.model_name ? ` · ${q.model_name}` : ''}</span>}
+                    {q.incoterms && <Badge variant="outline" className="text-micro h-4 px-1">{q.incoterms.replace('_', ' ')}</Badge>}
+                    {q.factory_request_id && <Badge variant="outline" className="text-micro h-4 px-1 border-primary/40 text-primary">공장 업로드</Badge>}
                   </div>
                   <div className="flex items-center gap-2">
                     <Select value={q.status} onValueChange={v => updateStatusMutation.mutate({ quote: q, status: v })}>
-                      <SelectTrigger className={`h-6 text-[10px] border-0 px-2 ${st.color} w-auto min-w-[80px]`}>
+                      <SelectTrigger className={`h-6 text-micro border-0 px-2 ${st.color} w-auto min-w-[80px]`}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {/* 승인됨·발송됨은 위 '견적 승인 · 고객 발송'에서 팀 관리자가 처리한다 */}
                         {Object.entries(STATUS_META).filter(([k]) => user?.account_tier !== 'sub' || !['APPROVED', 'SENT'].includes(k) || k === q.status).map(([k, v]) => (
-                          <SelectItem key={k} value={k} className="text-xs">{v.label}</SelectItem>
+                          <SelectItem key={k} value={k} className="text-caption">{v.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -725,7 +725,7 @@ export default function QuotationTab({ card, user }) {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+                  <div className="flex flex-wrap gap-3 text-micro text-muted-foreground">
                     {q.options_total_usd > 0 && (
                       <span>옵션 합계: <strong className="text-primary">${q.options_total_usd.toLocaleString()}</strong>
                       {q.exchange_rate_usd > 0 && <span className="opacity-70"> (≈₩{Math.round(q.options_total_usd * q.exchange_rate_usd).toLocaleString()})</span>}</span>
@@ -735,7 +735,7 @@ export default function QuotationTab({ card, user }) {
                     {q.masir_fee_amount_cny > 0 && <span>수수료: <strong className="text-accent">¥{q.masir_fee_amount_cny?.toLocaleString()} {q.masir_fee_type === 'PERCENT' ? `(${q.masir_fee_value}%)` : '(고정)'}</strong></span>}
                   </div>
                   {q.manual_total > 0 && (
-                    <p className="text-[11px]"><span className="rounded bg-chart-3/15 text-chart-3 px-1.5 py-0.5 font-semibold">수동 수정</span> <span className="text-muted-foreground">자동 {formatMoney(q.auto_total, q.final_currency)} → {formatMoney(q.final_total, q.final_currency)} · {q.manual_reason}</span></p>
+                    <p className="text-micro"><span className="rounded bg-chart-3/15 text-chart-3 px-1.5 py-0.5 font-semibold">수동 수정</span> <span className="text-muted-foreground">자동 {formatMoney(q.auto_total, q.final_currency)} → {formatMoney(q.final_total, q.final_currency)} · {q.manual_reason}</span></p>
                   )}
                   {q.rounding_version === 2 && q.final_total != null
                     ? <CurrencyPanel total={q.final_total} currency={q.final_currency || 'USD'} usdToCny={q.exchange_rate_usd_cny} usdToKrw={q.exchange_rate_usd} />
@@ -745,10 +745,10 @@ export default function QuotationTab({ card, user }) {
                   )}
                 </div>
                 {q.factory_request_id && q.status === 'DRAFT' && (
-                  <p className="text-[11px] text-muted-foreground">공장이 업로드 링크로 올린 견적서를 읽어 만든 초안입니다 (공장 원가 그대로). 수정에서 마진·수수료·환율을 확인하고 저장한 뒤 위에서 검토를 요청하세요.{/읽기 확인:/.test(q.internal_notes || '') ? ' 내부 메모에 읽기 확인 항목이 있습니다.' : ''}</p>
+                  <p className="text-micro text-muted-foreground">공장이 업로드 링크로 올린 견적서를 읽어 만든 초안입니다 (공장 원가 그대로). 수정에서 마진·수수료·환율을 확인하고 저장한 뒤 위에서 검토를 요청하세요.{/읽기 확인:/.test(q.internal_notes || '') ? ' 내부 메모에 읽기 확인 항목이 있습니다.' : ''}</p>
                 )}
                 {q.raw_file_url && (
-                  <a href={q.raw_file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[10px] text-primary hover:underline">
+                  <a href={q.raw_file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-micro text-primary hover:underline">
                     <ExternalLink className="w-3 h-3" />원본 파일 보기
                   </a>
                 )}

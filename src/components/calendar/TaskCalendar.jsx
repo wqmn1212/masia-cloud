@@ -129,13 +129,13 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 sm:px-6 py-3 sm:py-4 border-b bg-card">
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <CalendarDays className="w-5 h-5 text-primary" />
-          <h2 className="text-base sm:text-lg font-bold">
+          <h2 className="text-title sm:text-title font-bold">
             {lang === 'zh' ? `${currentYear}年 ${currentMonth + 1}月` : `${currentYear}년 ${currentMonth + 1}월`}
             </h2>
-            <Badge variant="outline" className="text-[10px] sm:text-xs">{cardsWithDueDate}{t('calendar.cards')} · {itemsWithDueDate}{t('calendar.tasks')}</Badge>
+            <Badge variant="outline" className="text-micro sm:text-caption">{cardsWithDueDate}{t('calendar.cards')} · {itemsWithDueDate}{t('calendar.tasks')}</Badge>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={goToday} className="text-xs h-7 px-3">
+          <Button variant="outline" size="sm" onClick={goToday} className="text-caption h-7 px-3">
             {t('calendar.today')}
           </Button>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevMonth}>
@@ -150,7 +150,7 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
       {/* Week header */}
       <div className="grid grid-cols-7 border-b">
         {(lang === 'zh' ? ['日', '一', '二', '三', '四', '五', '六'] : WEEK_DAYS).map((day, i) => (
-          <div key={day} className={`text-center text-xs font-medium py-2 ${i === 0 ? 'text-destructive' : i === 6 ? 'text-primary' : 'text-muted-foreground'}`}>
+          <div key={day} className={`text-center text-caption font-medium py-2 ${i === 0 ? 'text-destructive' : i === 6 ? 'text-primary' : 'text-muted-foreground'}`}>
             {day}
           </div>
         ))}
@@ -177,7 +177,7 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
             >
               {/* Day number */}
               <div className="flex items-center justify-between mb-1">
-                <span className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full
+                <span className={`text-caption font-semibold w-6 h-6 flex items-center justify-center rounded-full
                   ${todayStyle ? 'bg-primary text-primary-foreground' : ''}
                   ${!dayObj.isCurrentMonth ? 'text-muted-foreground/40' : ''}
                   ${dayOfWeek === 0 && !todayStyle ? 'text-destructive' : ''}
@@ -196,7 +196,7 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
                       onClick={(e) => { e.stopPropagation(); onCardClick && onCardClick(entry); }}
                       onMouseEnter={() => setHoveredCard(entry.id)}
                       onMouseLeave={() => setHoveredCard(null)}
-                      className={`relative text-[10px] rounded px-1.5 py-0.5 truncate cursor-pointer font-medium transition-opacity text-white
+                      className={`relative text-micro rounded px-1.5 py-0.5 truncate cursor-pointer font-medium transition-opacity text-white
                         ${hoveredCard === entry.id ? 'opacity-80' : 'opacity-100'}
                       `}
                       style={{
@@ -206,14 +206,14 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
                       title={`[${entry.priority ? t(`priority.${entry.priority}`) : t('calendar.noPriority')}] ${content(entry, 'title')}`}
                     >
                       {PRIORITY_EMOJI[entry.priority] && (
-                        <span className="mr-0.5 text-[9px]">{PRIORITY_EMOJI[entry.priority]}</span>
+                        <span className="mr-0.5 text-micro">{PRIORITY_EMOJI[entry.priority]}</span>
                       )}
                       {content(entry, 'title')}
                       </div>
                   ) : (
                     <div
                       key={entry.id}
-                      className="text-[10px] rounded px-1.5 py-0.5 truncate font-medium text-white border border-white/20"
+                      className="text-micro rounded px-1.5 py-0.5 truncate font-medium text-white border border-white/20"
                       style={{
                         backgroundColor: PRIORITY_BG[entry.priority] || ITEM_STATUS_BG[entry.status] || '#9ca3af',
                         opacity: 0.85,
@@ -226,7 +226,7 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
                   )
                 ))}
                 {allDayEntries.length > 3 && (
-                  <div className="text-[9px] text-muted-foreground px-1 font-medium">
+                  <div className="text-micro text-muted-foreground px-1 font-medium">
                     +{allDayEntries.length - 3}{t('calendar.more')}
                   </div>
                 )}
@@ -238,14 +238,14 @@ export default function TaskCalendar({ cards = [], taskItems = [], onCardClick, 
 
       {/* Legend */}
       <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-3 border-t bg-muted/20 flex-wrap">
-        <span className="text-[10px] font-semibold text-muted-foreground mr-1">{t('calendar.priority')}:</span>
+        <span className="text-micro font-semibold text-muted-foreground mr-1">{t('calendar.priority')}:</span>
         {[['URGENT','#ef4444'], ['HIGH','#f97316'], ['MEDIUM',null], ['LOW','#94a3b8']].map(([k, color]) => (
           <div key={k} className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color || '#6366f1' }} />
-            <span className="text-[10px] text-muted-foreground">{t(`priority.${k}`)}</span>
+            <span className="text-micro text-muted-foreground">{t(`priority.${k}`)}</span>
           </div>
         ))}
-        <span className="text-[10px] font-semibold text-muted-foreground ml-2 mr-1">↳ {t('calendar.detailTask')}</span>
+        <span className="text-micro font-semibold text-muted-foreground ml-2 mr-1">↳ {t('calendar.detailTask')}</span>
       </div>
     </div>
   );

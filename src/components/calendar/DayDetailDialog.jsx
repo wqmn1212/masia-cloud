@@ -6,7 +6,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 
 const PRIORITY_META = {
   URGENT: { label: '긴급',  className: 'bg-destructive text-destructive-foreground' },
-  HIGH:   { label: '높음',  className: 'bg-orange-500 text-white' },
+  HIGH:   { label: '높음',  className: 'bg-warning text-white' },
   MEDIUM: { label: '보통',  className: 'bg-chart-3/20 text-chart-3' },
   LOW:    { label: '낮음',  className: 'bg-muted text-muted-foreground' },
 };
@@ -47,20 +47,20 @@ export default function DayDetailDialog({ open, onClose, dateKey, cards = [], ta
           <DialogTitle className="flex items-center gap-2">
             <CalendarDays className="w-5 h-5 text-primary" />
             {formatDateLong(dateKey, lang)}
-            <Badge variant="outline" className="ml-2 text-[10px]">{t('calendar.total')} {total}{t('common.count')}</Badge>
+            <Badge variant="outline" className="ml-2 text-micro">{t('calendar.total')} {total}{t('common.count')}</Badge>
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
           {total === 0 && (
-            <div className="text-center py-10 text-sm text-muted-foreground">
+            <div className="text-center py-10 text-body text-muted-foreground">
               {t('calendar.emptyDay')}
             </div>
           )}
 
           {dayCards.length > 0 && (
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+              <div className="flex items-center gap-2 text-caption font-semibold text-muted-foreground">
                 <LayoutGrid className="w-3.5 h-3.5" /> {t('calendar.card')} ({dayCards.length})
               </div>
               {dayCards.map(card => {
@@ -72,13 +72,13 @@ export default function DayDetailDialog({ open, onClose, dateKey, cards = [], ta
                     className="w-full text-left rounded-xl border bg-card hover:bg-muted p-3 transition-colors"
                   >
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      {p && <Badge className={`${p.className} border-0 text-[10px] h-4 px-1.5`}>{t(`priority.${card.priority}`, p.label)}</Badge>}
-                      <Badge variant="outline" className="text-[10px] h-4 px-1.5">{t(`status.${card.status}`, STATUS_LABEL[card.status] || card.status)}</Badge>
+                      {p && <Badge className={`${p.className} border-0 text-micro h-4 px-1.5`}>{t(`priority.${card.priority}`, p.label)}</Badge>}
+                      <Badge variant="outline" className="text-micro h-4 px-1.5">{t(`status.${card.status}`, STATUS_LABEL[card.status] || card.status)}</Badge>
                       {card.client_name && (
-                        <span className="text-[11px] text-muted-foreground">🏢 {card.client_name}</span>
+                        <span className="text-micro text-muted-foreground">🏢 {card.client_name}</span>
                       )}
                     </div>
-                    <p className="text-sm font-medium leading-snug">{content(card, 'title')}</p>
+                    <p className="text-body font-medium leading-snug">{content(card, 'title')}</p>
                   </button>
                 );
               })}
@@ -87,7 +87,7 @@ export default function DayDetailDialog({ open, onClose, dateKey, cards = [], ta
 
           {dayItems.length > 0 && (
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+              <div className="flex items-center gap-2 text-caption font-semibold text-muted-foreground">
                 <ListTodo className="w-3.5 h-3.5" /> {t('calendar.detailTask')} ({dayItems.length})
               </div>
               {dayItems.map(item => {
@@ -101,12 +101,12 @@ export default function DayDetailDialog({ open, onClose, dateKey, cards = [], ta
                     className="w-full text-left rounded-xl border bg-muted/20 hover:bg-muted p-3 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      {p && <Badge className={`${p.className} border-0 text-[10px] h-4 px-1.5`}>{t(`priority.${item.priority}`, p.label)}</Badge>}
+                      {p && <Badge className={`${p.className} border-0 text-micro h-4 px-1.5`}>{t(`priority.${item.priority}`, p.label)}</Badge>}
                       {parent && (
-                        <span className="text-[11px] text-muted-foreground">↳ {content(parent, 'title')}</span>
+                        <span className="text-micro text-muted-foreground">↳ {content(parent, 'title')}</span>
                       )}
                     </div>
-                    <p className="text-sm font-medium leading-snug">{content(item, 'title')}</p>
+                    <p className="text-body font-medium leading-snug">{content(item, 'title')}</p>
                   </button>
                 );
               })}

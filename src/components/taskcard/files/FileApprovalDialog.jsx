@@ -11,10 +11,10 @@ export default function FileApprovalDialog({ file, files, open, onClose, onConfi
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle className="text-base">공장 전달 승인본으로 지정</DialogTitle></DialogHeader>
-        <p className="text-sm"><b>{file.file_name}</b></p>
-        <p className="text-xs text-muted-foreground">공장은 승인본으로만 만들어야 합니다. 이 파일이 예전 승인본을 고친 것이라면 그 파일을 고르세요. 예전 파일은 &lsquo;사용 안 함 · 已作废&rsquo;으로 바뀝니다.</p>
-        <fieldset className="space-y-1.5 text-sm">
+        <DialogHeader><DialogTitle className="text-title">공장 전달 승인본으로 지정</DialogTitle></DialogHeader>
+        <p className="text-body"><b>{file.file_name}</b></p>
+        <p className="text-caption text-muted-foreground">공장은 승인본으로만 만들어야 합니다. 이 파일이 예전 승인본을 고친 것이라면 그 파일을 고르세요. 예전 파일은 &lsquo;사용 안 함 · 已作废&rsquo;으로 바뀝니다.</p>
+        <fieldset className="space-y-1.5 text-body">
           <label className="flex items-center gap-2"><input type="radio" name="replace" checked={replace === ''} onChange={() => setReplace('')} />새 문서 (1판)</label>
           {candidates.map((c) => (
             <label key={c.id} className="flex items-center gap-2"><input type="radio" name="replace" checked={replace === c.id} onChange={() => setReplace(c.id)} /><span className="min-w-0 truncate">대체: {c.file_name} <span className="text-muted-foreground">v{c.revision || 1}</span></span></label>

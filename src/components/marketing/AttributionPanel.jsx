@@ -17,7 +17,7 @@ export default function AttributionPanel() {
       contracts: await base44.entities.Contract.list('-created_date', 2000),
     }),
   });
-  if (isLoading) return <p className="text-sm text-muted-foreground">불러오는 중...</p>;
+  if (isLoading) return <p className="text-body text-muted-foreground">불러오는 중...</p>;
 
   const since = Number(days) ? Date.now() - Number(days) * 86400000 : 0;
   const inRange = data.leads.filter((l) => new Date(l.created_date).getTime() >= since);
@@ -35,15 +35,15 @@ export default function AttributionPanel() {
     <div className="rounded-2xl border bg-card p-6 space-y-5">
       <div className="flex flex-wrap gap-2 items-center">
         {Object.entries(PERIODS).map(([k, v]) => <Button key={k} size="sm" variant={days === k ? 'default' : 'outline'} onClick={() => setDays(k)}>{v}</Button>)}
-        <select className="h-8 rounded-md border bg-transparent px-2 text-sm ml-auto" value={channel} onChange={(e) => setChannel(e.target.value)}>
+        <select className="h-8 rounded-md border bg-transparent px-2 text-body ml-auto" value={channel} onChange={(e) => setChannel(e.target.value)}>
           <option value="all">전체 채널</option>
           {channels.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         <Button size="sm" variant="ghost" asChild><Link to="/leads">리드 목록 →</Link></Button>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="text-xs text-muted-foreground text-left"><tr>
+        <table className="w-full text-body">
+          <thead className="text-caption text-muted-foreground text-left"><tr>
             <th className="py-2">캠페인</th><th className="text-right">문의</th><th className="text-right">견적</th><th className="text-right">전환</th><th className="text-right">계약</th>
           </tr></thead>
           <tbody className="divide-y tabular-nums">

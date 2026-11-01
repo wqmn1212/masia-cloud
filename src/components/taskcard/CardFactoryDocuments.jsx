@@ -25,13 +25,13 @@ export default function CardFactoryDocuments({ card }) {
     return () => { a(); b(); };
   }, [qc, card.id]);
   return <section className="rounded-lg border bg-card p-3 space-y-2">
-    <h3 className="text-sm font-semibold">연결된 공장 소개 자료</h3>
-    <p className="text-xs text-muted-foreground">후보·확정 공장의 원본을 참조합니다. 수정·공개 설정은 공장 페이지에서 관리합니다.</p>
-    {!ids.length ? <p className="text-xs text-muted-foreground">오버뷰에서 후보 또는 확정 공장을 선택하세요.</p> : isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : error ? <p role="alert" className="text-xs text-destructive">자료를 불러오지 못했습니다.</p> : !documents.length ? <p className="text-xs text-muted-foreground">등록된 공장 소개 자료가 없습니다.</p> : documents.map(doc => <div key={doc.id} className="flex items-center gap-2 border-t pt-2">
-      <div className="min-w-0 flex-1"><p className="text-sm truncate">{doc.file_name}</p><Link className="text-xs text-primary underline" to={`/factories?factoryId=${doc.company_id}#factory-${doc.company_id}`}>{doc.factory_name} · 원본 관리</Link></div>
+    <h3 className="text-body font-semibold">연결된 공장 소개 자료</h3>
+    <p className="text-caption text-muted-foreground">후보·확정 공장의 원본을 참조합니다. 수정·공개 설정은 공장 페이지에서 관리합니다.</p>
+    {!ids.length ? <p className="text-caption text-muted-foreground">오버뷰에서 후보 또는 확정 공장을 선택하세요.</p> : isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : error ? <p role="alert" className="text-caption text-destructive">자료를 불러오지 못했습니다.</p> : !documents.length ? <p className="text-caption text-muted-foreground">등록된 공장 소개 자료가 없습니다.</p> : documents.map(doc => <div key={doc.id} className="flex items-center gap-2 border-t pt-2">
+      <div className="min-w-0 flex-1"><p className="text-body truncate">{doc.file_name}</p><Link className="text-caption text-primary underline" to={`/factories?factoryId=${doc.company_id}#factory-${doc.company_id}`}>{doc.factory_name} · 원본 관리</Link></div>
       <span title={doc.client_visible ? '고객 공개' : '고객 비공개'}>{doc.client_visible ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}</span>
       <DocumentOpenButton kind="factory" document={doc} />
     </div>)}
-    {!!ids.length && <Link to={`/factories?factoryId=${ids[0]}#factory-${ids[0]}`} className="inline-block text-xs text-primary underline">공장 소개 자료 관리</Link>}
+    {!!ids.length && <Link to={`/factories?factoryId=${ids[0]}#factory-${ids[0]}`} className="inline-block text-caption text-primary underline">공장 소개 자료 관리</Link>}
   </section>;
 }

@@ -81,7 +81,7 @@ export default function ScheduleCalendar({ cards = [], onOpenCard }) {
       </div>
       <CalendarToolbar prefs={prefs} set={set} owners={owners} clients={clients} />
       <div className="hidden sm:block border-l border-t rounded-md overflow-hidden">
-        <div className="grid grid-cols-7 text-[11px] text-muted-foreground bg-muted">
+        <div className="grid grid-cols-7 text-micro text-muted-foreground bg-muted">
           {['일', '월', '화', '수', '목', '금', '토'].map((d) => <div key={d} className={`px-2 py-1 border-b border-r ${d === '일' ? 'text-destructive' : ''}`}>{d}</div>)}
         </div>
         <div className="grid grid-cols-7">
@@ -89,7 +89,7 @@ export default function ScheduleCalendar({ cards = [], onOpenCard }) {
         </div>
       </div>
       <div className="sm:hidden"><CalendarAgenda grid={grid} byDate={byDate} holidays={holidays} closuresOn={closuresOn} today={today} onOpen={onOpenCard} /></div>
-      <div className="flex flex-wrap gap-3 mt-3 text-[11px] text-muted-foreground">
+      <div className="flex flex-wrap gap-3 mt-3 text-micro text-muted-foreground">
         {LEGEND.map(([c, l]) => <span key={l} className="flex items-center gap-1"><i className={`w-3 h-2 rounded ${c}`} />{l}</span>)}
         <span className="flex items-center gap-1"><i className="w-3 h-2 rounded border border-dashed border-muted-foreground/50" />원래 계획일</span>
         <span className="flex items-center gap-1"><i className="w-3 h-2 rounded bg-primary/35 ring-2 ring-chart-3" />공휴일·공장 휴무 충돌</span>

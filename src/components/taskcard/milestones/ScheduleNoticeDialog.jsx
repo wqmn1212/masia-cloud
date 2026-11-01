@@ -41,24 +41,24 @@ export default function ScheduleNoticeDialog({ request, card, onDone }) {
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label className="text-xs">{tr('변경 사유')}</Label>
+            <Label className="text-caption">{tr('변경 사유')}</Label>
             <div className="mt-1 flex flex-wrap gap-1.5" role="group">
               {SCHEDULE_REASONS.map((r) => (
                 <button key={r} type="button" aria-pressed={preset === r} onClick={() => setPreset(r)}
-                  className={`rounded-full border px-2.5 py-1 text-xs ${preset === r ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-muted'}`}>
+                  className={`rounded-full border px-2.5 py-1 text-caption ${preset === r ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-muted'}`}>
                   {tr(r)}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <Label className="text-xs">{tr('고객에게 전할 설명')}</Label>
+            <Label className="text-caption">{tr('고객에게 전할 설명')}</Label>
             <Textarea rows={3} maxLength={800} value={detail} onChange={(e) => setDetail(e.target.value)}
               placeholder={tr('예: 사출 금형 수정으로 양산 시작이 5일 늦어졌습니다. 나머지 일정은 그대로입니다.')} />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">{tr(toClient ? '고객에게 이렇게 안내됩니다' : '변경 이력에 이렇게 남습니다')}</p>
-            <pre className="mt-1 whitespace-pre-wrap rounded-lg bg-muted/60 p-3 text-xs leading-relaxed">{preview}</pre>
+            <p className="text-caption text-muted-foreground">{tr(toClient ? '고객에게 이렇게 안내됩니다' : '변경 이력에 이렇게 남습니다')}</p>
+            <pre className="mt-1 whitespace-pre-wrap rounded-lg bg-muted/60 p-3 text-caption leading-relaxed">{preview}</pre>
           </div>
         </div>
         <DialogFooter>

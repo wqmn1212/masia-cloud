@@ -72,7 +72,7 @@ export default function ClauseLibraryPanel({ onInsert }) {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Library className="w-4 h-4 text-primary" />
-            <p className="font-semibold text-sm">공통 조항 라이브러리</p>
+            <p className="font-semibold text-body">공통 조항 라이브러리</p>
           </div>
           <div className="flex gap-1">
             {clauses.length === 0 && (
@@ -90,7 +90,7 @@ export default function ClauseLibraryPanel({ onInsert }) {
 
         <div className="flex gap-1.5 flex-wrap">
           {['ALL', ...Object.keys(CLAUSE_CATEGORIES)].map(cat => (
-            <Button key={cat} size="sm" variant={filter === cat ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setFilter(cat)}>
+            <Button key={cat} size="sm" variant={filter === cat ? 'default' : 'outline'} className="h-7 text-caption" onClick={() => setFilter(cat)}>
               {cat === 'ALL' ? '전체' : CLAUSE_CATEGORIES[cat]}
             </Button>
           ))}
@@ -102,7 +102,7 @@ export default function ClauseLibraryPanel({ onInsert }) {
 
         <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
           {filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">등록된 조항이 없습니다.</p>
+            <p className="text-body text-muted-foreground text-center py-8">등록된 조항이 없습니다.</p>
           ) : filtered.map(c => (
             <ClauseRow
               key={c.id}

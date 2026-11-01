@@ -334,13 +334,13 @@ export default function FilesTab({ card, tradeOnly = false }) {
       {isDragging && (
         <div className="absolute inset-0 z-20 rounded-lg border-2 border-dashed border-primary bg-primary/10 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none">
           <Upload className="w-8 h-8 text-primary mb-2" />
-          <p className="text-sm font-medium text-primary">여기에 드롭하여 업로드</p>
-          <p className="text-[11px] text-muted-foreground mt-1">파일과 폴더 모두 지원</p>
+          <p className="text-body font-medium text-primary">여기에 드롭하여 업로드</p>
+          <p className="text-micro text-muted-foreground mt-1">파일과 폴더 모두 지원</p>
         </div>
       )}
-      <p className="text-xs text-muted-foreground">고객 노출 스위치를 켠 파일만 고객에게 표시됩니다. 기존 파일과 새 파일은 기본 비공개이며, 카드 자체도 고객 공개 상태여야 합니다.</p>
-      <p className="text-xs text-muted-foreground">이전에 공개 URL로 업로드한 파일은 포털에서 숨겨도 이미 전달된 원본 URL은 회수되지 않습니다. 새 업로드는 비공개로 저장됩니다.</p>
-      {uploadError && <p role="alert" className="text-xs text-destructive">작업 실패: {uploadError}</p>}
+      <p className="text-caption text-muted-foreground">고객 노출 스위치를 켠 파일만 고객에게 표시됩니다. 기존 파일과 새 파일은 기본 비공개이며, 카드 자체도 고객 공개 상태여야 합니다.</p>
+      <p className="text-caption text-muted-foreground">이전에 공개 URL로 업로드한 파일은 포털에서 숨겨도 이미 전달된 원본 URL은 회수되지 않습니다. 새 업로드는 비공개로 저장됩니다.</p>
+      {uploadError && <p role="alert" className="text-caption text-destructive">작업 실패: {uploadError}</p>}
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <Breadcrumbs path={path} onNavigate={navigateTo} />
@@ -349,7 +349,7 @@ export default function FilesTab({ card, tradeOnly = false }) {
             size="sm"
             variant="outline"
             onClick={() => setShowNewFolder(true)}
-            className="h-8 text-xs gap-1"
+            className="h-8 text-caption gap-1"
           >
             <FolderPlus className="w-3.5 h-3.5" /> 새 폴더
           </Button>
@@ -358,7 +358,7 @@ export default function FilesTab({ card, tradeOnly = false }) {
             variant="outline"
             onClick={() => folderInputRef.current?.click()}
             disabled={folderUploading || uploading}
-            className="h-8 text-xs gap-1"
+            className="h-8 text-caption gap-1"
           >
             {folderUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FolderUp className="w-3.5 h-3.5" />}
             {folderUploading
@@ -369,7 +369,7 @@ export default function FilesTab({ card, tradeOnly = false }) {
             size="sm"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading || folderUploading}
-            className="h-8 text-xs gap-1"
+            className="h-8 text-caption gap-1"
           >
             {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
             파일 업로드
@@ -408,8 +408,8 @@ export default function FilesTab({ card, tradeOnly = false }) {
         ) : isEmpty ? (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <FolderOpen className="w-10 h-10 mb-2 opacity-40" />
-            <p className="text-xs">이 폴더는 비어있습니다</p>
-            <p className="text-[10px] mt-1">새 폴더를 만들거나 파일을 업로드하세요</p>
+            <p className="text-caption">이 폴더는 비어있습니다</p>
+            <p className="text-micro mt-1">새 폴더를 만들거나 파일을 업로드하세요</p>
           </div>
         ) : (
           <div className="divide-y">
@@ -448,7 +448,7 @@ export default function FilesTab({ card, tradeOnly = false }) {
 
       {/* Footer summary */}
       {!isLoading && !isEmpty && (
-        <div className="text-[10px] text-muted-foreground text-right px-1">
+        <div className="text-micro text-muted-foreground text-right px-1">
           폴더 {currentFolders.length}개 · 파일 {currentFiles.length}개
         </div>
       )}

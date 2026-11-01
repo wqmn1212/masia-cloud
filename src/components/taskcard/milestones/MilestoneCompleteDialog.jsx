@@ -25,22 +25,22 @@ export default function MilestoneCompleteDialog({ milestone, cardId, onClose, on
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-sm">
-        <DialogHeader><DialogTitle className="text-base">{label(milestone)} {tr('완료')}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="text-title">{label(milestone)} {tr('완료')}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div><Label className="text-xs">{tr('실제 완료일')}</Label><Input type="date" value={actual} onChange={(e) => setActual(e.target.value)} /></div>
+          <div><Label className="text-caption">{tr('실제 완료일')}</Label><Input type="date" value={actual} onChange={(e) => setActual(e.target.value)} /></div>
           {needsQc && (
             <div>
-              <Label className="text-xs">{tr('QC 보고서 연결 (필수)')}</Label>
+              <Label className="text-caption">{tr('QC 보고서 연결 (필수)')}</Label>
               {reports.length ? (
                 <Select value={qcId} onValueChange={setQcId}>
                   <SelectTrigger><SelectValue placeholder={tr('보고서 선택')} /></SelectTrigger>
                   <SelectContent>{reports.map((r) => <SelectItem key={r.id} value={r.id} disabled={r.qc_result === 'FAIL'}>{r.created_date?.slice(0, 10)} · {tr(RESULT[r.qc_result] || r.qc_result)}</SelectItem>)}</SelectContent>
                 </Select>
-              ) : <p className="text-xs text-muted-foreground">{tr('이 카드에 QC 보고서가 없습니다. 업무 탭에서 먼저 작성해 주세요.')}</p>}
+              ) : <p className="text-caption text-muted-foreground">{tr('이 카드에 QC 보고서가 없습니다. 업무 탭에서 먼저 작성해 주세요.')}</p>}
             </div>
           )}
           {late && (
-            <label className="flex items-center gap-2 text-xs">
+            <label className="flex items-center gap-2 text-caption">
               <input type="checkbox" checked={shift} onChange={(e) => setShift(e.target.checked)} />{tr('뒤 단계 계획일도 늦어진 만큼 밀기')}
             </label>
           )}

@@ -33,10 +33,10 @@ export default function HolidayManager({ canEdit }) {
         {canEdit && !editing && <Button size="sm" onClick={() => setEditing('new')}><Plus />휴일 추가</Button>}
       </div>
       {editing === 'new' && <HolidayForm onSubmit={save} onCancel={() => setEditing(null)} busy={busy} />}
-      {isLoading ? <p className="text-sm text-muted-foreground">불러오는 중...</p> : !rows.length ? <p className="text-sm text-muted-foreground py-6 text-center">등록된 휴일이 없습니다.</p> : (
+      {isLoading ? <p className="text-body text-muted-foreground">불러오는 중...</p> : !rows.length ? <p className="text-body text-muted-foreground py-6 text-center">등록된 휴일이 없습니다.</p> : (
         <div className="divide-y">
           {rows.map((h) => editing?.id === h.id ? <HolidayForm key={h.id} initial={h} onSubmit={save} onCancel={() => setEditing(null)} busy={busy} /> : (
-            <div key={h.id} className="py-3 flex flex-wrap items-center gap-3 text-sm">
+            <div key={h.id} className="py-3 flex flex-wrap items-center gap-3 text-body">
               <span className="font-medium w-28">{h.year} {h.name}</span>
               <span>{h.start_date} ~ {h.end_date}</span>
               {Number(h.factory_extra_days) > 0 && <span className="text-muted-foreground">공장 휴무 {holidayRange(h).start} ~ {holidayRange(h).end}</span>}

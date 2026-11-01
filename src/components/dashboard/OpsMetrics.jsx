@@ -4,9 +4,9 @@ import { Activity, AlarmClock, UserX, CheckCircle2, TrendingDown } from 'lucide-
 
 const Metric = ({ icon: Icon, label, value, sub, warn }) => (
   <div className="border rounded-lg p-3">
-    <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><Icon className="w-3.5 h-3.5" />{label}</div>
+    <div className="flex items-center gap-1.5 text-caption text-muted-foreground"><Icon className="w-3.5 h-3.5" />{label}</div>
     <p className={`text-2xl font-bold mt-1 ${warn ? 'text-destructive' : ''}`}>{value}</p>
-    {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
+    {sub && <p className="text-micro text-muted-foreground">{sub}</p>}
   </div>
 );
 
@@ -37,14 +37,14 @@ export default function OpsMetrics({ cards, onOpenCard }) {
       </div>
       {delayed.length > 0 && (
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-muted-foreground">지연 상위 카드</p>
+          <p className="text-caption font-semibold text-muted-foreground">지연 상위 카드</p>
           {delayed.slice(0, 5).map((c) => (
-            <button key={c.id} onClick={() => onOpenCard(c)} className="w-full flex items-center gap-2 text-sm px-2 py-1.5 rounded hover:bg-muted text-left">
+            <button key={c.id} onClick={() => onOpenCard(c)} className="w-full flex items-center gap-2 text-body px-2 py-1.5 rounded hover:bg-muted text-left">
               <span className="flex-1 truncate">{c.title}</span>
-              <span className="text-xs text-muted-foreground truncate max-w-[30%]">{c.current_milestone_label || ''} · {c.owner_name || '미지정'}</span>
+              <span className="text-caption text-muted-foreground truncate max-w-[30%]">{c.current_milestone_label || ''} · {c.owner_name || '미지정'}</span>
               {c.delay_days > 0
-                ? <span className="text-xs font-semibold text-destructive">+{c.delay_days}일</span>
-                : <span className="text-xs font-semibold text-chart-3">지금 지연 중 · 지난 단계 {c.overdue_steps}개</span>}
+                ? <span className="text-caption font-semibold text-destructive">+{c.delay_days}일</span>
+                : <span className="text-caption font-semibold text-chart-3">지금 지연 중 · 지난 단계 {c.overdue_steps}개</span>}
             </button>
           ))}
         </div>

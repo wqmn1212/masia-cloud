@@ -17,7 +17,7 @@ function Photo({ url, ok }) {
   return (
     <a href={url} target="_blank" rel="noreferrer" className="block w-20 shrink-0 text-center">
       <img src={url} alt={ok ? '허용 예시' : '불허 예시'} loading="lazy" className={`aspect-square w-20 rounded-md border-2 object-cover ${ok ? 'border-primary/50' : 'border-destructive/50'}`} />
-      <span className={`text-[10px] ${ok ? 'text-primary' : 'text-destructive'}`}>{ok ? '이 정도는 합격' : '이러면 불량'}</span>
+      <span className={`text-micro ${ok ? 'text-primary' : 'text-destructive'}`}>{ok ? '이 정도는 합격' : '이러면 불량'}</span>
     </a>
   );
 }
@@ -45,46 +45,46 @@ export default function ClientSpecSection({ cardId, spec, canDecide: isClient })
     <article className="space-y-3 rounded-xl border border-primary/30 p-4">
       <div className="flex flex-wrap items-center gap-2">
         <FileCheck2 className="h-4 w-4 text-primary" />
-        <p className="text-sm font-semibold">품질 기준서 <span className="font-normal text-muted-foreground">v{spec.version}</span></p>
+        <p className="text-body font-semibold">품질 기준서 <span className="font-normal text-muted-foreground">v{spec.version}</span></p>
         <Badge className={`${d.cls} border-0`}>{d.label}</Badge>
-        {spec.factory_confirmed && <Badge variant="outline" className="text-[10px]">공장 확인 완료</Badge>}
-        <span className="ml-auto text-[11px] text-muted-foreground">{when(spec.sent_at)}</span>
+        {spec.factory_confirmed && <Badge variant="outline" className="text-micro">공장 확인 완료</Badge>}
+        <span className="ml-auto text-micro text-muted-foreground">{when(spec.sent_at)}</span>
       </div>
-      <p className="text-xs text-muted-foreground">양산 전에 합격·불량 기준을 정해 두면, 출고 전 검수와 입고 후 확인을 같은 기준으로 할 수 있습니다.</p>
-      <p className="rounded-md bg-muted/50 px-3 py-2 text-xs">{aqlLine(spec)}{spec.sampling_note ? <><br />{spec.sampling_note}</> : null}</p>
+      <p className="text-caption text-muted-foreground">양산 전에 합격·불량 기준을 정해 두면, 출고 전 검수와 입고 후 확인을 같은 기준으로 할 수 있습니다.</p>
+      <p className="rounded-md bg-muted/50 px-3 py-2 text-caption">{aqlLine(spec)}{spec.sampling_note ? <><br />{spec.sampling_note}</> : null}</p>
       <ul className="divide-y rounded-lg border">
         {spec.items.map((i) => (
           <li key={i.key || i.label} className="flex gap-3 p-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <Badge className={`border-0 ${SEVERITY[i.severity]?.cls}`} title={SEVERITY[i.severity]?.hint}>{SEVERITY[i.severity]?.label}</Badge>
-                <p className="text-sm font-medium">{i.label}</p>
+                <p className="text-body font-medium">{i.label}</p>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">{i.standard}</p>
+              <p className="mt-1 text-body text-muted-foreground">{i.standard}</p>
             </div>
             <Photo url={i.ok_photo_url} ok />
             <Photo url={i.ng_photo_url} ok={false} />
           </li>
         ))}
       </ul>
-      {spec.note && <p className="whitespace-pre-wrap text-xs">{spec.note}</p>}
-      {spec.decision === 'APPROVED' && <p className="text-xs text-primary">{spec.decided_by_name} · {when(spec.decided_at)} 승인</p>}
+      {spec.note && <p className="whitespace-pre-wrap text-caption">{spec.note}</p>}
+      {spec.decision === 'APPROVED' && <p className="text-caption text-primary">{spec.decided_by_name} · {when(spec.decided_at)} 승인</p>}
       {spec.decision === 'REVISION_REQUESTED' && (
-        <p className="flex gap-1.5 text-xs"><MessageSquareWarning className="h-4 w-4 shrink-0 text-destructive" /><span><b>수정 요청함</b> · {spec.comment} <span className="text-muted-foreground">({when(spec.decided_at)}) 담당자가 고쳐서 다시 보내 드립니다.</span></span></p>
+        <p className="flex gap-1.5 text-caption"><MessageSquareWarning className="h-4 w-4 shrink-0 text-destructive" /><span><b>수정 요청함</b> · {spec.comment} <span className="text-muted-foreground">({when(spec.decided_at)}) 담당자가 고쳐서 다시 보내 드립니다.</span></span></p>
       )}
       {spec.decision === 'PENDING' && gate.pending && <ApprovalPendingNote approval={gate.pending} cardId={cardId} />}
       {spec.decision === 'PENDING' && !gate.pending && (
         <div className="space-y-2 rounded-lg border border-dashed p-3">
-          <p className="text-xs font-semibold">이 기준으로 검수해도 될까요?</p>
+          <p className="text-caption font-semibold">이 기준으로 검수해도 될까요?</p>
           <Textarea rows={2} maxLength={1000} value={note} disabled={!canDecide || decide.isPending} onChange={(e) => setNote(e.target.value)}
-            placeholder="고칠 점이 있으면 적어 주세요 (예: 단상자 모서리 찍힘은 1mm까지 허용)" className="text-sm" />
+            placeholder="고칠 점이 있으면 적어 주세요 (예: 단상자 모서리 찍힘은 1mm까지 허용)" className="text-body" />
           <div className="flex gap-2">
             <Button size="sm" className="flex-1 gap-1" disabled={!canDecide || decide.isPending} onClick={approve}>{decide.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}기준서 승인</Button>
             <Button size="sm" variant="outline" className="flex-1" disabled={!canDecide || decide.isPending || !note.trim()} onClick={() => decide.mutate('REVISION_REQUESTED')}>수정 요청</Button>
           </div>
-          {gate.financeOnly ? <p className="text-[11px] text-muted-foreground">{financeOnlyText}</p>
-            : !canDecide ? <p className="text-[11px] text-muted-foreground">승인·수정 요청은 고객사 계정에서만 선택할 수 있습니다.</p>
-            : gate.viaApproval && <p className="text-[11px] text-muted-foreground">기준서 승인: {viaApprovalText} 수정 요청은 바로 전달됩니다.</p>}
+          {gate.financeOnly ? <p className="text-micro text-muted-foreground">{financeOnlyText}</p>
+            : !canDecide ? <p className="text-micro text-muted-foreground">승인·수정 요청은 고객사 계정에서만 선택할 수 있습니다.</p>
+            : gate.viaApproval && <p className="text-micro text-muted-foreground">기준서 승인: {viaApprovalText} 수정 요청은 바로 전달됩니다.</p>}
         </div>
       )}
     </article>

@@ -12,7 +12,7 @@ import FileDropArea from '@/components/files/FileDropArea';
 import { INQUIRY_CATEGORIES as CATEGORIES, SPEC_QUESTIONS, CERT_OPTIONS, SAMPLE_OPTIONS } from '@/lib/inquiryForm';
 
 const kstToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
-const chip = (active) => `px-2.5 py-1 rounded-full text-xs border transition-colors ${active ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted border-border'}`;
+const chip = (active) => `px-2.5 py-1 rounded-full text-caption border transition-colors ${active ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted border-border'}`;
 const MAX_FILES = 5;
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
@@ -146,12 +146,12 @@ export default function NewInquiryDialog({ open, onClose, initialTitle = '', ini
 
           {questions.length > 0 && (
             <div className="space-y-2 rounded-lg border border-dashed p-3">
-              <p className="text-xs font-medium">견적에 꼭 필요한 사양 <span className="font-normal text-muted-foreground">· 모르시면 '모름'이라고 적어 주세요</span></p>
+              <p className="text-caption font-medium">견적에 꼭 필요한 사양 <span className="font-normal text-muted-foreground">· 모르시면 '모름'이라고 적어 주세요</span></p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {questions.map((q) => (
                   <div key={q} className="space-y-1">
-                    <Label className="text-xs">{q} *</Label>
-                    <Input value={answers[q] || ''} maxLength={300} onChange={(e) => setAnswers((a) => ({ ...a, [q]: e.target.value }))} className="h-8 text-sm" />
+                    <Label className="text-caption">{q} *</Label>
+                    <Input value={answers[q] || ''} maxLength={300} onChange={(e) => setAnswers((a) => ({ ...a, [q]: e.target.value }))} className="h-8 text-body" />
                   </div>
                 ))}
               </div>
@@ -210,7 +210,7 @@ export default function NewInquiryDialog({ open, onClose, initialTitle = '', ini
             <Label>첨부 파일 (최대 {MAX_FILES}건 · 10MB)</Label>
             <FileDropArea onFiles={addFiles} disabled={submit.isPending}>
             <label className="flex items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer hover:border-primary/50 transition-colors">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-body text-muted-foreground">
                 <Upload className="w-4 h-4" />
                 <span>파일 선택 / 드롭</span>
               </div>
@@ -225,7 +225,7 @@ export default function NewInquiryDialog({ open, onClose, initialTitle = '', ini
             {files.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {files.map((f, i) => (
-                  <span key={i} className="inline-flex items-center gap-1 bg-muted rounded-full pl-2.5 pr-1 py-1 text-xs">
+                  <span key={i} className="inline-flex items-center gap-1 bg-muted rounded-full pl-2.5 pr-1 py-1 text-caption">
                     {f.name}
                     <button type="button" onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}>
                       <X className="w-3 h-3" />
@@ -238,7 +238,7 @@ export default function NewInquiryDialog({ open, onClose, initialTitle = '', ini
         </div>
 
         <DialogFooter className="items-center gap-2">
-          {missing.length > 0 && <p className="mr-auto text-xs text-muted-foreground">사양 {missing.length}개에 답해 주세요</p>}
+          {missing.length > 0 && <p className="mr-auto text-caption text-muted-foreground">사양 {missing.length}개에 답해 주세요</p>}
           <Button variant="outline" onClick={() => { reset(); onClose(); }}>취소</Button>
           <Button disabled={!canSubmit} onClick={() => submit.mutate()}>
             {submit.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}

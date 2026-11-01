@@ -50,7 +50,7 @@ export default function BomPartViewer({ open, onOpenChange, part, mesh }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[560px] w-[95vw]">
         <DialogHeader>
-          <DialogTitle className="text-base">{part?.display_name || part?.part_name}</DialogTitle>
+          <DialogTitle className="text-title">{part?.display_name || part?.part_name}</DialogTitle>
         </DialogHeader>
 
         <div
@@ -67,10 +67,10 @@ export default function BomPartViewer({ open, onOpenChange, part, mesh }) {
         >
           {frame
             ? <img src={frame} alt="" draggable={false} className="max-h-full max-w-full object-contain" />
-            : <span className="text-xs text-muted-foreground">3D 형상 준비 중...</span>}
+            : <span className="text-caption text-muted-foreground">3D 형상 준비 중...</span>}
         </div>
 
-        <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-caption">
           <div className="flex justify-between"><span className="text-muted-foreground">부피</span><span className="tabular-nums">{num(part?.volume_cm3, 3)} cm³</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">중량</span><span className="tabular-nums">{num(part?.weight_g)} g</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">외곽 치수</span><span className="tabular-nums">{num(part?.bbox_x_mm, 1)} × {num(part?.bbox_y_mm, 1)} × {num(part?.bbox_z_mm, 1)} mm</span></div>
@@ -78,7 +78,7 @@ export default function BomPartViewer({ open, onOpenChange, part, mesh }) {
           <div className="flex justify-between"><span className="text-muted-foreground">재질</span><span>{part?.material || '-'}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">삼각형</span><span className="tabular-nums">{part?.triangle_count ?? '-'}</span></div>
         </div>
-        <p className="text-[11px] text-muted-foreground">드래그로 회전 · 휠로 확대/축소</p>
+        <p className="text-micro text-muted-foreground">드래그로 회전 · 휠로 확대/축소</p>
       </DialogContent>
     </Dialog>
   );

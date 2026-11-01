@@ -59,8 +59,8 @@ export default function PortfolioAdmin() {
     <div className="p-4 lg:p-8 space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div>
-          <h1 className="text-2xl font-bold">포트폴리오 관리</h1>
-          <p className="text-sm text-muted-foreground">랜딩 페이지에 노출되는 취급 품목과 상세 자료를 관리합니다.</p>
+          <h1 className="text-2xl font-bold tracking-tight">포트폴리오 관리</h1>
+          <p className="text-body text-muted-foreground">랜딩 페이지에 노출되는 취급 품목과 상세 자료를 관리합니다.</p>
         </div>
         <Button onClick={openNew}><Plus /> 항목 등록</Button>
       </div>
@@ -70,7 +70,7 @@ export default function PortfolioAdmin() {
       {isLoading ? (
         <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> 불러오는 중</div>
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-10 text-center">등록된 포트폴리오 항목이 없습니다.</p>
+        <p className="text-body text-muted-foreground py-10 text-center">등록된 포트폴리오 항목이 없습니다.</p>
       ) : (
         <div className="space-y-2">
           {filtered.map((item) => (

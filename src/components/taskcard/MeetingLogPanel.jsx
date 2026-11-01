@@ -50,7 +50,7 @@ export default function MeetingLogPanel({ card, user, onRecordingBusy = () => {}
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold flex items-center gap-1.5">
+        <h4 className="text-body font-semibold flex items-center gap-1.5">
           <CalendarDays className="h-4 w-4" /> 미팅 일정 ({logs.length})
         </h4>
         {!adding && (
@@ -69,9 +69,9 @@ export default function MeetingLogPanel({ card, user, onRecordingBusy = () => {}
       )}
 
       {isLoading ? (
-        <p className="text-xs text-muted-foreground">불러오는 중...</p>
+        <p className="text-caption text-muted-foreground">불러오는 중...</p>
       ) : logs.length === 0 ? (
-        <p className="text-xs text-muted-foreground py-4 text-center">등록된 미팅이 없습니다.</p>
+        <p className="text-caption text-muted-foreground py-4 text-center">등록된 미팅이 없습니다.</p>
       ) : (
         <div className="space-y-2">
           {logs.map(l => (

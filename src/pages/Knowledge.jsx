@@ -37,7 +37,7 @@ export default function Knowledge() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('knowledge.title')}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{t('knowledge.subtitle')}</p>
+          <p className="text-body text-muted-foreground mt-1">{t('knowledge.subtitle')}</p>
         </div>
         <Button onClick={() => setOpen(true)} className="shrink-0"><Plus className="w-4 h-4 mr-2" />{t('knowledge.add')}</Button>
       </div>
@@ -54,7 +54,7 @@ export default function Knowledge() {
       {filtered.length === 0 ? (
         <Card className="p-12 text-center">
           <Shield className="w-12 h-12 mx-auto text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-semibold">{t('knowledge.empty')}</p>
+          <p className="mt-4 text-title font-semibold">{t('knowledge.empty')}</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -69,15 +69,15 @@ export default function Knowledge() {
                     </div>
                     <div className="flex-1 min-w-0 space-y-1.5">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <Badge variant="secondary" className="text-[10px]">{typeLabel(caseType(log))}</Badge>
-                        {log.target_category && <Badge variant="outline" className="text-[10px]">{t(`cat.${log.target_category}`)}</Badge>}
-                        <Badge className={`${sev.className} border-0 text-[10px]`}>{t(`severity.${log.severity || 'MEDIUM'}`)}</Badge>
-                        {(log.tags || []).map((tag) => <span key={tag} className="rounded-md border px-1.5 text-[10px] text-muted-foreground">#{tag}</span>)}
+                        <Badge variant="secondary" className="text-micro">{typeLabel(caseType(log))}</Badge>
+                        {log.target_category && <Badge variant="outline" className="text-micro">{t(`cat.${log.target_category}`)}</Badge>}
+                        <Badge className={`${sev.className} border-0 text-micro`}>{t(`severity.${log.severity || 'MEDIUM'}`)}</Badge>
+                        {(log.tags || []).map((tag) => <span key={tag} className="rounded-md border px-1.5 text-micro text-muted-foreground">#{tag}</span>)}
                       </div>
-                      <p className="font-semibold text-sm">{log.issue_case}</p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">{log.root_cause}</p>
+                      <p className="font-semibold text-body">{log.issue_case}</p>
+                      <p className="text-caption text-muted-foreground leading-relaxed">{log.root_cause}</p>
                       {(log.trigger_decision || log.preventable_stage) && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-caption text-muted-foreground">
                           {log.trigger_decision && <>{t('knowledge.trigger')}: <span className="text-foreground">{log.trigger_decision}</span></>}
                           {log.trigger_decision && log.preventable_stage && ' · '}
                           {log.preventable_stage && <>{t('knowledge.stageAt')}: <span className="text-foreground">{STAGES[log.preventable_stage]?.[lang] || STAGES[log.preventable_stage]?.ko}</span></>}
@@ -85,10 +85,10 @@ export default function Knowledge() {
                       )}
                       {log.prevention && (
                         <div className="rounded-lg bg-primary/5 border border-primary/10 p-2.5">
-                          <p className="text-xs text-primary font-medium">{t('knowledge.prevention')}: {log.prevention}</p>
+                          <p className="text-caption text-primary font-medium">{t('knowledge.prevention')}: {log.prevention}</p>
                         </div>
                       )}
-                      {log.solution_parameter && <p className="text-xs text-muted-foreground">{t('knowledge.form.solution')}: {log.solution_parameter}</p>}
+                      {log.solution_parameter && <p className="text-caption text-muted-foreground">{t('knowledge.form.solution')}: {log.solution_parameter}</p>}
                     </div>
                   </div>
                 </CardContent>

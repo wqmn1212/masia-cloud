@@ -77,9 +77,9 @@ function RequestCard({ r, L, lang, busy, run, onShowInvite }) {
       </ul>
       {status !== 'DONE' && (
         <div className="flex flex-wrap justify-end gap-1.5 border-t pt-2">
-          {status !== 'REVOKED' && <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" disabled={busy} onClick={() => run({ action: 'extend', days: 7 })}><CalendarPlus className="h-3.5 w-3.5" />{L('7일 연장', '延长7天')}</Button>}
-          <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" disabled={busy} onClick={onShowInvite}><KeyRound className="h-3.5 w-3.5" />{L('링크·PIN 다시 만들기', '重新生成链接和验证码')}</Button>
-          {live && <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs text-destructive" disabled={busy} onClick={() => window.confirm(L('링크를 회수할까요? 공장은 더 이상 올릴 수 없습니다.', '确定收回链接吗？工厂将无法再上传。')) && run({ action: 'revoke' })}><Ban className="h-3.5 w-3.5" />{L('회수', '收回')}</Button>}
+          {status !== 'REVOKED' && <Button size="sm" variant="ghost" className="h-7 gap-1 text-caption" disabled={busy} onClick={() => run({ action: 'extend', days: 7 })}><CalendarPlus className="h-3.5 w-3.5" />{L('7일 연장', '延长7天')}</Button>}
+          <Button size="sm" variant="ghost" className="h-7 gap-1 text-caption" disabled={busy} onClick={onShowInvite}><KeyRound className="h-3.5 w-3.5" />{L('링크·PIN 다시 만들기', '重新生成链接和验证码')}</Button>
+          {live && <Button size="sm" variant="ghost" className="h-7 gap-1 text-caption text-destructive" disabled={busy} onClick={() => window.confirm(L('링크를 회수할까요? 공장은 더 이상 올릴 수 없습니다.', '确定收回链接吗？工厂将无法再上传。')) && run({ action: 'revoke' })}><Ban className="h-3.5 w-3.5" />{L('회수', '收回')}</Button>}
         </div>
       )}
     </div>
@@ -123,15 +123,15 @@ function ItemRow({ r, item, L, lang, busy, run }) {
       {item.status === 'SUBMITTED' && (
         redo ? (
           <div className="flex gap-1.5">
-            <Input className="h-8 text-xs" autoFocus value={reason} onChange={(e) => setReason(e.target.value)} placeholder={L('재요청 사유 (공장에 보입니다. 중국어로 쓰면 좋습니다)', '重新提交原因（工厂可见）')} />
+            <Input className="h-8 text-caption" autoFocus value={reason} onChange={(e) => setReason(e.target.value)} placeholder={L('재요청 사유 (공장에 보입니다. 중국어로 쓰면 좋습니다)', '重新提交原因（工厂可见）')} />
             <Button size="sm" variant="outline" className="h-8" disabled={busy || !reason.trim()} onClick={() => run({ action: 'review', item_key: item.key, decision: 'REDO', reason })}>{L('보내기', '发送')}</Button>
             <Button size="sm" variant="ghost" className="h-8" onClick={() => setRedo(false)}>{L('취소', '取消')}</Button>
           </div>
         ) : (
           <div className="flex flex-wrap items-center justify-end gap-2">
             {fresh.some((s) => s.file_uri) && <label className="flex items-center gap-1.5 text-caption text-muted-foreground"><Switch checked={visible} onCheckedChange={setVisible} aria-label={L('고객에게 공개', '对客户公开')} />{L('파일 고객 공개', '文件对客户公开')}</label>}
-            <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" disabled={busy} onClick={() => setRedo(true)}><RotateCcw className="h-3.5 w-3.5" />{L('재요청', '要求重新提交')}</Button>
-            <Button size="sm" className="h-7 gap-1 text-xs" disabled={busy} onClick={() => run({ action: 'review', item_key: item.key, decision: 'ACCEPT', client_visible: visible })}><Check className="h-3.5 w-3.5" />{L('채택', '确认')}</Button>
+            <Button size="sm" variant="outline" className="h-7 gap-1 text-caption" disabled={busy} onClick={() => setRedo(true)}><RotateCcw className="h-3.5 w-3.5" />{L('재요청', '要求重新提交')}</Button>
+            <Button size="sm" className="h-7 gap-1 text-caption" disabled={busy} onClick={() => run({ action: 'review', item_key: item.key, decision: 'ACCEPT', client_visible: visible })}><Check className="h-3.5 w-3.5" />{L('채택', '确认')}</Button>
           </div>
         )
       )}

@@ -43,7 +43,7 @@ export default function CategorySelect({ value, onValueChange, placeholder = '�
           onChange={(e) => setNewLabel(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
           placeholder="새 카테고리명 입력"
-          className="h-9 text-sm"
+          className="h-9 text-body"
         />
         <Button type="button" size="sm" onClick={handleAdd} disabled={createMutation.isPending} className="shrink-0 h-9 px-3">
           {createMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : '추가'}
@@ -64,7 +64,7 @@ export default function CategorySelect({ value, onValueChange, placeholder = '�
             <SelectItem key={c.id} value={c.key}>{c.label_kr}</SelectItem>
           ))}
           {categories.length === 0 && !isLoading && (
-            <div className="px-2 py-1.5 text-xs text-muted-foreground">카테고리를 추가해주세요</div>
+            <div className="px-2 py-1.5 text-caption text-muted-foreground">카테고리를 추가해주세요</div>
           )}
         </SelectContent>
       </Select>

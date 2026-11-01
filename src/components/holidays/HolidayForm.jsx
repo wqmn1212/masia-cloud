@@ -22,7 +22,7 @@ export default function HolidayForm({ initial, onSubmit, onCancel, busy }) {
       <div><Label>공장 앞뒤 추가 휴무(일)</Label><Input type="number" min="0" value={f.factory_extra_days} onChange={set('factory_extra_days')} /></div>
       <div><Label>발주 마감일</Label><Input type="date" value={f.order_cutoff_date || ''} onChange={set('order_cutoff_date')} /></div>
       <div className="sm:col-span-3"><Label>조휴 근무일 (쉼표로 구분)</Label><Input value={makeup} onChange={(e) => setMakeup(e.target.value)} placeholder="2027-01-31, 2027-02-20" /></div>
-      <label className="flex items-end gap-2 text-sm pb-2"><input type="checkbox" checked={!!f.announce} onChange={set('announce')} />고객 발주 마감 안내</label>
+      <label className="flex items-end gap-2 text-body pb-2"><input type="checkbox" checked={!!f.announce} onChange={set('announce')} />고객 발주 마감 안내</label>
       <div className="sm:col-span-4 flex justify-end gap-2">
         {onCancel && <Button type="button" variant="outline" onClick={onCancel}>취소</Button>}
         <Button type="submit" disabled={busy}>{busy ? '저장 중...' : '저장'}</Button>
