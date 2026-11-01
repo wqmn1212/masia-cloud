@@ -151,6 +151,10 @@
     "client_team_updated_by_name": {
       "type": "string",
       "description": "\uc5ed\ud560\u00b7\uacb0\uc7ac \uaddc\uce59\uc744 \ub9c8\uc9c0\ub9c9\uc73c\ub85c \ubc14\uafbc \uc0ac\ub78c"
+    },
+    "is_demo": {
+      "type": "boolean",
+      "description": "\uc601\uc5c5 \uc2dc\uc5f0\uc6a9 \ub370\ubaa8 \uace0\uac1d\uc0ac\u00b7\uacf5\uc7a5 (\ub370\ubaa8 \ud300\uc5d0\ub9cc \uc788\ub2e4). \uc9c1\uc6d0\uc774 \uace0\uac1d \ud3ec\ud138\uc744 \uc77d\uae30 \uc804\uc6a9\uc73c\ub85c \uc5f4\uc5b4 \ubcfc \uc218 \uc788\ub2e4"
     }
   },
   "required": [

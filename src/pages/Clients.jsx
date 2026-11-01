@@ -13,6 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
 import CreateClientTeamButton from '@/components/client/CreateClientTeamButton';
 import ClientPortalSettingsPanel from '@/components/client/ClientPortalSettingsPanel';
+import DemoEnvironmentPanel from '@/components/client/DemoEnvironmentPanel';
 import ClientTeamPanel, { ClientApprovalRulesPanel } from '@/components/client/team/ClientTeamPanel';
 
 const emptyClient = {
@@ -113,6 +114,7 @@ export default function Clients() {
         </Button>
       </div>
 
+      <DemoEnvironmentPanel />
       <ClientPortalSettingsPanel />
 
       <Dialog open={!!teamOf} onOpenChange={(o) => !o && setTeamOf(null)}>

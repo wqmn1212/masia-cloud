@@ -58,9 +58,12 @@ function chosenQuote(quotes: any[], comparison: any) {
  */
 export function summarizePerformance(data: any, { start, end }: { start: string; end: string }) {
   const inP = (d: string) => !!d && d >= start && d <= end;
+  const startOf = (c: any) => c.received_date || kstDateOf(c.created_date);
+  const doneOf = (c: any) => c.completed_date || kstDateOf(c.updated_date);
+  const qcDate = (r: any) => kstDateOf(r.client_published_at || r.created_date);
   const cards = (data.cards || []).filter((c: any) => c.client_visible === true && c.status !== 'CANCELLED');
   // 기간에 살아 있던 카드: 기간 끝 전에 만들어졌고, 기간 시작 전에 이미 끝난 카드는 뺀다
-  const alive = cards.filter((c: any) => kstDateOf(c.created_date) <= end && !(c.status === 'DONE' && kstDateOf(c.updated_date) < start));
+  const alive = cards.filter((c: any) => startOf(c) <= end && !(c.status === 'DONE' && doneOf(c) < start));
   const ids = new Set(alive.map((c: any) => c.id));
   const by = (rows: any[] = []) => rows.filter((r) => ids.has(r.card_id));
   const quotes = by(data.quotes), comparisons = by(data.comparisons), landed = by(data.landed).filter((r) => r.status === 'CONFIRMED');
@@ -68,7 +71,7 @@ export function summarizePerformance(data: any, { start, end }: { start: string;
   const quotesOf = (id: string) => quotes.filter((q) => q.card_id === id);
 
   // ── 진행
-  const done = alive.filter((c: any) => c.status === 'DONE' && inP(kstDateOf(c.updated_date)));
+  const done = alive.filter((c: any) => c.status === 'DONE' && inP(doneOf(c)));
   const ordered = alive.filter((c: any) => ['PRODUCTION', 'DONE'].includes(c.status));
 
   // ── 견적: 보낸 견적, 검토한 공장 수, 첫 견적까지 걸린 날
@@ -78,7 +81,7 @@ export function summarizePerformance(data: any, { start, end }: { start: string;
   const firstQuoteDays: number[] = [];
   for (const c of alive) {
     const first = quotesOf(c.id).map((q) => kstDateOf(q.client_published_at)).filter(Boolean).sort()[0];
-    if (first && inP(first)) firstQuoteDays.push(Math.max(0, daysBetween(kstDateOf(c.created_date), first)));
+    if (first && inP(first)) firstQuoteDays.push(Math.max(0, daysBetween(startOf(c), first)));
   }
 
   // ── 절감: 같은 카드에 공장 원가가 있는 견적이 2건 이상이고 고른 견적이 있을 때, 그중 가장 비싼 견적 대비 몇 % 낮은지
@@ -104,7 +107,7 @@ export function summarizePerformance(data: any, { start, end }: { start: string;
   const departed = shipments.filter((s) => inP(s.atd));
 
   // ── 품질: 검수, 출고 전에 잡아낸 문제, 불량 신고와 보상
-  const qcIn = qc.filter((r) => inP(kstDateOf(r.created_date)));
+  const qcIn = qc.filter((r) => inP(qcDate(r)));
   const caught = qcIn.filter((r) => ['FAIL', 'CONDITIONAL_PASS'].includes(r.qc_result));
   const claimsIn = claims.filter((c) => inP(kstDateOf(c.submitted_at || c.created_date)) && c.status !== 'REJECTED');
   const resolved = claims.filter((c) => c.status === 'RESOLVED' && inP(kstDateOf(c.resolved_at)));
@@ -170,7 +173,7 @@ export function summarizePerformance(data: any, { start, end }: { start: string;
     site_visits: meetings.filter((m) => inP(m.meeting_date) && m.meeting_type === 'OFFLINE').length,
   };
 
-  const latestQc = (id: string) => qc.filter((r) => r.card_id === id).sort((a, b) => String(b.created_date).localeCompare(String(a.created_date)))[0];
+  const latestQc = (id: string) => qc.filter((r) => r.card_id === id).sort((a, b) => qcDate(b).localeCompare(qcDate(a)))[0];
   const QC_LABEL: Record<string, string> = { PASS: '합격', CONDITIONAL_PASS: '조건부 합격', FAIL: '불합격' };
   const products = alive.map((c: any) => {
     const first = quotesOf(c.id).map((q) => kstDateOf(q.client_published_at)).filter(Boolean).sort()[0] || '';
@@ -180,7 +183,7 @@ export function summarizePerformance(data: any, { start, end }: { start: string;
     return {
       card_id: c.id, title: c.title, status: (CARD_STATUS_LABEL as any)[c.status] || c.status,
       quotes_sent: quotesOf(c.id).filter((q) => q.client_published_at).length,
-      first_quote_days: first ? Math.max(0, daysBetween(kstDateOf(c.created_date), first)) : null,
+      first_quote_days: first ? Math.max(0, daysBetween(startOf(c), first)) : null,
       qc: lq ? QC_LABEL[lq.qc_result] || '' : '',
       arrived: arrivedAt,
       per_unit_krw: lc && num(lc.per_unit_krw) > 0 ? Math.round(num(lc.per_unit_krw)) : null,

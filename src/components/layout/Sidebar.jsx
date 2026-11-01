@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { canAccessPath, CLIENT_MENU_OPTIONS } from '@/lib/menuPermissions';
+import { getViewCompanyId, isDemoView } from '@/lib/clientView';
 
 const CLIENT_ICONS = { '/client/dashboard': LayoutDashboard, '/client/board': Kanban, '/client/documents': FolderOpen, '/client/team': Users, '/client/mold-review': ScanSearch, '/client/costs': Calculator, '/client/landed-cost': Ship, '/client/molds': Boxes, '/client/guide': BookOpen };
 
@@ -84,9 +85,19 @@ export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobil
     }];
   }
 
-  navSections = navSections
-    .map(section => ({ ...section, items: section.items.filter(item => canAccessPath(user, item.path)) }))
-    .filter(section => section.items.length > 0);
+  // 직원이 고객 포털을 열람하는 중이면 고객 메뉴를 보여 준다 (마스터: 모든 고객사, 팀 관리자·팀원: 데모 고객사만)
+  const staff = ['master', 'service', 'sub'].includes(user?.account_tier);
+  const viewing = staff && location.pathname.startsWith('/client/') && !!getViewCompanyId() && (user?.account_tier === 'master' || isDemoView());
+  if (viewing) {
+    navSections = [{
+      label: isDemoView() ? '데모 고객 포털' : '고객 포털 미리보기',
+      items: CLIENT_MENU_OPTIONS.map(item => ({ ...item, icon: CLIENT_ICONS[item.path] || LayoutDashboard })),
+    }];
+  } else {
+    navSections = navSections
+      .map(section => ({ ...section, items: section.items.filter(item => canAccessPath(user, item.path)) }))
+      .filter(section => section.items.length > 0);
+  }
 
   return (
     <>

@@ -15,6 +15,15 @@ export async function requireClient(base44, req?: Request) {
     if (!body.view_company_id) return { error: Response.json({ error: '조회할 고객사를 선택하세요' }, { status: 400 }) };
     return { user, companyId: body.view_company_id };
   }
+  // 팀 관리자·팀원은 영업 시연용 데모 고객사의 포털만 읽기 전용으로 열 수 있다 (쓰기 함수는 req 를 넘기지 않아 막힌다)
+  if (req && ['service', 'sub'].includes(user.account_tier) && user.is_active !== false) {
+    const body = await req.clone().json().catch(() => ({}));
+    if (body.view_company_id) {
+      const company = await base44.asServiceRole.entities.Company.get(body.view_company_id).catch(() => null);
+      if (company?.is_demo === true && company.company_type === 'CLIENT') return { user, companyId: company.id };
+      return { error: Response.json({ error: '데모 고객사만 열어 볼 수 있습니다' }, { status: 403 }) };
+    }
+  }
   if (user.account_tier !== 'client') {
     return { error: Response.json({ error: 'Forbidden' }, { status: 403 }) };
   }
