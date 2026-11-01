@@ -36,6 +36,7 @@ const STEP_LABELS = {
   'assistantDestCost:apply': ['도착 비용 기록 중', '도착 비용 기록'],
   'assistantDraft:comparison': ['비교표 초안 만드는 중', '비교표 초안 만들기'],
   'assistantDraft:contract': ['계약서 초안 만드는 중', '계약서 초안 만들기'],
+  'assistantQuote:find': ['카드·견적 찾는 중', '카드·견적 찾기'],
   'assistantQuote:margin_rule': ['기준 마진 확인 중', '기준 마진 확인'],
   'assistantQuote:check': ['견적 확인 중', '견적 확인'],
   'assistantQuote:request_review': ['검토 요청 중', '검토 요청'],

@@ -7,6 +7,7 @@ import { createFactoryRequest, factoryLinkUrl, quoteRequestMessage } from '../..
 import { inviteText } from '../../shared/factoryRequest.ts';
 
 // AI 비서용 견적 자동화 도구. 화면과 같은 공용 코드를 쓴다. 고객에게 나가는 일(승인·발송·공개)은 하지 않는다.
+//  'find'           {card_query} → 카드 제목·고객사·공장 이름에 글자가 들어간 카드와 그 견적(상태·공개 여부·검토 요청 가능 여부). 카드·견적 찾기는 이걸 먼저
 //  'margin_rule'    {card_id} → 이 카드의 기준·최소 마진과 출처
 //  'check'          {quotation_id} → 검토 요청 전 요약(고객 금액·마진)과 확인 항목 (원가·마진은 팀 관리자에게만)
 //  'request_review' {quotation_id, note?} → 사용자가 승인한 뒤에만. 견적을 검토 중으로, 팀 관리자에게 알림
@@ -27,6 +28,27 @@ export default async function (req: Request) {
     const inScope = (r: any) => !!r && (user.account_tier === 'master' || r.tenant_id === user.tenant_id);
     const settingOf = async (tenantId: string) => (await db.OperationSetting.filter({ tenant_id: tenantId }, '-updated_date', 1).catch(() => []))[0] || null;
     const cardOf = async (id: unknown) => (typeof id === 'string' && id ? await db.TaskCard.get(id).catch(() => null) : null);
+
+    if (body.action === 'find') {
+      // 비서가 엔티티 조회로 카드를 못 찾고 도구 횟수를 다 쓰는 일을 막는다 (정규식 조회가 비어 돌아옴)
+      const words = s(body.card_query, 100).toLowerCase().split(/\s+/).filter(Boolean);
+      if (!words.length) return Response.json({ error: 'card_query 를 주세요' }, { status: 400 });
+      const scope = user.account_tier === 'master' ? {} : { tenant_id: user.tenant_id };
+      const cards = (await db.TaskCard.filter(scope, '-updated_date', 1000)).filter(inScope)
+        .filter((c: any) => { const hay = [c.title, c.title_cn, c.client_name, c.factory_name].filter(Boolean).join(' ').toLowerCase(); return words.every((w) => hay.includes(w)); });
+      const closed = (c: any) => ['DONE', 'CANCELLED'].includes(c.status);
+      cards.sort((a: any, b: any) => Number(closed(a)) - Number(closed(b)));
+      const top = cards.slice(0, 8);
+      const result = [];
+      for (const c of top) {
+        const qs = (await db.Quotation.filter({ card_id: c.id }, '-created_date', 30).catch(() => [])).filter((q: any) => q.card_id === c.id);
+        result.push({
+          card_id: c.id, card_title: c.title, client_name: c.client_name || '', status: c.status, closed: closed(c), factory_name: c.factory_name || '',
+          quotes: qs.map((q: any) => ({ quotation_id: q.id, title: quoteLabel(q), status: q.status, published: !!q.client_published_at, can_request_review: !q.client_published_at && ['DRAFT', 'APPROVED'].includes(q.status), rejected_reason: q.review_rejected_reason || '', factory_name: q.factory_name || '', created_date: String(q.created_date || '').slice(0, 10) })),
+        });
+      }
+      return Response.json({ query: words.join(' '), total: cards.length, cards: result });
+    }
 
     if (body.action === 'margin_rule' || body.action === 'factory_link') {
       const card = await cardOf(body.card_id);
