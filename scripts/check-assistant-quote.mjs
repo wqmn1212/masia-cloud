@@ -25,6 +25,13 @@ let r = await call('assistantQuote', { action: 'margin_rule', card_id: 'c1' });
 assert.deepEqual([r.data.default_pct, r.data.min_pct, r.data.default_label], [18, 12, '기계설비 카테고리 규칙']);
 assert.equal((await call('assistantQuote', { action: 'margin_rule', card_id: 'cx' })).status, 404, '다른 팀 카드');
 
+// 카드·견적 찾기 (여러 낱말은 모두 들어가야, 다른 팀 카드는 안 보임)
+r = await call('assistantQuote', { action: 'find', card_query: '타정기 예시' });
+assert.deepEqual(r.data.cards.map((c) => c.card_title), ['타정기 5구']);
+assert.deepEqual(r.data.cards[0].quotes.map((q) => [q.quotation_id, q.status, q.can_request_review]), [['q1', 'DRAFT', true]]);
+assert.equal((await call('assistantQuote', { action: 'find', card_query: '남의 팀' })).data.total, 0, '다른 팀 카드');
+assert.equal((await call('assistantQuote', { action: 'find', card_query: ' ' })).status, 400);
+
 // 검토 전 확인: 팀원에게는 원가·마진을 주지 않는다
 r = await call('assistantQuote', { action: 'check', quotation_id: 'q1' });
 assert.equal(r.data.summary.total, 3000);
