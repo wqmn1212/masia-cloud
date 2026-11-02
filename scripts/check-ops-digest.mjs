@@ -126,7 +126,7 @@ res = await call('sendDailyOpsDigest', {});
 assert.equal(res.status, 200);
 assert.deepEqual(globalThis.__emails.map((m) => m.to).sort(), ['boss@aegis.example', 'lee@aegis.example', 'wang@aegis.example'], '끈 사람·할 일 없는 사람·고객 제외');
 assert.match(globalThis.__emails.find((m) => m.to === 'wang@aegis.example').subject, /今日工作/);
-{ const wb = globalThis.__emails.find((m) => m.to === 'wang@aegis.example').body; assert.match(wb, /挂耳包/); assert.match(wb, />模具</); assert.match(wb, /已逾期/); assert.match(wb, /border:1\.5px solid/, '메일은 체크리스트 HTML'); }
+{ const wb = globalThis.__emails.find((m) => m.to === 'wang@aegis.example').body; assert.match(wb, /挂耳包/); assert.match(wb, />模具</); assert.match(wb, /已逾期/); assert.match(wb, /border:1px solid #0066FF;border-radius:6px/, '메일은 체크리스트 HTML'); }
 { const bb = globalThis.__emails.find((m) => m.to === 'boss@aegis.example').body; assert.match(bb, />팀 전체</); assert.match(bb, /진행 중<\/div><div[^>]*>3</); assert.match(bb, /지연 카드<\/div><div[^>]*>1</); }
 assert.equal(globalThis.__db.Notification.filter((n) => n.type === 'daily_digest').length, 3);
 assert.equal(globalThis.__db.Notification[0].link, '/my-work');
@@ -151,15 +151,15 @@ console.log('ops-digest mirror ok');
   assert.ok(!html.includes('<프로젝트>') && html.includes('SOL &lt;프로젝트&gt;'), '카드 제목은 HTML 이스케이프');
   assert.ok(html.includes('이호민 &lt;b&gt;'), '이름도 이스케이프');
   assert.equal((html.match(/SOL &lt;프로젝트&gt; ›/g) || []).length, 1, '같은 카드 할 일은 카드 제목 아래 한 번으로 묶는다');
-  assert.equal((html.match(/border:1\.5px solid/g) || []).length, 4, '할 일마다 체크 상자');
+  assert.equal((html.match(/border:1px solid #0066FF;border-radius:6px/g) || []).length, 4, '할 일마다 체크 상자');
   assert.ok(html.includes('href="https://app.example/task-board?card=c1"'), '카드 바로가기 링크');
   assert.ok(html.includes('href="https://app.example/my-work"'), '내 업무 버튼');
   assert.match(html, />SD카드 세팅</, '본문과 꼬리표를 나눈다');
-  assert.match(html, /color:#D93636">업무 61일 지남/, '14일 넘게 지난 일은 빨강 배지');
-  assert.match(html, /color:#AD5A00">업무 3일 지남/, '최근 지난 일은 주황 배지');
-  assert.match(html, /color:#D93636">35일째/, '오래 기다린 고객 회신은 빨강');
-  assert.match(html, /color:#70737C">4일째/, '며칠 안 된 대기는 회색');
-  assert.match(html, /책임자 없음<\/div><div style="font-size:20px;font-weight:700;color:#AD5A00">30/, '팀 숫자 칸');
+  assert.match(html, /color:#FF4242">업무 61일 지남/, '14일 넘게 지난 일은 빨강 배지');
+  assert.match(html, /color:#AD5100">업무 3일 지남/, '최근 지난 일은 주황 배지');
+  assert.match(html, /color:#FF4242">35일째/, '오래 기다린 고객 회신은 빨강');
+  assert.match(html, /color:#6F727B">4일째/, '며칠 안 된 대기는 회색');
+  assert.match(html, /책임자 없음<\/div><div style="[^"]*font-size:20px[^"]*color:#AD5100">30/, '팀 숫자 칸');
   assert.match(html, /늦은 카드<\/a><span[^>]*> · 왕리/, '팀 지연 카드 목록');
   assert.ok(!html.includes('due_today') && !/오늘 마감 <span/.test(html), '빈 구역은 그리지 않는다');
   const zh = D.digestHtml(dg, { name: '王', lang: 'zh' });
@@ -168,5 +168,11 @@ console.log('ops-digest mirror ok');
   assert.ok(zh.includes('打开我的工作'));
   assert.deepEqual(D.splitItem('견적 회신 · 7일째 · 수축비닐'), { main: '견적 회신 · 수축비닐', tags: ['7일째'] });
   assert.deepEqual(D.splitItem('포장 기준서 확인'), { main: '포장 기준서 확인', tags: [] });
+  // 메일 색은 앱 토큰(index.css 밝은 화면)과 같아야 한다
+  const fs = await import('node:fs');
+  const css = fs.readFileSync(new URL('../src/index.css', import.meta.url), 'utf8').split('.dark')[0];
+  const hsl = (name) => { const m = css.match(new RegExp(`--${name}:\\s*([\\d.]+)\\s+([\\d.]+)%\\s+([\\d.]+)%`)); const [h, sat, l] = m.slice(1).map(Number); const a = (sat / 100) * Math.min(l / 100, 1 - l / 100); const f = (n) => { const k = (n + h / 30) % 12; return Math.round(255 * (l / 100 - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))); }; return '#' + [f(0), f(8), f(4)].map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase(); };
+  const want = { ink: 'foreground', muted: 'muted-foreground', line: 'border', page: 'background', primary: 'primary', danger: 'destructive', warn: 'warning-text', violet: 'chart-4', success: 'success-text' };
+  for (const [k, token] of Object.entries(want)) assert.equal(D.MAIL_COLORS[k], hsl(token), `메일 색 ${k} = 토큰 --${token}`);
   console.log('ops-digest html ok');
 }

@@ -194,7 +194,9 @@ export const wantsDaily = (u: any) => ['service', 'sub'].includes(u?.account_tie
 
 // ── HTML 메일 (체크리스트) ──────────────────────────────────────────
 // 메일 프로그램(지메일·아웃룩·휴대폰)에서 깨지지 않게 표(table)와 인라인 스타일만 쓴다. 색은 앱 디자인 토큰과 같은 값.
-const C = { ink: '#171719', body: '#37383C', muted: '#70737C', line: '#E4E4E7', page: '#F7F7F8', box: '#C2C4C8', primary: '#0066FF', danger: '#D93636', dangerBg: '#FDEDED', warn: '#AD5A00', warnBg: '#FFF4E5', violet: '#6A4CE0', success: '#147A4E', successBg: '#E8F6EF' };
+// 앱 토큰(src/index.css 밝은 화면)의 hex 값. 옅은 배경은 토큰 10% (흰 바탕 위). check:ops-digest 가 index.css 와 같은지 검사한다.
+export const MAIL_COLORS = { ink: '#161618', muted: '#6F727B', line: '#E4E4E7', page: '#F7F7F8', primary: '#0066FF', danger: '#FF4242', dangerBg: '#FFECEC', warn: '#AD5100', warnBg: '#FFF4E6', violet: '#6A4CE1', success: '#147147' };
+const C = MAIL_COLORS;
 const SECTION_COLOR: Record<string, string> = { due_today: C.primary, risk: C.danger, client_wait: C.warn, factory_wait: C.violet, to_check: C.primary, opportunity: C.success };
 const SECTION_HINT: Record<string, { ko: string; cn: string }> = {
   due_today: { ko: '오늘 끝내야 할 일', cn: '今天需要完成' },
@@ -232,8 +234,8 @@ export function digestHtml(digest: any, { name = '', lang = 'ko', base = 'https:
   const counts = SECTIONS.map((k) => [k, (digest.sections[k] || []).length] as [string, number]).filter(([, n]) => n > 0);
   const total = digest.total + (t ? t.late.length : 0);
 
-  const chip = (k: string, n: number) => `<span style="display:inline-block;margin:0 6px 6px 0;padding:4px 10px;border-radius:999px;border:1px solid ${C.line};font-size:12.5px;color:${C.body};background:#fff"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${SECTION_COLOR[k]};margin-right:6px;vertical-align:1px"></span>${esc(SECTION_LABEL[k][zh ? 'cn' : 'ko'].replace(/\s*\(.*\)$/, '').replace(/（.*）$/, ''))} <b style="color:${C.ink}">${n}</b></span>`;
-  const checkbox = `<span style="display:inline-block;width:14px;height:14px;border:1.5px solid ${C.box};border-radius:4px;background:#fff"></span>`;
+  const chip = (k: string, n: number) => `<span style="display:inline-block;margin:0 6px 6px 0;padding:4px 10px;border-radius:999px;border:1px solid ${C.line};font-size:12.5px;color:${C.ink};background:#fff"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${SECTION_COLOR[k]};margin-right:6px;vertical-align:1px"></span>${esc(SECTION_LABEL[k][zh ? 'cn' : 'ko'].replace(/\s*\(.*\)$/, '').replace(/（.*）$/, ''))} <b style="color:${C.ink}">${n}</b></span>`;
+  const checkbox = `<span style="display:inline-block;width:16px;height:16px;box-sizing:border-box;border:1px solid ${C.primary};border-radius:6px;background:#fff"></span>`;
 
   const sectionHtml = (k: string) => {
     const rows = (digest.sections[k] || []).slice(0, 15);
@@ -247,15 +249,15 @@ export function digestHtml(digest: any, { name = '', lang = 'ko', base = 'https:
       const head = `<tr><td colspan="3" style="padding:12px 0 4px"><a href="${esc(url(`/task-board?card=${encodeURIComponent(cardId)}`))}" style="color:${C.muted};font-size:12.5px;font-weight:600;text-decoration:none">${esc(cardTitle || (zh ? '项目' : '프로젝트'))} ›</a></td></tr>`;
       const lines = items.map((r: any) => {
         const { main, tags } = splitItem(zh ? r.cn : r.ko);
-        const badges = tags.map((tag) => `<span style="display:inline-block;margin-left:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;${badgeStyle(tag, r.days)}">${esc(tag)}</span>`).join('');
-        return `<tr><td width="24" valign="top" style="padding:6px 0 6px">${checkbox}</td><td valign="top" style="padding:5px 8px 5px 0;font-size:14.5px;line-height:22px;color:${C.ink}">${esc(main)}</td><td valign="top" align="right" style="padding:5px 0;white-space:nowrap">${badges}</td></tr>`;
+        const badges = tags.map((tag) => `<span style="display:inline-block;margin-left:4px;padding:2px 10px;border-radius:8px;font-size:11px;line-height:16px;font-weight:600;white-space:nowrap;${badgeStyle(tag, r.days)}">${esc(tag)}</span>`).join('');
+        return `<tr><td width="26" valign="top" style="padding:8px 0 6px">${checkbox}</td><td valign="top" style="padding:5px 8px 5px 0;font-size:14.5px;line-height:23px;color:${C.ink}">${esc(main)}</td><td valign="top" align="right" style="padding:5px 0;white-space:nowrap">${badges}</td></tr>`;
       }).join('');
       return head + lines;
     }).join('');
     const moreHtml = more > 0 ? `<tr><td colspan="3" style="padding:8px 0 0;font-size:12.5px;color:${C.muted}">${zh ? `另有${more}项 — 在"我的工作"中查看` : `외 ${more}건 — 내 업무에서 확인하세요`}</td></tr>` : '';
-    return `<tr><td style="padding:0 0 12px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ${C.line};border-radius:12px;border-left:4px solid ${SECTION_COLOR[k]}"><tr><td style="padding:16px 18px 14px">
-<div style="font-size:16px;font-weight:700;color:${C.ink}">${esc(SECTION_LABEL[k][zh ? 'cn' : 'ko'])} <span style="color:${SECTION_COLOR[k]}">${(digest.sections[k] || []).length}</span></div>
-<div style="margin-top:2px;font-size:12.5px;color:${C.muted}">${esc(SECTION_HINT[k][zh ? 'cn' : 'ko'])}</div>
+    return `<tr><td style="padding:0 0 12px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ${C.line};border-radius:12px"><tr><td style="padding:16px 18px 14px">
+<div style="font-size:18px;line-height:26px;letter-spacing:-0.5px;font-weight:700;color:${C.ink}"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${SECTION_COLOR[k]};margin-right:8px;vertical-align:3px"></span>${esc(SECTION_LABEL[k][zh ? 'cn' : 'ko'])} <span style="color:${SECTION_COLOR[k]}">${(digest.sections[k] || []).length}</span></div>
+<div style="margin-top:2px;font-size:12.5px;line-height:18px;color:${C.muted}">${esc(SECTION_HINT[k][zh ? 'cn' : 'ko'])}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${groupHtml}${moreHtml}</table>
 </td></tr></table></td></tr>`;
   };
@@ -269,22 +271,24 @@ export function digestHtml(digest: any, { name = '', lang = 'ko', base = 'https:
       [zh ? '无负责人' : '책임자 없음', t.no_owner, t.no_owner ? C.warn : C.ink],
       [zh ? '报价逾期' : '견적 기한 지남', t.quote_overdue, t.quote_overdue ? C.danger : C.ink],
     ];
-    const cell = ([label, n, color]: any) => `<td width="33%" style="padding:10px 12px;border:1px solid ${C.line};background:#fff"><div style="font-size:11px;color:${C.muted}">${esc(label)}</div><div style="font-size:20px;font-weight:700;color:${color}">${n}</div></td>`;
-    const late = t.late.slice(0, 10).map((c: any) => `<tr><td style="padding:6px 0;border-top:1px solid ${C.line};font-size:13px"><a href="${esc(url(`/task-board?card=${encodeURIComponent(c.card_id)}`))}" style="color:${C.ink};text-decoration:none">${esc(zh ? c.card_title_cn : c.card_title)}</a>${c.owner_name ? `<span style="color:${C.muted}"> · ${esc(c.owner_name)}</span>` : ''}</td><td align="right" style="padding:6px 0;border-top:1px solid ${C.line};white-space:nowrap"><span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;${badgeStyle('지남', c.days)}">${zh ? `延误${c.days}天` : `${c.days}일 지연`}</span></td></tr>`).join('');
-    return `<tr><td style="padding:8px 0 12px"><div style="font-size:16px;font-weight:700;color:${C.ink};margin-bottom:8px">${zh ? '团队概况' : '팀 전체'}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>${stats.slice(0, 3).map(cell).join('')}</tr><tr>${stats.slice(3).map(cell).join('')}</tr></table>
-${late ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px">${late}</table>` : ''}</td></tr>`;
+    // 앱 숫자 칸과 같은 모양: 둥근 테두리 칸, 칸 사이 간격, micro 이름 + 20px 숫자
+    const cell = ([label, n, color]: any) => `<td width="33%" style="padding:10px 12px;border:1px solid ${C.line};border-radius:10px;background:#fff"><div style="font-size:11px;line-height:16px;color:${C.muted}">${esc(label)}</div><div style="margin-top:2px;font-size:20px;line-height:28px;font-weight:700;color:${color}">${n}</div></td>`;
+    const late = t.late.slice(0, 10).map((c: any) => `<tr><td style="padding:6px 0;border-top:1px solid ${C.line};font-size:13px"><a href="${esc(url(`/task-board?card=${encodeURIComponent(c.card_id)}`))}" style="color:${C.ink};text-decoration:none">${esc(zh ? c.card_title_cn : c.card_title)}</a>${c.owner_name ? `<span style="color:${C.muted}"> · ${esc(c.owner_name)}</span>` : ''}</td><td align="right" style="padding:6px 0;border-top:1px solid ${C.line};white-space:nowrap"><span style="padding:2px 10px;border-radius:8px;font-size:11px;line-height:16px;font-weight:600;${badgeStyle('지남', c.days)}">${zh ? `延误${c.days}天` : `${c.days}일 지연`}</span></td></tr>`).join('');
+    return `<tr><td style="padding:0 0 12px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ${C.line};border-radius:12px"><tr><td style="padding:16px 18px 14px">
+<div style="font-size:18px;line-height:26px;letter-spacing:-0.5px;font-weight:700;color:${C.ink}">${zh ? '团队概况' : '팀 전체'}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="6" style="border-collapse:separate;border-spacing:6px;margin-top:4px"><tr>${stats.slice(0, 3).map(cell).join('')}</tr><tr>${stats.slice(3).map(cell).join('')}</tr></table>
+${late ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px">${late}</table>` : ''}</td></tr></table></td></tr>`;
   })();
 
   const html = `<div style="margin:0;padding:24px 12px;background:${C.page}">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','PingFang SC','Microsoft YaHei',Arial,sans-serif;color:${C.ink}">
 <tr><td style="padding:0 2px 16px"><div style="font-size:12.5px;font-weight:700;color:${C.primary};letter-spacing:.04em">AEGIS · ${zh ? '今日工作' : '오늘 업무'}</div>
-<div style="margin-top:4px;font-size:22px;font-weight:800;color:${C.ink}">${zh ? `${md(digest.today)}（周${dow}）共 ${total} 项` : `${md(digest.today)} (${dow}) 할 일 ${total}건`}</div>
-<div style="margin-top:6px;font-size:14.5px;color:${C.body}">${esc(name)}${zh ? '，早上好。请从上往下逐项确认。' : '님, 좋은 아침입니다. 위에서부터 하나씩 확인하세요.'}</div>
+<div style="margin-top:4px;font-size:24px;line-height:32px;letter-spacing:-0.6px;font-weight:700;color:${C.ink}">${zh ? `${md(digest.today)}（周${dow}）共 ${total} 项` : `${md(digest.today)} (${dow}) 할 일 ${total}건`}</div>
+<div style="margin-top:6px;font-size:14.5px;line-height:23px;color:${C.muted}">${esc(name)}${zh ? '，早上好。请从上往下逐项确认。' : '님, 좋은 아침입니다. 위에서부터 하나씩 확인하세요.'}</div>
 <div style="margin-top:12px">${counts.map(([k, n]) => chip(k, n)).join('')}</div></td></tr>
 ${SECTIONS.map(sectionHtml).join('')}
 ${teamHtml}
-<tr><td align="center" style="padding:8px 0 20px"><a href="${esc(url('/my-work'))}" style="display:inline-block;background:${C.primary};color:#fff;text-decoration:none;font-size:14.5px;font-weight:700;padding:12px 28px;border-radius:9px">${zh ? '打开我的工作' : '내 업무 열기'}</a></td></tr>
+<tr><td align="center" style="padding:8px 0 20px"><a href="${esc(url('/my-work'))}" style="display:inline-block;background:${C.primary};color:#fff;text-decoration:none;font-size:14.5px;line-height:20px;font-weight:500;padding:8px 24px;border-radius:8px">${zh ? '打开我的工作' : '내 업무 열기'}</a></td></tr>
 <tr><td style="padding:0 2px;font-size:11px;line-height:17px;color:${C.muted}">${zh ? '项目名称可点击，直接打开该卡片。本邮件为 AEGIS Cloud 自动发送，请勿回复；如需沟通请使用项目卡片的咨询标签。可在通知设置中关闭每日摘要邮件。' : '프로젝트 이름을 누르면 그 카드가 바로 열립니다. AEGIS Cloud 자동 메일이니 회신하지 마시고, 문의는 프로젝트 카드의 문의 탭을 이용해 주세요. 알림 설정에서 아침 요약 메일을 끌 수 있습니다.'}</td></tr>
 </table></div>`;
   return html;
