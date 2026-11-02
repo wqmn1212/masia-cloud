@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
-import { FROM_NAME, emailBody } from '../../shared/notify.ts';
+import { FROM_NAME } from '../../shared/notify.ts';
 import { kstToday } from '../../shared/chinaHoliday.ts';
-import { buildOpsDigest, digestText, wantsDaily } from '../../shared/opsDigest.ts';
+import { buildOpsDigest, digestText, digestHtml, wantsDaily } from '../../shared/opsDigest.ts';
 import { loadOpsData } from '../../shared/opsDigestData.ts';
 
 // 직원 일일 운영 요약 (워크플로 DailyOpsDigest, 매일 08:30 KST).
@@ -28,7 +28,8 @@ export default async function (req: Request) {
         const { subject, body } = digestText(digest, { name: u.full_name || '', lang });
         try {
           await svc.entities.Notification.create({ tenant_id: u.tenant_id, recipient_id: u.id, recipient_email: u.email || '', type: 'daily_digest', title: subject, body, link: '/my-work', task_card_id: '', read: false });
-          if (u.email) await svc.integrations.Core.SendEmail({ to: u.email, from_name: FROM_NAME, subject, body: emailBody(body, '', '/my-work') });
+          // 메일은 체크리스트 HTML (앱 알림은 같은 내용의 글)
+          if (u.email) await svc.integrations.Core.SendEmail({ to: u.email, from_name: FROM_NAME, subject, body: digestHtml(digest, { name: u.full_name || '', lang, base: Deno.env.get('APP_BASE_URL') || 'https://aegistrade.biz' }) });
           await svc.entities.User.update(u.id, { daily_digest_sent_for: today });
           sent += 1;
         } catch (_e) { /* 한 사람 실패가 다른 사람 발송을 막지 않는다 */ }
