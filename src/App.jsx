@@ -27,6 +27,7 @@ const Quotations = lazy(() => import('@/pages/Quotations'));
 const AgentQuotes = lazy(() => import('@/pages/AgentQuotes'));
 const Knowledge = lazy(() => import('@/pages/Knowledge'));
 const Timeline = lazy(() => import('@/pages/Timeline'));
+const SerialLookup = lazy(() => import('@/pages/SerialLookup'));
 const ASRequests = lazy(() => import('@/pages/ASRequests'));
 const Settlement = lazy(() => import('@/pages/Settlement'));
 const Requirements = lazy(() => import('@/pages/Requirements'));
@@ -153,6 +154,7 @@ const AuthenticatedApp = () => {
         <Route path="/agent-quotes" element={<AgentQuotes />} />
         <Route path="/knowledge" element={<Knowledge />} />
         <Route path="/timeline" element={<Timeline />} />
+        <Route path="/serials" element={<SerialLookup />} />
         <Route path="/as-requests" element={<ASRequests />} />
         <Route path="/settlement" element={<Settlement />} />
         <Route path="/requirements" element={<Requirements />} />

@@ -20,6 +20,7 @@ export const TEAM_MENU_OPTIONS = [
   { path: '/china-holidays', label: '중국 휴무' },
   { path: '/clients', label: '고객사 관리' },
   { path: '/timeline', label: '생산 일정' },
+  { path: '/serials', label: '시리얼 조회' },
   { path: '/as-requests', label: 'A/S 요청' },
 ];
 

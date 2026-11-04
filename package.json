@@ -29,6 +29,7 @@
     "check:performance-report": "node --import ./scripts/fnmock/register.mjs scripts/check-performance-report.mjs",
     "check:demo-environment": "node --import ./scripts/fnmock/register.mjs scripts/check-demo-environment.mjs",
     "check:design-tokens": "node scripts/check-design-tokens.mjs",
+    "check:production-units": "node --import ./scripts/fnmock/register.mjs scripts/check-production-units.mjs",
     "check:client-roles": "node scripts/check-client-roles.mjs",
     "check:file-review": "node scripts/check-file-review.mjs",
     "check:client-approvals": "node --import ./scripts/fnmock/register.mjs scripts/check-client-approvals.mjs",

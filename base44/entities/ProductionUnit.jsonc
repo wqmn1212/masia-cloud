@@ -1,0 +1,219 @@
+{
+  "name": "ProductionUnit",
+  "type": "object",
+  "required": [
+    "card_id",
+    "serial"
+  ],
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID"
+    },
+    "card_id": {
+      "type": "string",
+      "description": "\uc0dd\uc0b0 \uce74\ub4dc ID"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "\uace0\uac1d\uc0ac ID (\uce74\ub4dc\uc758 client_id)"
+    },
+    "serial": {
+      "type": "string",
+      "description": "\uc2dc\ub9ac\uc5bc \ubc88\ud638 (\ub300\ubb38\uc790). \ud300 \uc548\uc5d0\uc11c \ud558\ub098"
+    },
+    "lot": {
+      "type": "string",
+      "description": "\uc0dd\uc0b0 \ucc28\uc218 (\uc608: 1\ucc28)"
+    },
+    "inspected_date": {
+      "type": "string",
+      "description": "\uac80\uc0ac\uc77c YYYY-MM-DD (\uc131\uc801\uc11c \uc2dc\ud2b8 \ub0a0\uc9dc)"
+    },
+    "sheet": {
+      "type": "string",
+      "description": "\uac00\uc838\uc628 \uc131\uc801\uc11c \uc2dc\ud2b8 \uc774\ub984"
+    },
+    "checks": {
+      "type": "object",
+      "description": "\ud56d\ubaa9\ubcc4 \uacb0\uacfc { \ud56d\ubaa9: 'pass' | 'fail' | '' }"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "FAIL",
+        "INCOMPLETE"
+      ],
+      "description": "\uc885\ud569 \ud310\uc815 (\ud56d\ubaa9 \uacb0\uacfc\ub85c \uacc4\uc0b0)"
+    },
+    "failed_items": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ubd88\ud569\uaca9 \ud56d\ubaa9"
+    },
+    "fail_note": {
+      "type": "string",
+      "description": "\ubd88\ub7c9 \ub0b4\uc6a9"
+    },
+    "inspector": {
+      "type": "string",
+      "description": "\uac80\uc0ac\uc790"
+    },
+    "pallet": {
+      "type": "string",
+      "description": "\ud30c\ub808\ud2b8 \ubc88\ud638 (\uc608: P-1104-01)"
+    },
+    "box": {
+      "type": "string",
+      "description": "\ubc15\uc2a4 \ubc88\ud638"
+    },
+    "disposition": {
+      "type": "string",
+      "enum": [
+        "",
+        "REWORK",
+        "SCRAP"
+      ],
+      "description": "\ubd88\ub7c9 \ucc98\ub9ac: \uc218\ub9ac \uc911 / \ud3d0\uae30"
+    },
+    "shipped_date": {
+      "type": "string",
+      "description": "\ucd9c\ud558\uc77c YYYY-MM-DD (\ube44\uc5b4 \uc788\uc73c\uba74 \ubbf8\ucd9c\ud558)"
+    },
+    "shipment_label": {
+      "type": "string",
+      "description": "\ucd9c\ud558 \uc774\ub984 (\uc608: 1\ucc28 \ucd9c\ud558)"
+    },
+    "shipment_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c \uc120\uc801(Shipment) ID"
+    },
+    "source_file": {
+      "type": "string",
+      "description": "\uac00\uc838\uc628 \uc131\uc801\uc11c \ud30c\uc77c \uc774\ub984"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "\ubcc0\uacbd \uae30\ub85d [{at, by, action, note}]"
+    },
+    "updated_by_name": {
+      "type": "string",
+      "description": "\ub9c8\uc9c0\ub9c9\uc73c\ub85c \ubc14\uafbc \uc9c1\uc6d0"
+    }
+  },
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
