@@ -27,6 +27,7 @@ import MeetingLogPanel from './MeetingLogPanel';
 import TaskInsightPanel from './TaskInsightPanel';
 import DecisionsTab from './DecisionsTab';
 import BomTab from './BomTab';
+import ProductionTab from './ProductionTab';
 import ClientVisibilityToggle from './ClientVisibilityToggle';
 import QuotationPublishPanel from './QuotationPublishPanel';
 import ClientApprovalBanner from './client/ClientApprovalBanner';
@@ -59,6 +60,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
   const [recordingBusy, setRecordingBusy] = useState(false);
   const [reorderOpen, setReorderOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(initialTab);
+  const isStaff = ['master', 'service', 'sub'].includes(user?.account_tier);
   // 요약 줄을 누르면 업무 탭의 사전 QC 점검 패널로 이동
   const openPrecheck = () => { setActiveTab('tasks'); setTimeout(() => document.getElementById('qc-precheck')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120); };
   useEffect(() => { if (open) setActiveTab(initialTab); }, [open, card?.id, initialTab]);
@@ -85,7 +87,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
                 <Badge variant="outline" className="text-micro">{CAT_LABEL[card.target_machine_category]}</Badge>
               )}
               <Badge className={`${st.color} border-0 text-micro`}>{st.label}</Badge>
-              {['master', 'service', 'sub'].includes(user?.account_tier) && (
+              {isStaff && (
                 <Button type="button" size="sm" variant="outline" className="h-7 gap-1 text-caption" onClick={() => setReorderOpen(true)}><Repeat className="h-3 w-3" />재주문</Button>
               )}
             </div>
@@ -118,6 +120,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
             <TabsTrigger value="chat" className="text-caption sm:text-body py-1.5">{t('card.tab.chat', '채팅')}</TabsTrigger>
             <TabsTrigger value="settlement" className="text-caption sm:text-body py-1.5">{t('card.tab.settlement', '정산')}</TabsTrigger>
             <TabsTrigger value="decisions" className="text-caption sm:text-body py-1.5">{t('card.tab.decisions', '결정')}</TabsTrigger>
+            {isStaff && <TabsTrigger value="production" className="text-caption sm:text-body py-1.5">{lang === 'zh' ? '量产' : '양산'}</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="milestones" className="mt-4">
@@ -169,6 +172,11 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
           <TabsContent value="decisions" className="mt-4">
             <DecisionsTab card={card} user={user} />
           </TabsContent>
+          {isStaff && (
+            <TabsContent value="production" className="mt-4">
+              <ProductionTab card={card} />
+            </TabsContent>
+          )}
         </Tabs>
       </DialogContent>
     </Dialog>
