@@ -1,10 +1,11 @@
 // 양산 시리얼 관리: 현장의 검사 성적서(엑셀, 날짜별 시트)를 읽어 제품 한 대씩(ProductionUnit) 기록한다.
 // 성적서 형식(N30 제조라인 검사성적서): '작성일'·'LOT' 칸, 머리글 줄에 '시리얼' 칸과 검사 항목들, 마지막에 '종합 판정'.
 // 종합 판정 칸의 수식 값은 믿지 않고 항목 결과로 다시 계산한다. 빈 항목이 있으면 '미검사'로 본다.
-// 스티커 불량으로 버린 번호는 성적서에 줄이 없으므로 따로 관리하지 않는다 (출고된 시리얼만 정확히).
+// 시리얼은 스티커 번호 전체(예: 0001~5500)를 먼저 '생산 전'으로 등록해 두고, 성적서가 들어오면 검사 결과로 바뀐다.
+// 스티커 불량으로 버린 번호는 '스티커 불량'(disposition VOID)으로 표시해 생산·출하 집계에서 뺀다.
 
-export const VERDICT = { PASS: 'PASS', FAIL: 'FAIL', INCOMPLETE: 'INCOMPLETE' };
-export const DISPOSITION = ['REWORK', 'SCRAP'];
+export const VERDICT = { PASS: 'PASS', FAIL: 'FAIL', INCOMPLETE: 'INCOMPLETE', PENDING: 'PENDING' };
+export const DISPOSITION = ['REWORK', 'SCRAP', 'VOID'];
 const PASS_WORDS = /^(pass|ok|o|합격|양호|通过|合格|y|yes|✓|√)$/i;
 const FAIL_WORDS = /^(fail|ng|x|불합격|불량|不合格|不良|n|no|✗)$/i;
 const clean = (v: unknown) => String(v ?? '').replace(/\s+/g, ' ').trim();
@@ -129,20 +130,26 @@ export function expandRange(text: string, sample = '') {
 // 한 대의 현재 상태 (화면·집계 공용)
 export function unitStatus(u: any) {
   if (u.shipped_date) return 'SHIPPED';
+  if (u.disposition === 'VOID') return 'VOID';
   if (u.disposition === 'SCRAP') return 'SCRAPPED';
+  if (!u.verdict || u.verdict === VERDICT.PENDING) return 'PENDING';
   if (u.verdict === VERDICT.PASS) return 'READY';
   if (u.disposition === 'REWORK') return 'REWORK';
   return u.verdict === VERDICT.INCOMPLETE ? 'INCOMPLETE' : 'FAILED';
 }
-export const STATUS_LABEL: Record<string, string> = { READY: '출하 대기', SHIPPED: '출하됨', FAILED: '불량', REWORK: '수리 중', SCRAPPED: '폐기', INCOMPLETE: '미검사 항목 있음' };
+export const STATUS_LABEL: Record<string, string> = { READY: '출하 대기', SHIPPED: '출하됨', FAILED: '불량', REWORK: '수리 중', SCRAPPED: '폐기', INCOMPLETE: '미검사 항목 있음', PENDING: '생산 전', VOID: '스티커 불량' };
+
+// 구간이 많으면(스티커 불량으로 군데군데 빠진 경우) '처음~끝 중 N대'로 줄인다. 정확한 목록은 내려받기로
+export function shortRange(list: string[]) {
+  const full = serialRange(list);
+  const parts = full ? full.split(', ') : [];
+  if (parts.length <= 3) return full;
+  const sorted = [...list].sort();
+  return `${sorted[0]}~${sorted[sorted.length - 1].slice(-4)} 중 ${list.length}대`;
+}
 
 // 카드 전체 집계: 상태별 수, 날짜별·파레트별·출하별 묶음
 export function productionSummary(units: any[]) {
-  const by = (key: (u: any) => string) => {
-    const m = new Map<string, any[]>();
-    for (const u of units) { const k = key(u) || ''; m.set(k, [...(m.get(k) || []), u]); }
-    return m;
-  };
   const counts: Record<string, number> = { total: units.length };
   for (const u of units) { const s = unitStatus(u); counts[s] = (counts[s] || 0) + 1; }
   const row = (k: string, list: any[]) => ({
@@ -150,8 +157,16 @@ export function productionSummary(units: any[]) {
     pass: list.filter((u) => u.verdict === VERDICT.PASS).length,
     fail: list.filter((u) => u.verdict !== VERDICT.PASS).length,
     shipped: list.filter((u) => u.shipped_date).length,
-    range: serialRange(list.map((u) => u.serial)),
+    range: shortRange(list.map((u) => u.serial)),
   });
+  // 생산 전·스티커 불량 번호는 제품이 아니므로 일별·파레트 묶음에서 뺀다
+  const made = units.filter((u) => !['PENDING', 'VOID'].includes(unitStatus(u)));
+  const by = (key: (u: any) => string) => {
+    const m = new Map<string, any[]>();
+    for (const u of made) { const k = key(u) || ''; m.set(k, [...(m.get(k) || []), u]); }
+    return m;
+  };
+  counts.produced = made.length;
   const days = [...by((u) => u.inspected_date)].map(([k, l]) => row(k, l)).sort((a, b) => b.key.localeCompare(a.key));
   const pallets = [...by((u) => u.pallet)].filter(([k]) => k).map(([k, l]) => row(k, l)).sort((a, b) => a.key.localeCompare(b.key));
   const shipments = [...by((u) => (u.shipped_date ? `${u.shipped_date}|${u.shipment_label || ''}` : ''))].filter(([k]) => k)

@@ -10,6 +10,8 @@ import { parseInspectionSheets, expandRange, productionSummary, unitStatus, VERD
 //  'dispose'       {card_id, serial, disposition: REWORK|SCRAP|REPASS|CLEAR, note?} → 불량 처리. REPASS 는 수리 후 재검사 합격
 //  'ship'          {card_id, pallets?, serials?, date, label?, shipment_id?} → 출하 대기(합격·미출하·미폐기)만 출하 처리
 //  'unship'        {card_id, serials} → 출하 취소
+//  'register'      {card_id, serials, lot?} → 스티커 번호를 '생산 전'으로 미리 등록 (예: MHAFS1AA0001-5500). 이미 있는 번호는 건너뜀
+//  'void'          {card_id, serials, note?} → 스티커 불량 번호 표시 (생산·출하에서 빠짐). 되돌리기는 dispose CLEAR
 //  'search'        {q} → 시리얼로 찾기 (팀 안, 마스터는 전체)
 const STAFF = ['master', 'service', 'sub'];
 const MAX_BYTES = 15 * 1024 * 1024;
@@ -69,7 +71,8 @@ export default async function (req: Request) {
 
     if (body.action === 'list') {
       const list = [...bySerial.values()];
-      return Response.json({ units: list.map(compact), summary: productionSummary(list) });
+      // 생산 전 번호(수천 개)는 목록에서 빼고 집계 숫자로만 보낸다
+      return Response.json({ units: list.filter((u) => unitStatus(u) !== 'PENDING').map(compact), summary: productionSummary(list) });
     }
 
     if (body.action === 'preview' || body.action === 'import') {
@@ -80,11 +83,13 @@ export default async function (req: Request) {
       if (!parsed.units.length) return Response.json({ error: '성적서에서 시리얼을 찾지 못했습니다', sheets: parsed.sheets, warnings: parsed.warnings }, { status: 400 });
       // 같은 팀의 다른 카드에 이미 있는 시리얼은 충돌로 건너뛴다
       const others = new Map((await allUnits(db, { tenant_id: card.tenant_id })).filter((u) => u.card_id !== card.id).map((u) => [u.serial, u]));
-      const plan = { create: [] as any[], update: [] as any[], same: 0, conflict: [] as string[], locked: [] as string[] };
+      const plan = { create: [] as any[], update: [] as any[], same: 0, conflict: [] as string[], locked: [] as string[], voided: [] as string[] };
       for (const p of parsed.units) {
         if (others.has(p.serial)) { plan.conflict.push(p.serial); continue; }
         const cur = bySerial.get(p.serial);
         if (!cur) { plan.create.push(p); continue; }
+        // 스티커 불량으로 표시한 번호는 성적서 양식에 줄이 남아 있어도 제품으로 보지 않는다
+        if (cur.disposition === 'VOID') { plan.voided.push(p.serial); continue; }
         const changed = cur.verdict !== p.verdict || JSON.stringify(cur.checks || {}) !== JSON.stringify(p.checks) || (p.pallet && p.pallet !== cur.pallet);
         if (!changed) { plan.same++; continue; }
         if (cur.shipped_date) { plan.locked.push(p.serial); continue; }
@@ -95,6 +100,7 @@ export default async function (req: Request) {
         create: plan.create.length, update: plan.update.length, same: plan.same,
         conflict: plan.conflict.slice(0, 50), conflict_count: plan.conflict.length,
         locked: plan.locked.slice(0, 50), locked_count: plan.locked.length,
+        voided: plan.voided.slice(0, 50), voided_count: plan.voided.length,
       };
       if (body.action === 'preview') return Response.json(result);
 
@@ -122,12 +128,38 @@ export default async function (req: Request) {
     const sample = units[0]?.serial || '';
     const pick = (text: unknown) => expandRange(s(text, 20000), sample).map((x) => bySerial.get(x)).filter(Boolean);
 
+    if (body.action === 'register') {
+      const list = expandRange(s(body.serials, 2000), sample);
+      if (!list.length || list.some((x) => !/[A-Z]/.test(x))) return Response.json({ error: '시리얼 범위를 앞부분까지 넣어 주세요 (예: MHAFS1AA0001-5500)' }, { status: 400 });
+      if (list.length > 20000) return Response.json({ error: '한 번에 20,000개까지 등록할 수 있습니다' }, { status: 400 });
+      const others = new Set((await allUnits(db, { tenant_id: card.tenant_id })).filter((u) => u.card_id !== card.id).map((u) => u.serial));
+      const conflict = list.filter((x) => others.has(x));
+      const fresh = list.filter((x) => !bySerial.has(x) && !others.has(x));
+      const lot = s(body.lot, 40);
+      const rows = fresh.map((serial) => ({ tenant_id: card.tenant_id, card_id: card.id, client_id: card.client_id || '', serial, lot, verdict: VERDICT.PENDING, checks: {}, failed_items: [], disposition: '', updated_by_name: by, history: [{ at: now, by, action: '시리얼 등록', note: lot }] }));
+      for (let i = 0; i < rows.length; i += 200) await db.ProductionUnit.bulkCreate(rows.slice(i, i + 200));
+      try { await db.ProjectAuditLog.create({ tenant_id: card.tenant_id, card_id: card.id, event_type: 'PRODUCTION_REGISTER', actor_id: user.id, actor_name: by, details: `시리얼 등록 ${rows.length}개 (${s(body.serials, 200)})` }); } catch (_e) { /* 기록 실패 무시 */ }
+      return Response.json({ ok: true, created: rows.length, existing: list.length - fresh.length - conflict.length, conflict: conflict.slice(0, 50), conflict_count: conflict.length });
+    }
+
+    if (body.action === 'void') {
+      const wanted = expandRange(s(body.serials, 20000), sample);
+      const targets = wanted.map((x) => bySerial.get(x)).filter(Boolean);
+      const missing = wanted.filter((x) => !bySerial.has(x));
+      const shipped = targets.filter((u: any) => u.shipped_date).map((u: any) => u.serial);
+      const todo = targets.filter((u: any) => !u.shipped_date && u.disposition !== 'VOID');
+      const note = s(body.note, 300) || '스티커 불량';
+      for (const u of todo) await db.ProductionUnit.update(u.id, { disposition: 'VOID', pallet: '', fail_note: note, updated_by_name: by, history: log(u, '스티커 불량', note) });
+      return Response.json({ ok: true, updated: todo.length, missing: missing.slice(0, 50), missing_count: missing.length, skipped_shipped: shipped.slice(0, 50) });
+    }
+
     if (body.action === 'assign_pallet') {
       const pallet = s(body.pallet, 40);
       const targets = pick(body.serials);
       if (!targets.length) return Response.json({ error: '이 카드에서 해당 시리얼을 찾지 못했습니다' }, { status: 400 });
       const skipped = targets.filter((u: any) => u.shipped_date).map((u: any) => u.serial);
-      const todo = targets.filter((u: any) => !u.shipped_date);
+      // 생산 전·스티커 불량 번호에는 파레트를 붙이지 않는다
+      const todo = targets.filter((u: any) => !u.shipped_date && !['PENDING', 'VOID'].includes(unitStatus(u)));
       for (const u of todo) await db.ProductionUnit.update(u.id, { pallet, updated_by_name: by, history: log(u, pallet ? '파레트 지정' : '파레트 해제', pallet) });
       return Response.json({ ok: true, updated: todo.length, skipped_shipped: skipped.slice(0, 50) });
     }
@@ -139,11 +171,12 @@ export default async function (req: Request) {
       const note = s(body.note, 300);
       const act = String(body.disposition || '').toUpperCase();
       let patch: any;
-      if (act === 'REWORK' || act === 'SCRAP') { if (u.verdict === VERDICT.PASS) return Response.json({ error: '합격 제품은 불량 처리할 수 없습니다' }, { status: 400 }); patch = { disposition: act }; }
+      if (act === 'REWORK' || act === 'SCRAP') { if (['PENDING', 'VOID'].includes(unitStatus(u))) return Response.json({ error: '아직 검사 결과가 없는 번호입니다' }, { status: 400 }); if (u.verdict === VERDICT.PASS) return Response.json({ error: '합격 제품은 불량 처리할 수 없습니다' }, { status: 400 }); patch = { disposition: act }; }
+      else if (act === 'REPASS' && unitStatus(u) === 'VOID') return Response.json({ error: '스티커 불량 번호입니다. 먼저 표시를 해제하세요' }, { status: 400 });
       else if (act === 'REPASS') patch = { verdict: VERDICT.PASS, disposition: '', failed_items: [] };
       else if (act === 'CLEAR') patch = { disposition: '' };
       else return Response.json({ error: '처리 방법을 고르세요 (수리·폐기·재검사 합격)' }, { status: 400 });
-      const label = { REWORK: '수리', SCRAP: '폐기', REPASS: '재검사 합격', CLEAR: '처리 취소' }[act];
+      const label = { REWORK: '수리', SCRAP: '폐기', REPASS: '재검사 합격', CLEAR: u.disposition === 'VOID' ? '스티커 불량 해제' : '처리 취소' }[act];
       await db.ProductionUnit.update(u.id, { ...patch, ...(note ? { fail_note: note } : {}), updated_by_name: by, history: log(u, label, note) });
       return Response.json({ ok: true, unit: compact({ ...u, ...patch }) });
     }

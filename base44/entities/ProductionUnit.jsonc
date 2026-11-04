@@ -43,7 +43,8 @@
       "enum": [
         "PASS",
         "FAIL",
-        "INCOMPLETE"
+        "INCOMPLETE",
+        "PENDING"
       ],
       "description": "\uc885\ud569 \ud310\uc815 (\ud56d\ubaa9 \uacb0\uacfc\ub85c \uacc4\uc0b0)"
     },
@@ -75,7 +76,8 @@
       "enum": [
         "",
         "REWORK",
-        "SCRAP"
+        "SCRAP",
+        "VOID"
       ],
       "description": "\ubd88\ub7c9 \ucc98\ub9ac: \uc218\ub9ac \uc911 / \ud3d0\uae30"
     },

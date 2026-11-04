@@ -10,6 +10,7 @@ import { downloadCsv, fileDate, safeName } from '@/lib/csv';
 
 // 카드 '양산' 탭: 현장 검사 성적서(엑셀, 날짜별 시트)를 올려 시리얼마다 검사 결과를 남기고,
 // 파레트 지정 → 출하 처리 → 출고 시리얼 목록을 내려받는다. 불량(불합격)은 출하에서 자동으로 빠진다.
+// 스티커 번호 전체를 '생산 전'으로 미리 등록하고, 스티커 불량 번호는 '스티커 불량'으로 표시해 집계에서 뺀다.
 const STATUS = {
   READY: ['출하 대기', 'bg-primary/10 text-primary'],
   SHIPPED: ['출하됨', 'bg-success/15 text-success-text'],
@@ -17,6 +18,8 @@ const STATUS = {
   REWORK: ['수리 중', 'bg-warning/15 text-warning-text'],
   SCRAPPED: ['폐기', 'bg-muted text-muted-foreground'],
   INCOMPLETE: ['미검사 항목', 'bg-warning/15 text-warning-text'],
+  PENDING: ['생산 전', 'bg-muted text-muted-foreground'],
+  VOID: ['스티커 불량', 'bg-muted text-muted-foreground'],
 };
 const errorText = (e) => e?.response?.data?.error || e?.message || '처리하지 못했습니다';
 const call = async (body) => (await base44.functions.invoke('productionUnits', body)).data;
@@ -80,6 +83,20 @@ export default function ProductionTab({ card }) {
     toast({ title: `${res.shipped}대를 출하 처리했습니다`, description: res.skipped_count ? `출하 대기가 아닌 ${res.skipped_count}대는 빠졌습니다` : undefined });
   });
 
+  // ── 시리얼 등록·스티커 불량
+  const [reg, setReg] = useState({ serials: '', lot: '', voids: '' });
+  const register = () => run('register', async () => {
+    const res = await call({ action: 'register', card_id: card.id, serials: reg.serials, lot: reg.lot });
+    setReg((r) => ({ ...r, serials: '' })); refresh();
+    toast({ title: `시리얼 ${res.created.toLocaleString()}개를 등록했습니다`, description: [res.existing && `이미 있는 ${res.existing}개 건너뜀`, res.conflict_count && `다른 카드에 있는 ${res.conflict_count}개 건너뜀`].filter(Boolean).join(' · ') || undefined });
+  });
+  const markVoid = () => window.confirm('입력한 번호를 스티커 불량으로 표시할까요? 생산·출하 집계에서 빠집니다.') && run('void', async () => {
+    const res = await call({ action: 'void', card_id: card.id, serials: reg.voids });
+    setReg((r) => ({ ...r, voids: '' })); refresh();
+    toast({ title: `${res.updated}개를 스티커 불량으로 표시했습니다`, description: res.missing_count ? `등록되지 않은 번호 ${res.missing_count}개: ${res.missing.slice(0, 5).join(', ')}` : undefined });
+  });
+  const voids = units.filter((u) => u.status === 'VOID');
+
   // ── 불량 처리
   const dispose = (serial, disposition) => {
     const note = disposition === 'REWORK' || disposition === 'REPASS' ? window.prompt(disposition === 'REPASS' ? '수리 내용 (예: RF 모듈 교체)' : '불량 내용 (예: RF 출력 약함)', '') : '';
@@ -99,13 +116,14 @@ export default function ProductionTab({ card }) {
   const found = useMemo(() => { const t = q.trim().toUpperCase(); return t.length >= 3 ? units.filter((u) => u.serial.includes(t)).slice(0, 30) : []; }, [q, units]);
   const defects = units.filter((u) => ['FAILED', 'REWORK', 'INCOMPLETE', 'SCRAPPED'].includes(u.status));
   const c = sm.counts || {};
+  const registered = (c.total || 0) > 0;
 
   if (isLoading) return <p className="py-8 text-center text-body text-muted-foreground">불러오는 중…</p>;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        {[['전체', c.total || 0, ''], ...Object.entries(STATUS).map(([k, [label, cls]]) => [label, c[k] || 0, cls])].filter(([, n], i) => i === 0 || n).map(([label, n, cls]) => (
+        {[['등록', c.total || 0, ''], ['생산', c.produced || 0, ''], ...Object.entries(STATUS).map(([k, [label, cls]]) => [label, c[k] || 0, cls])].filter(([, n], i) => i < 2 || n).map(([label, n, cls]) => (
           <span key={label} className={`rounded-full border px-3 py-1 text-caption ${cls}`}>{label} <b className="tabular-nums">{n}</b></span>
         ))}
         <div className="ml-auto flex gap-1.5">
@@ -128,6 +146,7 @@ export default function ProductionTab({ card }) {
           <p className="mt-3 text-body">새로 등록 <b>{upload.preview.create}</b>대 · 결과 갱신 <b>{upload.preview.update}</b>대 · 그대로 {upload.preview.same}대</p>
           {!!upload.preview.conflict_count && <p className="mt-1 text-caption text-destructive">다른 카드에 이미 있는 시리얼 {upload.preview.conflict_count}대는 건너뜁니다: {upload.preview.conflict.slice(0, 10).join(', ')}{upload.preview.conflict_count > 10 ? ' …' : ''}</p>}
           {!!upload.preview.locked_count && <p className="mt-1 text-caption text-warning-text">이미 출하된 {upload.preview.locked_count}대는 결과를 바꾸지 않습니다.</p>}
+          {!!upload.preview.voided_count && <p className="mt-1 text-caption text-muted-foreground">스티커 불량으로 표시한 번호 {upload.preview.voided_count}개는 성적서에 있어도 제품으로 등록하지 않습니다.</p>}
           {!!upload.preview.warnings?.length && <ul className="mt-2 space-y-0.5 rounded-lg bg-warning/10 p-2 text-caption text-warning-text">{upload.preview.warnings.slice(0, 8).map((w) => <li key={w} className="flex gap-1"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{w}</li>)}</ul>}
           <div className="mt-3 flex flex-wrap items-end gap-2">
             {upload.preview.sheets.some((s) => s.count && !s.lot) && <label className="text-label">LOT (성적서에 비어 있으면)<Input className="mt-1 h-9 w-40" value={lot} placeholder="예: 1차" onChange={(e) => setLot(e.target.value)} /></label>}
@@ -136,15 +155,39 @@ export default function ProductionTab({ card }) {
         </Section>
       )}
 
-      {!units.length && !upload && (
+      {!registered && !upload && (
         <div className="rounded-xl border border-dashed p-8 text-center">
           <FileSpreadsheet className="mx-auto h-8 w-8 text-muted-foreground" />
           <p className="mt-2 text-body font-medium">아직 등록된 시리얼이 없습니다</p>
-          <p className="mt-1 text-caption text-muted-foreground">현장의 검사 성적서(날짜별 시트, 시리얼·검사 항목·종합 판정)를 그대로 올리면 시리얼마다 검사 결과가 등록됩니다. 스티커 불량으로 버린 번호는 성적서에 없으니 따로 관리하지 않아도 됩니다.</p>
+          <p className="mt-1 text-caption text-muted-foreground">먼저 아래 '시리얼 등록'에서 스티커 번호 전체를 등록하거나, 현장의 검사 성적서(날짜별 시트)를 바로 올리세요. 성적서를 올리면 시리얼마다 검사 결과가 등록됩니다.</p>
         </div>
       )}
 
-      {!!units.length && (
+      <Section title="시리얼 등록 · 스티커 불량" hint="스티커 번호 전체를 '생산 전'으로 미리 등록해 두면 성적서가 들어올 때 검사 결과로 바뀝니다. 스티커가 망가져 버린 번호는 스티커 불량으로 표시하세요 (생산·출하 집계에서 빠짐).">
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="text-label">등록할 번호 범위<Input className="mt-1 h-9 w-72 font-mono" value={reg.serials} placeholder="예: MHAFS1AA0001-5500" onChange={(e) => setReg((r) => ({ ...r, serials: e.target.value }))} /></label>
+          <label className="text-label">LOT<Input className="mt-1 h-9 w-28" value={reg.lot} placeholder="1차" onChange={(e) => setReg((r) => ({ ...r, lot: e.target.value }))} /></label>
+          <Button variant="outline" disabled={!!busy || !reg.serials.trim()} onClick={register}>{busy === 'register' && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}등록</Button>
+          {!!c.PENDING && <span className="text-caption text-muted-foreground">생산 전 {c.PENDING.toLocaleString()}개</span>}
+        </div>
+        {registered && (
+          <div className="mt-3 flex flex-wrap items-end gap-2">
+            <label className="text-label">스티커 불량 번호 (범위·쉼표·줄바꿈)<textarea className="mt-1 block h-16 w-72 rounded-md border bg-background px-3 py-2 font-mono text-label" value={reg.voids} placeholder="예: 3775, 3976, 4016-4017" onChange={(e) => setReg((r) => ({ ...r, voids: e.target.value }))} /></label>
+            <Button variant="outline" disabled={!!busy || !reg.voids.trim()} onClick={markVoid}>{busy === 'void' && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}스티커 불량 표시</Button>
+          </div>
+        )}
+        {!!voids.length && (
+          <details className="mt-3 text-caption">
+            <summary className="cursor-pointer text-muted-foreground">스티커 불량 {voids.length}개 보기</summary>
+            <ul className="mt-2 flex flex-wrap gap-1.5">{voids.map((u) => (
+              <li key={u.serial} className="flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono">{u.serial.slice(-4)}
+                <button type="button" className="text-muted-foreground hover:text-foreground" aria-label={`${u.serial} 스티커 불량 해제`} title="표시 해제" disabled={!!busy} onClick={() => window.confirm(`${u.serial} 의 스티커 불량 표시를 해제할까요?`) && dispose(u.serial, 'CLEAR')}>×</button>
+              </li>
+            ))}</ul>
+          </details>
+        )}
+      </Section>
+      {registered && (
         <>
           <Section title="일별 생산" hint="성적서 시트 날짜 기준">
             <div className="overflow-x-auto"><table className="w-full whitespace-nowrap text-label">

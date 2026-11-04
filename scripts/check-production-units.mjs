@@ -93,4 +93,30 @@ assert.equal(res.data.results[0].shipped_date, '2026-11-06');
 assert.ok(res.data.results[0].history.some((h) => h.action === '출하'));
 res = await call('productionUnits', { action: 'unship', card_id: 'n30', serials: 'MHAFS1AA5001' });
 assert.equal(res.data.updated, 1);
+
+// ── 스티커 번호 미리 등록과 스티커 불량
+globalThis.__db.TaskCard.push({ id: 'pre-card', tenant_id: 't1', title: 'N30 2차', client_id: 'co1' });
+res = await call('productionUnits', { action: 'register', card_id: 'pre-card', serials: '0001-0010' });
+assert.equal(res.status, 400, '처음 등록은 앞부분까지');
+res = await call('productionUnits', { action: 'register', card_id: 'pre-card', serials: 'MHAFS1AB0001-MHAFS1AB0010', lot: '2차' });
+assert.deepEqual([res.data.created, res.data.existing], [10, 0]);
+res = await call('productionUnits', { action: 'register', card_id: 'pre-card', serials: '0009-0012' });
+assert.deepEqual([res.data.created, res.data.existing], [2, 2], '숫자만 넣어도 되고 있는 번호는 건너뜀');
+res = await call('productionUnits', { action: 'void', card_id: 'pre-card', serials: '0003, 0011, 0099' });
+assert.deepEqual([res.data.updated, res.data.missing_count], [2, 1]);
+res = await call('productionUnits', { action: 'assign_pallet', card_id: 'pre-card', serials: '0001-0004', pallet: 'P-1' });
+assert.equal(res.data.updated, 0, '생산 전·스티커 불량 번호에는 파레트를 붙이지 않는다');
+// 성적서 양식에 스티커 불량 번호 줄이 pass 로 남아 있어도 제품으로 보지 않는다
+book = [sheet('검사성적서_20261110', '2026.11.10', [['MHAFS1AB0001'], ['MHAFS1AB0002'], ['MHAFS1AB0003']])];
+res = await call('productionUnits', { action: 'import', card_id: 'pre-card', file_url: 'u', file_name: '2차.xlsx' });
+assert.deepEqual([res.data.create, res.data.update, res.data.voided_count], [0, 2, 1]);
+res = await call('productionUnits', { action: 'list', card_id: 'pre-card' });
+const c2 = res.data.summary.counts;
+assert.deepEqual([c2.total, c2.PENDING, c2.VOID, c2.READY, c2.produced], [12, 8, 2, 2, 2]);
+assert.equal(res.data.units.length, 4, '생산 전 번호는 목록에서 빼고 숫자로만');
+assert.equal(res.data.summary.days[0].count, 2, '일별 생산에 스티커 불량은 안 들어간다');
+res = await call('productionUnits', { action: 'ship', card_id: 'pre-card', serials: '0001-0005', date: '2026-11-11' });
+assert.deepEqual([res.data.shipped, res.data.skipped_count], [2, 3], '생산 전·스티커 불량은 출하 안 됨');
+res = await call('productionUnits', { action: 'dispose', card_id: 'pre-card', serial: 'MHAFS1AB0003', disposition: 'CLEAR' });
+assert.equal(res.data.unit.status, 'PENDING', '스티커 불량 해제');
 console.log('production-units ok');

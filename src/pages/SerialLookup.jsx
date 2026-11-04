@@ -13,6 +13,8 @@ const STATUS = {
   REWORK: ['수리 중', 'bg-warning/15 text-warning-text'],
   SCRAPPED: ['폐기', 'bg-muted text-muted-foreground'],
   INCOMPLETE: ['미검사 항목', 'bg-warning/15 text-warning-text'],
+  PENDING: ['생산 전', 'bg-muted text-muted-foreground'],
+  VOID: ['스티커 불량', 'bg-muted text-muted-foreground'],
 };
 // 성적서 항목 결과는 'pass' | 'fail' | '' (빈칸 = 미검사)
 const resultClass = (v) => (v === 'pass' ? 'text-success-text' : v === 'fail' ? 'text-destructive' : 'text-muted-foreground');
