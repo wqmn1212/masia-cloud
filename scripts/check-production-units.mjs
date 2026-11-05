@@ -119,4 +119,5 @@ res = await call('productionUnits', { action: 'ship', card_id: 'pre-card', seria
 assert.deepEqual([res.data.shipped, res.data.skipped_count], [2, 3], '생산 전·스티커 불량은 출하 안 됨');
 res = await call('productionUnits', { action: 'dispose', card_id: 'pre-card', serial: 'MHAFS1AB0003', disposition: 'CLEAR' });
 assert.equal(res.data.unit.status, 'PENDING', '스티커 불량 해제');
+assert.ok((globalThis.__bulkUpdates || []).length, '여러 대는 bulkUpdate 로 묶어 고친다');
 console.log('production-units ok');

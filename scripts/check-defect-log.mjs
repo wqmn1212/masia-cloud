@@ -62,6 +62,7 @@ assert.equal(res.status, 400, '종류를 안 정하면 저장하지 않는다');
 res = await call('defectLog', { action: 'apply', card_id: 'n30', file_url: 'u', file_name: '261104_불량시리얼넘버.xlsx', kind: 'STICKER' });
 assert.equal(res.status, 200, JSON.stringify(res.data));
 assert.deepEqual([res.data.serials.updated, res.data.serials.created, res.data.serials.conflict], [1, 1, ['MHAFS1AA3775']]);
+assert.ok(globalThis.__bulkUpdates.some((b) => b.name === 'ProductionUnit'), '시리얼은 한꺼번에(bulkUpdate) 고친다 — 하나씩 고치면 1분 요청 한도에 걸린다');
 const u3988 = globalThis.__db.ProductionUnit.find((x) => x.serial === 'MHAFS1AA3988');
 assert.deepEqual([u3988.disposition, u3988.pallet], ['VOID', ''], '스티커 불량 표시, 파레트 해제');
 assert.equal(globalThis.__db.ProductionUnit.find((x) => x.serial === 'MHAFS1AA3976').disposition, 'VOID', '등록 안 된 번호는 스티커 불량으로 새로 등록');

@@ -1,5 +1,6 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.59';
 import { readWorkbook } from '../../shared/workbook.ts';
+import { updateAll } from '../../shared/bulkUpdate.ts';
 import { recordInspectionDefects } from '../../shared/defectStore.ts';
 import { parseInspectionSheets, expandRange, productionSummary, unitStatus, VERDICT } from '../../shared/productionUnits.ts';
 
@@ -101,15 +102,14 @@ export default async function (req: Request) {
         disposition: '', source_file: fileName, updated_by_name: by, history: [{ at: now, by, action: '성적서 등록', note: `${fileName} · ${p.sheet}` }],
       }));
       for (let i = 0; i < rows.length; i += 200) await db.ProductionUnit.bulkCreate(rows.slice(i, i + 200));
-      for (const { cur, p } of plan.update) {
-        await db.ProductionUnit.update(cur.id, {
+      await updateAll(db.ProductionUnit, plan.update.map(({ cur, p }) => ({
+        id: cur.id,
           checks: p.checks, verdict: p.verdict, failed_items: p.failed_items, inspected_date: p.inspected_date || cur.inspected_date, sheet: p.sheet,
           ...(p.pallet ? { pallet: p.pallet } : {}), ...(p.fail_note ? { fail_note: p.fail_note } : {}), ...(p.inspector ? { inspector: p.inspector } : {}),
           // 다시 합격하면 수리 중 표시는 지운다 (폐기는 그대로)
           ...(p.verdict === VERDICT.PASS && cur.disposition === 'REWORK' ? { disposition: '' } : {}),
           source_file: fileName, updated_by_name: by, history: log(cur, '성적서 갱신', `${cur.verdict} → ${p.verdict} · ${p.sheet}`),
-        });
-      }
+      })));
       // 불합격 제품은 카드 불량 기록('양산 검사')으로도 남겨 다음 QC 검토 때 비슷한 불량을 찾을 수 있게 한다
       const defects = await recordInspectionDefects(db, card, [...plan.create, ...plan.update.map((x) => x.p)], fileName, by).catch(() => ({ created: 0, skipped: 0 }));
       try { await db.ProjectAuditLog.create({ tenant_id: card.tenant_id, card_id: card.id, event_type: 'PRODUCTION_IMPORT', actor_id: user.id, actor_name: by, details: `검사 성적서 등록 ${fileName}: 새로 ${rows.length}대 · 갱신 ${plan.update.length}대 · 충돌 ${plan.conflict.length}` }); } catch (_e) { /* 기록 실패가 등록을 막지 않는다 */ }
@@ -141,7 +141,7 @@ export default async function (req: Request) {
       const shipped = targets.filter((u: any) => u.shipped_date).map((u: any) => u.serial);
       const todo = targets.filter((u: any) => !u.shipped_date && u.disposition !== 'VOID');
       const note = s(body.note, 300) || '스티커 불량';
-      for (const u of todo) await db.ProductionUnit.update(u.id, { disposition: 'VOID', pallet: '', fail_note: note, updated_by_name: by, history: log(u, '스티커 불량', note) });
+      await updateAll(db.ProductionUnit, todo.map((u: any) => ({ id: u.id, disposition: 'VOID', pallet: '', fail_note: note, updated_by_name: by, history: log(u, '스티커 불량', note) })));
       return Response.json({ ok: true, updated: todo.length, missing: missing.slice(0, 50), missing_count: missing.length, skipped_shipped: shipped.slice(0, 50) });
     }
 
@@ -152,7 +152,7 @@ export default async function (req: Request) {
       const skipped = targets.filter((u: any) => u.shipped_date).map((u: any) => u.serial);
       // 생산 전·스티커 불량 번호에는 파레트를 붙이지 않는다
       const todo = targets.filter((u: any) => !u.shipped_date && !['PENDING', 'VOID'].includes(unitStatus(u)));
-      for (const u of todo) await db.ProductionUnit.update(u.id, { pallet, updated_by_name: by, history: log(u, pallet ? '파레트 지정' : '파레트 해제', pallet) });
+      await updateAll(db.ProductionUnit, todo.map((u: any) => ({ id: u.id, pallet, updated_by_name: by, history: log(u, pallet ? '파레트 지정' : '파레트 해제', pallet) })));
       return Response.json({ ok: true, updated: todo.length, skipped_shipped: skipped.slice(0, 50) });
     }
 
@@ -183,14 +183,14 @@ export default async function (req: Request) {
       const skipped = uniq.filter((u: any) => unitStatus(u) !== 'READY').map((u: any) => ({ serial: u.serial, status: unitStatus(u) }));
       const label = s(body.label, 60);
       const shipmentId = s(body.shipment_id, 60);
-      for (const u of ready) await db.ProductionUnit.update(u.id, { shipped_date: body.date, shipment_label: label, shipment_id: shipmentId, updated_by_name: by, history: log(u, '출하', `${body.date}${label ? ` · ${label}` : ''}`) });
+      await updateAll(db.ProductionUnit, ready.map((u: any) => ({ id: u.id, shipped_date: body.date, shipment_label: label, shipment_id: shipmentId, updated_by_name: by, history: log(u, '출하', `${body.date}${label ? ` · ${label}` : ''}`) })));
       try { await db.ProjectAuditLog.create({ tenant_id: card.tenant_id, card_id: card.id, event_type: 'PRODUCTION_SHIP', actor_id: user.id, actor_name: by, details: `${body.date} 출하 ${ready.length}대${label ? ` (${label})` : ''}` }); } catch (_e) { /* 기록 실패 무시 */ }
       return Response.json({ ok: true, shipped: ready.length, skipped: skipped.slice(0, 100), skipped_count: skipped.length });
     }
 
     if (body.action === 'unship') {
       const targets = pick(body.serials).filter((u: any) => u.shipped_date);
-      for (const u of targets) await db.ProductionUnit.update(u.id, { shipped_date: '', shipment_label: '', shipment_id: '', updated_by_name: by, history: log(u, '출하 취소', u.shipped_date) });
+      await updateAll(db.ProductionUnit, targets.map((u: any) => ({ id: u.id, shipped_date: '', shipment_label: '', shipment_id: '', updated_by_name: by, history: log(u, '출하 취소', u.shipped_date) })));
       return Response.json({ ok: true, updated: targets.length });
     }
 
