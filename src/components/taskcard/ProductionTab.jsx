@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/use-toast';
 import { downloadCsv, fileDate, safeName } from '@/lib/csv';
+import DefectInsights from './DefectInsights';
 
 // 카드 '양산' 탭: 현장 검사 성적서(엑셀, 날짜별 시트)를 올려 시리얼마다 검사 결과를 남기고,
 // 파레트 지정 → 출하 처리 → 출고 시리얼 목록을 내려받는다. 불량(불합격)은 출하에서 자동으로 빠진다.
@@ -256,6 +257,10 @@ export default function ProductionTab({ card }) {
               ))}</ul>
             </Section>
           )}
+
+          <Section title="불량 기록" hint="검사 성적서의 불합격과 AI 비서로 보낸 불량 엑셀이 쌓입니다. QC 검수 화면에서 비슷한 과거 불량과 함께 다시 보여 줍니다.">
+            <DefectInsights card={card} showSimilar={false} />
+          </Section>
 
           <Section title="시리얼 찾기" hint="이 카드 안에서 찾습니다. 다른 카드까지 찾으려면 왼쪽 메뉴 '시리얼 조회'를 쓰세요.">
             <div className="relative max-w-sm"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input className="h-9 pl-8 font-mono" value={q} placeholder="시리얼 또는 끝자리 (예: 3982)" onChange={(e) => setQ(e.target.value)} /></div>

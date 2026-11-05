@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
-import { assertPublicHttpUrl } from '../../shared/safeUrl.ts';
+import { readWorkbook } from '../../shared/workbook.ts';
+import { recordInspectionDefects } from '../../shared/defectStore.ts';
 import { parseInspectionSheets, expandRange, productionSummary, unitStatus, VERDICT } from '../../shared/productionUnits.ts';
 
 // 양산 시리얼 관리 (직원 전용). 카드 '양산' 탭과 '시리얼 조회' 메뉴가 쓴다.
@@ -14,7 +15,6 @@ import { parseInspectionSheets, expandRange, productionSummary, unitStatus, VERD
 //  'void'          {card_id, serials, note?} → 스티커 불량 번호 표시 (생산·출하에서 빠짐). 되돌리기는 dispose CLEAR
 //  'search'        {q} → 시리얼로 찾기 (팀 안, 마스터는 전체)
 const STAFF = ['master', 'service', 'sub'];
-const MAX_BYTES = 15 * 1024 * 1024;
 const s = (v: unknown, n = 200) => (typeof v === 'string' ? v.trim().slice(0, n) : '');
 const isDate = (v: unknown) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
 const compact = (u: any) => ({ id: u.id, serial: u.serial, lot: u.lot || '', inspected_date: u.inspected_date || '', verdict: u.verdict, failed_items: u.failed_items || [], fail_note: u.fail_note || '', pallet: u.pallet || '', box: u.box || '', disposition: u.disposition || '', shipped_date: u.shipped_date || '', shipment_label: u.shipment_label || '', status: unitStatus(u) });
@@ -29,16 +29,6 @@ async function allUnits(db: any, query: any) {
   return out;
 }
 
-async function readWorkbook(fileUrl: string) {
-  await assertPublicHttpUrl(fileUrl);
-  const res = await fetch(fileUrl);
-  if (!res.ok) throw new Error('성적서 파일을 내려받지 못했습니다');
-  const bytes = new Uint8Array(await res.arrayBuffer());
-  if (bytes.byteLength > MAX_BYTES) throw new Error('파일이 너무 큽니다 (15MB 이하)');
-  const XLSX: any = await import('npm:xlsx@0.18.5');
-  const wb = XLSX.read(bytes, { type: 'array' });
-  return wb.SheetNames.map((name: string) => ({ name, rows: XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: false, blankrows: false, defval: '' }) }));
-}
 
 export default async function (req: Request) {
   try {
@@ -79,7 +69,7 @@ export default async function (req: Request) {
       const fileUrl = s(body.file_url, 2000);
       if (!fileUrl) return Response.json({ error: '성적서 파일을 올려 주세요' }, { status: 400 });
       // 검산에서는 globalThis.__readWorkbook 으로 파일 읽기를 바꿔 끼운다
-      const parsed = parseInspectionSheets(await ((globalThis as any).__readWorkbook || readWorkbook)(fileUrl));
+      const parsed = parseInspectionSheets(await readWorkbook(fileUrl));
       if (!parsed.units.length) return Response.json({ error: '성적서에서 시리얼을 찾지 못했습니다', sheets: parsed.sheets, warnings: parsed.warnings }, { status: 400 });
       // 같은 팀의 다른 카드에 이미 있는 시리얼은 충돌로 건너뛴다
       const others = new Map((await allUnits(db, { tenant_id: card.tenant_id })).filter((u) => u.card_id !== card.id).map((u) => [u.serial, u]));
@@ -120,8 +110,10 @@ export default async function (req: Request) {
           source_file: fileName, updated_by_name: by, history: log(cur, '성적서 갱신', `${cur.verdict} → ${p.verdict} · ${p.sheet}`),
         });
       }
+      // 불합격 제품은 카드 불량 기록('양산 검사')으로도 남겨 다음 QC 검토 때 비슷한 불량을 찾을 수 있게 한다
+      const defects = await recordInspectionDefects(db, card, [...plan.create, ...plan.update.map((x) => x.p)], fileName, by).catch(() => ({ created: 0, skipped: 0 }));
       try { await db.ProjectAuditLog.create({ tenant_id: card.tenant_id, card_id: card.id, event_type: 'PRODUCTION_IMPORT', actor_id: user.id, actor_name: by, details: `검사 성적서 등록 ${fileName}: 새로 ${rows.length}대 · 갱신 ${plan.update.length}대 · 충돌 ${plan.conflict.length}` }); } catch (_e) { /* 기록 실패가 등록을 막지 않는다 */ }
-      return Response.json({ ok: true, ...result });
+      return Response.json({ ok: true, ...result, defect_logs: defects.created });
     }
 
     // 시리얼 목록 해석: 범위·쉼표·줄바꿈 (앞부분 없이 숫자만 넣으면 카드의 시리얼 형식으로)

@@ -10,6 +10,7 @@ import QCChecklistEditor, { DEFAULT_QC_ITEMS } from './QCChecklistEditor';
 import QCEvidenceUploader from './QCEvidenceUploader';
 import QCReportHistory from './QCReportHistory';
 import { hasGoldenSample } from '@/lib/goldenSample';
+import DefectInsights from './DefectInsights';
 
 const freshItems = () => DEFAULT_QC_ITEMS.map(label => ({ label, status: 'PENDING', note: '' }));
 export default function QCReportPanel({ card, user }) {
@@ -33,6 +34,7 @@ export default function QCReportPanel({ card, user }) {
   return <section className="mt-5 space-y-4 border-t pt-5"><div><h3 className="text-body font-semibold">품질 검수 관리</h3><p className="text-caption text-muted-foreground">샘플·양산품 체크리스트와 현장 증빙을 기록합니다.</p></div>
     <div className="grid grid-cols-2 gap-3"><div><Label className="text-caption">검수 유형</Label><Select value={type} onValueChange={setType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="SAMPLE">샘플 검수</SelectItem><SelectItem value="MASS_PRODUCTION">양산품 검수</SelectItem></SelectContent></Select></div><div><Label className="text-caption">최종 판정</Label><Select value={result} onValueChange={setResult}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PASS">합격</SelectItem><SelectItem value="CONDITIONAL_PASS">조건부 합격</SelectItem><SelectItem value="FAIL">불합격</SelectItem></SelectContent></Select></div></div>
     {sentSpec && <Button type="button" variant="outline" size="sm" className="h-7 text-caption" onClick={loadSpec}>품질 기준서 v{sentSpec.version || 1} 항목으로 체크리스트 채우기</Button>}
+    <DefectInsights card={card} text={(sentSpec?.items || []).map(i => i.label).join(' ')} onAdd={(label) => setItems(x => x.some(i => i.label === label) ? x : [...x, { label, status: 'PENDING', note: '' }])} />
     <QCChecklistEditor items={items} onChange={setItems} /><div><Label className="text-caption">판정 의견</Label><Textarea value={comments} onChange={e => setComments(e.target.value)} placeholder="조건부 합격 조건, 불량 내용, 재작업 지시 등을 입력하세요" /></div><QCEvidenceUploader files={files} onChange={setFiles} disabled={save.isPending} />
     {golden && type === 'MASS_PRODUCTION' && <label className="flex items-center gap-2 rounded-md border p-2 text-caption"><input type="checkbox" checked={compared} onChange={e => setCompared(e.target.checked)} />기준 샘플과 나란히 비교한 사진을 올렸습니다{card.golden_sample?.seal_no ? ` (${card.golden_sample.seal_no})` : ''}</label>}
     {error && <p className="text-caption text-destructive">{error}</p>}<Button onClick={() => save.mutate()} disabled={save.isPending}>{save.isPending ? '저장 중...' : '검수 결과 저장'}</Button><QCReportHistory card={card} user={user} reports={qc.data || []} />
