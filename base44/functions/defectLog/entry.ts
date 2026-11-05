@@ -1,5 +1,6 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.59';
 import { readWorkbook } from '../../shared/workbook.ts';
+import { updateAll } from '../../shared/bulkUpdate.ts';
 import { parseInspectionSheets, expandRange, unitStatus, VERDICT } from '../../shared/productionUnits.ts';
 import { parseDefectSheets, groupDefects, dateFromName, defectLine, DEFECT_KIND } from '../../shared/defects.ts';
 import { saveDefectGroups, similarRecords } from '../../shared/defectStore.ts';
@@ -67,6 +68,7 @@ export default async function (req: Request) {
       const mine = new Map((await allUnits(db, { card_id: card.id })).filter((u) => u.card_id === card.id).map((u) => [u.serial, u]));
       const others = new Set((await allUnits(db, { tenant_id: card.tenant_id })).filter((u) => u.card_id !== card.id).map((u) => u.serial));
       const fresh: any[] = [];
+      const patches: any[] = [];
       for (const it of withSerial) {
         if (others.has(it.serial)) { res.conflict.push(it.serial); continue; }
         const u = mine.get(it.serial);
@@ -74,13 +76,13 @@ export default async function (req: Request) {
         const log = (action: string) => [...(u?.history || []).slice(-30), { at: now, by, action, note: `${note}${it.date ? ` · ${it.date}` : ''}${it.stage ? ` · ${it.stage}` : ''}` }];
         if (u?.shipped_date) { res.shipped.push(it.serial); continue; }
         if (kind === 'STICKER') {
-          if (u) { if (u.disposition !== 'VOID') { await db.ProductionUnit.update(u.id, { disposition: 'VOID', pallet: '', fail_note: note, updated_by_name: by, history: log('스티커 불량') }); res.updated++; } }
+          if (u) { if (u.disposition !== 'VOID') patches.push({ id: u.id, disposition: 'VOID', pallet: '', fail_note: note, updated_by_name: by, history: log('스티커 불량') }); }
           else fresh.push({ serial: it.serial, verdict: VERDICT.PENDING, disposition: 'VOID', fail_note: note, history: log('스티커 불량') });
         } else if (u) {
-          await db.ProductionUnit.update(u.id, { verdict: VERDICT.FAIL, failed_items: [...new Set([...(u.failed_items || []), note])], fail_note: note, ...(u.disposition === 'VOID' ? { disposition: '' } : {}), inspected_date: u.inspected_date || it.date || '', pallet: '', updated_by_name: by, history: log('불량 등록') });
-          res.updated++;
+          patches.push({ id: u.id, verdict: VERDICT.FAIL, failed_items: [...new Set([...(u.failed_items || []), note])], fail_note: note, ...(u.disposition === 'VOID' ? { disposition: '' } : {}), inspected_date: u.inspected_date || it.date || '', pallet: '', updated_by_name: by, history: log('불량 등록') });
         } else fresh.push({ serial: it.serial, verdict: VERDICT.FAIL, failed_items: [note], fail_note: note, inspected_date: it.date || '', disposition: '', history: log('불량 등록') });
       }
+      res.updated = await updateAll(db.ProductionUnit, patches);
       const rows = fresh.map((f) => ({ tenant_id: card.tenant_id, card_id: card.id, client_id: card.client_id || '', checks: {}, updated_by_name: by, ...f }));
       for (let i = 0; i < rows.length; i += 200) await db.ProductionUnit.bulkCreate(rows.slice(i, i + 200));
       res.created = rows.length;

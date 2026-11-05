@@ -9,6 +9,7 @@ const entity = (name) => ({
   create: async (d) => { const r = { id: `${name}-${++seq}`, created_date: new Date().toISOString(), ...d }; (globalThis.__db[name] ||= []).push(r); return r; },
   update: async (id, d) => { const r = globalThis.__db[name].find((x) => x.id === id); Object.assign(r, d); return r; },
   bulkCreate: async (rows) => Promise.all(rows.map((d) => entity(name).create(d))),
+  bulkUpdate: async (rows) => { (globalThis.__bulkUpdates ||= []).push({ name, n: rows.length }); return Promise.all(rows.map(({ id, ...d }) => entity(name).update(id, d))); },
   delete: async (id) => { globalThis.__db[name] = (globalThis.__db[name] || []).filter((x) => x.id !== id); return {}; },
 });
 export function createClientFromRequest() {
