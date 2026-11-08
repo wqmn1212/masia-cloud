@@ -5,7 +5,7 @@ const sortBy = (rows, sort) => { if (!sort) return rows; const d = sort.startsWi
 const entity = (name) => ({
   list: async (sort, limit) => sortBy([...(globalThis.__db[name] ||= [])], sort).slice(0, limit || 1000),
   filter: async (q, sort, limit) => sortBy((globalThis.__db[name] ||= []).filter((r) => match(r, q)), sort).slice(0, limit || 1000),
-  get: async (id) => { const r = (globalThis.__db[name] || []).find((x) => x.id === id); if (!r) throw new Error('not found'); return r; },
+  get: async (id) => { const r = (globalThis.__db[name] || []).find((x) => x.id === id); if (!r) throw Object.assign(new Error('not found'), { status: 404 }); return r; },
   create: async (d) => { const r = { id: `${name}-${++seq}`, created_date: new Date().toISOString(), ...d }; (globalThis.__db[name] ||= []).push(r); return r; },
   update: async (id, d) => { const r = globalThis.__db[name].find((x) => x.id === id); Object.assign(r, d); return r; },
   bulkCreate: async (rows) => Promise.all(rows.map((d) => entity(name).create(d))),

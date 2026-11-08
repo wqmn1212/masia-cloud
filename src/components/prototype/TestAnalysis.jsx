@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/components/ui/use-toast';
 import Pill from '@/components/prototype/Pill';
 import { SEVERITY } from '@/lib/prototype';
-import { errorText } from '@/lib/prototypeApi';
+import { errorText, runDraft } from '@/lib/prototypeApi';
 
 const VERDICT = { WORKING: ['작동 확인', 'bg-success/15 text-success-text'], PARTIAL: ['부분 작동', 'bg-warning/15 text-warning-text'], NOT_WORKING: ['작동 안 함', 'bg-destructive/10 text-destructive'], UNKNOWN: ['판단 불가', 'bg-muted text-muted-foreground'] };
 const AREA = { CIRCUIT: '회로', BOM: '부품', FIRMWARE: '펌웨어', MECHANICAL: '기구', MOLD: '금형', TEST: '시험' };
@@ -29,9 +29,9 @@ export default function TestAnalysis({ project, test, onChanged, onVersionCreate
     const chosen = picked.map((i) => a.improvements[i]);
     const instruction = `시험 '${test.title}'의 개선안을 반영한다:\n${chosen.map((c) => `- [${AREA[c.area] || c.area}] ${c.title}: ${c.detail}`).join('\n')}`;
     try {
-      const res = await base44.functions.invoke('prototypeAction', { action: 'draft', project_id: project.id, base_version_id: test.version_id, source_test_id: test.id, instruction });
+      const { version } = await runDraft({ project_id: project.id, base_version_id: test.version_id, source_test_id: test.id, instruction });
       setPicked([]);
-      toast({ title: `개선안을 반영한 v${res.data.version.version_no} 초안을 만들었습니다` });
+      toast({ title: `개선안을 반영한 v${version.version_no} 초안을 만들었습니다` });
       onVersionCreated();
     } catch (e) { toast({ title: '새 버전을 만들지 못했습니다', description: errorText(e), variant: 'destructive' }); }
     setBusy('');

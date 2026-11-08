@@ -16,7 +16,7 @@ export default function DesignTab({ project, versions, user, onChanged }) {
   return (
     <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
       <aside className="space-y-3">
-        <AiDraftPanel project={project} baseVersion={selected || current} onCreated={(v) => { setSelectedId(v.id); onChanged(); }} />
+        <AiDraftPanel project={project} baseVersion={selectedId ? selected : (current || versions[0])} onCreated={(v) => { setSelectedId(v.id); onChanged(); }} />
         <div className="rounded-xl border bg-card p-2">
           <p className="px-2 py-1.5 text-caption font-semibold text-muted-foreground">설계 버전</p>
           {versions.length === 0 && <p className="px-2 pb-2 text-caption text-muted-foreground">아직 버전이 없습니다.</p>}
@@ -40,7 +40,7 @@ export default function DesignTab({ project, versions, user, onChanged }) {
               <p className="text-caption text-muted-foreground">{selected.source === 'AI' ? 'AI 초안' : '수동'} · {selected.created_by_name || '-'} · {fmtDate(selected.updated_date)}{selected.change_note ? ` · ${selected.change_note}` : ''}</p>
               {selected.review_note && <p className="mt-1 text-caption">검토 메모 ({selected.reviewed_by_name}): {selected.review_note}</p>}
             </div>
-            <VersionActions project={project} version={selected} versions={versions} user={user} onEdit={() => setEditing(true)} onChanged={onChanged} />
+            <VersionActions project={project} version={selected} user={user} onEdit={() => setEditing(true)} onChanged={onChanged} />
           </div>
           {selected.source === 'AI' && selected.status === 'DRAFT' && (
             <p className="rounded-lg bg-warning/10 px-3 py-2 text-caption text-warning-text">AI가 만든 검토 전 초안입니다. ‘검증 필요’ 부품은 데이터시트로 확인한 뒤 승인하세요. 실제 작동은 시제품 시험으로만 확인됩니다.</p>

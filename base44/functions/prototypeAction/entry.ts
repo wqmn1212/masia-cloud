@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
+import { openRiskCount, nextVersionNo, versionNoFix, cleanFiles } from '../../shared/prototype.ts';
 
 const MODEL = 'claude_opus_5_5';
 const AI_FILE = /\.(png|jpe?g|webp|gif|pdf)$/i;
@@ -44,9 +45,10 @@ const RULES = `규칙:
 
 const strip = (v) => {
   if (!v) return null;
-  const { id, created_date, updated_date, created_by_id, tenant_id, history, ...rest } = v;
+  const { id, created_date, updated_date, created_by_id, tenant_id, history, request_id, ...rest } = v;
   return rest;
 };
+const ACTIONS = ['draft', 'analyze_test', 'sign_file', 'add_files', 'remove_file', 'duplicate_version', 'approve_version', 'sync_risk'];
 
 async function signedInputs(svc, files) {
   const picks = (files || []).filter((f) => ['DRAWING', 'PHOTO', 'REFERENCE'].includes(f.category) && AI_FILE.test(f.name || '') && f.uri).slice(0, 6);
@@ -62,13 +64,47 @@ export default async function(req) {
     if (user.is_active === false || !['master', 'service', 'sub'].includes(user.account_tier)) return Response.json({ error: 'Forbidden' }, { status: 403 });
     const body = await req.json().catch(() => ({}));
     const { action, project_id } = body;
-    if (!project_id || !['draft', 'analyze_test', 'sign_file'].includes(action)) return Response.json({ error: '잘못된 요청입니다.' }, { status: 400 });
+    if (!project_id || !ACTIONS.includes(action)) return Response.json({ error: '잘못된 요청입니다.' }, { status: 400 });
 
     // 사용자 권한으로 읽어 팀 격리(RLS)를 지킨다
     const project = await base44.entities.ProtoProject.get(project_id).catch((e) => (e.status === 404 ? null : Promise.reject(e)));
     if (!project?.tenant_id) return Response.json({ error: '시제품을 찾을 수 없습니다.' }, { status: 404 });
     if (user.account_tier !== 'master' && project.tenant_id !== user.tenant_id) return Response.json({ error: 'Forbidden' }, { status: 403 });
     const svc = base44.asServiceRole;
+    const by = user.full_name || user.email;
+    const now = () => new Date().toISOString();
+    const loadVersions = () => base44.entities.ProtoDesignVersion.filter({ project_id: project.id }, '-version_no', 50);
+    // 목록에 보이는 미해결 위험 수 — 바뀌는 작업 뒤에만 다시 센다 (화면을 열기만 해서는 고치지 않는다)
+    const syncRisk = async (proj = project) => {
+      const [vs, ts] = await Promise.all([loadVersions(), base44.entities.ProtoTest.filter({ project_id: project.id }, '-created_date', 200)]);
+      const n = openRiskCount(vs.find((v) => v.id === proj.current_version_id) || vs[0], ts);
+      if ((proj.open_risk_count || 0) !== n) await svc.entities.ProtoProject.update(project.id, { open_risk_count: n });
+      return n;
+    };
+    // 동시에 같은 번호가 생기면 늦게 만든 쪽 번호를 끝으로 옮긴다
+    const settleVersionNo = async (version) => {
+      const fix = versionNoFix(version, await loadVersions());
+      if (fix == null) return version;
+      await svc.entities.ProtoDesignVersion.update(version.id, { version_no: fix });
+      return { ...version, version_no: fix };
+    };
+
+    // 파일 목록은 서버에서 최신 목록에 더하고 뺀다 — 두 사람이 동시에 올려도 한쪽이 사라지지 않게
+    if (action === 'add_files' || action === 'remove_file') {
+      const fresh = await svc.entities.ProtoProject.get(project.id);
+      let files = fresh.files || [];
+      if (action === 'add_files') {
+        const added = cleanFiles(body.files);
+        if (!added.length) return Response.json({ error: '올릴 파일 정보가 없습니다.' }, { status: 400 });
+        const ids = new Set(files.map((f) => f.id));
+        files = [...files, ...added.filter((f) => !ids.has(f.id))];
+      } else {
+        if (!files.some((f) => f.id === body.file_id)) return Response.json({ error: '파일을 찾을 수 없습니다.' }, { status: 404 });
+        files = files.filter((f) => f.id !== body.file_id);
+      }
+      await svc.entities.ProtoProject.update(project.id, { files });
+      return Response.json({ files });
+    }
 
     if (action === 'sign_file') {
       const { file_id, test_id } = body;
@@ -82,9 +118,46 @@ export default async function(req) {
       return Response.json({ url: signed_url }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
-    const versions = await base44.entities.ProtoDesignVersion.filter({ project_id: project.id }, '-version_no', 50);
+    const versions = await loadVersions();
+
+    if (action === 'sync_risk') return Response.json({ open_risk_count: await syncRisk() });
+
+    if (action === 'duplicate_version') {
+      const src = versions.find((v) => v.id === body.version_id);
+      if (!src) return Response.json({ error: '설계 버전을 찾을 수 없습니다.' }, { status: 404 });
+      const { id, created_date, updated_date, created_by_id, history, review_note, reviewed_by_name, reviewed_at, request_id, ...rest } = src;
+      const version = await svc.entities.ProtoDesignVersion.create({
+        ...rest, tenant_id: project.tenant_id, project_id: project.id, version_no: nextVersionNo(versions), source: 'MANUAL', status: 'REVIEW',
+        based_on_version_id: src.id, source_test_id: null, change_note: `v${src.version_no} 복제`, created_by_name: by,
+        history: [{ at: now(), by, action: `v${src.version_no}에서 복제`, note: '' }],
+      });
+      return Response.json({ version: await settleVersionNo(version) });
+    }
+
+    if (action === 'approve_version') {
+      const target = versions.find((v) => v.id === body.version_id);
+      if (!target) return Response.json({ error: '설계 버전을 찾을 수 없습니다.' }, { status: 404 });
+      if (target.status === 'APPROVED') return Response.json({ error: '이미 승인된 버전입니다.' }, { status: 409 });
+      const note = String(body.note || '').slice(0, 1000);
+      await svc.entities.ProtoDesignVersion.update(target.id, {
+        status: 'APPROVED', review_note: note, reviewed_by_name: by, reviewed_at: now(),
+        history: [...(target.history || []), { at: now(), by, action: '승인', note }],
+      });
+      // 이전 승인본은 '대체됨'으로 — 승인 버전은 늘 하나
+      for (const old of versions.filter((v) => v.status === 'APPROVED' && v.id !== target.id)) {
+        await svc.entities.ProtoDesignVersion.update(old.id, { status: 'SUPERSEDED', history: [...(old.history || []), { at: now(), by, action: `v${target.version_no} 승인으로 대체`, note: '' }] });
+      }
+      const patch = { current_version_id: target.id, ...(['REQUIREMENTS', 'DESIGN', 'IMPROVE'].includes(project.stage) ? { stage: 'BUILD' } : {}) };
+      await svc.entities.ProtoProject.update(project.id, patch);
+      await syncRisk({ ...project, ...patch });
+      return Response.json({ ok: true });
+    }
 
     if (action === 'draft') {
+      // 같은 요청을 다시 받으면(화면이 시간 초과로 실패를 보고 다시 누른 경우) 이미 만든 버전을 돌려준다
+      const requestId = typeof body.request_id === 'string' ? body.request_id.slice(0, 80) : '';
+      const done = requestId && versions.find((v) => v.request_id === requestId);
+      if (done) return Response.json({ version: done, reused: true });
       const base = body.base_version_id ? versions.find((v) => v.id === body.base_version_id) : versions.find((v) => v.id === project.current_version_id);
       let sourceTest = null;
       if (body.source_test_id) {
@@ -110,22 +183,24 @@ ${RULES}
 change_note 에는 기준 설계 대비 바뀐 점(처음이면 '첫 초안')을 쓴다.`;
       const file_urls = await signedInputs(svc, project.files);
       const draft = await svc.integrations.Core.InvokeLLM({ prompt, response_json_schema: DRAFT_SCHEMA, model: MODEL, ...(file_urls.length ? { file_urls } : {}) });
-      const now = new Date().toISOString();
-      const by = user.full_name || user.email;
-      const version = await svc.entities.ProtoDesignVersion.create({
+      const created = await svc.entities.ProtoDesignVersion.create({
         ...draft,
         tenant_id: project.tenant_id,
         project_id: project.id,
-        version_no: (versions[0]?.version_no || 0) + 1,
+        request_id: requestId || null,
+        version_no: nextVersionNo(await loadVersions()),
         source: 'AI',
         status: 'DRAFT',
         based_on_version_id: base?.id || null,
         source_test_id: sourceTest?.id || null,
         created_by_name: by,
-        history: [{ at: now, by, action: 'AI 초안 생성', note: body.instruction ? String(body.instruction).slice(0, 300) : '' }],
+        history: [{ at: now(), by, action: 'AI 초안 생성', note: body.instruction ? String(body.instruction).slice(0, 300) : '' }],
       });
-      await svc.entities.ProtoProject.update(project.id, { stage: 'DESIGN' });
+      const version = await settleVersionNo(created);
+      // 처음 초안일 때만 '설계' 단계로 — 제작·시험·개선 중에는 단계를 되돌리지 않는다
+      if (project.stage === 'REQUIREMENTS') await svc.entities.ProtoProject.update(project.id, { stage: 'DESIGN' });
       if (sourceTest) await svc.entities.ProtoTest.update(sourceTest.id, { improvement_version_id: version.id });
+      await syncRisk();
       return Response.json({ version });
     }
 
