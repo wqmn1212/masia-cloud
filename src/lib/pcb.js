@@ -19,6 +19,12 @@ export const lcscSearchUrl = (v) => `https://www.lcsc.com/search?q=${encodeURICo
 
 const key = (r) => `${r.ref || ''}|${r.name || ''}`;
 
+// SMT 조립 대상이 아닌 줄: 기구·기판 자체·케이블·하우징 등 (AI 가 smt 를 안 줬을 때만 짐작한다)
+const NON_SMT_REF = /^(MECH|PCB|CASE|HOUSING|HW|CBL|CABLE|WIRE|SCREW|LABEL)/i;
+const NON_SMT_NAME = /(기구|하우징|케이스|나사|케이블|전선|하네스|라벨|PCB 기판|원판|방열판|어댑터)/;
+export const guessSmt = (r) => !(NON_SMT_REF.test(String(r.ref || '').trim()) || NON_SMT_NAME.test(String(r.name || '')));
+export const isSmt = (r) => (typeof r.smt === 'boolean' ? r.smt : guessSmt(r));
+
 /**
  * 설계 부품표에서 PCB 확정 행을 만든다. 이미 확정한 값(같은 Ref·부품명)은 그대로 이어 쓴다.
  * 돌려줌: [{ ref, name, part_no, manufacturer, qty, comment, footprint, lcsc, lcsc_type }]
@@ -29,15 +35,17 @@ export function seedPcbRows(bom = [], previous = []) {
     const p = prev.get(key(b)) || {};
     return {
       ref: b.ref || '', name: b.name || '', part_no: b.part_no || '', manufacturer: b.manufacturer || '', qty: Number(b.qty) || 0,
-      comment: p.comment ?? (b.part_no || b.name || ''), footprint: p.footprint || '', lcsc: p.lcsc || '', lcsc_type: p.lcsc_type || '',
+      comment: p.comment ?? (b.part_no || b.name || ''), footprint: p.footprint || b.footprint || '', lcsc: p.lcsc || '', lcsc_type: p.lcsc_type || '',
+      smt: typeof p.smt === 'boolean' ? p.smt : typeof b.smt === 'boolean' ? b.smt : guessSmt(b),
     };
   });
 }
 
-/** 확정 현황 */
+/** 확정 현황 (SMT 조립 대상만 센다) */
 export function pcbSummary(rows = []) {
-  const s = { total: rows.length, confirmed: 0, invalid: 0, missing: 0, basic: 0, extended: 0, noFootprint: 0 };
-  for (const r of rows) {
+  const smt = rows.filter(isSmt);
+  const s = { total: smt.length, confirmed: 0, invalid: 0, missing: 0, basic: 0, extended: 0, noFootprint: 0, excluded: rows.length - smt.length };
+  for (const r of smt) {
     if (!r.lcsc) s.missing++;
     else if (!isLcsc(r.lcsc)) s.invalid++;
     else s.confirmed++;
@@ -49,21 +57,31 @@ export function pcbSummary(rows = []) {
 }
 
 const natural = (a, b) => a.localeCompare(b, 'en', { numeric: true });
-const splitRefs = (ref) => String(ref || '').split(/[,\s;]+/).map((x) => x.trim()).filter(Boolean);
+/** 'R1,R2' · 'SW1~SW3' · 'R1-R4' · 'C1 C2' → ['R1','R2'] / ['SW1','SW2','SW3'] … (범위는 앞글자가 같을 때만 푼다) */
+export function expandRefs(ref) {
+  const out = [];
+  for (const part of String(ref || '').split(/[,\s;]+/).map((x) => x.trim()).filter(Boolean)) {
+    const m = part.match(/^([A-Za-z_]+)(\d+)\s*[~\-–]\s*([A-Za-z_]*)(\d+)$/);
+    if (m && (!m[3] || m[3] === m[1]) && Number(m[4]) >= Number(m[2]) && Number(m[4]) - Number(m[2]) <= 200) {
+      for (let n = Number(m[2]); n <= Number(m[4]); n++) out.push(`${m[1]}${n}`);
+    } else out.push(part);
+  }
+  return out;
+}
 
 /**
- * JLCPCB 부품표 (Comment · Designator · Footprint · LCSC Part #).
- * 같은 값·실장 모양·부품번호는 한 줄로 묶고 Designator 를 이어 붙인다.
+ * JLCPCB 부품표 (Comment · Designator · Footprint · LCSC Part #). SMT 조립 대상이 아닌 줄은 뺀다.
+ * 같은 값·실장 모양·부품번호는 한 줄로 묶고 Designator 를 이어 붙인다 (범위 표기는 풀어서).
  */
 export function jlcBomRows(rows = []) {
   const groups = new Map();
-  for (const r of rows) {
+  for (const r of rows.filter(isSmt)) {
     const comment = String(r.comment || r.part_no || r.name || '').trim();
     const footprint = String(r.footprint || '').trim();
     const lcsc = isLcsc(r.lcsc) ? r.lcsc : '';
     const k = `${comment}|${footprint}|${lcsc}`;
     const g = groups.get(k) || { Comment: comment, Footprint: footprint, 'LCSC Part #': lcsc, refs: [] };
-    g.refs.push(...splitRefs(r.ref));
+    g.refs.push(...expandRefs(r.ref));
     groups.set(k, g);
   }
   return [...groups.values()]

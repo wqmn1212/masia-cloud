@@ -12,7 +12,7 @@ import { actorName, errorText } from '@/lib/prototypeApi';
 
 const BOM_COLS = [
   { key: 'ref', label: 'Ref', width: 60 }, { key: 'name', label: '부품명', width: 140 }, { key: 'manufacturer', label: '제조사' },
-  { key: 'part_no', label: '부품번호', width: 140 }, { key: 'qty', label: '수량', width: 56, type: 'number' }, { key: 'voltage', label: '전압', width: 80 },
+  { key: 'part_no', label: '부품번호', width: 140 }, { key: 'footprint', label: '실장 모양', width: 90 }, { key: 'qty', label: '수량', width: 56, type: 'number' }, { key: 'voltage', label: '전압', width: 80 },
   { key: 'current', label: '전류', width: 80 }, { key: 'interface', label: '인터페이스' },
   { key: 'verify_status', label: '검증', options: Object.entries(VERIFY_STATUS).map(([value, m]) => ({ value, label: m.label })) },
   { key: 'basis', label: '근거', width: 180 },
