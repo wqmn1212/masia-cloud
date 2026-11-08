@@ -1,0 +1,353 @@
+{
+  "name": "ProtoDesignVersion",
+  "type": "object",
+  "description": "\uc2dc\uc81c\ud488 \uc124\uacc4 \ubc84\uc804 (AI \ucd08\uc548 \ub610\ub294 \uc218\ub3d9). \ubd80\ud488\ud45c\u00b7\uc5f0\uacb0 \uad00\uacc4\u00b7\ud68c\ub85c\u00b7\ud38c\uc6e8\uc5b4\u00b7\uc0ac\ucd9c\u00b7\uae08\ud615 \ucd08\uc548\uacfc \uadfc\uac70\u00b7\uac00\uc815\u00b7\uc704\ud5d8",
+  "properties": {
+    "tenant_id": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "version_no": {
+      "type": "number"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "AI",
+        "MANUAL"
+      ],
+      "default": "AI"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "REVIEW",
+        "APPROVED",
+        "REJECTED"
+      ],
+      "enumColors": [
+        "purple",
+        "yellow",
+        "green",
+        "red"
+      ],
+      "default": "DRAFT"
+    },
+    "based_on_version_id": {
+      "type": "string"
+    },
+    "source_test_id": {
+      "type": "string",
+      "description": "\uac1c\uc120\uc548\uc744 \ubc18\uc601\ud574 \ub9cc\ub4e0 \uacbd\uc6b0 \uc6d0\uc778 \uc2dc\ud5d8"
+    },
+    "change_note": {
+      "type": "string",
+      "description": "\uc774 \ubc84\uc804\uc5d0\uc11c \ubc14\ub010 \uc810"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "operating_principle": {
+      "type": "string",
+      "description": "\uc81c\ud488 \uad6c\uc131\uacfc \ub3d9\uc791 \uc6d0\ub9ac"
+    },
+    "architecture": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "block": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "bom": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "part_no": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "number"
+          },
+          "voltage": {
+            "type": "string"
+          },
+          "current": {
+            "type": "string"
+          },
+          "interface": {
+            "type": "string"
+          },
+          "function": {
+            "type": "string"
+          },
+          "verify_status": {
+            "type": "string",
+            "enum": [
+              "VERIFIED",
+              "NEEDS_CHECK",
+              "ASSUMED"
+            ]
+          },
+          "basis": {
+            "type": "string",
+            "description": "\uc120\uc815 \uadfc\uac70"
+          }
+        }
+      }
+    },
+    "connections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "signal": {
+            "type": "string"
+          },
+          "voltage": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "power_budget": {
+      "type": "string"
+    },
+    "circuit_notes": {
+      "type": "string"
+    },
+    "firmware_draft": {
+      "type": "string",
+      "description": "\ud38c\uc6e8\uc5b4 \ucd08\uc548 \ucf54\ub4dc"
+    },
+    "firmware_notes": {
+      "type": "string"
+    },
+    "mechanical_notes": {
+      "type": "string",
+      "description": "\uc0ac\ucd9c\ud488 \uad6c\uc870 (\ub450\uaed8\u00b7\ub9ac\ube0c\u00b7\ubcf4\uc2a4\u00b7\uccb4\uacb0)"
+    },
+    "mold_notes": {
+      "type": "string",
+      "description": "\uae08\ud615 \uc124\uacc4 \ucd08\uc548 (\ud30c\ud305\u00b7\uad6c\ubc30\u00b7\uac8c\uc774\ud2b8\u00b7\uc774\uc81d\ud130\u00b7\uce90\ube44\ud2f0)"
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "missing": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\uc785\ub825\uc5d0\uc11c \ube60\uc9c4 \uc815\ubcf4"
+    },
+    "contradictions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "HIGH",
+              "MEDIUM",
+              "LOW"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "mitigation": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "review_note": {
+      "type": "string"
+    },
+    "reviewed_by_name": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "created_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "project_id",
+    "version_no"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
