@@ -1,0 +1,282 @@
+{
+  "name": "ProtoDesignReview",
+  "type": "object",
+  "description": "\uc2dc\uc81c\ud488 \uc124\uacc4 \uac80\ud1a0 \uae30\ub85d: \ub4f1\ub85d\ud55c \ud68c\ub85c\ub3c4\u00b7\uc0ac\ucd9c \ub3c4\uba74\u00b7\ubd80\ud488\ud45c\ub97c AI\uac00 \uac80\ud1a0\ud55c \uacb0\uacfc\uc640 \uc9c0\uc801 \uc0ac\ud56d \ucc98\ub9ac \uc0c1\ud0dc",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "version_id": {
+      "type": "string",
+      "description": "\ud568\uaed8 \ub300\uc870\ud55c \uc124\uacc4 \ubc84\uc804 (\uc120\ud0dd)"
+    },
+    "version_no": {
+      "type": "number"
+    },
+    "areas": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "CIRCUIT",
+          "MOLD",
+          "BOM"
+        ]
+      },
+      "description": "\uac80\ud1a0 \ubc94\uc704"
+    },
+    "files": {
+      "type": "array",
+      "description": "\uac80\ud1a0\uc5d0 \uc4f4 \ud30c\uc77c",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "read_as": {
+            "type": "string",
+            "description": "image|text|table|unreadable"
+          }
+        }
+      }
+    },
+    "instruction": {
+      "type": "string"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "CONDITIONAL",
+        "FAIL"
+      ],
+      "enumColors": [
+        "green",
+        "yellow",
+        "red"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string",
+            "enum": [
+              "CIRCUIT",
+              "MOLD",
+              "BOM",
+              "CROSS"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "HIGH",
+              "MEDIUM",
+              "LOW"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string",
+            "description": "\ub3c4\uba74\u00b7\ubd80\ud488 \uc704\uce58 (\uc608: U3 \uc804\uc6d0\ud540, \ubcf4\uc2a4 B2)"
+          },
+          "recommendation": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "RESOLVED",
+              "DISMISSED"
+            ]
+          },
+          "resolved_note": {
+            "type": "string"
+          },
+          "resolved_by_name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "bom_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string"
+          },
+          "part_no": {
+            "type": "string"
+          },
+          "issue": {
+            "type": "string"
+          },
+          "suggestion": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "unverified": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\uc124\uacc4\uc790\uc5d0\uac8c \ud655\uc778\ud560 \uc9c8\ubb38"
+    },
+    "reviewer_name": {
+      "type": "string",
+      "description": "\uac80\ud1a0\ub97c \uc694\uccad\ud55c \uc0ac\ub78c"
+    },
+    "request_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "project_id"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

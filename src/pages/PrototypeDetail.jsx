@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, ClipboardCheck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,8 +41,13 @@ export default function PrototypeDetail() {
     <div className="max-w-7xl mx-auto space-y-5">
       <div>
         <Link to="/prototypes" className="inline-flex items-center gap-1 text-label text-muted-foreground hover:text-foreground"><ArrowLeft className="w-4 h-4" />시제품 목록</Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">{project.title}</h1>
-        <p className="text-caption text-muted-foreground">담당 {project.owner_name || '-'} · 최근 변경 {fmtDate(project.updated_date)}</p>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">{project.title}</h1>
+            <p className="text-caption text-muted-foreground">담당 {project.owner_name || '-'} · 최근 변경 {fmtDate(project.updated_date)}</p>
+          </div>
+          <Button asChild><Link to={`/prototypes/${project.id}/review`}><ClipboardCheck className="w-4 h-4" />설계 검토 워크스페이스</Link></Button>
+        </div>
       </div>
       <div className="rounded-xl border bg-card p-4"><ProtoStageBar stage={project.stage} onSelect={setStage} /></div>
       <ProtoSummary project={project} versions={versions} tests={tests} />

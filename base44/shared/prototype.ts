@@ -1,6 +1,6 @@
 // 시제품 개발 공용 계산 (서버 prototypeAction 과 검산이 같이 쓴다)
 
-export const FILE_CATEGORIES = ['DRAWING', 'PHOTO', 'REFERENCE', 'CAD', 'PCB', 'CODE', 'MFG', 'MODEL3D'];
+export const FILE_CATEGORIES = ['DRAWING', 'PHOTO', 'REFERENCE', 'CAD', 'PCB', 'CODE', 'MFG', 'MODEL3D', 'SCHEMATIC', 'MOLD_DRAWING', 'BOM_FILE'];
 
 /** 미해결 위험 = 현재 설계(없으면 최신)의 높음·보통 위험 + 불합격 시험 */
 export function openRiskCount(version: any, tests: any[]) {
