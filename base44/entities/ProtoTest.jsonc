@@ -1,0 +1,235 @@
+{
+  "name": "ProtoTest",
+  "type": "object",
+  "description": "\uc2dc\uc81c\ud488 \uc2dc\ud5d8: \uacc4\ud68d\u00b7\uc870\uac74\u00b7\uce21\uc815\uac12\u00b7\uc99d\uac70\u00b7\ubd88\ub7c9\u00b7AI \ubd84\uc11d",
+  "properties": {
+    "tenant_id": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "version_id": {
+      "type": "string",
+      "description": "\uc2dc\ud5d8\ud55c \uc124\uacc4 \ubc84\uc804"
+    },
+    "version_no": {
+      "type": "number"
+    },
+    "retest_of": {
+      "type": "string",
+      "description": "\uc7ac\uc2dc\ud5d8\uc774\uba74 \uc6d0\ub798 \uc2dc\ud5d8 ID"
+    },
+    "title": {
+      "type": "string"
+    },
+    "conditions": {
+      "type": "string",
+      "description": "\uc2dc\ud5d8 \uc870\uac74 (\uc804\uc555\u00b7\uc628\ub3c4\u00b7\ubd80\ud558 \ub4f1)"
+    },
+    "procedure": {
+      "type": "string"
+    },
+    "expected": {
+      "type": "string",
+      "description": "\ud569\uaca9 \uae30\uc900"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PLANNED",
+        "PASS",
+        "PARTIAL",
+        "FAIL"
+      ],
+      "enumColors": [
+        "gray",
+        "green",
+        "yellow",
+        "red"
+      ],
+      "default": "PLANNED"
+    },
+    "measurements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "spec": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "result_note": {
+      "type": "string"
+    },
+    "defects": {
+      "type": "string"
+    },
+    "repro_steps": {
+      "type": "string"
+    },
+    "log_text": {
+      "type": "string",
+      "description": "\uc2dc\ub9ac\uc5bc\u00b7\ub514\ubc84\uadf8 \ub85c\uadf8 (\uc9e7\uac8c)"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "uri": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "tested_at": {
+      "type": "string"
+    },
+    "tester_name": {
+      "type": "string"
+    },
+    "ai_analysis": {
+      "type": "object",
+      "description": "{verdict, summary, unverified[], causes[{title, evidence, likelihood}], improvements[{title, detail, area, priority}], analyzed_at}"
+    },
+    "improvement_version_id": {
+      "type": "string",
+      "description": "\uac1c\uc120\uc548\uc744 \ubc18\uc601\ud55c \uc0c8 \uc124\uacc4 \ubc84\uc804"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "project_id",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

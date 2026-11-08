@@ -1,0 +1,235 @@
+{
+  "name": "ProtoProject",
+  "type": "object",
+  "description": "\uc2dc\uc81c\ud488 \uac1c\ubc1c \ud504\ub85c\uc81d\ud2b8: \uc694\uad6c\uc0ac\ud56d\u00b7\uc785\ub825 \ud30c\uc77c\u00b7\uc81c\uc791 \uae30\ub85d\uc744 \ub2f4\ub294\ub2e4. \uc124\uacc4\ub294 ProtoDesignVersion, \uc2dc\ud5d8\uc740 ProtoTest",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "title": {
+      "type": "string",
+      "description": "\uc2dc\uc81c\ud488 \uc774\ub984"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "REQUIREMENTS",
+        "DESIGN",
+        "BUILD",
+        "TEST",
+        "IMPROVE"
+      ],
+      "enumColors": [
+        "gray",
+        "blue",
+        "purple",
+        "yellow",
+        "green"
+      ],
+      "default": "REQUIREMENTS"
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "owner_name": {
+      "type": "string"
+    },
+    "card_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ub41c \uc5c5\ubb34 \uce74\ub4dc (\uc120\ud0dd)"
+    },
+    "goal": {
+      "type": "string",
+      "description": "\uc81c\ud488 \ubaa9\ud45c\u00b7\uae30\ub2a5"
+    },
+    "use_conditions": {
+      "type": "string",
+      "description": "\uc0ac\uc6a9 \ud658\uacbd\u00b7\uc870\uac74 (\uc628\ub3c4\u00b7\uc2b5\ub3c4\u00b7\uc0ac\uc6a9\uc790 \ub4f1)"
+    },
+    "power_requirements": {
+      "type": "string",
+      "description": "\uc804\uc6d0 \uc694\uad6c\uc0ac\ud56d (\uc785\ub825 \uc804\uc555\u00b7\ubc30\ud130\ub9ac\u00b7\uc18c\ube44 \uc804\ub825)"
+    },
+    "io_requirements": {
+      "type": "string",
+      "description": "\uc785\ucd9c\ub825 (\uc13c\uc11c\u00b7\ubaa8\ud130\u00b7\ub514\uc2a4\ud50c\ub808\uc774\u00b7\ud1b5\uc2e0)"
+    },
+    "constraints": {
+      "type": "string",
+      "description": "\uc81c\uc57d\uc870\uac74 (\ud06c\uae30\u00b7\uc6d0\uac00\u00b7\uc778\uc99d\u00b7\uc7ac\uc9c8\u00b7\uc218\ub7c9)"
+    },
+    "files": {
+      "type": "array",
+      "description": "\uc785\ub825 \ud30c\uc77c\u00b7\uc0b0\ucd9c\ubb3c \uba54\ud0c0\ub370\uc774\ud130. \ud30c\uc77c \ubcf8\ubb38\uc740 \ube44\uacf5\uac1c \uc800\uc7a5\uc18c(uri)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "uri": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "DRAWING",
+              "PHOTO",
+              "REFERENCE",
+              "CAD",
+              "PCB",
+              "CODE",
+              "MFG",
+              "MODEL3D"
+            ]
+          },
+          "size": {
+            "type": "number"
+          },
+          "version_no": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          },
+          "uploaded_at": {
+            "type": "string"
+          },
+          "uploaded_by_name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "current_version_id": {
+      "type": "string",
+      "description": "\ud604\uc7ac \uc2b9\uc778 \uc124\uacc4 \ubc84\uc804"
+    },
+    "build": {
+      "type": "object",
+      "description": "\uc2dc\uc81c\ud488 \uc870\ub9bd \uae30\ub85d {version_id, version_no, firmware_version, wiring_note, assembled_at, actual_parts[{ref, name, planned_part_no, actual_part_no, actual_manufacturer, status: MATCH|SUBSTITUTE|MISSING, note}], updated_by_name}"
+    },
+    "open_risk_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\ubbf8\ud574\uacb0 \uc704\ud5d8 \uc218 (\ud604\uc7ac \uc124\uacc4 \uc704\ud5d8 \ub192\uc74c\u00b7\ubcf4\ud1b5 + \ubd88\ud569\uaca9 \uc2dc\ud5d8)"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
