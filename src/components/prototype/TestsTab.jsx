@@ -6,7 +6,7 @@ import Pill from '@/components/prototype/Pill';
 import TestDialog from '@/components/prototype/TestDialog';
 import TestAnalysis from '@/components/prototype/TestAnalysis';
 import { TEST_STATUS, fmtDate } from '@/lib/prototype';
-import { openProtoFile } from '@/lib/prototypeApi';
+import { openProtoFile, syncProtoRisk } from '@/lib/prototypeApi';
 
 export default function TestsTab({ project, versions, tests, user, onChanged }) {
   const [dialog, setDialog] = useState(null); // { test?, retestOf? }
@@ -17,6 +17,7 @@ export default function TestsTab({ project, versions, tests, user, onChanged }) 
     setDialog(null);
     const next = status === 'FAIL' || status === 'PARTIAL' ? 'IMPROVE' : project.stage === 'BUILD' ? 'TEST' : null;
     if (next && next !== project.stage) await base44.entities.ProtoProject.update(project.id, { stage: next });
+    await syncProtoRisk(project.id); // 불합격 시험 수가 바뀌면 목록의 위험 수도 맞춘다
     onChanged();
   };
 

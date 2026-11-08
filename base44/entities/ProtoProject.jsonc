@@ -113,6 +113,10 @@
       "type": "object",
       "description": "\uc2dc\uc81c\ud488 \uc870\ub9bd \uae30\ub85d {version_id, version_no, firmware_version, wiring_note, assembled_at, actual_parts[{ref, name, planned_part_no, actual_part_no, actual_manufacturer, status: MATCH|SUBSTITUTE|MISSING, note}], updated_by_name}"
     },
+    "pcb": {
+      "type": "object",
+      "description": "PCB \ubd80\ud488 \ud655\uc815 {version_id, version_no, rows[{ref, name, part_no, manufacturer, qty, comment, footprint, lcsc, lcsc_type: BASIC|EXTENDED|\"\"}], updated_by_name, updated_at}"
+    },
     "open_risk_count": {
       "type": "number",
       "default": 0,

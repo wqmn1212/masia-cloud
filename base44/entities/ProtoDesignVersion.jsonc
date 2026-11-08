@@ -26,13 +26,15 @@
         "DRAFT",
         "REVIEW",
         "APPROVED",
-        "REJECTED"
+        "REJECTED",
+        "SUPERSEDED"
       ],
       "enumColors": [
         "purple",
         "yellow",
         "green",
-        "red"
+        "red",
+        "gray"
       ],
       "default": "DRAFT"
     },
@@ -42,6 +44,10 @@
     "source_test_id": {
       "type": "string",
       "description": "\uac1c\uc120\uc548\uc744 \ubc18\uc601\ud574 \ub9cc\ub4e0 \uacbd\uc6b0 \uc6d0\uc778 \uc2dc\ud5d8"
+    },
+    "request_id": {
+      "type": "string",
+      "description": "AI \ucd08\uc548 \uc694\uccad \ubc88\ud638 \u2014 \uac19\uc740 \uc694\uccad\uc744 \ub2e4\uc2dc \ubc1b\uc73c\uba74 \uc0c8\ub85c \ub9cc\ub4e4\uc9c0 \uc54a\ub294\ub2e4"
     },
     "change_note": {
       "type": "string",

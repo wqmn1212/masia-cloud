@@ -1,10 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { FileText, Upload, Loader2, Trash2, ExternalLink } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { FILE_CATEGORIES, fileCategoryLabel, fmtDate } from '@/lib/prototype';
-import { uploadProtoFile, openProtoFile, errorText } from '@/lib/prototypeApi';
+import { uploadProtoFile, openProtoFile, errorText, addProtoFiles, removeProtoFile } from '@/lib/prototypeApi';
 
 // 프로젝트 파일 (입력 자료 또는 산출물). categories 로 보이는 분류를 정한다.
 export default function ProtoFiles({ project, user, categories, versionNo, onChanged, title }) {
@@ -19,7 +18,7 @@ export default function ProtoFiles({ project, user, categories, versionNo, onCha
     try {
       const added = [];
       for (const file of list) added.push(await uploadProtoFile(file, user, { category, version_no: versionNo || null }));
-      await base44.entities.ProtoProject.update(project.id, { files: [...(project.files || []), ...added] });
+      await addProtoFiles(project.id, added);
       onChanged();
     } catch (e) { toast({ title: '업로드하지 못했습니다', description: errorText(e), variant: 'destructive' }); }
     setBusy(false);
@@ -28,8 +27,8 @@ export default function ProtoFiles({ project, user, categories, versionNo, onCha
 
   const remove = async (f) => {
     if (!window.confirm(`${f.name} 파일 연결을 지울까요?`)) return;
-    await base44.entities.ProtoProject.update(project.id, { files: (project.files || []).filter((x) => x.id !== f.id) });
-    onChanged();
+    try { await removeProtoFile(project.id, f.id); onChanged(); }
+    catch (e) { toast({ title: '지우지 못했습니다', description: errorText(e), variant: 'destructive' }); }
   };
 
   return (

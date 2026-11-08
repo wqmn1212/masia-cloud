@@ -34,8 +34,32 @@ export async function openProtoFile(projectId, fileId, testId) {
 
 export const errorText = (e) => e?.response?.data?.error || e?.message || '처리하지 못했습니다';
 
-// 미해결 위험 = 현재 설계의 높음·보통 위험 + 불합격 시험
-export function openRiskCount(currentVersion, tests) {
-  const risks = (currentVersion?.risks || []).filter((r) => r.severity !== 'LOW').length;
-  return risks + tests.filter((t) => t.status === 'FAIL').length;
+export const protoAction = async (action, body) => (await base44.functions.invoke('prototypeAction', { action, ...body })).data;
+
+// 파일 목록은 서버에서 최신 목록에 더하고 뺀다 (동시에 올려도 한쪽이 사라지지 않게)
+export const addProtoFiles = (projectId, files) => protoAction('add_files', { project_id: projectId, files });
+export const removeProtoFile = (projectId, fileId) => protoAction('remove_file', { project_id: projectId, file_id: fileId });
+export const syncProtoRisk = (projectId) => protoAction('sync_risk', { project_id: projectId }).catch(() => null);
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * AI 설계 초안 만들기. 오래 걸려 화면 쪽 요청이 먼저 끊겨도 서버는 초안을 끝까지 만들 수 있으므로,
+ * 요청 번호(request_id)로 만들어진 버전을 3분 동안 찾아본다. 다시 눌러도 같은 번호면 새로 만들지 않는다.
+ */
+export async function runDraft(params, onWaiting) {
+  const request_id = params.request_id || newId();
+  try {
+    return await protoAction('draft', { ...params, request_id });
+  } catch (e) {
+    const status = e?.response?.status;
+    if (status && status < 500) throw e; // 400·403·404 같은 확실한 실패는 바로 알린다
+    onWaiting?.();
+    for (let i = 0; i < 18; i++) {
+      await sleep(10000);
+      const found = await base44.entities.ProtoDesignVersion.filter({ project_id: params.project_id, request_id }, '-created_date', 1).catch(() => []);
+      if (found[0]) return { version: found[0], recovered: true };
+    }
+    throw e;
+  }
 }

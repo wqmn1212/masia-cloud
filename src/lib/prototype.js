@@ -14,6 +14,7 @@ export const VERSION_STATUS = {
   REVIEW: { label: '검토 중', className: 'bg-warning/15 text-warning-text' },
   APPROVED: { label: '승인', className: 'bg-success/15 text-success-text' },
   REJECTED: { label: '반려', className: 'bg-destructive/10 text-destructive' },
+  SUPERSEDED: { label: '대체됨', className: 'bg-muted text-muted-foreground' },
 };
 
 // AI 가 낸 항목의 신뢰 표시 — 외부 규격·데이터시트 확인 전에는 '검증 필요'
