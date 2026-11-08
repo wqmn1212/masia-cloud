@@ -68,6 +68,7 @@ const LogisticsRates = lazy(() => import('@/pages/LogisticsRates'));
 const FactoryUpload = lazy(() => import('@/pages/FactoryUpload'));
 const Prototypes = lazy(() => import('@/pages/Prototypes'));
 const PrototypeDetail = lazy(() => import('@/pages/PrototypeDetail'));
+const PrototypeReview = lazy(() => import('@/pages/PrototypeReview'));
 
 const Spinner = () => (
   <div className="fixed inset-0 flex items-center justify-center">
@@ -169,6 +170,7 @@ const AuthenticatedApp = () => {
         <Route path="/mold-review" element={<MoldReview />} />
         <Route path="/prototypes" element={<Prototypes />} />
         <Route path="/prototypes/:projectId" element={<PrototypeDetail />} />
+        <Route path="/prototypes/:projectId/review" element={<PrototypeReview />} />
         <Route path="/agreements" element={<Agreements />} />
         <Route path="/logistics-rates" element={<LogisticsRates />} />
         <Route path="/artcraft" element={<ArtCraft />} />

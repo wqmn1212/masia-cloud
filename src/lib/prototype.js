@@ -46,7 +46,28 @@ export const FILE_CATEGORIES = [
   { key: 'CODE', label: '펌웨어 코드' },
   { key: 'MFG', label: '제조 산출물' },
   { key: 'MODEL3D', label: '3D 모델 (STEP·STL)' },
+  { key: 'SCHEMATIC', label: '회로도' },
+  { key: 'MOLD_DRAWING', label: '사출 도면' },
+  { key: 'BOM_FILE', label: '부품표(BOM)' },
 ];
+
+// 설계 검토 워크스페이스
+export const REVIEW_SECTIONS = [
+  { category: 'SCHEMATIC', area: 'CIRCUIT', title: '회로도', hint: 'PDF·이미지 회로도, KiCad(.kicad_sch)·넷리스트 텍스트' },
+  { category: 'MOLD_DRAWING', area: 'MOLD', title: '사출 도면', hint: 'PDF·이미지 2D 도면 (STEP·DWG 는 AI가 읽지 못합니다)' },
+  { category: 'BOM_FILE', area: 'BOM', title: '부품표(BOM)', hint: 'CSV·XLSX·TXT 부품표 또는 PDF' },
+];
+export const REVIEW_AREAS = { CIRCUIT: '회로', MOLD: '사출·금형', BOM: '부품표', CROSS: '교차 검토' };
+export const REVIEW_VERDICT = {
+  PASS: { label: '진행 가능', className: 'bg-success/15 text-success-text' },
+  CONDITIONAL: { label: '보완 후 진행', className: 'bg-warning/15 text-warning-text' },
+  FAIL: { label: '재설계 필요', className: 'bg-destructive/10 text-destructive' },
+};
+export const FINDING_STATUS = {
+  OPEN: { label: '미해결', className: 'bg-warning/15 text-warning-text' },
+  RESOLVED: { label: '해결', className: 'bg-success/15 text-success-text' },
+  DISMISSED: { label: '해당 없음', className: 'bg-muted text-muted-foreground' },
+};
 export const fileCategoryLabel = (key) => FILE_CATEGORIES.find((c) => c.key === key)?.label || key;
 export const INPUT_CATEGORIES = ['DRAWING', 'PHOTO', 'REFERENCE'];
 export const ARTIFACT_CATEGORIES = ['CAD', 'PCB', 'CODE', 'MFG', 'MODEL3D'];

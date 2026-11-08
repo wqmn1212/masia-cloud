@@ -6,7 +6,10 @@ export const protoKeys = {
   project: (id) => ['proto-project', id],
   versions: (id) => ['proto-versions', id],
   tests: (id) => ['proto-tests', id],
+  reviews: (id) => ['proto-reviews', id],
 };
+
+export const useProtoReviews = (id) => useQuery({ queryKey: protoKeys.reviews(id), queryFn: () => base44.entities.ProtoDesignReview.filter({ project_id: id }, '-created_date', 50), enabled: !!id });
 
 export const useProtoProject = (id) => useQuery({ queryKey: protoKeys.project(id), queryFn: () => base44.entities.ProtoProject.get(id), enabled: !!id });
 export const useProtoVersions = (id) => useQuery({ queryKey: protoKeys.versions(id), queryFn: () => base44.entities.ProtoDesignVersion.filter({ project_id: id }, '-version_no', 50), enabled: !!id });
@@ -42,6 +45,24 @@ export const removeProtoFile = (projectId, fileId) => protoAction('remove_file',
 export const syncProtoRisk = (projectId) => protoAction('sync_risk', { project_id: projectId }).catch(() => null);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** AI 설계 검토 실행 — 화면 요청이 먼저 끊겨도 request_id 로 만들어진 검토를 3분간 찾는다 */
+export async function runReview(params, onWaiting) {
+  const request_id = newId();
+  try {
+    return (await base44.functions.invoke('prototypeReview', { action: 'run', ...params, request_id })).data;
+  } catch (e) {
+    const status = e?.response?.status;
+    if (status && status < 500) throw e;
+    onWaiting?.();
+    for (let i = 0; i < 18; i++) {
+      await sleep(10000);
+      const found = await base44.entities.ProtoDesignReview.filter({ project_id: params.project_id, request_id }, '-created_date', 1).catch(() => []);
+      if (found[0]) return { review: found[0], recovered: true };
+    }
+    throw e;
+  }
+}
 
 /**
  * AI 설계 초안 만들기. 오래 걸려 화면 쪽 요청이 먼저 끊겨도 서버는 초안을 끝까지 만들 수 있으므로,

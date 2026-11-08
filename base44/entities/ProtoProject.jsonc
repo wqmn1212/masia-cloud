@@ -1,7 +1,7 @@
 {
   "name": "ProtoProject",
   "type": "object",
-  "description": "\uc2dc\uc81c\ud488 \uac1c\ubc1c \ud504\ub85c\uc81d\ud2b8: \uc694\uad6c\uc0ac\ud56d\u00b7\uc785\ub825 \ud30c\uc77c\u00b7\uc81c\uc791 \uae30\ub85d\uc744 \ub2f4\ub294\ub2e4. \uc124\uacc4\ub294 ProtoDesignVersion, \uc2dc\ud5d8\uc740 ProtoTest",
+  "description": "\uc2dc\uc81c\ud488 \uac1c\ubc1c \ud504\ub85c\uc81d\ud2b8: \uc694\uad6c\uc0ac\ud56d\u00b7\uc785\ub825 \ud30c\uc77c\u00b7\uc81c\uc791 \uae30\ub85d\uc744 \ub2f4\ub294\ub2e4. \uc124\uacc4\ub294 ProtoDesignVersion, \uc2dc\ud5d8\uc740 ProtoTest, \uc124\uacc4 \uac80\ud1a0\ub294 ProtoDesignReview",
   "properties": {
     "tenant_id": {
       "type": "string",
@@ -84,7 +84,10 @@
               "PCB",
               "CODE",
               "MFG",
-              "MODEL3D"
+              "MODEL3D",
+              "SCHEMATIC",
+              "MOLD_DRAWING",
+              "BOM_FILE"
             ]
           },
           "size": {
