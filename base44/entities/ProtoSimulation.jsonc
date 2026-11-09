@@ -1,0 +1,331 @@
+{
+  "name": "ProtoSimulation",
+  "type": "object",
+  "description": "\uc2dc\uc81c\ud488 \uc804\uae30\u00b7\uae30\uad6c \ub3d9\uc791 \uc2dc\ubbac\ub808\uc774\uc158: \uad6c\ub3d9 \ubd80\ud488\u00b7\ub3d9\uc791 \uc2dc\ub098\ub9ac\uc624 \uc785\ub825\uacfc \uc815\uaca9\uac12 \uae30\ubc18 \uacc4\uc0b0 \uacb0\uacfc(\ud30c\ud615\u00b7\uc6c0\uc9c1\uc784 \ud2b8\ub799)\u00b7AI \uc124\uba85",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "version_id": {
+      "type": "string",
+      "description": "\uc5f0\uacb0\ud55c \uc124\uacc4 \ubc84\uc804"
+    },
+    "version_no": {
+      "type": "number"
+    },
+    "title": {
+      "type": "string"
+    },
+    "model_file_id": {
+      "type": "string",
+      "description": "\uc560\ub2c8\uba54\uc774\uc158\uc5d0 \uc4f4 3D \ubaa8\ub378 \ud30c\uc77c (ProtoProject.files.id)"
+    },
+    "model_file_name": {
+      "type": "string"
+    },
+    "supply_voltage_v": {
+      "type": "number",
+      "description": "\uacf5\uae09 \uc804\uc555 (V)"
+    },
+    "supply_limit_a": {
+      "type": "number",
+      "description": "\uc804\uc6d0 \ud5c8\uc6a9 \uc804\ub958 (A, \uc120\ud0dd)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "\uc870\uac74\u00b7\uac00\uc815 \uba54\ubaa8"
+    },
+    "actuators": {
+      "type": "array",
+      "description": "\uad6c\ub3d9\u00b7\uc804\uae30 \ubd80\ud488",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ROTARY_MOTOR",
+              "SERVO",
+              "LINEAR",
+              "SOLENOID",
+              "PUMP_FAN",
+              "HEATER",
+              "LED",
+              "SENSOR",
+              "OTHER"
+            ]
+          },
+          "rated_voltage_v": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "rated_current_a": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "idle_current_a": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "motion": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "ROTATE",
+              "TRANSLATE"
+            ]
+          },
+          "axis": {
+            "type": "string",
+            "enum": [
+              "X",
+              "Y",
+              "Z"
+            ]
+          },
+          "speed": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "\u00b0/s \ub610\ub294 mm/s"
+          },
+          "travel_min": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "travel_max": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "part_index": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "3D \ubaa8\ub378 \ubd80\ud488 \uc21c\ubc88"
+          },
+          "part_name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "description": "\ub3d9\uc791 \uc2dc\ub098\ub9ac\uc624 \ub2e8\uacc4",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "duration_s": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "trigger": {
+            "type": "string",
+            "description": "\uc2dc\uc791 \uc870\uac74\u00b7\uc13c\uc11c \uc2e0\ud638"
+          },
+          "note": {
+            "type": "string"
+          },
+          "states": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "actuator_id": {
+                  "type": "string"
+                },
+                "on": {
+                  "type": "boolean"
+                },
+                "direction": {
+                  "type": "number"
+                },
+                "duty_pct": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "RAN"
+      ],
+      "enumColors": [
+        "gray",
+        "green"
+      ],
+      "default": "DRAFT"
+    },
+    "result": {
+      "type": "object",
+      "description": "{duration_s, supply_voltage_v, peak_current_a, avg_current_a, peak_power_w, energy_wh, steps[], series[], tracks[], checks[], unknowns[], ai{summary, step_notes[], assumptions[], unverified[], limitations[]}, ai_error, version_id, version_no, ran_at, ran_by_name, request_id}"
+    },
+    "result_stale": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uacb0\uacfc \uc774\ud6c4 \uc785\ub825\uc774 \ubc14\ub01c"
+    },
+    "run_count": {
+      "type": "number",
+      "default": 0
+    },
+    "created_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "project_id",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -3,11 +3,13 @@ import { Box, Loader2, CheckCircle2, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ModelCanvas from '@/components/prototype/ModelCanvas';
 import ConnectionList from '@/components/prototype/ConnectionList';
+import SimulationPanel from '@/components/prototype/sim/SimulationPanel';
 import { OUTPUT_SCOPE } from '@/lib/prototype';
 import { signProtoFile, errorText } from '@/lib/prototypeApi';
 import { isModelFile, loadModelParts, mergeMeshes } from '@/lib/protoModel';
 
-export default function ViewerTab({ project, versions }) {
+export default function ViewerTab({ project, versions, user }) {
+  const [modelFile, setModelFile] = useState(null);
   // 분류와 상관없이 STEP·STL 확장자면 3D 로 연다 (도면 분류로 올린 STEP 포함)
   const models = (project.files || []).filter((f) => f.category === 'MODEL3D' || isModelFile(f.name));
   const [parts, setParts] = useState(null);
@@ -24,6 +26,7 @@ export default function ViewerTab({ project, versions }) {
       const loaded = await loadModelParts(await signProtoFile(project.id, f.id), f.name);
       if (!loaded.length) throw new Error('이 파일에서 3D 형상을 찾지 못했습니다. 솔리드가 들어 있는 STEP·STL 인지 확인해 주세요.');
       setParts(loaded);
+      setModelFile({ id: f.id, name: f.name });
     }
     catch (e) { setError(errorText(e)); }
     setLoading('');
@@ -52,6 +55,7 @@ export default function ViewerTab({ project, versions }) {
           ))}
         </div>
       </div>
+      <SimulationPanel project={project} versions={versions} user={user} parts={parts} modelFile={modelFile} />
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border bg-card p-5 space-y-3">
           <p className="text-title font-semibold">연결·작동 흐름 {v ? `(v${v.version_no})` : ''}</p>

@@ -81,7 +81,8 @@ export const OUTPUT_SCOPE = [
   { label: 'STEP/STL 3D 형상 보기·부품 탐색', auto: true },
   { label: 'PCB 아트웍(거버)·회로도 원본', auto: false, tool: 'KiCad·Altium' },
   { label: '사출품·금형 3D 모델링 및 금형 도면', auto: false, tool: 'SolidWorks·NX·Fusion' },
-  { label: '전기·기구 물리 시뮬레이션', auto: false, tool: 'SPICE·FEA·Moldflow' },
+  { label: '동작 시나리오 시뮬레이션 (정격값 계산·파형·3D 재생·AI 설명)', auto: true },
+  { label: '정밀 물리 해석 (과도 응답·응력·유동)', auto: false, tool: 'SPICE·FEA·Moldflow' },
 ];
 
 export const fmtDate = (v) => (v ? String(v).slice(0, 10) : '-');
