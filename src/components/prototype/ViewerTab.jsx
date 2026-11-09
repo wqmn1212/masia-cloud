@@ -8,7 +8,8 @@ import { signProtoFile, errorText } from '@/lib/prototypeApi';
 import { isModelFile, loadModelParts, mergeMeshes } from '@/lib/protoModel';
 
 export default function ViewerTab({ project, versions }) {
-  const models = (project.files || []).filter((f) => f.category === 'MODEL3D' || ((f.category === 'CAD') && isModelFile(f.name)));
+  // 분류와 상관없이 STEP·STL 확장자면 3D 로 연다 (도면 분류로 올린 STEP 포함)
+  const models = (project.files || []).filter((f) => f.category === 'MODEL3D' || isModelFile(f.name));
   const [parts, setParts] = useState(null);
   const [selected, setSelected] = useState(-1);
   const [loading, setLoading] = useState('');
@@ -19,7 +20,11 @@ export default function ViewerTab({ project, versions }) {
 
   const load = async (f) => {
     setLoading(f.id); setError(''); setParts(null); setSelected(-1);
-    try { setParts(await loadModelParts(await signProtoFile(project.id, f.id), f.name)); }
+    try {
+      const loaded = await loadModelParts(await signProtoFile(project.id, f.id), f.name);
+      if (!loaded.length) throw new Error('이 파일에서 3D 형상을 찾지 못했습니다. 솔리드가 들어 있는 STEP·STL 인지 확인해 주세요.');
+      setParts(loaded);
+    }
     catch (e) { setError(errorText(e)); }
     setLoading('');
   };
