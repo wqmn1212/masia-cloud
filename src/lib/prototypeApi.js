@@ -7,7 +7,28 @@ export const protoKeys = {
   versions: (id) => ['proto-versions', id],
   tests: (id) => ['proto-tests', id],
   reviews: (id) => ['proto-reviews', id],
+  sims: (id) => ['proto-sims', id],
 };
+
+export const useProtoSims = (id) => useQuery({ queryKey: protoKeys.sims(id), queryFn: () => base44.entities.ProtoSimulation.filter({ project_id: id }, '-updated_date', 50), enabled: !!id });
+
+/** 시뮬레이션 실행 — 화면 요청이 끊겨도 request_id 가 기록된 결과를 3분간 찾는다 */
+export async function runSimulation(simId, onWaiting) {
+  const request_id = newId();
+  try {
+    return (await base44.functions.invoke('prototypeSimulate', { action: 'run', sim_id: simId, request_id })).data;
+  } catch (e) {
+    const status = e?.response?.status;
+    if (status && status < 500) throw e;
+    onWaiting?.();
+    for (let i = 0; i < 18; i++) {
+      await sleep(10000);
+      const sim = await base44.entities.ProtoSimulation.get(simId).catch(() => null);
+      if (sim?.result?.request_id === request_id) return { sim, recovered: true };
+    }
+    throw e;
+  }
+}
 
 export const useProtoReviews = (id) => useQuery({ queryKey: protoKeys.reviews(id), queryFn: () => base44.entities.ProtoDesignReview.filter({ project_id: id }, '-created_date', 50), enabled: !!id });
 

@@ -153,14 +153,17 @@ export default async function (req) {
         try { await fillMissingTranslation(svc, 'CardChat', saved, ['message_text'], text ? 'zh' : 'ko'); }
         catch { translationFailed = true; }
         const staff = await internalUsersOfTenant(svc, card.tenant_id);
-        await notifyUsers(svc, staff, {
+        const chatPayload = {
           type: 'chat_message',
-          title: `[고객 메시지] ${card.title}`,
-          body: `${senderName}: ${(text || chinese).slice(0, 300)}`,
-          link: `/task-board?card=${card.id}`,
+          title: `[고객 문의] ${card.title}`,
+          body: `${senderName} 님이 문의를 남겼습니다.\n\n${(text || chinese).slice(0, 300)}`,
+          link: `/task-board?card=${card.id}&tab=chat`,
           task_card_id: card.id,
           card_title: card.title,
-        });
+        };
+        // 팀 마스터(service)는 고객 문의마다 메일을 받는다. 팀원(sub)은 기존처럼 5분 안 중복 메일을 생략한다.
+        await notifyUsers(svc, staff.filter((u) => u.account_tier === 'service'), chatPayload, { alwaysEmail: true });
+        await notifyUsers(svc, staff.filter((u) => u.account_tier !== 'service'), chatPayload);
         return Response.json({ ok: true, translation_failed: translationFailed });
       }
 

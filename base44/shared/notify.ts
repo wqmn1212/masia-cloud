@@ -41,7 +41,7 @@ async function shouldEmail(svc, recipientId, type, cardId) {
  * @param svc  base44.asServiceRole
  * @param recipients  User 레코드 배열
  * @param payload  { type, title, body, link, task_card_id, card_title }
- * @param options  { email: false } 이면 이메일 생략 (앱 알림만) · { roleFilter: false } 이면 고객사 역할로 좁히지 않음 (특정인에게 보낼 때)
+ * @param options  { email: false } 이면 이메일 생략 (앱 알림만) · { alwaysEmail: true } 이면 5분 생략 규칙 없이 매번 메일 · { roleFilter: false } 이면 고객사 역할로 좁히지 않음 (특정인에게 보낼 때)
  */
 export async function notifyUsers(svc, recipients, payload, options = {}) {
   let targets = (recipients || []).filter((u) => u?.id && u.is_active !== false);
@@ -50,7 +50,7 @@ export async function notifyUsers(svc, recipients, payload, options = {}) {
 
   for (const u of targets) {
     const emailAllowed = options.email !== false && wantsEmail(u, payload.type) &&
-      (ALWAYS_EMAIL.includes(payload.type) || await shouldEmail(svc, u.id, payload.type, payload.task_card_id));
+      (options.alwaysEmail || ALWAYS_EMAIL.includes(payload.type) || await shouldEmail(svc, u.id, payload.type, payload.task_card_id));
 
     await svc.entities.Notification.create({
       tenant_id: u.tenant_id || '',
