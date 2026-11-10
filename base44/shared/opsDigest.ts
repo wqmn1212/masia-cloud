@@ -1,3 +1,4 @@
+import { logoImg } from './emailLayout.ts';
 // 직원 일일 운영 요약 (4단계 ④). 매일 아침 담당자마다 자기 카드의 할 일을 묶어 한 통 보낸다.
 //  오늘 마감 · 지연 위험 · 고객 대기(3일 넘게 멈춤) · 공장 대기 · 확인할 것 · 영업 기회(고객 재주문 시점 14일 이내)
 // 대표·팀 관리자(service)에게는 자기 몫에 더해 팀 전체 숫자와 지연 카드를 붙인다. 중국어 설정 직원에게는 중국어로.
@@ -282,7 +283,8 @@ ${late ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0
 
   const html = `<div style="margin:0;padding:24px 12px;background:${C.page}">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','PingFang SC','Microsoft YaHei',Arial,sans-serif;color:${C.ink}">
-<tr><td style="padding:0 2px 16px"><div style="font-size:12.5px;font-weight:700;color:${C.primary};letter-spacing:.04em">AEGIS · ${zh ? '今日工作' : '오늘 업무'}</div>
+<tr><td style="padding:0 2px 14px"><a href="${esc(url('/my-work'))}" style="text-decoration:none">${logoImg(30)}</a></td></tr>
+<tr><td style="padding:0 2px 16px"><div style="font-size:12.5px;font-weight:700;color:${C.primary};letter-spacing:.04em">${zh ? '今日工作' : '오늘 업무'}</div>
 <div style="margin-top:4px;font-size:24px;line-height:32px;letter-spacing:-0.6px;font-weight:700;color:${C.ink}">${zh ? `${md(digest.today)}（周${dow}）共 ${total} 项` : `${md(digest.today)} (${dow}) 할 일 ${total}건`}</div>
 <div style="margin-top:6px;font-size:14.5px;line-height:23px;color:${C.muted}">${esc(name)}${zh ? '，早上好。请从上往下逐项确认。' : '님, 좋은 아침입니다. 위에서부터 하나씩 확인하세요.'}</div>
 <div style="margin-top:12px">${counts.map(([k, n]) => chip(k, n)).join('')}</div></td></tr>
