@@ -31,6 +31,7 @@
     "check:design-tokens": "node scripts/check-design-tokens.mjs",
     "check:production-units": "node --import ./scripts/fnmock/register.mjs scripts/check-production-units.mjs",
     "check:defect-log": "node --import ./scripts/fnmock/register.mjs scripts/check-defect-log.mjs",
+    "check:email-layout": "node --import ./scripts/fnmock/register.mjs scripts/check-email-layout.mjs",
     "check:prototype": "node --import ./scripts/fnmock/register.mjs scripts/check-prototype.mjs",
     "check:client-roles": "node scripts/check-client-roles.mjs",
     "check:file-review": "node scripts/check-file-review.mjs",

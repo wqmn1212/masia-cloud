@@ -4,6 +4,7 @@ import {
 } from '../../shared/signature.ts';
 import { appendEvent, completeRequest, fetchPrivate, uploadPrivate } from '../../shared/signatureServer.ts';
 import { internalUsersOfTenant, notifyUsers, FROM_NAME } from '../../shared/notify.ts';
+import { emailLayout, p, facts, esc, codeBox, notice } from '../../shared/emailLayout.ts';
 
 // 서명자(고객 계정) 행동: read_to_end · send_otp · verify_otp · sign · decline.
 // 서명자로 지정된 본인만 할 수 있고, 마스터 열람 모드·직원은 막는다. 시각·IP 는 서버가 기록한다.
@@ -41,7 +42,12 @@ export default async function (req: Request) {
         else await db.SignatureOtp.create(fields);
         await svc.integrations.Core.SendEmail({
           to: me.email, from_name: FROM_NAME, subject: `[AEGIS] 계약서 서명 인증번호 ${code}`,
-          body: `계약서 서명을 위한 인증번호입니다.\n\n인증번호: ${code}\n\n${r.document_title} (${r.document_no})\n10분 동안 유효합니다. 본인이 요청하지 않았다면 이 메일을 무시하고 담당자에게 알려 주세요.\n이지스 직원은 인증번호를 묻지 않습니다.`,
+          body: emailLayout({
+            kind: '전자서명', eyebrow: '본인 확인', title: '계약서 서명 인증번호', preheader: `인증번호 ${code} · 10분 동안 유효합니다`,
+            body: p('아래 번호를 서명 화면에 입력해 주세요.') + codeBox(code, '10분 동안 유효합니다') +
+              facts([['문서', esc(r.document_title)], ['문서 번호', esc(r.document_no)]]) +
+              notice(`<b>이지스 직원은 인증번호를 묻지 않습니다.</b> 본인이 요청하지 않았다면 이 메일을 무시하고 담당자에게 알려 주세요.`, 'danger'),
+          }),
         });
         await appendEvent(svc, r, { type: 'OTP_SENT', ...actor, data: { email: maskEmail(me.email) } }, req);
         return Response.json({ ok: true, email_masked: maskEmail(me.email), expires_at: fields.expires_at });

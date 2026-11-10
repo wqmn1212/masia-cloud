@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
-import { FROM_NAME, emailBody } from '../../shared/notify.ts';
+import { FROM_NAME } from '../../shared/notify.ts';
 import { clientOverview } from '../../shared/clientOverview.ts';
-import { weeklyDigest, wantsWeekly } from '../../shared/weeklyDigest.ts';
+import { weeklyDigest, weeklyDigestHtml, wantsWeekly } from '../../shared/weeklyDigest.ts';
 import { shiftDate, kstToday } from '../../shared/chinaHoliday.ts';
 import { ARRIVED } from '../../shared/reorderForecast.ts';
 
@@ -42,7 +42,7 @@ export default async function (req: Request) {
         const d = weeklyDigest({ name: u.full_name || u.account_label || '', overview, changes, today, weekEnd });
         if (!d) { skipped += 1; continue; }
         try {
-          await svc.integrations.Core.SendEmail({ to: u.email, from_name: FROM_NAME, subject: d.subject, body: emailBody(d.text, '', '/client/dashboard') });
+          await svc.integrations.Core.SendEmail({ to: u.email, from_name: FROM_NAME, subject: d.subject, body: weeklyDigestHtml(d) });
           await svc.entities.User.update(u.id, { weekly_digest_sent_for: monday }).catch(() => null);
           sent += 1;
         } catch (_e) { skipped += 1; }

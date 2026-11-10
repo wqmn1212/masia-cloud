@@ -5,6 +5,7 @@
 // 역할을 정한 고객사는 알림 묶음별로 받을 역할에게만 보낸다 (clientRoles.ts notificationAudience).
 import { wantsEmail } from './notificationPrefs.ts';
 import { notificationAudience } from './clientRoles.ts';
+import { emailLayout, textToHtml, facts, esc, button, linkFallback } from './emailLayout.ts';
 
 export const FROM_NAME = 'AEGIS';
 
@@ -12,16 +13,15 @@ const DEBOUNCE_MS = 5 * 60 * 1000;
 // 매번 이메일을 보내는 알림 (5분 규칙 제외)
 const ALWAYS_EMAIL = ['quote_published', 'quote_review_requested', 'payment_confirmed', 'schedule_changed', 'payment_requested', 'payment_due', 'client_approval_requested', 'client_approval_decided', 'file_review_requested'];
 
-// 공통 이메일 본문 틀: 본문 + 프로젝트 + 바로가기 링크 + 안내
-export function emailBody(text, cardTitle, link) {
-  const base = (Deno.env.get('APP_BASE_URL') || 'https://aegistrade.biz').replace(/\/$/, '');
-  const lines = [text || ''];
-  const meta = [];
-  if (cardTitle) meta.push(`프로젝트: ${cardTitle}`);
-  if (link) meta.push(`바로 확인하기: ${base}${link}`);
-  if (meta.length) lines.push('', ...meta);
-  lines.push('', 'AEGIS Cloud 알림 메일입니다. 이 메일에는 회신하지 마시고, 문의는 프로젝트 카드의 문의 탭을 이용해 주세요.');
-  return lines.join('\n');
+// 공통 알림 메일: 공통 틀(emailLayout) 안에 제목·본문·프로젝트·바로가기 버튼
+// opts: { title, kind, eyebrow, footNote, button }
+export function emailBody(text, cardTitle, link, opts = {}) {
+  const title = opts.title || String(text || '').split('\n')[0].slice(0, 80) || 'AEGIS 알림';
+  const bodyText = opts.title ? text : String(text || '').split('\n').slice(1).join('\n');
+  const body = textToHtml(bodyText && bodyText.trim() !== title ? bodyText : '') +
+    facts(cardTitle ? [['프로젝트', esc(cardTitle)]] : []) +
+    (link ? button(opts.button || '프로젝트에서 확인하기', link) + linkFallback(link) : '');
+  return emailLayout({ kind: opts.kind || '프로젝트 알림', eyebrow: opts.eyebrow || '', title, body, preheader: cardTitle ? `${cardTitle} · ${title}` : title, footNote: opts.footNote });
 }
 
 // 같은 수신자·카드·타입의 미읽음 알림이 최근에 있으면 이메일만 생략한다 (앱 내 알림은 항상 생성)
@@ -70,7 +70,7 @@ export async function notifyUsers(svc, recipients, payload, options = {}) {
           to: u.email,
           from_name: FROM_NAME,
           subject: payload.title,
-          body: emailBody(payload.body || payload.title, payload.card_title, payload.link),
+          body: emailBody(payload.body || '', payload.card_title, payload.link, { title: payload.title }),
         });
       } catch (_e) { /* 메일 실패가 알림 생성을 막지 않는다 */ }
     }
