@@ -147,6 +147,7 @@ console.log('ops-digest mirror ok');
     client_wait: [r('c2', '슬리터기', '견적 회신 · 35일째 · 각도회전', null), r('c2', '슬리터기', '견적 회신 · 4일째 · 수축비닐', null)] },
     team: { active: 35, late: [{ card_id: 'c9', card_title: '늦은 카드', card_title_cn: '迟', days: 5, owner_name: '왕리' }], client_waits: 0, factory_submissions: 0, no_owner: 30, quote_overdue: 0 } };
   const html = D.digestHtml(dg, { name: '이호민 <b>', base: 'https://app.example/' });
+  assert.match(html, /alt="AEGIS"/, '아침 업무 메일도 이미지 로고');
   assert.match(html, /11\/2 \(월\) 할 일 5건/, '제목: 날짜·요일·전체 건수(팀 지연 포함)');
   assert.ok(!html.includes('<프로젝트>') && html.includes('SOL &lt;프로젝트&gt;'), '카드 제목은 HTML 이스케이프');
   assert.ok(html.includes('이호민 &lt;b&gt;'), '이름도 이스케이프');

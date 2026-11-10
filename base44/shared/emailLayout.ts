@@ -7,6 +7,9 @@ export const EMAIL_COLORS = {
   primary: '#0066FF', primarySoft: '#EAF2FF', danger: '#E5484D', dangerSoft: '#FFF0F0', warn: '#AD5100', warnSoft: '#FFF4E6', success: '#147147', successSoft: '#E9F7EF',
 };
 const C = EMAIL_COLORS;
+// 로고는 이미지로 (홈페이지 머리글과 같은 파일, 773×323 투명 PNG). 이미지를 막은 메일 프로그램에서는 alt 글자 'AEGIS' 가 보인다
+export const LOGO_URL = 'https://media.base44.com/images/public/6a0c1b56a385588fbd4454f5/2cd63c7e3___2x__2__3-removebg-preview.png';
+export const logoImg = (height = 30) => { const w = Math.round(height * 773 / 323); return `<img src="${LOGO_URL}" width="${w}" height="${height}" alt="AEGIS" style="display:block;border:0;outline:none;text-decoration:none;width:${w}px;height:${height}px;font-size:20px;line-height:${height}px;font-weight:800;color:#161618">`; };
 const FONT = `'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕','PingFang SC','Microsoft YaHei',Arial,sans-serif`;
 
 export const esc = (s: unknown) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string));
@@ -60,8 +63,8 @@ export function emailLayout({ kind = '', eyebrow = '', title, body, preheader = 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${C.page}" style="background:${C.page}"><tr><td align="center" style="padding:28px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;font-family:${FONT};color:${C.ink}">
 <tr><td style="padding:0 4px 14px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-<td style="font-size:20px;line-height:28px;font-weight:800;letter-spacing:-0.5px;color:${C.ink}">AEGIS</td>
-<td align="right" style="font-size:12.5px;line-height:28px;color:${C.muted}">${esc(kind)}</td></tr></table></td></tr>
+<td style="vertical-align:middle"><a href="https://aegistrade.biz" style="text-decoration:none">${logoImg(30)}</a></td>
+<td align="right" style="font-size:12.5px;line-height:30px;color:${C.muted};vertical-align:middle">${esc(kind)}</td></tr></table></td></tr>
 <tr><td bgcolor="${C.card}" style="background:${C.card};border:1px solid ${C.line};border-radius:14px;padding:30px 28px 26px">
 ${eyebrow ? `<div style="font-size:13px;line-height:18px;font-weight:700;color:${C.primary};letter-spacing:.02em">${esc(eyebrow)}</div>` : ''}
 <h1 style="margin:6px 0 14px;font-size:22px;line-height:31px;letter-spacing:-0.5px;font-weight:700;color:${C.ink}">${esc(title)}</h1>

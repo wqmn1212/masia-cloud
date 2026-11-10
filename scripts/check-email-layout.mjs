@@ -17,6 +17,9 @@ assert.ok(html.includes('검수 결과 &lt;확인&gt;'), '제목은 이스케이
 assert.ok(html.includes('첫 줄<br>둘째 줄') && html.includes('새 문단 &amp; 끝'), '줄바꿈·문단');
 assert.ok(!/<script/i.test(emailLayout({ title: '<script>alert(1)</script>', body: textToHtml('<script>x</script>') })), '본문·제목에 태그를 넣을 수 없다');
 assert.ok(html.includes('aegistrade.biz') && html.includes('회신하지'), '바닥 안내');
+assert.match(html, /<img src="https:\/\/media\.base44\.com\/[^"]+" width="72" height="30" alt="AEGIS"/, '로고는 이미지 (크기 고정·alt 글자)');
+assert.ok(!/>AEGIS<\/td>/.test(html), '글자 로고는 쓰지 않는다');
+assert.ok(fs.readFileSync(new URL('../base44/emails/UserInvite.html', import.meta.url), 'utf8').includes('alt="AEGIS"'), '초대 메일도 이미지 로고');
 assert.ok(html.includes('max-width:560px') && !/@import|<link/i.test(html), '웹 글꼴·외부 CSS 없이');
 assert.equal(appUrl('/client/board'), `${appBase()}/client/board`, '앱 주소(APP_BASE_URL) 기준');
 assert.equal(appUrl('https://x.example/a'), 'https://x.example/a');
