@@ -5,6 +5,7 @@ import { applyIntake } from '../../shared/intakeServer.ts';
 import { uploadPrivateAttachments, linkCardAttachments } from '../../shared/privateAttachments.ts';
 import { cleanInquiry } from '../../shared/inquiryForm.ts';
 import { kstToday } from '../../shared/chinaHoliday.ts';
+import { emailLayout, p, facts, esc, steps, heading, button, strong } from '../../shared/emailLayout.ts';
 
 // 로그인한 고객사가 소싱 보드에서 신규 문의를 작성 → 새 TaskCard 자동 생성.
 // tenant_id 는 본사(HQ) 테넌트로 지정하여 본사 팀 보드에도 노출되고, client_id 로 고객 보드에도 노출된다.
@@ -92,14 +93,14 @@ export default async function (req) {
           to: auth.user.email,
           from_name: FROM_NAME,
           subject: '문의가 접수되었습니다 — AEGIS',
-          body: [
-            `${auth.user.full_name || clientName} 님, 안녕하세요.`,
-            ``,
-            `접수하신 문의 "${title}" 가 정상적으로 등록되었습니다.`,
-            `담당자가 검토 후 영업일 기준 1일 이내에 회신드리며, 진행 상황은 이 소싱 보드에서 확인하실 수 있습니다.`,
-            ``,
-            'AEGIS',
-          ].join('\n'),
+          body: emailLayout({
+            kind: '문의 접수', eyebrow: '접수 완료', title: '문의가 접수되었습니다', preheader: `${title} · 영업일 기준 1일 안에 회신드립니다`,
+            body: p(`${esc(auth.user.full_name || clientName)} 님, 안녕하세요. 접수하신 문의가 정상적으로 등록되었습니다.<br>담당자가 검토 후 영업일 기준 ${strong('1일 안에')} 회신드립니다.`) +
+              facts([['문의', esc(title)]]) +
+              heading('이렇게 진행됩니다') +
+              steps([['담당자 검토와 회신', '사양을 확인하고 필요한 추가 정보를 여쭤봅니다'], ['광둥성 공장 확인', '맞는 공장을 찾아 가능 여부와 견적을 받습니다'], ['견적·일정 안내', '소싱 보드에서 견적과 진행 상황을 함께 봅니다']]) +
+              button('소싱 보드에서 보기', `/client/board?card=${card.id}`),
+          }),
         });
       } catch (_e) { /* 미등록 주소 발송 실패 허용 */ }
     }

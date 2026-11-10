@@ -1,5 +1,7 @@
 // 고객 주간 요약 메일 (3단계 E2): 월요일 아침 한 통 — 이번 주 확인하실 일, 이번 주 일정·도착 예정, 지난주 바뀐 것.
 // 메일 설정(User.notification_prefs.weekly.email)을 끄면 보내지 않는다 (기본은 받음). 검산: npm run check:weekly-digest
+import { emailLayout, p, esc, stats, heading, listRows, button, linkFallback, EMAIL_COLORS } from './emailLayout.ts';
+
 const STAGE = { DOWN_PAYMENT: '선금', INTERIM_PAYMENT: '중도금', BALANCE_PAYMENT: '잔금' } as Record<string, string>;
 const md = (ymd: string) => (ymd ? `${Number(ymd.slice(5, 7))}/${Number(ymd.slice(8, 10))}` : '');
 
@@ -40,5 +42,28 @@ export function weeklyDigest({ name, overview, changes = {}, today, weekEnd }: a
     ...section('지난주 바뀐 것', done, '지난주에는 바뀐 것이 없습니다'),
     '메일 설정(포털 알림 종 → 메일 설정)에서 주간 요약을 끌 수 있습니다.',
   ].join('\n');
-  return { subject: `[AEGIS 주간 요약] 확인하실 일 ${todos.length}건 · 이번 주 일정 ${week.length}건`, text, counts: { todos: todos.length, week: week.length, done: done.length } };
+  return { subject: `[AEGIS 주간 요약] 확인하실 일 ${todos.length}건 · 이번 주 일정 ${week.length}건`, text, counts: { todos: todos.length, week: week.length, done: done.length }, name: name || '고객', todos, week, done, today, weekEnd };
+}
+
+// 'A · B · C' 한 줄 → 목록 칸(제목·보조 글)
+const splitLine = (line: string): [string, string] => { const [first, ...rest] = String(line).split(' · '); return [first, rest.join(' · ')]; };
+const LIMIT = 12;
+const section = (title: string, list: string[], empty: string) => heading(`${title}${list.length ? ` (${list.length})` : ''}`) +
+  (list.length ? listRows(list.slice(0, LIMIT).map((x) => splitLine(x))) + (list.length > LIMIT ? `<div style="font-size:13px;color:${EMAIL_COLORS.muted}">외 ${list.length - LIMIT}건은 포털에서 확인해 주세요</div>` : '')
+    : `<div style="padding:10px 0;border-top:1px solid ${EMAIL_COLORS.line};font-size:14px;line-height:21px;color:${EMAIL_COLORS.muted}">${esc(empty)}</div>`);
+
+/** 주간 요약 메일 HTML (공통 틀) — weeklyDigest() 결과로 만든다 */
+export function weeklyDigestHtml(d: any) {
+  const C = EMAIL_COLORS;
+  const body = p(`${esc(d.name)}님, 이번 주 AEGIS 진행 요약입니다.`) +
+    stats([['확인하실 일', d.todos.length, d.todos.length ? C.warn : C.ink], ['이번 주 일정', d.week.length], ['지난주 바뀐 것', d.done.length, d.done.length ? C.success : C.ink]]) +
+    section('이번 주 확인하실 일', d.todos, '지금 확인하실 일은 없습니다') +
+    section('이번 주 일정·도착 예정', d.week, '이번 주 예정된 단계가 없습니다') +
+    section('지난주 바뀐 것', d.done, '지난주에는 바뀐 것이 없습니다') +
+    button('포털에서 보기', '/client/dashboard') + linkFallback('/client/dashboard');
+  return emailLayout({
+    kind: '주간 요약', eyebrow: d.today && d.weekEnd ? `${md(d.today)} ~ ${md(d.weekEnd)}` : '', title: '이번 주 프로젝트 요약', body,
+    preheader: `확인하실 일 ${d.todos.length}건 · 이번 주 일정 ${d.week.length}건`,
+    footNote: '매주 월요일 아침에 보내 드리는 요약입니다. 메일 설정(포털 알림 종 → 메일 설정)에서 주간 요약을 끌 수 있습니다.',
+  });
 }

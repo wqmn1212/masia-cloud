@@ -1,7 +1,7 @@
 // 시제품 개발 검산: PCB 부품 확정·JLCPCB 부품표, 버전 번호 겹침, 서버(파일 추가·삭제, AI 초안 재요청, 승인·대체, 복제, 위험 수).
 // 실행: npm run check:prototype
 import assert from 'node:assert/strict';
-import { normalizeLcsc, isLcsc, seedPcbRows, pcbSummary, jlcBomRows, toCsv } from '../src/lib/pcb.js';
+import { normalizeLcsc, isLcsc, seedPcbRows, pcbSummary, jlcBomRows, toCsv, expandRefs, isSmt } from '../src/lib/pcb.js';
 import { versionNoFix, nextVersionNo, cleanFiles, openRiskCount } from '../base44/shared/prototype.ts';
 
 const call = async (body) => { const m = await import('../base44/functions/prototypeAction/entry.ts'); const res = await m.default(new Request('https://x', { method: 'POST', body: JSON.stringify(body) })); return { status: res.status, data: await res.json() }; };
@@ -24,7 +24,25 @@ rows[2] = { ...rows[2], footprint: 'SMD-18', lcsc: 'RC0603' };
 // 새 버전 부품표: 같은 Ref·부품명은 이어 받고, 새 부품은 비어 있다
 const next = seedPcbRows([...bom.slice(0, 2), { ref: 'C1', name: '캐패시터 10uF', part_no: 'CL21A106KAYNNNE', qty: 1 }], rows);
 assert.deepEqual(next.map((r) => [r.ref, r.lcsc]), [['R1', 'C25804'], ['R2', 'C25804'], ['C1', '']]);
-assert.deepEqual(pcbSummary(rows), { total: 3, confirmed: 2, invalid: 1, missing: 0, basic: 2, extended: 0, noFootprint: 0 });
+assert.deepEqual(pcbSummary(rows), { total: 3, confirmed: 2, invalid: 1, missing: 0, basic: 2, extended: 0, noFootprint: 0, excluded: 0 });
+// 실제 앱 시험에서 나온 것: 범위 표기, 조립 대상이 아닌 줄, AI 가 준 실장 모양
+assert.deepEqual(expandRefs('SW1~SW3'), ['SW1', 'SW2', 'SW3']);
+assert.deepEqual(expandRefs('R1-R3, C5'), ['R1', 'R2', 'R3', 'C5']);
+assert.deepEqual(expandRefs('LED_F'), ['LED_F'], '범위가 아니면 그대로');
+assert.deepEqual(expandRefs('R1-C3'), ['R1-C3'], '앞글자가 다른 범위는 풀지 않는다');
+const aiBom = [
+  { ref: 'SW1~SW3', name: '택트 스위치', part_no: 'B3F-1000', qty: 3, footprint: 'THT 6x6', smt: false },
+  { ref: 'MECH', name: '힌지 축', qty: 1 },
+  { ref: 'PCB_LED', name: 'Ø170mm 원판 LED 기판', qty: 1 },
+  { ref: 'U1', name: 'MCU', part_no: 'ESP32-C3-MINI-1-N4', qty: 1, footprint: 'SMD-53', smt: true },
+  { ref: 'D1,D2', name: '쇼트키', part_no: 'B240A-13-F', qty: 2, footprint: 'SMA' },
+];
+const aiRows = seedPcbRows(aiBom);
+assert.deepEqual(aiRows.map((r) => [r.ref, r.smt, r.footprint]), [['SW1~SW3', false, 'THT 6x6'], ['MECH', false, ''], ['PCB_LED', false, ''], ['U1', true, 'SMD-53'], ['D1,D2', true, 'SMA']], 'AI 값이 있으면 쓰고, 없으면 기구·기판은 뺀다고 짐작');
+assert.equal(isSmt({ ref: 'MECH' }), false, '예전에 저장한 줄(smt 없음)도 짐작');
+assert.deepEqual(pcbSummary(aiRows).excluded, 3);
+assert.deepEqual(jlcBomRows(aiRows).map((r) => r.Designator), ['D1,D2', 'U1'], '조립 대상만 내보낸다');
+assert.deepEqual(jlcBomRows([{ ref: 'SW1~SW3', comment: 'TS-1187A', footprint: 'SMD-4', lcsc: 'C318884', smt: true }])[0].Designator, 'SW1,SW2,SW3', 'JLCPCB 는 범위 표기를 못 읽는다');
 // JLCPCB 양식: 같은 값·실장 모양·번호는 한 줄, Designator 는 자연 순서, 잘못된 번호는 비운다
 const jlc = jlcBomRows([...rows, { ref: 'R10', comment: '0603WAF1002T5E', footprint: '0603', lcsc: 'C25804' }]);
 assert.deepEqual(jlc, [
@@ -75,10 +93,14 @@ assert.equal((await call({ action: 'remove_file', project_id: 'p1', file_id: 'f-
 
 // AI 초안: 같은 요청 번호로 다시 오면 새로 만들지 않는다. 시험 중이던 단계를 되돌리지 않는다.
 let llmCalls = 0;
-globalThis.__llm = async () => { llmCalls++; return { summary: '감광 회로 수정', change_note: 'PWM 주파수 상향', risks: [{ severity: 'MEDIUM', title: '부품 수급' }], bom: [] }; };
+let llmArgs = null;
+globalThis.__llm = async (args) => { llmCalls++; llmArgs = args; return { summary: '감광 회로 수정', change_note: 'PWM 주파수 상향', risks: [{ severity: 'MEDIUM', title: '부품 수급' }], bom: [] }; };
 res = await call({ action: 'draft', project_id: 'p1', request_id: 'req-1', instruction: '깜빡임 개선' });
 assert.equal(res.status, 200, JSON.stringify(res.data));
 const v2 = res.data.version;
+const bomProps = llmArgs.response_json_schema.properties.bom.items.properties;
+assert.ok(bomProps.footprint && bomProps.smt, 'AI 부품표에 실장 모양·SMT 대상 여부를 받는다');
+assert.ok(llmArgs.prompt.includes('쉼표로 나열'), '범위 표기 금지 지시');
 assert.deepEqual([v2.version_no, v2.status, v2.request_id, v2.based_on_version_id], [2, 'DRAFT', 'req-1', 'v1'], '기본 기준은 현재 승인본');
 assert.equal(db.ProtoProject[0].stage, 'TEST', '시험 중에 초안을 만들어도 단계는 그대로');
 res = await call({ action: 'draft', project_id: 'p1', request_id: 'req-1' });

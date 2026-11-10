@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { actorName, errorText } from '@/lib/prototypeApi';
-import { LCSC_TYPES, isLcsc, jlcBomRows, lcscSearchUrl, normalizeLcsc, pcbSummary, seedPcbRows, toCsv } from '@/lib/pcb';
+import { LCSC_TYPES, isLcsc, isSmt, jlcBomRows, lcscSearchUrl, normalizeLcsc, pcbSummary, seedPcbRows, toCsv } from '@/lib/pcb';
 
 // PCB 부품 확정: 승인 설계의 부품표마다 LCSC 부품번호·실장 모양을 확정하고 JLCPCB 양식 부품표로 내보낸다.
 // 실제 회로·PCB 설계는 EasyEDA·KiCad 에서 하고, 여기서는 구매 가능한 부품으로 확정하는 단계를 맡는다.
@@ -23,7 +23,7 @@ export default function PcbTab({ project, versions, user, onChanged }) {
   const save = async () => {
     setSaving(true);
     try {
-      const clean = rows.map((r) => ({ ...r, lcsc: normalizeLcsc(r.lcsc) }));
+      const clean = rows.map((r) => ({ ...r, lcsc: normalizeLcsc(r.lcsc), smt: isSmt(r) }));
       await base44.entities.ProtoProject.update(project.id, { pcb: { version_id: v.id, version_no: v.version_no, rows: clean, updated_by_name: actorName(user), updated_at: new Date().toISOString() } });
       onChanged();
       toast({ title: 'PCB 부품 확정 내용을 저장했습니다' });
@@ -46,11 +46,12 @@ export default function PcbTab({ project, versions, user, onChanged }) {
   if (!v) return <div className="rounded-xl border border-dashed bg-card p-10 text-center text-body text-muted-foreground">설계 버전을 승인하면 그 부품표로 PCB 부품을 확정할 수 있습니다.</div>;
 
   const tiles = [
-    ['LCSC 번호 확정', `${sum.confirmed} / ${sum.total}`, sum.confirmed < sum.total],
+    ['LCSC 번호 확정 (SMT 대상)', `${sum.confirmed} / ${sum.total}`, sum.confirmed < sum.total],
     ['기본 부품', sum.basic, false],
     ['확장 부품', sum.extended, false],
     ['실장 모양 빈칸', sum.noFootprint, sum.noFootprint > 0],
   ];
+  const smtCount = sum.total;
   const input = 'h-8 rounded-md border bg-transparent px-2 text-label';
 
   return (
@@ -65,7 +66,7 @@ export default function PcbTab({ project, versions, user, onChanged }) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-title font-semibold">PCB 부품 확정 · v{v.version_no}</p>
-            <p className="text-caption text-muted-foreground">부품마다 LCSC 부품번호(C로 시작)와 실장 모양(예: 0603, SOT-23-5)을 정하세요. 확장 부품은 SMT 조립 때 추가 비용이 생길 수 있습니다.</p>
+            <p className="text-caption text-muted-foreground">SMT 조립 대상 {smtCount}개 부품의 LCSC 부품번호(C로 시작)와 실장 모양(예: 0603, SOT-23-5)을 정하세요. 확장 부품은 SMT 조립 때 추가 비용이 생길 수 있습니다.{sum.excluded ? ` 조립 대상이 아닌 ${sum.excluded}개(기구·기판·케이블 등)는 부품표 내보내기에서 뺍니다.` : ''}</p>
             {stale && <p className="mt-1 text-caption text-warning-text">저장된 확정 내용은 v{saved.version_no} 기준입니다. 같은 Ref·부품명은 이어 받았고, 바뀐 부품만 새로 확인하면 됩니다.</p>}
           </div>
           <div className="flex flex-wrap gap-2">
@@ -80,15 +81,17 @@ export default function PcbTab({ project, versions, user, onChanged }) {
             <table className="w-full text-label">
               <thead>
                 <tr className="text-left text-caption text-muted-foreground">
-                  {['Ref', '부품', '수량', 'Comment (값·부품번호)', '실장 모양', 'LCSC 번호', '유형', ''].map((h) => <th key={h} className="px-1 py-1.5 font-medium whitespace-nowrap">{h}</th>)}
+                  {['SMT', 'Ref', '부품', '수량', 'Comment (값·부품번호)', '실장 모양', 'LCSC 번호', '유형', ''].map((h) => <th key={h} className="px-1 py-1.5 font-medium whitespace-nowrap">{h}</th>)}
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r, i) => {
                   const lcsc = normalizeLcsc(r.lcsc);
                   const bad = !!lcsc && !isLcsc(lcsc);
+                  const smt = isSmt(r);
                   return (
-                    <tr key={`${r.ref}-${i}`} className="border-t">
+                    <tr key={`${r.ref}-${i}`} className={`border-t ${smt ? '' : 'opacity-50'}`}>
+                      <td className="px-1 py-1.5"><input type="checkbox" className="h-4 w-4 accent-primary" checked={smt} onChange={(e) => set(i, 'smt', e.target.checked)} aria-label={`${r.ref} SMT 조립 대상`} /></td>
                       <td className="px-1 py-1.5 font-medium whitespace-nowrap">{r.ref || '-'}</td>
                       <td className="px-1 py-1.5 min-w-[140px]"><p>{r.name}</p><p className="text-micro text-muted-foreground">{[r.manufacturer, r.part_no].filter(Boolean).join(' · ')}</p></td>
                       <td className="px-1 py-1.5 tabular-nums">{r.qty || '-'}</td>
@@ -116,7 +119,7 @@ export default function PcbTab({ project, versions, user, onChanged }) {
           </div>
         )}
         <p className="text-micro text-muted-foreground">
-          내보낸 CSV는 JLCPCB SMT 주문의 부품표 양식(Comment · Designator · Footprint · LCSC Part #)입니다. 같은 값·실장 모양·부품번호는 한 줄로 묶습니다.
+          내보낸 CSV는 JLCPCB SMT 주문의 부품표 양식(Comment · Designator · Footprint · LCSC Part #)입니다. SMT 대상만 넣고, 같은 값·실장 모양·부품번호는 한 줄로 묶으며, SW1~SW3 같은 범위는 SW1,SW2,SW3 로 풉니다.
           재고·가격은 LCSC 링크에서 확인하세요. 회로도·PCB 아트웍은 EasyEDA·KiCad에서 만듭니다.
         </p>
       </div>

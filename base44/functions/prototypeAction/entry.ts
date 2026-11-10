@@ -15,6 +15,7 @@ const DRAFT_SCHEMA = {
     bom: { type: 'array', items: { type: 'object', properties: {
       ref: { type: 'string' }, name: { type: 'string' }, manufacturer: { type: 'string' }, part_no: { type: 'string' }, qty: { type: 'number' },
       voltage: { type: 'string' }, current: { type: 'string' }, interface: { type: 'string' }, function: { type: 'string' },
+      footprint: { type: 'string' }, smt: { type: 'boolean' },
       verify_status: { type: 'string', enum: ['VERIFIED', 'NEEDS_CHECK', 'ASSUMED'] }, basis: { type: 'string' } } } },
     connections: { type: 'array', items: { type: 'object', properties: { from: { type: 'string' }, to: { type: 'string' }, signal: { type: 'string' }, voltage: { type: 'string' }, note: { type: 'string' } } } },
     power_budget: { type: 'string' }, circuit_notes: { type: 'string' }, firmware_draft: { type: 'string' }, firmware_notes: { type: 'string' },
@@ -38,6 +39,8 @@ const ANALYSIS_SCHEMA = {
 const RULES = `규칙:
 - 한국어로 작성한다. 부품번호·규격은 실제 존재하는 범용 부품을 우선하되, 데이터시트로 확인하지 못한 값은 verify_status 를 NEEDS_CHECK, 추정이면 ASSUMED 로 둔다. 확실한 경우만 VERIFIED.
 - 모든 부품에 선정 근거(basis)를 쓴다. 전압·전류는 단위를 붙인다.
+- 부품표 ref 는 'R1,R2,R3' 처럼 쉼표로 나열한다 (SW1~SW3 같은 범위 표기 금지).
+- 모든 부품에 footprint(실장 모양: 0603, SOT-23-5, SOIC-8, QFN-32 처럼 JLCPCB·LCSC 에서 쓰는 이름, 스루홀은 THT 와 피치)와 smt(기판에 SMT 로 실장하는 전자 부품이면 true, 기구·하우징·기판 자체·케이블·어댑터·손으로 다는 부품이면 false)를 쓴다.
 - 입력에 없는 정보는 지어내지 말고 missing 에, 서로 맞지 않는 요구는 contradictions 에, 전제한 내용은 assumptions 에 적는다.
 - 펌웨어 초안은 주석 달린 실행 가능한 형태(Arduino/ESP-IDF/STM32 HAL 등 적합한 것)로 핀맵을 포함한다.
 - 사출 구조(두께·리브·보스·스냅·체결)와 금형 초안(파팅라인·구배·게이트·이젝터·캐비티 수·언더컷 처리)을 구체적으로 쓴다.

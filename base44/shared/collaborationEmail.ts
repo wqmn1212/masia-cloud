@@ -19,7 +19,7 @@ export async function sendCollaborationEmail(svc, change) {
   for (const target of targets) {
     if (sent.includes(target.id) || !target.email) continue;
     try {
-      await svc.integrations.Core.SendEmail({ to: target.email, from_name: 'AEGIS', subject: change.title, body: emailBody(`${change.body}\n\n변경 사유: ${change.reason || '미입력'}\n변경일시: ${new Date(change.created_date).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} (한국시간)`, card.title, `/client/board?card=${card.id}`) });
+      await svc.integrations.Core.SendEmail({ to: target.email, from_name: 'AEGIS', subject: change.title, body: emailBody(`${change.body}\n\n변경 사유: ${change.reason || '미입력'}\n변경일시: ${new Date(change.created_date).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} (한국시간)`, card.title, `/client/board?card=${card.id}`, { title: change.title, kind: '진행 변경 안내' }) });
     } catch (error) {
       await svc.entities.CollaborationChange.update(change.id, { email_status: 'FAILED', sent_user_ids: sent, email_error: String(error.message || '이메일 발송 실패').slice(0, 1000) });
       return { status: 'FAILED' };
