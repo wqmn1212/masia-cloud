@@ -3,7 +3,9 @@ import { base44 } from '@/api/base44Client';
 import ConversationList from '@/components/assistant/ConversationList';
 import MessageBubble from '@/components/assistant/MessageBubble';
 import ChatComposer from '@/components/assistant/ChatComposer';
-import { Bot, Loader2, AlertTriangle } from 'lucide-react';
+import { Bot, Box, Loader2, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import ConceptStartDialog from '@/components/prototype/concept/ConceptStartDialog';
 import { Button } from '@/components/ui/button';
 
 const AGENT_NAME = 'masia_assistant';
@@ -16,6 +18,8 @@ export default function Assistant() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const scrollRef = useRef(null);
+  const [conceptOpen, setConceptOpen] = useState(false);
+  const navigate = useNavigate();
 
   const loadConversations = async () => {
     const list = await base44.agents.listConversations({ agent_name: AGENT_NAME });
@@ -101,7 +105,9 @@ export default function Assistant() {
           <h1 className="text-2xl font-bold tracking-tight">AI 업무 비서</h1>
           <p className="text-label text-muted-foreground">진행 중인 업무 카드와 파일을 분석하고, 첨부 파일을 알맞은 카드에 등록합니다.</p>
         </div>
+        <Button variant="outline" className="ml-auto shrink-0" onClick={() => setConceptOpen(true)}><Box className="w-4 h-4" /><span className="hidden sm:inline">시제품 컨셉 만들기</span></Button>
       </div>
+      <ConceptStartDialog open={conceptOpen} onOpenChange={setConceptOpen} onCreated={(res) => navigate(`/prototypes/${res.project_id}/concept`)} />
 
       <div className="flex-1 flex flex-col md:flex-row min-h-0">
         <ConversationList

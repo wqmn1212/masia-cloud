@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
-import { Cpu, Plus, Loader2, AlertTriangle } from 'lucide-react';
+import { Cpu, Plus, Loader2, AlertTriangle, Sparkles } from 'lucide-react';
+import ConceptStartDialog from '@/components/prototype/concept/ConceptStartDialog';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ export default function Prototypes() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [conceptOpen, setConceptOpen] = useState(false);
   const { data: projects = [], isLoading } = useQuery({ queryKey: protoKeys.list, queryFn: () => base44.entities.ProtoProject.list('-updated_date', 100) });
 
   return (
@@ -25,8 +27,12 @@ export default function Prototypes() {
           <h1 className="mt-1 text-2xl font-bold tracking-tight">요구사항부터 시험·개선까지 한 곳에서</h1>
           <p className="mt-1 text-body text-muted-foreground">도면·사양을 올리면 AI가 부품표·회로·펌웨어·금형 초안을 만들고, 담당자가 검토·승인합니다.</p>
         </div>
-        <Button onClick={() => setOpen(true)}><Plus className="w-4 h-4" />새 시제품</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setConceptOpen(true)}><Sparkles className="w-4 h-4" />아이디어로 컨셉 만들기</Button>
+          <Button onClick={() => setOpen(true)}><Plus className="w-4 h-4" />새 시제품</Button>
+        </div>
       </div>
+      <ConceptStartDialog open={conceptOpen} onOpenChange={setConceptOpen} onCreated={(res) => { qc.invalidateQueries({ queryKey: protoKeys.list }); navigate(`/prototypes/${res.project_id}/concept`); }} />
 
       {isLoading ? (
         <div className="py-20 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>

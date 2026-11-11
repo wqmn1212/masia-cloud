@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, ClipboardCheck } from 'lucide-react';
+import { ArrowLeft, Loader2, ClipboardCheck, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
@@ -46,7 +46,10 @@ export default function PrototypeDetail() {
             <h1 className="text-2xl font-bold tracking-tight">{project.title}</h1>
             <p className="text-caption text-muted-foreground">담당 {project.owner_name || '-'} · 최근 변경 {fmtDate(project.updated_date)}</p>
           </div>
-          <Button asChild><Link to={`/prototypes/${project.id}/review`}><ClipboardCheck className="w-4 h-4" />설계 검토 워크스페이스</Link></Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline"><Link to={`/prototypes/${project.id}/concept`}><Sparkles className="w-4 h-4" />컨셉 스튜디오 (3D 프리뷰)</Link></Button>
+            <Button asChild><Link to={`/prototypes/${project.id}/review`}><ClipboardCheck className="w-4 h-4" />설계 검토 워크스페이스</Link></Button>
+          </div>
         </div>
       </div>
       <div className="rounded-xl border bg-card p-4"><ProtoStageBar stage={project.stage} onSelect={setStage} /></div>
