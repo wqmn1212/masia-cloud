@@ -29,9 +29,11 @@ assert.deepEqual([r.default_pct, r.min_pct, r.default_source, r.min_source], [22
 r = M.resolveMargin(setting, { inquiry_details: { categories: ['기타', '굿즈 · 조형', '기계설비'] } });
 assert.deepEqual([r.default_pct, r.min_pct, r.default_label], [30, 25, '굿즈 · 조형 카테고리 규칙'], '카드 카테고리 순서대로 첫 규칙');
 r = M.resolveMargin({}, {});
-assert.deepEqual([r.default_pct, r.min_pct, r.default_source], [15, 10, 'BASE']);
+assert.deepEqual([r.default_pct, r.min_pct, r.default_source], [20, 10, 'BASE']);
+assert.equal(r.max_pct, 100);
+assert.equal(r.billing_mode, 'TURNKEY');
 r = M.resolveMargin({ margin_rules: [{ scope: 'CLIENT', client_id: 'co1', min_pct: 8 }] }, { client_id: 'co1', client_name: '도깨비' });
-assert.deepEqual([r.default_pct, r.min_pct, r.min_label], [15, 8, '도깨비 고객사 규칙'], '고객사 규칙이 최소만 있으면 기본 마진은 앱 기본');
+assert.deepEqual([r.default_pct, r.min_pct, r.min_label], [20, 8, '도깨비 고객사 규칙'], '고객사 규칙이 최소만 있으면 기본 마진은 앱 기본');
 
 // 항목 마진 채우기
 assert.deepEqual(M.fillMargins([{ margin_percent: '' }, { margin_percent: 5 }, {}], 18).map((o) => o.margin_percent), [18, 5, 18]);
@@ -39,14 +41,24 @@ assert.deepEqual(M.fillMargins([{ margin_percent: '' }, { margin_percent: 5 }, {
 // 승인 확인의 최소 마진
 const q = { status: 'DRAFT', rounding_version: 2, final_total: 1150, final_currency: 'USD', exchange_rate_usd_cny: 7, quote_options: [{ option_name: 'A', quantity: 1, unit_price: 7000, currency: 'CNY' }], lead_time_business_days: 10, validity_days: 30 };
 const card = { id: 'c1', tenant_id: 't1', title: '타정기', client_id: 'co1', client_name: '도깨비산업기계', client_visible: true, inquiry_details: { categories: ['기계설비'] } };
-// 마진 13%: 앱 기본 10% 이상이라 주의 없음, 고객사 규칙 최소 15%면 주의
+// 마진은 원가에 얹은 비율: 원가 $1,000 → 고객 $1,150 = 15%. 앱 기본 10% 이상이라 주의 없음, 고객사 규칙 최소 16%면 주의
 assert.ok(!R.reviewChecks(q, card, '2026-11-02').some((c) => c.code === 'low_margin'));
-const strict = M.resolveMargin({ margin_rules: [{ scope: 'CLIENT', client_id: 'co1', client_name: '도깨비산업기계', min_pct: 15 }] }, card);
+const strict = M.resolveMargin({ margin_rules: [{ scope: 'CLIENT', client_id: 'co1', client_name: '도깨비산업기계', min_pct: 16 }] }, card);
 const low = R.reviewChecks(q, card, '2026-11-02', strict).find((c) => c.code === 'low_margin');
-assert.equal(low.text, '마진이 13%로 기준(도깨비산업기계 고객사 규칙 15%)보다 낮습니다');
-assert.equal(R.reviewChecks({ ...q, final_total: 1050 }, card, '2026-11-02', M.resolveMargin({}, card)).find((c) => c.code === 'low_margin').text, '마진이 4.8%로 기준(10%)보다 낮습니다', '앱 기본은 출처를 쓰지 않는다');
+assert.equal(low.text, '마진이 15%로 기준(도깨비산업기계 고객사 규칙 16%)보다 낮습니다');
+assert.equal(R.reviewChecks({ ...q, final_total: 1050 }, card, '2026-11-02', M.resolveMargin({}, card)).find((c) => c.code === 'low_margin').text, '마진이 5%로 기준(10%)보다 낮습니다', '앱 기본은 출처를 쓰지 않는다');
 const queue = R.approvalQueue([{ ...q, id: 'a', card_id: 'c1', status: 'REVIEW' }], { c1: card }, '2026-11-02', () => strict);
 assert.ok(queue.review[0].checks.some((c) => c.code === 'low_margin'), '승인함도 규칙을 따른다');
+// 상한 100%: 넘으면 주의
+assert.ok(R.reviewChecks({ ...q, final_total: 2100 }, card, '2026-11-02', M.resolveMargin({}, card)).some((c) => c.code === 'high_margin'));
+assert.ok(!R.reviewChecks({ ...q, final_total: 2000 }, card, '2026-11-02', M.resolveMargin({}, card)).some((c) => c.code === 'high_margin'), '100%까지는 허용');
+// 월정액 고객: 마진 없음. 공장 가격 그대로가 아니면 주의, 낮은 마진 주의는 없다
+const monthly = M.resolveMargin(setting, card, 'MONTHLY');
+assert.deepEqual([monthly.billing_mode, monthly.default_pct, monthly.min_pct, monthly.max_pct], ['MONTHLY', 0, 0, 0]);
+assert.deepEqual(R.reviewChecks({ ...q, final_total: 1000 }, card, '2026-11-02', monthly).filter((c) => /margin/.test(c.code)), []);
+assert.equal(R.reviewChecks(q, card, '2026-11-02', monthly).find((c) => c.code === 'monthly_margin').text, '월정액 고객은 공장 가격 그대로 전달합니다 (지금 원가보다 15% 높음)');
+assert.equal(M.billingMode('MONTHLY'), 'MONTHLY');
+assert.equal(M.billingMode(undefined), 'TURNKEY');
 console.log('margin-rule module ok');
 
 // 서버 함수
@@ -59,10 +71,10 @@ globalThis.__emails = [];
 globalThis.__user = SUB;
 assert.equal((await call('quoteApproval', { action: 'save_margin_rules', margin_default_pct: 20 })).status, 403, '직원은 규칙을 못 바꾼다');
 r = await call('quoteApproval', { action: 'margin_rule', card_id: 'c1' });
-assert.deepEqual([r.data.default_pct, r.data.min_pct], [15, 10], '규칙이 없으면 앱 기본');
+assert.deepEqual([r.data.default_pct, r.data.min_pct], [20, 10], '규칙이 없으면 앱 기본');
 
 globalThis.__user = BOSS;
-r = await call('quoteApproval', { action: 'save_margin_rules', margin_default_pct: '17', margin_min_pct: '', margin_rules: [{ scope: 'CLIENT', client_id: 'co1', client_name: '도깨비산업기계', default_pct: 20, min_pct: 15 }, { scope: 'CATEGORY', category: '기계설비' }] });
+r = await call('quoteApproval', { action: 'save_margin_rules', margin_default_pct: '17', margin_min_pct: '', margin_rules: [{ scope: 'CLIENT', client_id: 'co1', client_name: '도깨비산업기계', default_pct: 25, min_pct: 16 }, { scope: 'CATEGORY', category: '기계설비' }] });
 assert.equal(r.status, 200, JSON.stringify(r.data));
 const saved = globalThis.__db.OperationSetting[0];
 assert.equal(saved.tenant_id, 't1');
@@ -73,10 +85,10 @@ assert.equal(saved.updated_by, '이호민');
 
 globalThis.__user = SUB;
 r = await call('quoteApproval', { action: 'margin_rule', card_id: 'c1' });
-assert.deepEqual([r.data.default_pct, r.data.min_pct, r.data.default_label], [20, 15, '도깨비산업기계 고객사 규칙']);
+assert.deepEqual([r.data.default_pct, r.data.min_pct, r.data.default_label], [25, 16, '도깨비산업기계 고객사 규칙']);
 r = await call('quoteApproval', { action: 'preview', quotation_id: 'q1' });
-assert.equal(r.data.rule.min_pct, 15);
-assert.ok(r.data.checks.some((c) => c.code === 'low_margin' && /고객사 규칙 15%/.test(c.text)), JSON.stringify(r.data.checks));
+assert.equal(r.data.rule.min_pct, 16);
+assert.ok(r.data.checks.some((c) => c.code === 'low_margin' && /고객사 규칙 16%/.test(c.text)), JSON.stringify(r.data.checks));
 
 // 공장 견적 초안에 기준 마진 채우기
 globalThis.__db.FactoryRequest = [{ id: 'fr1', tenant_id: 't1', card_id: 'c1', factory_name: '운용', status: 'OPEN', expires_at: '2099-01-01T00:00:00Z', quote_import_pending: true,
@@ -89,6 +101,6 @@ globalThis.__user = null;
 r = await call('importFactoryQuote', { request_id: 'fr1' });
 assert.equal(r.data.created, 1, JSON.stringify(r.data));
 const draft = globalThis.__db.Quotation.at(-1);
-assert.deepEqual(draft.quote_options.map((o) => o.margin_percent), [20, 20], '선택 사양까지 같은 기준 마진');
-assert.match(draft.internal_notes, /^기준 마진 20% 채움 \(도깨비산업기계 고객사 규칙\)/);
+assert.deepEqual(draft.quote_options.map((o) => o.margin_percent), [25, 25], '선택 사양까지 같은 기준 마진');
+assert.match(draft.internal_notes, /^기준 마진 25% 채움 \(도깨비산업기계 고객사 규칙\)/);
 console.log('margin-rule functions ok');

@@ -19,6 +19,7 @@ import ClientTeamPanel, { ClientApprovalRulesPanel } from '@/components/client/t
 const emptyClient = {
   company_type: 'CLIENT',
   company_name: '',
+  billing_mode: 'TURNKEY',
   contact_person: '',
   address: '',
   phone: '',
@@ -180,6 +181,15 @@ export default function Clients() {
                   </a>
                 )}
               </div>
+            </div>
+
+            <div>
+              <Label className="text-caption">과금 방식</Label>
+              <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-body" value={form.billing_mode || 'TURNKEY'} onChange={(e) => handleChange('billing_mode', e.target.value)}>
+                <option value="TURNKEY">턴키 납품 (기본) · 공장 원가에 마진을 얹어 납품</option>
+                <option value="MONTHLY">월정액 제조팀 · 공장 가격 그대로, 월 관리 비용</option>
+              </select>
+              <p className="mt-1 text-micro text-muted-foreground">견적을 만들 때 이 방식에 맞는 기준이 들어갑니다. 고객 화면에는 보이지 않습니다.</p>
             </div>
 
             <div>

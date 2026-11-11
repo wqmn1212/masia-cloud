@@ -25,7 +25,7 @@ export function QuoteNumbers({ summary: s }) {
     <p className="flex flex-wrap gap-x-3 gap-y-0.5 text-label tabular-nums text-muted-foreground">
       <span>고객 금액 <b className="text-foreground">{s.total ? formatMoney(s.total, s.currency) : '-'}</b></span>
       <span>원가 {usd(s.cost_usd)}</span>
-      <span>마진 <b className={low ? 'text-warning-text' : 'text-foreground'}>{s.margin_pct == null ? '-' : `${s.margin_pct}%`}</b></span>
+      <span title="원가에 얹은 비율">마진 <b className={low ? 'text-warning-text' : 'text-foreground'}>{s.margin_pct == null ? '-' : `${s.margin_pct}%`}</b></span>
       <span>납기 {s.lead_time_business_days ? `${s.lead_time_business_days}영업일` : s.shipping_days ? `${s.shipping_days}일` : '-'}</span>
       <span>유효 {s.validity_days ? `${s.validity_days}일` : '-'}</span>
     </p>

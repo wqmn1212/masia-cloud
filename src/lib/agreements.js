@@ -12,7 +12,11 @@ export const INVOICE_STATUS = {
   PAID: { label: '입금 완료', cls: 'bg-primary/15 text-primary' },
   OVERDUE: { label: '입금 지연', cls: 'bg-destructive/15 text-destructive' },
 };
-export const TERM_OPTIONS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+// 계약 기간은 12개월이 기본. 예전 계약(3~11개월)도 고칠 수 있게 선택지는 남긴다
+export const DEFAULT_TERM = 12;
+export const TERM_OPTIONS = [12, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+// 월정액 제조팀 플랜 (대행 범위)
+export const AGREEMENT_PLANS = { LITE: '라이트 · 구매 담당', STANDARD: '스탠다드 · 구매 + 품질', PRO: '프로 · 제조팀 전체', ENTERPRISE: '엔터프라이즈 · 별도 협의' };
 
 export const kstToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
 export const kstMonth = () => kstToday().slice(0, 7);

@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { notifyUsers, clientUsersOfCompany } from '../../shared/notify.ts';
 import { kstToday } from '../../shared/chinaHoliday.ts';
 import { quoteSummary, reviewChecks, canSend, isPublished, approvalQueue } from '../../shared/quoteReview.ts';
-import { resolveMargin, cleanRules } from '../../shared/marginRule.ts';
+import { resolveMargin, cleanRules, billingModeReader, BASE_MAX_PCT } from '../../shared/marginRule.ts';
 import { requestQuoteReview } from '../../shared/quoteActions.ts';
 
 // 견적 승인과 고객 발송.
@@ -40,7 +40,8 @@ export default async function (req: Request) {
       if (!settings.has(tenantId)) settings.set(tenantId, (await db.OperationSetting.filter({ tenant_id: tenantId }, '-updated_date', 1).catch(() => []))[0] || null);
       return settings.get(tenantId);
     };
-    const ruleOf = async (card: any) => (card ? resolveMargin(await settingOf(card.tenant_id), card) : null);
+    const modeOf = billingModeReader(db);
+    const ruleOf = async (card: any) => (card ? resolveMargin(await settingOf(card.tenant_id), card, await modeOf(card)) : null);
 
     if (action === 'margin_rule') {
       const card = typeof body.card_id === 'string' ? await db.TaskCard.get(body.card_id).catch(() => null) : null;
@@ -52,7 +53,7 @@ export default async function (req: Request) {
       if (!approver) return Response.json({ error: '마진 규칙은 팀 관리자만 바꿀 수 있습니다.' }, { status: 403 });
       const tenantId = user.account_tier === 'master' && typeof body.tenant_id === 'string' && body.tenant_id ? body.tenant_id : user.tenant_id;
       if (!tenantId) return Response.json({ error: '소속 팀이 없습니다.' }, { status: 403 });
-      const num = (v: unknown) => (v === '' || v == null || !Number.isFinite(Number(v)) || Number(v) < 0 || Number(v) > 500 ? null : Math.round(Number(v) * 10) / 10);
+      const num = (v: unknown) => (v === '' || v == null || !Number.isFinite(Number(v)) || Number(v) < 0 || Number(v) > BASE_MAX_PCT ? null : Math.round(Number(v) * 10) / 10);
       const patch = { margin_default_pct: num(body.margin_default_pct), margin_min_pct: num(body.margin_min_pct), margin_rules: cleanRules(body.margin_rules), updated_by: by };
       const current = await settingOf(tenantId);
       if (current) await db.OperationSetting.update(current.id, patch);

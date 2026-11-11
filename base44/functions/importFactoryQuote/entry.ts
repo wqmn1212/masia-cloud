@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { extractQuotation } from '../../shared/quoteExtract.ts';
 import { pendingQuoteSubs, markSubs, sameSub, draftQuotation, draftLine } from '../../shared/factoryQuote.ts';
 import { notifyUsers, internalUsersOfTenant } from '../../shared/notify.ts';
-import { resolveMargin, fillMargins } from '../../shared/marginRule.ts';
+import { resolveMargin, fillMargins, billingModeReader } from '../../shared/marginRule.ts';
 
 // 공장 업로드 링크로 올라온 견적서를 읽어 견적 초안(DRAFT)을 만든다.
 //  - 워크플로우(FactoryQuoteImport)가 공장 제출 직후(quote_import_pending) 로그인 없이 부른다: { request_id }
@@ -34,7 +34,7 @@ export default async function (req: Request) {
     const rates = (await db.ExchangeRate.list('-rate_date', 1).catch(() => []))[0] || null;
     // 팀 마진 규칙의 기준 마진을 항목마다 미리 채운다 (직원이 확인하고 고친다)
     const setting = (await db.OperationSetting.filter({ tenant_id: card.tenant_id }, '-updated_date', 1).catch(() => []))[0] || null;
-    const rule = resolveMargin(setting, card);
+    const rule = resolveMargin(setting, card, await billingModeReader(db)(card));
     const results: { sub: any; quotation_id?: string; record?: any; error?: string }[] = [];
     for (const sub of targets) {
       try {

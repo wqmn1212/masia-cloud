@@ -1,4 +1,6 @@
 // 상세 요금 비교 (/pricing) — 모든 문구 [ko, en, zh], VAT 별도
+// 상품 구조: 턴키 납품(기본, 제품별 납품가 견적) + 제조팀 구독(추가 옵션, 월 관리 비용) + 단건 상품. 계약 기간은 모두 12개월.
+// 턴키 마진율 같은 내부 기준은 이 파일에 적지 않는다 (고객 공개 화면).
 import { PLAN_KEYS } from '@/lib/planTheme';
 const T = (ko, en, zh) => [ko, en, zh];
 const TEAM = T('한국 PM 1 + 중국 현지 QC·PM 2', 'Korea PM 1 + China QC·PM 2', '韩国 PM 1 + 中国现场 QC·PM 2');
@@ -7,11 +9,13 @@ const QUOTE_COST = T('신규 견적마다 + 원가 구성 검토', 'Every new qu
 const QC = T('출고 건마다 + 검수 보고서', 'Every shipment + inspection report', '每批出货 + 检验报告');
 
 export const page = {
-  meta: T('AEGIS 제조팀 구독 플랜 · 상세 요금 비교', 'AEGIS manufacturing team plans · Pricing', 'AEGIS 制造团队订阅方案 · 价格对比'),
-  desc: T('라이트·스탠다드·프로 구독 플랜 비교, 포함 범위와 실비, 단건 상품, 계약 조건 안내.', 'Compare Lite, Standard and Pro plans, what is included, pass-through costs, single services and contract terms.', '对比轻量版、标准版、专业版方案，了解包含范围、实费、单次服务与合同条件。'),
-  h1: T('제조팀 구독 플랜 상세 비교', 'Manufacturing team plans in detail', '制造团队订阅方案详细对比'),
-  lead: T('세 플랜 모두 같은 담당 팀(한국 PM 1명 + 중국 현지 QC·PM 2명)이 맡습니다. 플랜에 따라 관리 범위와 현장 방문 횟수가 달라집니다. VAT 별도.', 'All three plans are served by the same assigned team (1 PM in Korea + 2 QC·PMs in China). Plans differ in scope and number of site visits. VAT excluded.', '三个方案均由同一负责团队（韩国 PM 1 名 + 中国现场 QC·PM 2 名）承担，差异在于管理范围与现场走访次数。不含增值税。'),
-  compareTitle: T('플랜 비교', 'Plan comparison', '方案对比'),
+  meta: T('AEGIS 요금 안내 · 턴키 납품과 제조팀 구독', 'AEGIS pricing · Turnkey delivery and manufacturing team plans', 'AEGIS 价格说明 · 交钥匙交付与制造团队订阅'),
+  desc: T('턴키 납품과 제조팀 구독(라이트·스탠다드·프로) 비교, 포함 범위와 실비, 단건 상품, 계약 조건 안내.', 'Compare turnkey delivery with Lite, Standard and Pro manufacturing team plans: what is included, pass-through costs, single services and contract terms.', '对比交钥匙交付与制造团队订阅（轻量版、标准版、专业版），了解包含范围、实费、单次服务与合同条件。'),
+  h1: T('턴키 납품과 제조팀 구독', 'Turnkey delivery and manufacturing team plans', '交钥匙交付与制造团队订阅'),
+  modesTitle: T('두 가지 방식', 'Two ways to work with us', '两种合作方式'),
+  modesHead: [T('항목', 'Item', '项目'), T('턴키 납품 (기본)', 'Turnkey delivery (default)', '交钥匙交付（基本）'), T('제조팀 구독 (추가 옵션)', 'Manufacturing team plan (add-on)', '制造团队订阅（附加选项）')],
+  lead: T('기본은 턴키 납품입니다. 제품 개발부터 양산·납품까지 이지스가 맡고, 제품별 납품가로 견적합니다. 중국 생산 전체를 계속 맡기려면 제조팀 구독을 더할 수 있습니다. 구독은 대행 범위에 따라 플랜이 나뉘며, 모든 플랜을 같은 담당 팀(한국 PM 1명 + 중국 현지 QC·PM 2명)이 맡습니다. VAT 별도.', 'Turnkey delivery is our default: we take the product from development through mass production and delivery, quoted as a delivered price per product. If you want us to keep running your China production, add a manufacturing team plan. Plans differ by how much of the work we take over, and every plan is served by the same assigned team (1 PM in Korea + 2 QC·PMs in China). VAT excluded.', '基本方式为交钥匙交付：从产品开发到量产与交付均由 AEGIS 负责，按产品报交付价。如需持续托管在华生产，可追加制造团队订阅。订阅按代行范围分为不同方案，所有方案均由同一负责团队（韩国 PM 1 名 + 中国现场 QC·PM 2 名）负责。不含增值税。'),
+  compareTitle: T('제조팀 구독 플랜 비교', 'Manufacturing team plan comparison', '制造团队订阅方案对比'),
   includedTitle: T('포함 범위와 실비', 'Included vs. billed at cost', '包含范围与实费'),
   singlesTitle: T('단건 상품 (구독 전 체험)', 'Single services (try before subscribing)', '单次服务（订阅前体验）'),
   termsTitle: T('계약 조건', 'Contract terms', '合同条件'),
@@ -27,11 +31,26 @@ export const page = {
 const ENT_NAME = T('엔터프라이즈', 'Enterprise', '企业版');
 export const plans = [T('라이트', 'Lite', '轻量版'), T('스탠다드', 'Standard', '标准版'), T('프로', 'Pro', '专业版'), ENT_NAME];
 
+// 턴키 납품과 제조팀 구독의 차이 (역할·범위 기준)
+export const modes = [
+  [T('이지스의 역할', 'Our role', 'AEGIS 的角色'), T('납품 업체. 이지스가 만들어서 납품합니다', 'Supplier. We build and deliver the product to you', '供应商。由 AEGIS 负责生产并交付'), T('귀사의 제조팀. 귀사를 대신해 생산과 물류를 관리합니다', 'Your manufacturing team. We manage production and logistics on your behalf', '贵司的制造团队。代表贵司管理生产与物流')],
+  [T('범위', 'Scope', '范围'), T('제품 1개, 개발부터 양산·납품까지', 'One product, from development to mass production and delivery', '1 个产品，从开发到量产与交付'), T('플랜에 정한 품목·공장의 생산과 물류 전체', 'All production and logistics for the items and factories in your plan', '方案约定的品项与工厂的全部生产与物流')],
+  [T('비용', 'Cost', '费用'), T('제품별 납품가 견적', 'Quoted delivered price per product', '按产品报交付价'), T('월 관리 비용 (플랜별). 제품 대금은 공장에 직접 결제', 'Monthly management fee (by plan). Product cost is paid directly to the factory', '月度管理费（按方案）。货款直接支付给工厂')],
+  [T('결제 상대', 'Who you pay', '付款对象'), T('이지스', 'AEGIS', 'AEGIS'), T('제품 대금은 공장, 관리 비용은 이지스', 'Factory for product cost, AEGIS for the management fee', '货款付给工厂，管理费付给 AEGIS')],
+  [T('결과물', 'Deliverables', '交付物'), T('제조용 서류(검토 보고서·컨설팅), 샘플, 완제품 납품', 'Manufacturing documents (review reports, consulting), samples, finished goods', '制造用文件（评审报告与咨询）、样品、成品交付'), T('상시 견적·QC·일정·물류 관리, 정기 보고', 'Ongoing quotes, QC, schedule and logistics management, regular reports', '持续的报价、质检、进度与物流管理及定期报告')],
+  [T('계약 기간', 'Term', '合同期'), T('12개월', '12 months', '12 个月'), T('12개월', '12 months', '12 个月')],
+];
+export const modesNotes = [
+  T('한 고객사에는 한 가지 방식만 적용합니다.', 'One mode applies per client company.', '每家客户公司只适用一种方式。'),
+  T('어느 쪽이 맞는지는 무료 상담에서 제품과 발주 계획을 듣고 안내해 드립니다.', 'We will recommend the right mode in a free consultation, based on your product and order plan.', '我们会在免费咨询中根据产品与订单计划推荐合适的方式。'),
+];
+
 const NEG = T('협의', 'By agreement', '协商');
 // 비교표 엔터프라이즈 열 (그룹 행 제외, 순서대로)
 const ENT_COL = [
   T('별도 협의', 'Custom pricing', '单独洽谈'),
   T('대량 발주, 여러 제품 라인, 장기 반복 생산', 'Volume orders, multiple product lines, long-term repeat production', '大批量订单、多条产品线、长期重复生产'),
+  T('전담 제조 조직', 'A dedicated manufacturing organisation', '专属制造组织'),
   T('이 고객만 맡는 전담 팀 1개 이상, 현지 인력 추가 배정', 'One or more teams dedicated to you, with extra local staff', '一支以上专属团队，可增派现场人员'),
   T('협의 (제품·공장 수 제한 없음)', 'By agreement (no limit on products or factories)', '协商（产品与工厂数量不限）'),
   T('협의 + 대체 공장 확보', 'By agreement + backup factory', '协商 + 确保备选工厂'),
@@ -51,6 +70,7 @@ const ENT_COL = [
 const BASE_ROWS = [
   [T('월 구독료 (VAT 별도)', 'Monthly fee (excl. VAT)', '月订阅费（不含增值税）'), T('150만원', 'KRW 1.5M', '150 万韩元'), T('300만원', 'KRW 3M', '300 万韩元'), T('500만원 이상', 'KRW 5M+', '500 万韩元起')],
   [T('이런 프로젝트에', 'Best for', '适用项目'), T('부품 소싱, 단일 사출품, 같은 품목 반복 발주', 'Part sourcing, single moulded parts, repeat orders', '零件采购、单一注塑件、同品项复购'), T('사출 + 후가공 + 조립, 여러 부품을 모아 하나의 제품으로', 'Moulding + finishing + assembly, multiple parts into one product', '注塑 + 后加工 + 组装，多零件组成一个产品'), T('완제품 개발, 시제품부터 양산까지, 인증 필요', 'Full product development, prototype to mass production, certification', '整机开发，从样品到量产，需认证')],
+  [T('대신하는 역할', 'Role we cover', '代行角色'), T('구매 담당 1명', 'One purchasing manager', '1 名采购负责人'), T('구매 + 품질 담당', 'Purchasing + quality', '采购 + 质量负责人'), T('제조팀 전체 (개발·구매·품질·물류)', 'A full manufacturing team (development, purchasing, quality, logistics)', '整个制造团队（开发、采购、质量、物流）')],
   [T('담당 팀', 'Assigned team', '负责团队'), TEAM, TEAM, TEAM],
   [T('관리 범위', 'Scope', '管理范围'), T('품목 1개, 공장 1곳', '1 item, 1 factory', '1 个品项，1 家工厂'), T('품목 3개까지, 공장 3곳까지', 'Up to 3 items, 3 factories', '最多 3 个品项，3 家工厂'), T('제품 1개의 모든 부품, 공장 6곳까지', 'All parts of 1 product, up to 6 factories', '1 个产品的全部零件，最多 6 家工厂')],
   { group: T('소싱', 'SOURSING', '寻找') },
@@ -68,7 +88,7 @@ const BASE_ROWS = [
   [T('진행 보고', 'Progress reports', '进度报告'), T('격주 1회', 'Every 2 weeks', '每两周 1 次'), T('주 1회', 'Weekly', '每周 1 次'), T('주 1회 + 월 1회 화상 리뷰', 'Weekly + monthly video review', '每周 1 次 + 每月视频复盘')],
   [T('AEGIS Cloud', 'AEGIS Cloud', 'AEGIS Cloud'), INC, INC, INC],
   [T('월간 리포트', 'Monthly report', '月度报告'), T('—', '—', '—'), INC, INC],
-  [T('최소 계약', 'Minimum term', '最短合同期'), T('3개월', '3 months', '3 个月'), T('3개월', '3 months', '3 个月'), T('6개월', '6 months', '6 个月')],
+  [T('계약 기간', 'Term', '合同期'), T('12개월', '12 months', '12 个月'), T('12개월', '12 months', '12 个月'), T('12개월', '12 months', '12 个月')],
 ];
 let entIdx = 0;
 export const compareRows = BASE_ROWS.map((r) => (r.group ? r : [...r, ENT_COL[entIdx++]]));
@@ -111,7 +131,7 @@ export const compareNotes = [
 ];
 
 export const included = [
-  [T('공장 탐색·비교·가격 협상', 'Factory search, comparison & negotiation', '工厂寻找、比较与议价'), T('제품 대금(공장에 직접 또는 대행 정산)', 'Product cost (paid to factory or via us)', '货款（直付工厂或代为结算）')],
+  [T('공장 탐색·비교·가격 협상', 'Factory search, comparison & negotiation', '工厂寻找、比较与议价'), T('제품 대금(공장에 직접 결제)', 'Product cost (paid directly to the factory)', '货款（直接支付给工厂）')],
   [T('견적 검증과 도면·사양 검토', 'Quote verification and drawing/spec review', '报价核验与图纸规格审核'), T('샘플·시제품 제작비', 'Samples & prototypes', '样品与原型制作费')],
   [T('플랜별 횟수만큼의 현장 방문', 'Site visits per plan', '按方案次数的现场走访'), T('금형비', 'Tooling', '模具费')],
   [T('출고 전 검수와 검수 보고서', 'Pre-shipment inspection & report', '出货前检验与报告'), T('물류비(중국 내륙 운송, 해운·항공, 국내 배송)', 'Logistics (China inland, sea/air, Korea delivery)', '物流费（中国内陆、海运/空运、韩国配送）')],
@@ -141,21 +161,19 @@ export const singleNotes = [
 
 export const terms = [
   [T('계약 단위', 'Contract unit', '合同单位'), T('프로젝트 1개 = 계약 1건', '1 project = 1 contract', '1 个项目 = 1 份合同')],
-  [T('최소 기간', 'Minimum term', '最短期限'), T('라이트·스탠다드 3개월, 프로 6개월', 'Lite/Standard 3 months, Pro 6 months', '轻量版/标准版 3 个月，专业版 6 个月')],
-  [T('최대 기간', 'Maximum term', '最长期限'), T('12개월, 이후 갱신', '12 months, then renewal', '12 个月，之后续约')],
-  [T('해지', 'Termination', '解约'), T('최소 기간 이후 1개월 전 서면 통보', '1 month written notice after minimum term', '最短期限后提前 1 个月书面通知')],
+  [T('계약 기간', 'Term', '合同期'), T('모든 플랜 12개월, 이후 갱신', '12 months for every plan, then renewal', '所有方案均为 12 个月，之后续约')],
+  [T('갱신 중단', 'Non-renewal', '不续约'), T('만료 1개월 전 서면 통보', '1 month written notice before expiry', '到期前 1 个月书面通知')],
   [T('다수 계약 할인', 'Multi-contract discount', '多合同折扣'), T('같은 회사의 두 번째 계약부터 10%', '10% from the second contract of the same company', '同一公司第二份合同起 9 折')],
-  [T('6개월 계약 혜택', '6-month benefit', '6 个月合同优惠'), T('공장 실사 1회 무료', '1 free factory audit', '免费验厂 1 次')],
-  [T('12개월 계약 혜택', '12-month benefit', '12 个月合同优惠'), T('월 구독료 10% 할인 + 생산 공백기 일시 정지 1회(최대 1개월)', '10% off monthly fee + one pause during production gaps (up to 1 month)', '月费 9 折 + 生产空档期暂停 1 次（最长 1 个月）')],
+  [T('계약 혜택', 'Contract benefits', '合同优惠'), T('공장 실사 1회 무료 + 생산 공백기 일시 정지 1회(최대 1개월)', '1 free factory audit + one pause during production gaps (up to 1 month)', '免费验厂 1 次 + 生产空档期暂停 1 次（最长 1 个月）')],
   [T('플랜 올리기', 'Upgrade', '升级方案'), T('언제든, 다음 달부터 적용', 'Anytime, from next month', '随时，次月生效')],
-  [T('플랜 내리기', 'Downgrade', '降级方案'), T('최소 기간 이후, 다음 달부터 적용', 'After minimum term, from next month', '最短期限后，次月生效')],
+  [T('플랜 내리기', 'Downgrade', '降级方案'), T('갱신할 때 적용', 'Applied at renewal', '续约时生效')],
   [T('결제', 'Billing', '付款'), T('매월 초 선불, 세금계산서 발행', 'Prepaid at the start of each month, tax invoice issued', '每月初预付，开具税务发票')],
   [ENT_NAME, T('최소 12개월, 범위와 금액은 협의', 'Minimum 12 months, scope and price agreed', '最短 12 个月，范围与价格协商确定')],
 ];
 export const termsNote = T('할인은 중복 적용되지 않습니다. 모든 금액은 VAT 별도입니다. 프로는 상담 후 결정합니다.', 'Discounts do not stack. All prices exclude VAT. Pro is priced after consultation.', '折扣不可叠加。所有价格均不含增值税。专业版咨询后确定价格。');
 
-// 메인 플랜 카드: 가격 + 핵심 4줄(관리 범위, 현장 방문, 보고 주기, 최소 계약)
-const KEY_ROWS = [3, 9, 16, 19];
+// 메인 플랜 카드: 가격 + 핵심 4줄(관리 범위, 현장 방문, 보고 주기, 계약 기간)
+const KEY_ROWS = [4, 10, 17, 20];
 export const planCards = plans.slice(0, 3).map((name, i) => ({
   name,
   price: compareRows[0][i + 1],

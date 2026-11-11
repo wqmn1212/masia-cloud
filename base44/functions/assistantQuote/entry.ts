@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { kstToday } from '../../shared/chinaHoliday.ts';
 import { reviewChecks, quoteSummary } from '../../shared/quoteReview.ts';
-import { resolveMargin } from '../../shared/marginRule.ts';
+import { resolveMargin, billingModeReader } from '../../shared/marginRule.ts';
 import { requestQuoteReview, quoteLabel } from '../../shared/quoteActions.ts';
 import { createFactoryRequest, factoryLinkUrl, quoteRequestMessage } from '../../shared/factoryRequestServer.ts';
 import { inviteText } from '../../shared/factoryRequest.ts';
@@ -53,7 +53,7 @@ export default async function (req: Request) {
     if (body.action === 'margin_rule' || body.action === 'factory_link') {
       const card = await cardOf(body.card_id);
       if (!inScope(card)) return Response.json({ error: '카드를 찾을 수 없습니다' }, { status: 404 });
-      if (body.action === 'margin_rule') return Response.json({ card_title: card.title, ...resolveMargin(await settingOf(card.tenant_id), card) });
+      if (body.action === 'margin_rule') return Response.json({ card_title: card.title, ...resolveMargin(await settingOf(card.tenant_id), card, await billingModeReader(db)(card)) });
       const product = card.title_cn || card.title;
       const items = [{ kind: 'QUOTE', label_ko: '공장 견적서', label_cn: '报价单' }, ...(body.with_photo ? [{ kind: 'PHOTO', label_ko: '샘플·제품 사진', label_cn: '样品·产品照片' }] : [])];
       const by = user.full_name || user.email || '';
@@ -71,7 +71,7 @@ export default async function (req: Request) {
       const q = typeof body.quotation_id === 'string' ? await db.Quotation.get(body.quotation_id).catch(() => null) : null;
       if (!inScope(q)) return Response.json({ error: '견적서를 찾을 수 없습니다' }, { status: 404 });
       const card = await cardOf(q.card_id);
-      const rule = card ? resolveMargin(await settingOf(card.tenant_id), card) : null;
+      const rule = card ? resolveMargin(await settingOf(card.tenant_id), card, await billingModeReader(db)(card)) : null;
       const checks = reviewChecks(q, card, kstToday(), rule);
       if (body.action === 'check') {
         const sum = quoteSummary(q);

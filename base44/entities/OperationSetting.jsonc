@@ -89,11 +89,11 @@
     },
     "margin_default_pct": {
       "type": "number",
-      "description": "\uacac\uc801 \uae30\uc900 \ub9c8\uc9c4 % (\ud300 \uae30\ubcf8). \ube44\uc6b0\uba74 \uc571 \uae30\ubcf8 15%"
+      "description": "\uacac\uc801 \uae30\uc900 \ub9c8\uc9c4 % (\ud300 \uae30\ubcf8). \uacf5\uc7a5 \uc6d0\uac00\uc5d0 \uc5b9\ub294 \ube44\uc728. \ube44\uc6b0\uba74 \uc571 \uae30\ubcf8 20%"
     },
     "margin_min_pct": {
       "type": "number",
-      "description": "\uacac\uc801 \ucd5c\uc18c \ub9c8\uc9c4 % (\ud300 \uae30\ubcf8). \uc774\ubcf4\ub2e4 \ub0ae\uc73c\uba74 \uc2b9\uc778 \ub54c \uc8fc\uc758. \ube44\uc6b0\uba74 \uc571 \uae30\ubcf8 10%"
+      "description": "\uacac\uc801 \ucd5c\uc18c \ub9c8\uc9c4 % (\ud300 \uae30\ubcf8). \uc774\ubcf4\ub2e4 \ub0ae\uc73c\uba74 \uc2b9\uc778 \ub54c \uc8fc\uc758. \ube44\uc6b0\uba74 \uc571 \uae30\ubcf8 10% (\uc0c1\ud55c\uc740 100%)"
     },
     "margin_rules": {
       "type": "array",

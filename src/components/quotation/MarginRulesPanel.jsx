@@ -10,7 +10,8 @@ import { toast } from '@/components/ui/use-toast';
 import { INQUIRY_CATEGORIES } from '@/lib/inquiryForm';
 
 // 견적 마진 규칙 (대표·팀 관리자·마스터): 팀 기본 기준·최소 마진과 고객사·카테고리별 규칙.
-// 고객사 → 카테고리(카드 문의 카테고리) → 팀 기본 → 앱 기본(15%·10%) 순으로 칸마다 적용한다.
+// 고객사 → 카테고리(카드 문의 카테고리) → 팀 기본 → 앱 기본(20%·10%) 순으로 칸마다 적용한다. 마진은 공장 원가에 얹는 비율이고 상한은 100%다.
+// 월정액 고객사(Company.billing_mode = MONTHLY)는 이 규칙과 상관없이 마진 0%다.
 // 기준 마진은 공장 견적 초안·견적 작성에 미리 채우고, 최소 마진보다 낮으면 승인 때 주의로 보인다. 저장·정리는 서버(quoteApproval)가 한다.
 const sel = 'h-8 rounded-md border bg-background px-2 text-caption';
 const blank = () => ({ scope: 'CLIENT', client_id: '', client_name: '', category: INQUIRY_CATEGORIES[0], default_pct: '', min_pct: '', note: '' });
@@ -59,7 +60,7 @@ export default function MarginRulesPanel() {
         </div>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
-        <label className="text-label">팀 기준 마진 (%)<Input className="mt-1 h-8 text-caption" type="number" min="0" step="0.5" value={base.d} onChange={(e) => setBase((b) => ({ ...b, d: e.target.value }))} placeholder="비우면 15" /></label>
+        <label className="text-label">팀 기준 마진 (%)<Input className="mt-1 h-8 text-caption" type="number" min="0" step="0.5" value={base.d} onChange={(e) => setBase((b) => ({ ...b, d: e.target.value }))} placeholder="비우면 20" /></label>
         <label className="text-label">팀 최소 마진 (%)<Input className="mt-1 h-8 text-caption" type="number" min="0" step="0.5" value={base.m} onChange={(e) => setBase((b) => ({ ...b, m: e.target.value }))} placeholder="비우면 10" /></label>
       </div>
       <div className="space-y-1.5">

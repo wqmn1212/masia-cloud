@@ -21,7 +21,7 @@ export function clientTotal(q: any) {
   return { amount: num(q.final_client_price), currency: num(q.exchange_rate_usd_cny) > 0 ? 'USD' : 'CNY' };
 }
 
-// 고객 금액·원가·마진 (수수료 포함 총 마진). 물류비 별도 견적은 양쪽에서 물류비를 뺀다. 선택 사양은 빼고 센다
+// 고객 금액·원가·마진 (수수료 포함 총 마진, 원가에 얹은 비율: (고객 금액 − 원가) ÷ 원가). 물류비 별도 견적은 양쪽에서 물류비를 뺀다. 선택 사양은 빼고 센다
 export function quoteSummary(q: any) {
   const krw = num(q.exchange_rate_usd), cny = num(q.exchange_rate_usd_cny);
   const total = clientTotal(q);
@@ -32,7 +32,7 @@ export function quoteSummary(q: any) {
   if (options.length) for (const o of options) { const u = toUSD(o.unit_price, o.currency || 'CNY', krw, cny); add(u == null ? null : u * num(o.quantity)); }
   else add(toUSD(q.factory_total_cost, q.factory_cost_currency || 'CNY', krw, cny));
   if (!q.logistics_separate) add(toUSD(q.logistics_cost, q.logistics_cost_currency || 'CNY', krw, cny));
-  const margin = totalUSD && costUSD ? Math.round(((totalUSD - costUSD) / totalUSD) * 1000) / 10 : null;
+  const margin = totalUSD && costUSD ? Math.round(((totalUSD - costUSD) / costUSD) * 1000) / 10 : null;
   return {
     total: total.amount,
     currency: total.currency,
@@ -64,7 +64,11 @@ export function reviewChecks(q: any, card: any, today: string, rule: any = null)
   if (s.total > 0 && s.total_usd == null) push('warn', 'no_rate', '환율이 없어 원가·마진을 계산하지 못했습니다');
   else if (!s.cost_usd) push('warn', 'no_cost', '공장 원가가 비어 있어 마진을 확인할 수 없습니다');
   else if (s.margin_pct != null && s.margin_pct < 0) push('warn', 'loss', `고객 금액이 원가보다 낮습니다 (마진 ${s.margin_pct}%)`);
+  else if (rule?.billing_mode === 'MONTHLY') {
+    if (s.margin_pct != null && s.margin_pct > 0.5) push('warn', 'monthly_margin', `월정액 고객은 공장 가격 그대로 전달합니다 (지금 원가보다 ${s.margin_pct}% 높음)`);
+  }
   else if (s.margin_pct != null && s.margin_pct < minPct) push('warn', 'low_margin', `마진이 ${s.margin_pct}%로 기준(${minLabel})보다 낮습니다`);
+  else if (s.margin_pct != null && rule?.max_pct != null && s.margin_pct > rule.max_pct) push('warn', 'high_margin', `마진이 ${s.margin_pct}%로 상한(${rule.max_pct}%)보다 높습니다`);
   if (!s.lead_time_business_days && !s.shipping_days) push('warn', 'no_lead', '납기가 비어 있습니다');
   if (!s.validity_days) push('warn', 'no_validity', '견적 유효기간이 비어 있습니다');
   else if (q.factory_quote_date && addDays(q.factory_quote_date, s.validity_days) < today) push('warn', 'factory_expired', `공장 견적일(${q.factory_quote_date}) 기준 유효기간이 지났습니다. 공장에 가격을 다시 확인하세요`);

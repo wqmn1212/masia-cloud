@@ -40,7 +40,7 @@ assert.equal(r.data.summary.cost_usd, undefined);
 assert.ok(!r.data.checks.some((c) => ['low_margin', 'loss'].includes(c.code)));
 globalThis.__user = BOSS;
 r = await call('assistantQuote', { action: 'check', quotation_id: 'q1' });
-assert.equal(r.data.summary.margin_pct, 9.5);
+assert.equal(r.data.summary.margin_pct, 10.5);
 assert.ok(r.data.checks.some((c) => c.code === 'low_margin' && /기준\(12%\)|팀 기본값 12%/.test(c.text)), JSON.stringify(r.data.checks));
 
 // 검토 요청 (화면과 같은 공용 코드)
@@ -88,7 +88,7 @@ globalThis.__user = BOSS;
 r = await call('assistantStatus', { topic: 'quotes' });
 const Q = r.data.quotes;
 assert.deepEqual(Q.approval_waiting.map((x) => [x.title, x.requested_by, x.waiting_days]), [['ZP-5B', '왕리', 2]]);
-assert.equal(Q.approval_waiting[0].margin_pct, 9.5, '팀 관리자에게는 마진');
+assert.equal(Q.approval_waiting[0].margin_pct, 10.5, '팀 관리자에게는 마진');
 assert.equal(Q.factory_quote_waiting.length, 2);
 assert.equal(Q.factory_quote_waiting.find((x) => x.factory_name === '운용(云涌)').days, 4);
 assert.deepEqual(Q.factory_drafts.map((x) => x.title), ['공장 초안']);

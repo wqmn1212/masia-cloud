@@ -8,7 +8,7 @@ import LandingFooter from '@/components/landing/LandingFooter';
 import PricingTable from '@/components/pricing/PricingTable';
 import { PLAN_KEYS } from '@/lib/planTheme';
 import PricingBlock from '@/components/pricing/PricingBlock';
-import { page, plans, compareRows, compareNotes, included, includedNotes, singles, singleNotes, terms, termsNote, enterprise, recommendedLabel } from '@/lib/pricingContent';
+import { page, modes, modesNotes, plans, compareRows, compareNotes, included, includedNotes, singles, singleNotes, terms, termsNote, enterprise, recommendedLabel } from '@/lib/pricingContent';
 import '@/components/landing/landingMinimal.css';
 
 export default function Pricing() {
@@ -27,6 +27,9 @@ export default function Pricing() {
         <h1 className="mt-3 text-[32px] md:text-[44px] font-extrabold tracking-[-1px] leading-[1.25]">{tx(page.h1, lang)}</h1>
         <p className="mt-5 max-w-[820px] text-[16px] leading-[1.85] text-landing-muted">{tx(page.lead, lang)}</p>
 
+        <PricingBlock title={page.modesTitle} notes={modesNotes} lang={lang}>
+          <PricingTable head={page.modesHead} rows={modes} lang={lang} />
+        </PricingBlock>
         <PricingBlock title={page.compareTitle} notes={compareNotes} lang={lang}>
           <PricingTable head={[page.item, ...plans]} rows={compareRows} lang={lang} colThemes={[null, ...PLAN_KEYS]} badgeCol={2} badgeLabel={recommendedLabel} priceRow={0} />
         </PricingBlock>

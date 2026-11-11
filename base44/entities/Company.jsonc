@@ -15,6 +15,12 @@
     "company_name": {
       "type": "string"
     },
+    "billing_mode": {
+      "type": "string",
+      "enum": ["TURNKEY", "MONTHLY"],
+      "default": "TURNKEY",
+      "description": "고객사 과금 방식. TURNKEY=턴키 납품(공장 원가에 마진을 얹어 납품, 기본) · MONTHLY=월정액 제조팀(공장 가격 그대로 전달, 월 관리 비용만 받음). 한 고객사에 두 방식을 섞지 않는다"
+    },
     "address": {
       "type": "string"
     },
