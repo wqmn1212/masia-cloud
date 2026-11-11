@@ -45,7 +45,8 @@ export async function generateConceptPDF(concept, project, clientName = '') {
   const images = [{ ...conceptSnapshot(p.parts), caption: '3D 컨셉 형상' }];
   if (p.render_url) {
     const render = await imageToJpeg(p.render_url, 1200).catch(() => null);
-    if (render) images.push({ ...render, caption: 'AI 렌더 이미지 (분위기 참고용)' });
+    const rv = p.render_version ?? concept.version_no;
+    if (render) images.push({ ...render, caption: rv !== concept.version_no ? `AI 렌더 이미지 (v${rv} 형상 기준, 분위기 참고용)` : 'AI 렌더 이미지 (분위기 참고용)' });
   }
   imageRow(d, images);
   paragraph(d, p.summary);
