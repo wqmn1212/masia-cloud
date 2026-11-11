@@ -1,0 +1,225 @@
+{
+  "name": "ProtoConcept",
+  "type": "object",
+  "description": "\uc2dc\uc81c\ud488 \ucee8\uc149 \ubc84\uc804: \uc544\uc774\ub514\uc5b4\u00b7\ud655\uc778 \uc9c8\ubb38\u00b7\uac00\uc815, \ubbf8\ud305\uc6a9 3D \ud504\ub9ac\ubdf0(\uae30\ubcf8 \ub3c4\ud615 \uc7a5\uba74 + \ub80c\ub354 \uc774\ubbf8\uc9c0), \ud68c\ub85c \uac80\ud1a0(\uc815\uaca9\uac12 \uadfc\uc0ac \uacc4\uc0b0), \uc0ac\ucd9c\u00b7\uae08\ud615 \uac80\ud1a0 \ucd08\uc548. \ud655\uc815 \uc124\uacc4\uac00 \uc544\ub2c8\ub2e4",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "\uc18c\uc18d \ud300 ID (\ub370\uc774\ud130 \uaca9\ub9ac \ud0a4)"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "version_no": {
+      "type": "number"
+    },
+    "based_on_id": {
+      "type": "string",
+      "description": "\ubcc0\uacbd \uc694\uccad\uc73c\ub85c \ub9cc\ub4e0 \ubc84\uc804\uc774\uba74 \uc6d0\ub798 \ucee8\uc149"
+    },
+    "change_request": {
+      "type": "string",
+      "description": "\uc774 \ubc84\uc804\uc744 \ub9cc\ub4e0 \ubcc0\uacbd \uc694\uccad"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "BRIEF",
+        "READY"
+      ],
+      "enumColors": [
+        "gray",
+        "green"
+      ],
+      "default": "BRIEF",
+      "description": "BRIEF = \uc9c8\ubb38\u00b7\uac00\uc815 \ud655\uc778 \uc804, READY = \ud504\ub9ac\ubdf0 \uc0dd\uc131\ub428"
+    },
+    "title": {
+      "type": "string"
+    },
+    "idea": {
+      "type": "string",
+      "description": "\uc0ac\uc6a9\uc790\uac00 \ub9d0\ud55c \uc544\uc774\ub514\uc5b4 \uc6d0\ubb38"
+    },
+    "known_info": {
+      "type": "string",
+      "description": "\uc0ac\uc6a9\uc790\uac00 \uc54c\ub824 \uc900 \ud06c\uae30\u00b7\uc7ac\ub8cc\u00b7\uc0ac\uc6a9 \uc870\uac74"
+    },
+    "brief_summary": {
+      "type": "string"
+    },
+    "questions": {
+      "type": "array",
+      "description": "AI\uac00 \ubf51\uc740 \ud655\uc778 \uc9c8\ubb38\uacfc \uc0ac\uc6a9\uc790\uc758 \ub2f5",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          },
+          "default_assumption": {
+            "type": "string",
+            "description": "\ub2f5\uc774 \uc5c6\uc744 \ub54c \ub458 \uac00\uc815"
+          },
+          "answer": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "AI\uac00 \uc804\uc81c\ud55c \ub0b4\uc6a9 (\ud655\uc815 \uc544\ub2d8)"
+    },
+    "confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\uc0ac\uc6a9\uc790\uac00 \uc870\uac74\uc744 \ud655\uc778\ud55c \uc2dc\uac01"
+    },
+    "confirmed_by_name": {
+      "type": "string"
+    },
+    "preview": {
+      "type": "object",
+      "description": "{title, summary, overall_mm{x,y,z}, parts[{id,name,role,layer,shape,size,position,rotation_deg,color,finish,material}], design_notes[], assumptions[], unverified[], render_url, render_error, change_summary, generated_at, generated_by_name}"
+    },
+    "circuit": {
+      "type": "object",
+      "description": "{inputs, summary, blocks[], components[], connections[], actuators[], steps[], calc{\uc815\uaca9\uac12 \uacc4\uc0b0}, risks[], assumptions[], unverified[], limitations[], stale, generated_at, generated_by_name}"
+    },
+    "mold": {
+      "type": "object",
+      "description": "{inputs, rules{metrics, checks[], unknowns[]}, verdict, summary, findings[], gate_candidates[], parting_line, assumptions[], unverified[], vendor_checks[], files[], stale, generated_at, generated_by_name}"
+    },
+    "last_request_id": {
+      "type": "string",
+      "description": "\ub9c8\uc9c0\ub9c9 \uc0dd\uc131 \uc694\uccad \ubc88\ud638 \u2014 \ud654\uba74 \uc694\uccad\uc774 \ub04a\uaca8\ub3c4 \uacb0\uacfc\ub97c \ucc3e\ub294\ub2e4"
+    },
+    "created_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "project_id",
+    "version_no"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
