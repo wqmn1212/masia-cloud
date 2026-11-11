@@ -21,15 +21,13 @@ async function createDoc(title, subtitle, logo = null) {
   d.color = (c) => pdf.setTextColor(...c);
   d.font = (size, bold) => { pdf.setFont('Nanum', bold ? 'bold' : 'normal'); pdf.setFontSize(size); };
   d.ensure = (h) => { if (d.y + h > H - M - 8) { pdf.addPage(); d.y = M; } };
-  let brandX = M + 22;
   if (logo) {
     const lh = 10, lw = lh * (logo.w / logo.h);
     pdf.addImage(logo.data, 'JPEG', M, d.y - 0.5, lw, lh);
-    brandX = M + lw + 5;
   } else {
     d.font(16, true); d.color(BLUE); pdf.text('AEGIS', M, d.y + 6);
+    d.font(8); d.color(MUTED); pdf.text('중국 광둥성 현지 제조 관리', M + 22, d.y + 6);
   }
-  d.font(8); d.color(MUTED); pdf.text('중국 광둥성 현지 제조 관리', brandX, d.y + 6);
   pdf.text(`작성일 ${fileDate()}`, W - M, d.y + 6, { align: 'right' });
   d.y += 10; pdf.setDrawColor(...BLUE); pdf.setLineWidth(0.7); pdf.line(M, d.y, W - M, d.y); d.y += 8;
   d.font(15, true); d.color(INK); pdf.text(pdf.splitTextToSize(title, CW), M, d.y); d.y += 7;
