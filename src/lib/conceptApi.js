@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { newId } from '@/lib/prototypeApi';
+import { fileToUpload, newId } from '@/lib/prototypeApi';
 
 export const conceptKey = (projectId) => ['proto-concepts', projectId];
 export const useProtoConcepts = (projectId) => useQuery({
@@ -14,12 +14,6 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // 참고 자료 제한 (서버 base44/shared/privateAttachments.ts 와 같은 기준)
 export const MAX_UPLOADS = 5;
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-const fileToUpload = (file) => new Promise((resolve, reject) => {
-  const r = new FileReader();
-  r.onload = () => resolve({ name: file.name, type: file.type, data: String(r.result).split(',')[1] || '' });
-  r.onerror = () => reject(r.error);
-  r.readAsDataURL(file);
-});
 
 // AI 작업은 4분 넘게 걸리기도 한다. 화면 요청이 끊겨도 요청 번호로 저장된 결과를 6분간 찾는다
 export const RECOVER_TRIES = 36;

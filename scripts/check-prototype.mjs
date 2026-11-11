@@ -1,8 +1,8 @@
-// 시제품 개발 검산: PCB 부품 확정·JLCPCB 부품표, 버전 번호 겹침, 서버(파일 추가·삭제, AI 초안 재요청, 승인·대체, 복제, 위험 수).
+// 시제품 개발 검산: PCB 부품 확정·JLCPCB 부품표, 버전 번호 겹침, 서버(파일·증거 업로드는 서버가 직접, 파일 추가·삭제, AI 초안 재요청, 승인·대체, 복제, 위험 수).
 // 실행: npm run check:prototype
 import assert from 'node:assert/strict';
 import { normalizeLcsc, isLcsc, seedPcbRows, pcbSummary, jlcBomRows, toCsv, expandRefs, isSmt } from '../src/lib/pcb.js';
-import { versionNoFix, nextVersionNo, cleanFiles, openRiskCount } from '../base44/shared/prototype.ts';
+import { versionNoFix, nextVersionNo, cleanUploads, openRiskCount, PROTO_FILE_MAX_BYTES } from '../base44/shared/prototype.ts';
 
 const call = async (body) => { const m = await import('../base44/functions/prototypeAction/entry.ts'); const res = await m.default(new Request('https://x', { method: 'POST', body: JSON.stringify(body) })); return { status: res.status, data: await res.json() }; };
 
@@ -58,7 +58,11 @@ assert.equal(nextVersionNo([{ version_no: 2 }, { version_no: 5 }]), 6);
 const twins = [{ id: 'a', version_no: 3, created_date: '2026-11-08T01:00:00Z' }, { id: 'b', version_no: 3, created_date: '2026-11-08T01:00:01Z' }, { id: 'c', version_no: 2 }];
 assert.equal(versionNoFix(twins[0], twins), null, '먼저 만든 쪽은 번호를 지킨다');
 assert.equal(versionNoFix(twins[1], twins), 4, '늦게 만든 쪽은 끝 번호 다음으로');
-assert.deepEqual(cleanFiles([{ id: 'f', name: 'a.pdf', uri: 'private://a', category: 'DRAWING', size: '12', extra: 'x' }, { id: 'g', name: 'b', uri: '', category: 'DRAWING' }, { id: 'h', name: 'c', uri: 'u', category: 'EXE' }]).map((f) => [f.id, f.size, 'extra' in f]), [['f', 12, false]], '모양이 틀린 파일·모르는 분류는 뺀다');
+const b64 = (t) => Buffer.from(t).toString('base64');
+assert.deepEqual(cleanUploads([{ name: 'a.step', data: b64('x'), category: 'CAD', uri: 'private://victim', id: 'mine', version_no: '2' }]).map((u) => [u.upload.name, u.category, u.version_no, 'uri' in u, 'id' in u, 'uri' in u.upload]), [['a.step', 'CAD', 2, false, false, false]], '주소·id 는 화면 값을 받지 않는다');
+assert.deepEqual(cleanUploads([{ name: 'a.exe', data: b64('x'), category: 'EXE' }, { name: 'b.pdf', category: 'DRAWING' }]), [], '모르는 분류·내용 없는 항목은 뺀다');
+assert.equal(cleanUploads([{ name: 'a.png', data: 'x', category: 'PHOTO' }, { name: 'b.png', data: 'x', category: 'PHOTO' }]).length, 1, '요청 하나에 한 파일');
+assert.equal(PROTO_FILE_MAX_BYTES, 25 * 1024 * 1024, 'STEP·DWG 를 위해 파일당 25MB');
 assert.equal(openRiskCount({ risks: [{ severity: 'HIGH' }, { severity: 'LOW' }] }, [{ status: 'FAIL' }, { status: 'PASS' }]), 2);
 
 // ── 서버
@@ -82,14 +86,57 @@ let res = await call({ action: 'sync_risk', project_id: 'p1' });
 assert.equal(res.data.open_risk_count, 2);
 assert.equal(db.ProtoProject[0].open_risk_count, 2);
 
-// 파일: 두 사람이 따로 올려도 둘 다 남는다 (화면에 남은 옛 목록으로 덮어쓰지 않는다)
-await call({ action: 'add_files', project_id: 'p1', files: [{ id: 'f-a', name: 'front.png', uri: 'private://front', category: 'PHOTO' }] });
-await call({ action: 'add_files', project_id: 'p1', files: [{ id: 'f-b', name: 'pcb.zip', uri: 'private://pcb', category: 'PCB' }, { id: 'bad', name: 'x', uri: 'u', category: 'EXE' }] });
-assert.deepEqual(db.ProtoProject[0].files.map((f) => f.id), ['old', 'f-a', 'f-b']);
-assert.equal((await call({ action: 'add_files', project_id: 'p1', files: [{ id: 'bad', category: 'EXE' }] })).status, 400);
-await call({ action: 'remove_file', project_id: 'p1', file_id: 'f-a' });
-assert.deepEqual(db.ProtoProject[0].files.map((f) => f.id), ['old', 'f-b']);
-assert.equal((await call({ action: 'remove_file', project_id: 'p1', file_id: 'f-a' })).status, 404);
+// 파일: 서버가 직접 비공개 저장소에 올린 것만 저장한다. 화면이 보낸 주소(uri)·id 는 무시한다
+const uploadedNames = [];
+globalThis.__upload = ({ file }) => { uploadedNames.push(file.name); return { file_uri: `private://server/${file.name}` }; };
+res = await call({ action: 'add_files', project_id: 'p1', files: [{ id: 'evil', name: 'secret.png', uri: 'private://t2/secret.png', category: 'PHOTO' }] });
+assert.equal(res.status, 400, '예전 방식(files[].uri)은 받지 않는다');
+assert.ok(!db.ProtoProject[0].files.some((f) => f.uri === 'private://t2/secret.png'), '화면이 보낸 남의 팀 주소는 저장되지 않는다');
+res = await call({ action: 'add_files', project_id: 'p1', uploads: [{ id: 'evil', uri: 'private://t2/secret.png', name: 'front.png', type: 'image/png', data: b64('png'), category: 'PHOTO', version_no: 1 }] });
+assert.equal(res.status, 200, JSON.stringify(res.data));
+const front = db.ProtoProject[0].files.at(-1);
+assert.deepEqual([front.name, front.uri, front.category, front.version_no, front.size, front.uploaded_by_name], ['front.png', 'private://server/front.png', 'PHOTO', 1, 3, '왕리'], '서버가 올린 주소·크기·올린 사람');
+assert.ok(front.id && front.id !== 'evil', 'id 는 서버가 정한다');
+assert.ok(!JSON.stringify(db.ProtoProject[0].files).includes('t2/secret'), '화면이 보낸 주소는 어디에도 남지 않는다');
+// 두 사람이 따로 올려도 둘 다 남는다 (화면에 남은 옛 목록으로 덮어쓰지 않는다)
+await call({ action: 'add_files', project_id: 'p1', uploads: [{ name: 'housing.step', data: b64('ISO-10303-21'), category: 'CAD' }] });
+assert.deepEqual(db.ProtoProject[0].files.map((f) => f.name), ['spec.pdf', 'front.png', 'housing.step']);
+assert.deepEqual(uploadedNames, ['front.png', 'housing.step'], '저장된 파일은 모두 서버가 올린 것');
+assert.equal((await call({ action: 'add_files', project_id: 'p1', uploads: [{ name: 'x.exe', data: b64('x'), category: 'EXE' }] })).status, 400, '모르는 분류');
+assert.equal((await call({ action: 'add_files', project_id: 'p1', uploads: [{ name: 'x.png', category: 'PHOTO' }] })).status, 400, '내용 없음');
+// 크기: 25MB 넘으면 풀기 전에 거른다
+const big = 'A'.repeat(Math.ceil(PROTO_FILE_MAX_BYTES / 3) * 4 + 8);
+res = await call({ action: 'add_files', project_id: 'p1', uploads: [{ name: 'huge.dwg', data: big, category: 'DRAWING' }] });
+assert.deepEqual([res.status, res.data.error], [400, 'huge.dwg: 파일은 25MB 이하여야 합니다']);
+assert.equal((await call({ action: 'add_files', project_id: 'p1', uploads: [{ name: 'broken.png', data: '%%%', category: 'PHOTO' }] })).status, 400, '깨진 내용');
+assert.equal(uploadedNames.length, 2, '거른 파일은 올리지 않는다');
+assert.equal((await call({ action: 'add_files', project_id: 'p2', uploads: [{ name: 'a.png', data: b64('x'), category: 'PHOTO' }] })).status, 403, '남의 팀 시제품');
+// 서명 링크는 서버가 올린 주소로만
+globalThis.__signed = (uri) => `https://files.example/${uri}`;
+res = await call({ action: 'sign_file', project_id: 'p1', file_id: front.id });
+assert.equal(res.data.url, 'https://files.example/private://server/front.png');
+assert.equal((await call({ action: 'sign_file', project_id: 'p1', file_id: 'evil' })).status, 404, '화면이 보낸 id 로는 찾지 못한다');
+await call({ action: 'remove_file', project_id: 'p1', file_id: front.id });
+assert.deepEqual(db.ProtoProject[0].files.map((f) => f.name), ['spec.pdf', 'housing.step']);
+assert.equal((await call({ action: 'remove_file', project_id: 'p1', file_id: front.id })).status, 404);
+
+// 시험 증거 파일: 같은 방식 — 서버가 올려 시험에 붙이고, 화면이 보낸 주소는 무시한다
+res = await call({ action: 'add_evidence', project_id: 'p1', test_id: 't-1', uploads: [{ name: 'flicker.jpg', data: b64('jpg'), uri: 'private://t2/secret.png', id: 'evil' }] });
+assert.equal(res.status, 200, JSON.stringify(res.data));
+const ev = db.ProtoTest[0].evidence;
+assert.deepEqual(ev.map((f) => [f.name, f.uri, f.size]), [['flicker.jpg', 'private://server/flicker.jpg', 3]], '서버가 올린 증거만');
+assert.ok(ev[0].id !== 'evil');
+assert.equal((await call({ action: 'add_evidence', project_id: 'p1', test_id: 't-1', evidence: [{ id: 'evil', name: 'secret.png', uri: 'private://t2/secret.png' }] })).status, 400, '예전 방식(evidence[].uri)은 받지 않는다');
+assert.equal(db.ProtoTest[0].evidence.length, 1);
+res = await call({ action: 'sign_file', project_id: 'p1', file_id: ev[0].id, test_id: 't-1' });
+assert.equal(res.data.url, 'https://files.example/private://server/flicker.jpg');
+db.ProtoTest.push({ id: 't-other', tenant_id: 't2', project_id: 'p2', title: '남의 시험', evidence: [] });
+assert.equal((await call({ action: 'add_evidence', project_id: 'p1', test_id: 't-other', uploads: [{ name: 'a.png', data: b64('x') }] })).status, 404, '다른 시제품의 시험');
+assert.equal((await call({ action: 'remove_evidence', project_id: 'p1', test_id: 't-1', file_id: 'nope' })).status, 404);
+await call({ action: 'remove_evidence', project_id: 'p1', test_id: 't-1', file_id: ev[0].id });
+assert.deepEqual(db.ProtoTest[0].evidence, []);
+assert.equal(uploadedNames.length, 3);
+globalThis.__signed = undefined;
 
 // AI 초안: 같은 요청 번호로 다시 오면 새로 만들지 않는다. 시험 중이던 단계를 되돌리지 않는다.
 let llmCalls = 0;

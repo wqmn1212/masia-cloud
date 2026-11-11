@@ -23,13 +23,33 @@ export function versionNoFix(mine: any, all: any[]) {
 
 const str = (v: unknown, n = 300) => (typeof v === 'string' ? v.slice(0, n) : '');
 
-/** 화면에서 올린 파일 정보를 저장 가능한 모양으로 정리. 모양이 틀린 항목은 뺀다 */
-export function cleanFiles(files: any[]) {
-  return (Array.isArray(files) ? files : []).slice(0, 20)
-    .filter((f) => f && typeof f.id === 'string' && f.id && typeof f.uri === 'string' && f.uri && typeof f.name === 'string' && FILE_CATEGORIES.includes(f.category))
-    .map((f) => ({
-      id: str(f.id, 80), name: str(f.name, 200), uri: str(f.uri, 500), category: f.category,
-      size: Number(f.size) || 0, version_no: Number(f.version_no) || null, note: str(f.note, 300),
-      uploaded_at: str(f.uploaded_at, 40) || new Date().toISOString(), uploaded_by_name: str(f.uploaded_by_name, 100),
+// 시제품 파일 업로드 기준 (화면 src/lib/prototypeApi.js 와 같은 값).
+// STEP·DWG·PCB 압축 파일은 10MB 를 자주 넘는다. 한 번에 한 파일씩 보내고 파일당 25MB 까지 받는다
+// (회의 녹음 meetingAudioActions 도 같은 크기의 요청을 받는다). 더 큰 파일은 zip 으로 압축해 올린다.
+export const PROTO_FILE_MAX_BYTES = 25 * 1024 * 1024;
+export const PROTO_UPLOADS_PER_CALL = 1;
+
+/**
+ * 화면이 보낸 업로드 요청(uploads)에서 파일 정보(분류·버전·메모)만 정리한다. 모양이 틀린 항목은 뺀다.
+ * 파일 주소(uri)·id·올린 사람은 화면 값을 쓰지 않는다 — 서버가 직접 올린 뒤 protoFileRecord 로 채운다.
+ */
+export function cleanUploads(uploads: any[], { needCategory = true } = {}) {
+  return (Array.isArray(uploads) ? uploads : []).slice(0, PROTO_UPLOADS_PER_CALL)
+    .filter((u) => u && typeof u.name === 'string' && u.name.trim() && typeof u.data === 'string' && u.data && (!needCategory || FILE_CATEGORIES.includes(u.category)))
+    .map((u) => ({
+      upload: { name: str(u.name, 200), type: str(u.type, 100), data: u.data },
+      category: needCategory ? u.category : null, version_no: Number(u.version_no) || null, note: str(u.note, 300),
     }));
 }
+
+/** 서버가 올린 파일(uploadPrivateFile 결과)로 저장할 파일 정보를 만든다 */
+export function protoFileRecord(uploaded: { name: string, size: number, url: string }, meta: any, by: string, id = crypto.randomUUID()) {
+  return {
+    id, name: str(uploaded.name, 200), uri: uploaded.url, category: meta.category, size: uploaded.size || 0,
+    version_no: meta.version_no || null, note: meta.note || '', uploaded_at: new Date().toISOString(), uploaded_by_name: str(by, 100),
+  };
+}
+
+/** 시험 증거 파일 정보 (ProtoTest.evidence: id·name·uri·size) */
+export const evidenceRecord = (uploaded: { name: string, size: number, url: string }, id = crypto.randomUUID()) =>
+  ({ id, name: str(uploaded.name, 200), uri: uploaded.url, size: uploaded.size || 0 });

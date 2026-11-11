@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
-import { openRiskCount, nextVersionNo, versionNoFix, cleanFiles } from '../../shared/prototype.ts';
+import { openRiskCount, nextVersionNo, versionNoFix, cleanUploads, protoFileRecord, evidenceRecord, PROTO_FILE_MAX_BYTES } from '../../shared/prototype.ts';
+import { uploadPrivateFile } from '../../shared/privateAttachments.ts';
 
 const MODEL = 'claude_opus_5_5';
 const AI_FILE = /\.(png|jpe?g|webp|gif|pdf)$/i;
@@ -51,7 +52,7 @@ const strip = (v) => {
   const { id, created_date, updated_date, created_by_id, tenant_id, history, request_id, ...rest } = v;
   return rest;
 };
-const ACTIONS = ['draft', 'analyze_test', 'sign_file', 'add_files', 'remove_file', 'duplicate_version', 'approve_version', 'sync_risk'];
+const ACTIONS = ['draft', 'analyze_test', 'sign_file', 'add_files', 'remove_file', 'add_evidence', 'remove_evidence', 'duplicate_version', 'approve_version', 'sync_risk'];
 
 async function signedInputs(svc, files) {
   const picks = (files || []).filter((f) => ['DRAWING', 'PHOTO', 'REFERENCE'].includes(f.category) && AI_FILE.test(f.name || '') && f.uri).slice(0, 6);
@@ -92,21 +93,57 @@ export default async function(req) {
       return { ...version, version_no: fix };
     };
 
+    // 파일은 화면이 보낸 내용(uploads: [{name, type, data(base64), category, version_no, note}])을 서버가 직접 비공개 저장소에 올린다.
+    // 화면이 보낸 저장소 주소(files[].uri)는 받지 않는다 — 남의 팀 파일 주소를 넣어 서명 링크를 받는 길을 막는다.
+    const uploadAll = async (items) => {
+      const out = [];
+      for (const item of items) {
+        const uploaded = await uploadPrivateFile(svc, item.upload, PROTO_FILE_MAX_BYTES);
+        if (uploaded) out.push({ uploaded, meta: item });
+      }
+      return out;
+    };
+
     // 파일 목록은 서버에서 최신 목록에 더하고 뺀다 — 두 사람이 동시에 올려도 한쪽이 사라지지 않게
     if (action === 'add_files' || action === 'remove_file') {
+      let added = [];
+      if (action === 'add_files') {
+        const items = cleanUploads(body.uploads);
+        if (!items.length) return Response.json({ error: '올릴 파일이 없습니다.' }, { status: 400 });
+        added = (await uploadAll(items)).map(({ uploaded, meta }) => protoFileRecord(uploaded, meta, by));
+        if (!added.length) return Response.json({ error: '올릴 파일이 없습니다.' }, { status: 400 });
+      }
       const fresh = await svc.entities.ProtoProject.get(project.id);
       let files = fresh.files || [];
-      if (action === 'add_files') {
-        const added = cleanFiles(body.files);
-        if (!added.length) return Response.json({ error: '올릴 파일 정보가 없습니다.' }, { status: 400 });
-        const ids = new Set(files.map((f) => f.id));
-        files = [...files, ...added.filter((f) => !ids.has(f.id))];
-      } else {
+      if (action === 'add_files') files = [...files, ...added];
+      else {
         if (!files.some((f) => f.id === body.file_id)) return Response.json({ error: '파일을 찾을 수 없습니다.' }, { status: 404 });
         files = files.filter((f) => f.id !== body.file_id);
       }
       await svc.entities.ProtoProject.update(project.id, { files });
       return Response.json({ files });
+    }
+
+    // 시험 증거 파일도 같은 방식 — 서버가 올리고 최신 시험 기록에 더하고 뺀다
+    if (action === 'add_evidence' || action === 'remove_evidence') {
+      const test = body.test_id ? await base44.entities.ProtoTest.get(body.test_id).catch((e) => (e.status === 404 ? null : Promise.reject(e))) : null;
+      if (!test || test.project_id !== project.id) return Response.json({ error: '시험을 찾을 수 없습니다.' }, { status: 404 });
+      let added = [];
+      if (action === 'add_evidence') {
+        const items = cleanUploads(body.uploads, { needCategory: false });
+        if (!items.length) return Response.json({ error: '올릴 파일이 없습니다.' }, { status: 400 });
+        added = (await uploadAll(items)).map(({ uploaded }) => evidenceRecord(uploaded));
+        if (!added.length) return Response.json({ error: '올릴 파일이 없습니다.' }, { status: 400 });
+      }
+      const fresh = await svc.entities.ProtoTest.get(test.id);
+      let evidence = fresh.evidence || [];
+      if (action === 'add_evidence') evidence = [...evidence, ...added];
+      else {
+        if (!evidence.some((f) => f.id === body.file_id)) return Response.json({ error: '파일을 찾을 수 없습니다.' }, { status: 404 });
+        evidence = evidence.filter((f) => f.id !== body.file_id);
+      }
+      await svc.entities.ProtoTest.update(test.id, { evidence });
+      return Response.json({ evidence });
     }
 
     if (action === 'sign_file') {
@@ -236,6 +273,6 @@ change_note 에는 기준 설계 대비 바뀐 점(처음이면 '첫 초안')을
     await svc.entities.ProtoTest.update(test.id, { ai_analysis });
     return Response.json({ ai_analysis });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message }, { status: error?.status === 400 ? 400 : 500 });
   }
 }

@@ -3,7 +3,7 @@ import { FileText, Upload, Loader2, Trash2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { FILE_CATEGORIES, fileCategoryLabel, fmtDate } from '@/lib/prototype';
-import { uploadProtoFile, openProtoFile, errorText, addProtoFiles, removeProtoFile } from '@/lib/prototypeApi';
+import { openProtoFile, errorText, addProtoFiles, removeProtoFile, PROTO_FILE_MAX_LABEL } from '@/lib/prototypeApi';
 
 // 프로젝트 파일 (입력 자료 또는 산출물). categories 로 보이는 분류를 정한다.
 export default function ProtoFiles({ project, user, categories, versionNo, onChanged, title }) {
@@ -16,11 +16,10 @@ export default function ProtoFiles({ project, user, categories, versionNo, onCha
     if (!list?.length) return;
     setBusy(true);
     try {
-      const added = [];
-      for (const file of list) added.push(await uploadProtoFile(file, user, { category, version_no: versionNo || null }));
-      await addProtoFiles(project.id, added);
-      onChanged();
+      // 파일은 서버가 비공개 저장소에 올린다 (한 파일씩, 파일당 25MB 까지)
+      await addProtoFiles(project.id, list, { category, version_no: versionNo || null });
     } catch (e) { toast({ title: '업로드하지 못했습니다', description: errorText(e), variant: 'destructive' }); }
+    onChanged();
     setBusy(false);
     if (input.current) input.current.value = '';
   };
@@ -44,7 +43,7 @@ export default function ProtoFiles({ project, user, categories, versionNo, onCha
         </div>
       </div>
       {files.length === 0 ? (
-        <p className="text-caption text-muted-foreground">아직 파일이 없습니다. 이미지·PDF 도면은 AI 검토에 함께 쓰입니다.</p>
+        <p className="text-caption text-muted-foreground">아직 파일이 없습니다. 이미지·PDF 도면은 AI 검토에 함께 쓰입니다. (파일당 {PROTO_FILE_MAX_LABEL} 이하, 큰 CAD 파일은 zip 으로 압축)</p>
       ) : (
         <ul className="divide-y">
           {files.map((f) => (

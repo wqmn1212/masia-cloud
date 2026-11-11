@@ -39,10 +39,22 @@ export const useProtoTests = (id) => useQuery({ queryKey: protoKeys.tests(id), q
 export const newId = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
 export const actorName = (user) => user?.full_name || user?.email || '';
 
-// 업로드 파일은 비공개 저장소에 두고 레코드에는 uri·메타데이터만 남긴다
-export async function uploadProtoFile(file, user, extra = {}) {
-  const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
-  return { id: newId(), name: file.name, uri: file_uri, size: file.size, uploaded_at: new Date().toISOString(), uploaded_by_name: actorName(user), ...extra };
+// 업로드 파일은 서버가 비공개 저장소에 올리고 레코드에는 uri·메타데이터만 남긴다.
+// 화면은 파일 내용(base64)만 보내고 저장소 주소는 다루지 않는다 (서버 base44/shared/prototype.ts 와 같은 기준)
+export const PROTO_FILE_MAX_BYTES = 25 * 1024 * 1024;
+export const PROTO_FILE_MAX_LABEL = '25MB';
+
+export const fileToUpload = (file) => new Promise((resolve, reject) => {
+  const r = new FileReader();
+  r.onload = () => resolve({ name: file.name, type: file.type, data: String(r.result).split(',')[1] || '' });
+  r.onerror = () => reject(r.error);
+  r.readAsDataURL(file);
+});
+
+/** 크기 초과 파일을 고른 즉시 알린다 (서버도 다시 확인한다) */
+export function checkProtoFileSize(list) {
+  const big = (list || []).filter((f) => f.size > PROTO_FILE_MAX_BYTES);
+  if (big.length) throw new Error(`${PROTO_FILE_MAX_LABEL} 넘는 파일은 올릴 수 없습니다. zip 으로 압축해 올려 주세요: ${big.map((f) => f.name).join(', ')}`);
 }
 
 export async function signProtoFile(projectId, fileId, testId) {
@@ -60,9 +72,22 @@ export const errorText = (e) => e?.response?.data?.error || e?.message || '처�
 
 export const protoAction = async (action, body) => (await base44.functions.invoke('prototypeAction', { action, ...body })).data;
 
-// 파일 목록은 서버에서 최신 목록에 더하고 뺀다 (동시에 올려도 한쪽이 사라지지 않게)
-export const addProtoFiles = (projectId, files) => protoAction('add_files', { project_id: projectId, files });
+// 파일 목록은 서버에서 최신 목록에 더하고 뺀다 (동시에 올려도 한쪽이 사라지지 않게). 요청이 커지지 않게 한 파일씩 보낸다
+export async function addProtoFiles(projectId, files, meta = {}) {
+  checkProtoFileSize(files);
+  let out = null;
+  for (const file of files) out = await protoAction('add_files', { project_id: projectId, uploads: [{ ...(await fileToUpload(file)), ...meta }] });
+  return out;
+}
 export const removeProtoFile = (projectId, fileId) => protoAction('remove_file', { project_id: projectId, file_id: fileId });
+// 시험 증거 파일 — 시험 기록이 저장된 뒤 서버가 올려 붙인다
+export async function addTestEvidence(projectId, testId, files) {
+  checkProtoFileSize(files);
+  let out = null;
+  for (const file of files) out = await protoAction('add_evidence', { project_id: projectId, test_id: testId, uploads: [await fileToUpload(file)] });
+  return out;
+}
+export const removeTestEvidence = (projectId, testId, fileId) => protoAction('remove_evidence', { project_id: projectId, test_id: testId, file_id: fileId });
 export const syncProtoRisk = (projectId) => protoAction('sync_risk', { project_id: projectId }).catch(() => null);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
