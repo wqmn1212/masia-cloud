@@ -150,6 +150,7 @@ globalThis.__llm = (a) => {
   if (keys.includes('images')) {
     if (globalThis.__visionFail) throw new Error('vision down');
     if (globalThis.__skVision && a.file_urls.length === 4) return globalThis.__skVision;
+    if (globalThis.__sideViews?.length && a.file_urls.length === 2) { const v = globalThis.__sideViews.shift(); return { images: [{ image_index: 0, views: [{ view: 'FRONT', perspective: 'LOW', box: [300, 100, 700, 900] }] }, { image_index: 1, views: [{ view: v, perspective: 'LOW', box: [300, 100, 700, 900] }] }] }; }
     return globalThis.__visionKind ? { ...AI_VISION, images: AI_VISION.images.map((i) => ({ ...i, kind: globalThis.__visionKind })) } : AI_VISION;
   }
   if (keys.includes('verdict')) return { verdict: 'MAYBE', summary: '보완 필요', findings: [{ part_id: 'p1', category: 'DRAFT', severity: 'HIGH', title: '구배' }, { part_id: 'zzz', category: 'NOPE', title: '모르는 위치' }] };
@@ -304,10 +305,19 @@ assert.equal(calls.img.length - imgBefore, 3, '정면 시안 3장');
 assert.ok(calls.img.slice(imgBefore).every((c) => /FRONT view/.test(c.prompt) && c.existing_image_urls[0].includes('sketch.png')), '스케치를 참고 이미지로 넣는다');
 assert.deepEqual([sc.sketch.status, sc.sketch.sketch_ratio, sc.sketch.variants.map((v) => [v.diff_pct, v.warn])], ['CHOOSE', 0.38, [[32, true], [16, true], [0, false]]]);
 assert.equal((await call({ action: 'sketch', concept_id: sc.id, step: 'side', variant: 7 })).status, 400, '없는 시안');
+globalThis.__sideViews = ['BACK', 'BACK'];
+r = await call({ action: 'sketch', concept_id: sc.id, step: 'side', variant: 0 });
+assert.match(r.data.concept.sketch.side_note, /두 번 모두 측면이 아니었습니다/, '두 번 다 측면이 아니면 알린다');
+// 측면 대신 뒷면이 나오면 한 번 더 만든다 (정사각 제품에서 실제로 나온 문제)
+globalThis.__sideViews = ['BACK', 'SIDE'];
+const sideBefore = calls.img.length;
 r = await call({ action: 'sketch', concept_id: sc.id, step: 'side', variant: 2 });
 assert.equal(r.status, 200, JSON.stringify(r.data));
 sc = r.data.concept;
-assert.match(calls.img.at(-1).prompt, /RIGHT SIDE view/);
+assert.equal(calls.img.length - sideBefore, 2, '뒷면이 나와 한 번 더 만든다');
+assert.match(calls.img.at(-1).prompt, /previous attempt showed the back/);
+assert.equal(sc.sketch.side_note, '', '두 번째에 측면이 나오면 경고 없음');
+assert.match(calls.img.at(-1).prompt, /RIGHT SIDE face/);
 assert.equal(calls.img.at(-1).existing_image_urls[0], sc.sketch.variants[2].url, '고른 정면 시안을 기준으로 측면을 만든다');
 const skFiles = skProject().files.filter((f) => sc.sketch.file_ids.includes(f.id));
 assert.deepEqual([sc.sketch.status, sc.sketch.chosen, skFiles.map((f) => [f.note, f.width_px])], ['READY', 2, [['스케치 정리 이미지(정면)', 1000], ['스케치 정리 이미지(측면)', 1000]]]);

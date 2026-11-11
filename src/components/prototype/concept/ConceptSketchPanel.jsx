@@ -72,6 +72,7 @@ export default function ConceptSketchPanel({ concept, onChanged, disabled, onBus
             <figure className="overflow-hidden rounded-xl border bg-white"><img src={sk.variants?.[sk.chosen]?.url} alt="정리한 정면" className="aspect-square w-full object-cover" /><figcaption className="px-2 py-1 text-caption">정면 · {sk.variants?.[sk.chosen]?.label}</figcaption></figure>
             <figure className="overflow-hidden rounded-xl border bg-white"><img src={sk.side_url} alt="정리한 측면" className="aspect-square w-full object-cover" /><figcaption className="px-2 py-1 text-caption">측면</figcaption></figure>
           </div>
+          {sk.side_note && <p className="flex items-start gap-1.5 text-caption text-warning-text"><AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />{sk.side_note}</p>}
           <p className="text-caption text-success-text">이 정면·측면 두 장을 기준으로 3D 를 만들고, 렌더 참고 이미지로도 씁니다.</p>
           <Button size="sm" variant="ghost" onClick={() => onChanged({ ...concept, sketch: { ...sk, status: 'CHOOSE' } })} disabled={lock}><RotateCcw className="w-4 h-4" />다른 시안 고르기</Button>
         </>

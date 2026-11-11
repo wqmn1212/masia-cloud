@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { simulate } from '../../shared/protoSim.ts';
 import { moldRuleChecks, MOLD_MATERIAL_KEYS } from '../../shared/protoMold.ts';
 import { BRIEF_SCHEMA, SCENE_SCHEMA, SCENE_RULES, cleanScene, strList } from '../../shared/protoConcept.ts';
-import { SKETCH_PLAN_SCHEMA, SKETCH_VARIANTS, sketchPlanPrompt, frontPrompt, sidePrompt, compareSketch, koFix } from '../../shared/protoSketch.ts';
+import { SKETCH_PLAN_SCHEMA, SKETCH_VARIANTS, sketchPlanPrompt, frontPrompt, sidePrompt, isSideView, compareSketch, koFix } from '../../shared/protoSketch.ts';
 import { VISION_PROMPT, VISION_SCHEMA, MAX_VISION_IMAGES, imageSize, b64Bytes, cleanVision, measureVision, visionHint, fitScene } from '../../shared/protoVision.ts';
 import { uploadPrivateAttachments } from '../../shared/privateAttachments.ts';
 
@@ -313,14 +313,24 @@ Rules:
       const idx = Number(body.variant);
       const pickV = sk?.variants?.[idx];
       if (!pickV?.url) return Response.json({ error: '고를 정면 시안이 없습니다. 먼저 정면 시안을 만들어 주세요.' }, { status: 400 });
-      const side = await svc.integrations.Core.GenerateImage({ prompt: sidePrompt(sk.shape || '', pickV.style || ''), existing_image_urls: [pickV.url, ...srcUrls] });
+      // 측면을 만들고 정말 측면인지 확인한다. 뒷면·정면이 나오면 한 번 더 만들고, 그래도 아니면 알린다
+      let side = null, sideNote = '';
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const img = await svc.integrations.Core.GenerateImage({ prompt: sidePrompt(sk.shape || '', pickV.style || '', attempt > 0), existing_image_urls: [pickV.url, ...srcUrls] });
+        if (!img?.url) continue;
+        side = img;
+        const vis = await llm(VISION_PROMPT, VISION_SCHEMA, [pickV.url, img.url], IMAGE_MODEL).then((ai) => cleanVision(ai, [{ id: 'f', name: 'front' }, { id: 's', name: 'side' }])).catch(() => null);
+        if (!vis) { sideNote = '측면 이미지가 맞는지 확인하지 못했습니다. 눈으로 확인해 주세요.'; break; }
+        if (isSideView(vis)) { sideNote = ''; break; }
+        sideNote = `측면 대신 ${vis.images[1]?.views?.[0]?.view === 'BACK' ? '뒷면' : '다른 방향'}이 만들어져 ${attempt === 0 ? '다시 만들었습니다' : '두 번 모두 측면이 아니었습니다. 깊이는 추정으로 만들어집니다'}.`;
+      }
       if (!side?.url) return Response.json({ error: '측면 이미지를 만들지 못했습니다. 다시 시도해 주세요.' }, { status: 502 });
       const tag = `sketch-v${concept.version_no}-${idx + 1}`;
       const [frontFile, sideFile] = await Promise.all([saveGenerated(pickV.url, `${tag}-front`, '스케치 정리 이미지(정면)'), saveGenerated(side.url, `${tag}-side`, '스케치 정리 이미지(측면)')]);
       const fresh = await base44.entities.ProtoProject.get(project.id).catch(() => project);
       await svc.entities.ProtoProject.update(project.id, { files: [...(fresh.files || []), frontFile, sideFile] });
       const saved = await svc.entities.ProtoConcept.update(concept.id, {
-        sketch: { ...sk, status: 'READY', chosen: idx, side_url: side.url, file_ids: [frontFile.id, sideFile.id], confirmed_at: now(), confirmed_by_name: by },
+        sketch: { ...sk, status: 'READY', chosen: idx, side_url: side.url, side_note: sideNote, file_ids: [frontFile.id, sideFile.id], confirmed_at: now(), confirmed_by_name: by },
         ref_file_ids: [...new Set([...(concept.ref_file_ids || []), frontFile.id, sideFile.id])], last_request_id: rid,
       });
       return Response.json({ concept: saved, link, next: '정면·측면 이미지가 준비됐습니다. action=generate 로 이 두 장을 기준으로 3D 프리뷰를 만듭니다.' });
