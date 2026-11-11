@@ -10,6 +10,7 @@ import ValueSection from '@/components/landing/ValueSection';
 import CloudFeatureSection from '@/components/landing/CloudFeatureSection';
 import BrandSection from '@/components/landing/BrandSection';
 import ProcessSection from '@/components/landing/ProcessSection';
+import DevCaseSection from '@/components/landing/DevCaseSection';
 import GuangdongSection from '@/components/landing/GuangdongSection';
 import FastShippingSection from '@/components/landing/FastShippingSection';
 import CategorySection from '@/components/landing/CategorySection';
@@ -40,12 +41,13 @@ export default function Landing() {
         onLogin={navigateToLogin}
       />
       <main>
-      {/* 순서: 기술력 → 합리적인 가격 → 고객 편의 기능 → 진행 방식 → 브랜드 → 현장·물류 → 구독 → 대상 → 품목 → 보안 → 문의 */}
+      {/* 순서: 기술력 → 합리적인 가격 → 고객 편의 기능 → 진행 방식 → 개발 사례(가상 예시) → 브랜드 → 현장·물류 → 구독 → 대상 → 품목 → 보안 → 문의 */}
       <HeroSection lang={lang} />
       <CapabilitySection lang={lang} />
       <ValueSection lang={lang} />
       <CloudFeatureSection lang={lang} />
       <ProcessSection lang={lang} />
+      <DevCaseSection lang={lang} />
       <BrandSection lang={lang} />
       <GuangdongSection lang={lang} />
       <FastShippingSection lang={lang} />

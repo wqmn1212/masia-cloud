@@ -5,7 +5,6 @@ import { getHomePath } from '@/lib/menuPermissions';
 import { tx } from '@/lib/landingContent';
 import { about } from '@/lib/aboutContent';
 import { brand } from '@/lib/brandContent';
-import BrandRoles from '@/components/landing/BrandRoles';
 import BrandGuards from '@/components/landing/BrandGuards';
 import LandingHeader from '@/components/landing/LandingHeader';
 import LandingFooter from '@/components/landing/LandingFooter';
@@ -25,17 +24,13 @@ export default function About() {
       <LandingHeader lang={lang} setLang={setLang} isAuthenticated={isAuthenticated} homePath={getHomePath(user)} onLogin={navigateToLogin} />
       <main className="max-w-[1200px] mx-auto px-5 lg:px-8 py-14">
         <div className="text-[12px] font-bold tracking-[.08em] text-landing-brand">{tx(about.eyebrow, lang)}</div>
-        <h1 className="mt-3 text-[32px] md:text-[44px] font-extrabold tracking-[-1px] leading-[1.25]">{tx(about.h1, lang)}</h1>
+        <h1 className="mt-3 text-[32px] md:text-[44px] font-extrabold tracking-[-1px] leading-[1.25]">{tx(brand.h2, lang)}</h1>
         <p className="mt-4 text-[20px] font-bold text-landing-ink2">{tx(about.sub, lang)}</p>
         <p className="mt-4 max-w-[820px] text-[16px] leading-[1.85] text-landing-muted">{tx(about.lead, lang)}</p>
 
         <h2 className="mt-14 text-[24px] font-extrabold tracking-[-.5px]">{tx(about.nameTitle, lang)}</h2>
-        <div className="mt-5 grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6 items-start">
-          <div className="space-y-3 text-[15.5px] leading-[1.85] text-landing-muted">
-            <p>{tx(brand.lead, lang)}</p>
-            {brand.story.map((s) => <p key={s[0]}>{tx(s, lang)}</p>)}
-          </div>
-          <BrandRoles lang={lang} />
+        <div className="mt-5 max-w-[820px] space-y-3 text-[15.5px] leading-[1.85] text-landing-muted">
+          {brand.story.map((s) => <p key={s[0]}>{tx(s, lang)}</p>)}
         </div>
 
         <h2 className="mt-14 text-[24px] font-extrabold tracking-[-.5px]">{tx(brand.guardsTitle, lang)}</h2>
@@ -52,7 +47,7 @@ export default function About() {
         </div>
 
         <h2 className="mt-14 text-[24px] font-extrabold tracking-[-.5px]">{tx(about.teamTitle, lang)}</h2>
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           {about.team.map((m) => (
             <div key={m.t[0]} className="border border-landing-line rounded-[13px] p-6 bg-white">
               <h3 className="text-[17px] font-bold">{tx(m.t, lang)}</h3>

@@ -5,9 +5,9 @@ export const capabilities = {
   eyebrow: '01 — CAPABILITIES',
   h2: ['도면이 없어도, 아이디어부터 양산까지 만듭니다', 'No drawings? We take your idea all the way to mass production', '没有图纸也没关系，从创意一路做到量产'],
   sub: [
-    '좋은 제품은 공장을 찾는 것만으로 나오지 않습니다. 이지스는 설계 검토, 회로, 금형, 시험, 품질 관리를 직접 다루는 기술과 도구로 개발 기간과 시행착오를 줄입니다.',
-    'Good products take more than finding a factory. AEGIS handles design review, circuits, tooling, testing and quality control in-house, with our own tools, to cut development time and trial and error.',
-    '好产品不只是找到工厂。AEGIS 以自有技术和工具亲自处理设计评审、电路、模具、测试与品质管理，缩短开发周期、减少反复试错。',
+    '좋은 제품은 공장을 찾는 것만으로 나오지 않습니다. 한국과 중국의 개발팀이 설계, 회로, 금형, 시험, 품질 관리를 직접 다루고, 자체 도구로 개발 기간과 시행착오를 줄입니다.',
+    'Good products take more than finding a factory. Our development teams in Korea and China handle design, circuits, tooling, testing and quality control themselves, using our own tools to cut development time and trial and error.',
+    '好产品不只是找到工厂。韩国与中国的开发团队亲自负责设计、电路、模具、测试与品质管理，并以自有工具缩短开发周期、减少反复试错。',
   ],
   demoTitle: ['컨셉 스튜디오', 'Concept Studio', '概念工作室'],
   demoCaption: [
@@ -41,7 +41,7 @@ export const value = {
   items: [
     { t: ['공장과 직접 협상', 'Direct negotiation', '直接与工厂议价'], d: ['중간 유통사 없이 광둥성 현지 직원이 공장을 직접 만나 가격을 협상합니다.', 'No middlemen: our Guangdong staff meet factories in person and negotiate the price.', '没有中间商，广东本地员工亲自与工厂面谈议价。'] },
     { t: ['여러 공장 비교', 'Compare factories', '多家工厂比价'], d: ['같은 사양으로 여러 공장의 견적을 받아 단가·납기·조건을 나란히 비교한 뒤 고릅니다.', 'Quotes from several factories on the same spec, compared side by side on price, lead time and terms.', '按同一规格向多家工厂询价，并排比较单价、交期与条件后再选择。'] },
-    { t: ['설계에서 원가 절감', 'Cost down by design', '从设计降低成本'], d: ['금형 수 줄이기, 알맞은 살 두께, 표준 부품처럼 만들기 쉬운 설계로 금형비와 단가를 낮춥니다.', 'Fewer moulds, the right wall thickness, standard parts — design for manufacturing lowers tooling and unit cost.', '减少模具数量、合理壁厚、采用标准件——以易于制造的设计降低模具费与单价。'] },
+    { t: ['설계에서 원가 절감', 'Cost down by design', '从设计降低成本'], d: ['중국 현장의 공정을 보며 처음부터 양산에 맞춰 설계합니다. 금형 수 줄이기, 알맞은 살 두께, 표준 부품으로 금형비와 단가를 낮춥니다.', 'We design for mass production from the start, with the factory floor in view. Fewer moulds, the right wall thickness and standard parts lower tooling and unit cost.', '对照中国现场工艺，从一开始就按量产设计。减少模具数量、合理壁厚、采用标准件，降低模具费与单价。'] },
     { t: ['도착 원가까지 미리', 'Landed cost up front', '提前算到落地成本'], d: ['물류비·관세·부가세까지 더한 개당 한국 도착 원가로 비교해, 받고 나서 늘어나는 비용을 줄입니다.', 'We compare on landed cost per unit in Korea — freight, duty and VAT included — so costs do not grow after delivery.', '按含物流费、关税与增值税的单件韩国落地成本比较，减少到货后才增加的费用。'] },
     { t: ['불량은 출고 전에', 'Defects stop before shipping', '不良在出货前拦截'], d: ['출고 전 현지 검수로 불량을 걸러내, 한국에 도착한 뒤의 재작업·반품 비용을 막습니다.', 'On-site inspection before dispatch keeps rework and returns in Korea from eating your margin.', '出货前现场检验拦截不良，避免到韩国后的返工与退货成本。'] },
   ],

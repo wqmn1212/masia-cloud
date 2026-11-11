@@ -3,12 +3,12 @@ import { cn } from '@/lib/utils';
 import { tx } from '@/lib/landingContent';
 import { brand } from '@/lib/brandContent';
 
-// 이름과 역할 카드: 헤파이스토스 → 이지스 → 영웅 / 공장 → AEGIS → 고객
+// 한 팀 구성 카드: 한국 개발팀 · 중국 현지 개발·생산팀 · 협력 공장 개발팀
 export default function BrandRoles({ lang }) {
   return (
     <div className="border border-landing-line rounded-[13px] bg-white p-6">
       <div className="text-[13px] font-bold text-landing-muted">{tx(brand.rolesTitle, lang)}</div>
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
         {brand.roles.map((r) => (
           <div key={r.myth[0]} className={cn('rounded-[10px] p-3 text-center', r.highlight ? 'bg-landing-tint border border-landing-tint-border' : 'bg-landing-page')}>
             <div className="text-[12px] text-landing-muted2">{tx(r.myth, lang)}</div>
