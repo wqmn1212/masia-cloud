@@ -3,6 +3,8 @@
 import assert from 'node:assert/strict';
 import { cleanScene } from '../base44/shared/protoConcept.ts';
 import { moldRuleChecks } from '../base44/shared/protoMold.ts';
+import { compareSketch, koFix } from '../base44/shared/protoSketch.ts';
+import { buildConceptGroup } from '../src/lib/conceptScene.js';
 import { imageSize, cleanVision, measureVision, fitScene, visionHint, sceneBounds } from '../base44/shared/protoVision.ts';
 
 // ── 형상 정리: id 는 서버가 p1.. 로, 범위 밖 값은 자르고, 잘못된 값은 기본값
@@ -99,6 +101,28 @@ assert.ok(fit2.warnings.some((w) => /크게 달라/.test(w)));
 // 측정값이 없으면 형상을 그대로 둔다
 assert.deepEqual(fitScene(rawScene, null).scene, rawScene);
 
+// ── 중국어 표기 정리
+assert.equal(koFix('约300mm 높이, 20mm 左右'), '약 300mm 높이, 20mm 정도');
+assert.equal(cleanScene({ summary: '约300mm 높이의 조명', parts: [] }).summary, '약 300mm 높이의 조명');
+
+// ── 스케치 비교: 스케치 정면 비율 대비 시안 차이, 비스듬한 스케치는 비교하지 않음
+const skVis = cleanVision({ images: [
+  { image_index: 0, views: [{ view: 'FRONT', perspective: 'MEDIUM', box: [300, 100, 700, 900], parts: [] }] },
+  { image_index: 1, views: [{ view: 'FRONT', perspective: 'LOW', box: [300, 100, 700, 900], parts: [] }] },
+  { image_index: 2, views: [{ view: 'FRONT', perspective: 'LOW', box: [337, 100, 637, 900], parts: [] }] },
+] }, [{ id: 's', name: 's.png', width_px: 600, height_px: 800 }, { id: 'a', name: 'a', width_px: 1000, height_px: 1000 }, { id: 'b', name: 'b', width_px: 1000, height_px: 1000 }]);
+const skCmp = compareSketch(skVis, 1);
+assert.deepEqual([skCmp.sketch_ratio, skCmp.variants.map((v) => [v.ratio, v.diff_pct, v.warn])], [0.38, [[0.5, 32, true], [0.38, 0, false]]]);
+assert.match(compareSketch(cleanVision({ images: [{ image_index: 0, views: [{ view: 'PERSPECTIVE', perspective: 'HIGH', box: [0, 0, 500, 500] }] }] }, [{ id: 's', width_px: 10, height_px: 10 }, { id: 'a', width_px: 10, height_px: 10 }]), 1).sketch_note, /비스듬/);
+
+// ── 분해 보기: 세로로 긴 제품도 부품이 너무 멀리 가지 않고, 카메라가 맞출 범위를 알려 준다
+const tall = buildConceptGroup([
+  { id: 'a', layer: 'SHELL', shape: 'box', size: { x: 90, y: 260, z: 30 }, position: { x: 0, y: 170, z: 0 } },
+  { id: 'b', layer: 'SHELL', shape: 'box', size: { x: 126, y: 50, z: 128 }, position: { x: 0, y: 25, z: 0 } },
+]);
+assert.ok(tall.items.every((it) => it.explode.length() <= tall.radius * 0.9 + 1e-6));
+assert.ok(tall.explodedRadius >= tall.radius && tall.explodedRadius < tall.radius * 2.2, `분해 범위 ${tall.explodedRadius} / ${tall.radius}`);
+
 console.log('proto-concept modules ok');
 
 // ── 서버 함수
@@ -119,10 +143,15 @@ const SCENE = { summary: '원통형 공기청정기', overall_mm: { x: 120, y: 2
 globalThis.__llm = (a) => {
   calls.llm.push(a);
   const keys = Object.keys(a.response_json_schema.properties);
-  if (keys.includes('questions')) return { title: '미니 공기청정기', summary: '책상용', questions: [{ question: '높이는?', why: '형상', default_assumption: '200mm' }], assumptions: ['USB 전원으로 가정'] };
+  if (keys.includes('variants') && keys.includes('shape')) return globalThis.__skPlan || { shape: 'A tall rectangle twice as tall as wide on a low base.', parts: ['body', 'base'], variants: [{ label: '화이트 무광', style: 'white matte' }, { label: '우드', style: 'oak base' }, { label: '블랙', style: 'black metal' }], notes: ['뒷면은 스케치에 없음'] };
+  if (keys.includes('questions')) return { title: '미니 공기청정기', summary: '책상용', reference_kind: globalThis.__refKind || 'PHOTO', questions: [{ question: '높이는?', why: '형상', default_assumption: '200mm' }], assumptions: ['USB 전원으로 가정'] };
   if (keys.includes('parts')) return SCENE;
   if (keys.includes('actuators')) return { summary: '팬 1개', actuators: [{ id: 'fan', label: '팬', kind: 'PUMP_FAN', rated_voltage_v: 5, rated_current_a: 0.3, value_source: 'ASSUMED' }], steps: [{ name: '운전', duration_s: 10, states: [{ actuator_id: 'fan', on: true }] }], assumptions: ['팬 0.3A 로 가정'] };
-  if (keys.includes('images')) { if (globalThis.__visionFail) throw new Error('vision down'); return AI_VISION; }
+  if (keys.includes('images')) {
+    if (globalThis.__visionFail) throw new Error('vision down');
+    if (globalThis.__skVision && a.file_urls.length === 4) return globalThis.__skVision;
+    return globalThis.__visionKind ? { ...AI_VISION, images: AI_VISION.images.map((i) => ({ ...i, kind: globalThis.__visionKind })) } : AI_VISION;
+  }
   if (keys.includes('verdict')) return { verdict: 'MAYBE', summary: '보완 필요', findings: [{ part_id: 'p1', category: 'DRAFT', severity: 'HIGH', title: '구배' }, { part_id: 'zzz', category: 'NOPE', title: '모르는 위치' }] };
   throw new Error('unexpected schema');
 };
@@ -172,7 +201,7 @@ r = await call({ action: 'render', concept_id: concept.id });
 assert.equal(r.status, 200, JSON.stringify(r.data));
 concept = r.data.concept;
 assert.deepEqual([concept.preview.render_url, concept.preview.render_version, concept.preview.render_pending], ['https://img.example/r1.png', 1, false]);
-assert.equal(calls.img[0].existing_image_urls, undefined, '첨부 사진이 없으면 참고 이미지를 넣지 않는다');
+assert.deepEqual(calls.img[0].existing_image_urls, ['https://files.example/private://sketch.png'], '처음(brief)에 올린 사진도 렌더 참고 이미지로 쓴다');
 
 // 다른 팀은 컨셉을 다룰 수 없다
 globalThis.__user = OTHER;
@@ -245,6 +274,58 @@ assert.equal(r.data.concept.preview.image_fit, undefined);
 // PDF 만 올린 변경은 렌더를 다시 만들지 않는다
 r = await call({ action: 'revise', concept_id: v3.id, change_request: '', uploads: [{ name: 'spec2.pdf', type: 'application/pdf', data: b64('pdf2') }] });
 assert.deepEqual([r.data.concept.preview.render_pending, r.data.render_pending], [false, false]);
+
+// 스케치를 첨부한 변경은 렌더 참고 이미지로 쓰지 않는다 (선·글자가 렌더에 찍힘)
+globalThis.__visionKind = 'SKETCH';
+r = await call({ action: 'revise', concept_id: v3.id, change_request: '', uploads: [{ name: 'rough.png', type: 'image/png', data: Buffer.from(png(500, 700)).toString('base64') }] });
+assert.deepEqual([r.data.concept.preview.render_pending, r.data.concept.preview.render_ref_ids], [false, []]);
+globalThis.__visionKind = null;
+
+// ── 스케치 정리: 정면 시안 3장 → 고르기 → 측면 → 두 장으로 3D
+const pngBytes = (w, h) => png(w, h).buffer;
+globalThis.fetch = async (url) => (String(url).startsWith('https://img.example') ? { ok: true, status: 200, arrayBuffer: async () => pngBytes(1000, 1000) } : { ok: false, status: 404, arrayBuffer: async () => new ArrayBuffer(0) });
+globalThis.__refKind = 'SKETCH';
+r = await call({ action: 'brief', idea: '책상 위 양면 조명 스케치', uploads: [{ name: 'sketch.png', type: 'image/png', data: Buffer.from(png(600, 800)).toString('base64') }] });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+let sc = r.data.concept;
+const skProject = () => globalThis.__db.ProtoProject.find((p) => p.id === sc.project_id);
+assert.deepEqual([sc.reference_kind, sc.ref_file_ids.length], ['SKETCH', 1], '손 스케치로 판단하고 이 컨셉의 자료를 기억한다');
+globalThis.__skVision = { images: [
+  { image_index: 0, views: [{ view: 'FRONT', perspective: 'MEDIUM', box: [300, 100, 700, 900], parts: [] }] },
+  { image_index: 1, views: [{ view: 'FRONT', perspective: 'LOW', box: [300, 100, 700, 900], parts: [] }] },
+  { image_index: 2, views: [{ view: 'FRONT', perspective: 'LOW', box: [325, 100, 675, 900], parts: [] }] },
+  { image_index: 3, views: [{ view: 'FRONT', perspective: 'LOW', box: [337, 100, 637, 900], parts: [] }] },
+] };
+const imgBefore = calls.img.length;
+r = await call({ action: 'sketch', concept_id: sc.id });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+sc = r.data.concept;
+assert.equal(calls.img.length - imgBefore, 3, '정면 시안 3장');
+assert.ok(calls.img.slice(imgBefore).every((c) => /FRONT view/.test(c.prompt) && c.existing_image_urls[0].includes('sketch.png')), '스케치를 참고 이미지로 넣는다');
+assert.deepEqual([sc.sketch.status, sc.sketch.sketch_ratio, sc.sketch.variants.map((v) => [v.diff_pct, v.warn])], ['CHOOSE', 0.38, [[32, true], [16, true], [0, false]]]);
+assert.equal((await call({ action: 'sketch', concept_id: sc.id, step: 'side', variant: 7 })).status, 400, '없는 시안');
+r = await call({ action: 'sketch', concept_id: sc.id, step: 'side', variant: 2 });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+sc = r.data.concept;
+assert.match(calls.img.at(-1).prompt, /RIGHT SIDE view/);
+assert.equal(calls.img.at(-1).existing_image_urls[0], sc.sketch.variants[2].url, '고른 정면 시안을 기준으로 측면을 만든다');
+const skFiles = skProject().files.filter((f) => sc.sketch.file_ids.includes(f.id));
+assert.deepEqual([sc.sketch.status, sc.sketch.chosen, skFiles.map((f) => [f.note, f.width_px])], ['READY', 2, [['스케치 정리 이미지(정면)', 1000], ['스케치 정리 이미지(측면)', 1000]]]);
+globalThis.__skVision = null;
+const llmBefore = calls.llm.length;
+r = await call({ action: 'generate', concept_id: sc.id, answers: [] });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+const genVision = calls.llm.slice(llmBefore).find((c) => 'images' in c.response_json_schema.properties);
+assert.deepEqual(genVision.file_urls, skFiles.map((f) => `https://files.example/${f.uri}`), '정리한 정면·측면 두 장으로 측정한다');
+assert.deepEqual(r.data.concept.preview.render_ref_ids, sc.sketch.file_ids, '렌더 참고 이미지도 그 두 장');
+assert.equal((await call({ action: 'sketch', concept_id: sc.id })).status, 400, '프리뷰를 만든 뒤에는 스케치 정리를 다시 하지 않는다');
+globalThis.__refKind = null;
+
+// 처음(brief)에 올린 사진도 렌더 참고 이미지로 쓴다
+r = await call({ action: 'brief', idea: '사진으로 만드는 조명 컨셉', uploads: [{ name: 'photo.png', type: 'image/png', data: Buffer.from(png(800, 800)).toString('base64') }] });
+const pc = r.data.concept;
+r = await call({ action: 'generate', concept_id: pc.id, answers: [] });
+assert.deepEqual(r.data.concept.preview.render_ref_ids, pc.ref_file_ids, 'brief 때 올린 사진이 렌더 참고 이미지가 된다');
 
 // 사출·금형 검토: 판정·위치·분류를 정리하고 규칙 계산을 붙인다
 r = await call({ action: 'mold', concept_id: v2.id, inputs: { material: 'ABS', wall_mm: 2, draft_deg: 0.2 } });

@@ -88,6 +88,20 @@
     "confirmed_by_name": {
       "type": "string"
     },
+    "ref_file_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "이 컨셉에 붙은 참고 자료의 ProtoProject.files id (다른 컨셉 자료와 섞이지 않게)"
+    },
+    "reference_kind": {
+      "type": "string",
+      "enum": ["PHOTO", "DRAWING", "SKETCH", "NONE"],
+      "description": "형태를 정하는 주 참고 이미지 종류 (SKETCH 면 스케치 정리 단계를 권한다)"
+    },
+    "sketch": {
+      "type": "object",
+      "description": "스케치 정리 {status(CHOOSE·READY), source_ids, shape, parts[], notes[], sketch_ratio, sketch_note, variants[{label, style, url, ratio, diff_pct, warn}], chosen, side_url, file_ids[정면·측면 파일 id], generated_at}"
+    },
     "preview": {
       "type": "object",
       "description": "{title, summary, overall_mm{x,y,z}, parts[{id,name,ref_key,role,layer,shape,size,position,rotation_deg,color,finish,material}], design_notes[], assumptions[], unverified[], render_url, render_version(렌더를 만든 버전 번호), render_error, render_pending(형상 저장 뒤 render 로 만들 렌더가 남음), render_ref_ids(렌더 참고 사진의 프로젝트 파일 id), image_fit(첨부 이미지 측정·보정 기록), vision_appearance, vision_text, change_summary, generated_at, generated_by_name}"
