@@ -38,6 +38,7 @@ export const fit = {
   eyebrow: '06 — WHO IT IS FOR',
   h2: ['이런 회사에 맞습니다', 'Built for companies like these', '适合这样的企业'],
   targets: [
+    { t: ['신제품을 처음 만드는 회사', 'Making a new product for the first time', '首次开发新产品的企业'], d: ['아이디어나 스케치만 있고 도면 · 공장이 없는 경우. 설계부터 양산까지 한 팀에 맡기면 됩니다.', 'You have an idea or a sketch, but no drawings or factory. Hand it all, from design to mass production, to one team.', '只有创意或草图，没有图纸和工厂。从设计到量产交给同一个团队即可。'] },
     { t: ['품질 · 납기가 불안한 회사', 'Unsure about quality or delivery', '质量与交期不稳定的企业'], d: ['이미 중국 공장과 거래 중이지만 불량과 일정 지연이 반복되는 경우', 'Already buying from a Chinese factory, but defects and delays keep coming back.', '已与中国工厂合作，但不良与延期反复出现。'] },
     { t: ['반복 생산 품목을 가진 브랜드', 'Brands with repeat production', '有重复生产品项的品牌'], d: ['같은 제품을 꾸준히 발주하는 중소 브랜드', 'Small and mid-sized brands that reorder the same products regularly.', '持续复购同一产品的中小品牌。'] },
     { t: ['여러 품목을 동시에 소싱하는 회사', 'Sourcing many items at once', '同时采购多个品项的企业'], d: ['여러 부품 · 품목을 여러 공장에서 함께 관리해야 하는 경우', 'Several parts and items across several factories that need one point of control.', '需要在多家工厂同时管理多个零件与品项。'] },

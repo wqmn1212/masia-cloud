@@ -9,7 +9,7 @@ export default function FitSection({ lang }) {
     <section id="fit" className="border-t border-landing-line bg-white px-5 lg:px-8 py-16 lg:py-[88px]">
       <div className="max-w-[1200px] mx-auto">
         <SectionHeading eyebrow={fit.eyebrow} title={tx(fit.h2, lang)} maxWidth="max-w-[620px]" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-10">
           {fit.targets.map((c, i) => (
             <div key={i} className="border border-landing-line rounded-[13px] p-[22px] bg-landing-page">
               <div className="text-[11px] font-extrabold font-mono text-landing-muted3">{String(i + 1).padStart(2, '0')}</div>

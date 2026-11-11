@@ -9,11 +9,11 @@ export const regionCities = [
 ];
 
 export const guangdong = {
-  title: ['우리의 현장은 광둥성 전역입니다.', 'Our operations span Guangdong.', '我们的业务覆盖广东全省。'],
+  title: ['개발도 생산도, 중국 현장에서 직접 합니다.', 'We develop and produce on the ground in China.', '开发与生产，都在中国现场亲自完成。'],
   body: [
-    '광저우를 비롯해 선전, 동관, 포산, 중산까지. AEGIS는 중국 광둥성을 주 업무 지역으로 삼아 전역의 공장을 직접 만나고, 소싱부터 가격 협상·공장 검증·QC·출하까지 현장에서 연결합니다.',
-    'From Guangzhou to Shenzhen, Dongguan, Foshan and Zhongshan, Guangdong is our primary region of operations. AEGIS works directly with factories across the province, coordinating sourcing, negotiation, factory checks, QC and dispatch on the ground.',
-    '从广州到深圳、东莞、佛山、中山，广东省是 AEGIS 的主要业务区域。我们直接对接全省工厂，在现场衔接采购、议价、验厂、QC 与出货。',
+    '동관 지사의 개발·생산팀은 한국 본사 개발팀과 같은 제품을 동시에 설계합니다. 공장의 금형과 공정을 현장에서 보며 설계하기 때문에 처음부터 양산에 맞는 설계가 나옵니다. 선전·동관·광저우·포산·중산 등 광둥성 전역의 협력 공장과 그 개발팀을 AEGIS가 직접 조율하고, 시제품부터 양산·QC·출하까지 현장에서 관리합니다.',
+    'Our Dongguan development and production team designs the same product at the same time as our Korea HQ developers. Because they design while looking at the factory’s tooling and processes, the design is ready for mass production from the start. Across Guangdong — Shenzhen, Dongguan, Guangzhou, Foshan, Zhongshan — AEGIS directly coordinates partner factories and their engineering teams, and manages prototypes, mass production, QC and dispatch on site.',
+    '东莞分公司的开发生产团队与韩国总部开发团队同步设计同一款产品。由于在现场对照工厂的模具与工艺进行设计，从一开始就是适合量产的设计。深圳、东莞、广州、佛山、中山等广东全省的合作工厂及其开发团队由 AEGIS 直接协调，从样机到量产、QC 与出货均在现场管理。',
   ],
   alt: ['광저우 스카이라인과 광둥성 제조·항만 물류를 표현한 이미지', 'Conceptual view of Guangzhou and Guangdong manufacturing and port logistics', '展现广州天际线与广东制造及港口物流的概念图'],
   caption: ['광둥성의 도시·제조·물류를 표현한 AI 생성 컨셉 이미지입니다.', 'AI-generated concept image representing Guangdong’s cities, manufacturing and logistics.', 'AI 生成概念图，展现广东的城市、制造与物流。'],
@@ -53,21 +53,21 @@ export const nav = [
 ];
 
 export const header = {
-  cta: ['견적 요청', 'Request a quote', '索取报价'],
+  cta: ['개발·제조 문의', 'Start a project', '咨询开发·制造'],
   login: ['로그인', 'Log in', '登录'],
   dashboard: ['대시보드로 이동', 'Go to dashboard', '前往控制台'],
 };
 
 export const hero = {
-  badge: ['중국 광둥성 지사 운영 · 한국 본사 업무 진행', 'Guangdong branch · Korean HQ operations', '广东省分公司 · 韩国总部运营'],
+  badge: ['제품 개발 · 제조 전문 · 한국 본사 + 중국 동관 지사', 'Product development & manufacturing · Korea HQ + Dongguan branch', '产品开发与制造 · 韩国总部 + 中国东莞分公司'],
   h1a: ['개발부터 납품까지,', 'From development to delivery,', '从开发到交付，'],
   h1b: ['이지스가 만들어 드립니다.', 'AEGIS builds it for you.', '由 AEGIS 为您打造。'],
   body: [
-    '한국 본사와 중국 광둥성 지사가 공장을 직접 만나 협상하고, 시제품·양산·QC·배송·통관까지 한 번에 맡습니다.',
-    'Our Korean HQ and Guangdong branch meet factories face to face to negotiate, then take care of prototypes, mass production, QC, shipping and customs in one line.',
-    '韩国总部与中国广东分公司直接与工厂面对面谈判，并一站式负责样品、量产、QC、运输与清关。',
+    '한국과 중국의 개발팀이 함께 설계하고, 중국 현지에서 시제품·금형·양산·QC까지 직접 관리합니다. 이미 완성된 제품이라면 그대로 양산만 맡기셔도 됩니다.',
+    'Our development teams in Korea and China design together, then manage prototypes, tooling, mass production and QC ourselves on the ground in China. Already have a finished product? Hand us just the mass production.',
+    '韩国与中国的开发团队共同设计，并在中国当地亲自管理样机、模具、量产与 QC。已有成品的，也可以只委托量产。',
   ],
-  cta1: ['제조 문의하기', 'Request a quote', '索取报价'],
+  cta1: ['개발·제조 문의하기', 'Start a project', '咨询开发·制造'],
   cta2: ['진행 방식 보기', 'See how it works', '查看进行流程'],
   note: [
     '문의 접수 시 AEGIS Cloud 계정이 발급되어 견적 · QC · 물류 현황을 직접 확인할 수 있습니다.',
@@ -80,12 +80,12 @@ export const supply = {
   title: ['SUPPLY STRUCTURE', 'SUPPLY STRUCTURE', '供应结构'],
   koreaLabel: ['KOREA', 'KOREA', '韩国'],
   korea: ['고객사', 'Your company', '贵公司'],
-  aegisLabel: ['KOREA HQ + GUANGDONG BRANCH', 'KOREA HQ + GUANGDONG BRANCH', '韩国总部 + 广东省分公司'],
-  aegisDesc: ['현지 가격 협상 · 공장 검증 · QC · 배송 · 통관', 'On-site negotiation · factory audit · QC · shipping · customs', '现场议价 · 验厂 · QC · 运输 · 清关'],
+  aegisLabel: ['KOREA HQ + DONGGUAN BRANCH', 'KOREA HQ + DONGGUAN BRANCH', '韩国总部 + 东莞分公司'],
+  aegisDesc: ['공동 개발 · 시제품 · 금형 · 양산 관리 · QC · 배송', 'Co-development · prototypes · tooling · production control · QC · shipping', '联合开发 · 样机 · 模具 · 量产管理 · QC · 运输'],
   removed: ['공장을 표방하는 온라인 유통사', 'Trading companies posing as factories', '冒充工厂的贸易商'],
   removedTag: ['제거', 'REMOVED', '已去除'],
   chinaLabel: ['CHINA', 'CHINA', '中国'],
-  china: ['검증 완료 공장', 'Verified factory', '已验证工厂'],
+  china: ['직접 관리하는 협력 공장', 'Partner factories we manage', '直接管控的合作工厂'],
 };
 
 export const stats = [
@@ -97,17 +97,26 @@ export const stats = [
 
 export const process = {
   eyebrow: '04 — PROCESS',
-  h2: ['문의 한 번에서 납품까지, 끊기지 않는 한 줄', 'From first inquiry to the pallet at your gate', '从首次询价到货物送达贵司门口'],
-  sub: ['각 단계는 AEGIS Cloud 계정에 기록되어, 지금 어디까지 왔는지 항상 확인할 수 있습니다.', 'Each step is logged in your AEGIS Cloud account, so you always know where the order stands.', '每个环节都记录在您的 AEGIS Cloud 账号中，随时掌握订单进度。'],
+  h2: ['아이디어부터 양산까지, 한 팀이 끝까지', 'From idea to mass production, one team all the way', '从创意到量产，一个团队负责到底'],
+  sub: ['각 단계는 AEGIS Cloud 계정에 기록되어, 지금 어디까지 왔는지 항상 확인할 수 있습니다.', 'Each step is logged in your AEGIS Cloud account, so you always know where the project stands.', '每个环节都记录在您的 AEGIS Cloud 账号中，随时掌握项目进度。'],
+  phases: { dev: ['개발', 'DEVELOP', '开发'], prod: ['양산', 'PRODUCE', '量产'] },
+  existing: {
+    t: ['이미 완성된 제품이 있나요?', 'Already have a finished product?', '已有成品？'],
+    d: [
+      '도면·샘플·기존 제품이 있다면 개발 단계를 건너뛰고 STEP 04부터 바로 양산을 맡기시면 됩니다. 공장 선정부터 생산 관리, 출고 전 검수까지 AEGIS가 공장을 직접 관리해 양산에 문제가 없게 합니다.',
+      'If you have drawings, a sample or an existing product, skip development and start mass production from STEP 04. From factory selection to production control and pre-shipment inspection, AEGIS manages the factory directly so production runs without problems.',
+      '如有图纸、样品或现有产品，可跳过开发阶段，从 STEP 04 直接委托量产。从工厂选定、生产管理到出货前检验，AEGIS 直接管控工厂，确保量产顺利无误。',
+    ],
+  },
   steps: [
-    { t: ['제조 문의 · 요구사항 정리', 'Inquiry & requirements', '询价与需求整理'], d: ['도면, 샘플, 또는 설명만으로도 가능합니다. 사양 · 수량 · 목표 단가를 함께 정리합니다.', 'Send drawings, samples or just a description. We define specs, quantity and target price with you.', '提交图纸、样品或简单描述均可。我们与您共同确定规格、数量与目标价格。'] },
-    { t: ['공장 매칭 · NNN 체결', 'Factory matching & NNN', '工厂匹配与 NNN 签署'], d: ['현지 직원이 NNN 계약이 체결된 중국의 공장을 선별.', 'Our Guangdong staff shortlist factories that actually make your item, and sign NNN before any file is shared.', '广东省团队筛选真正能生产该品项的工厂，并在共享任何文件前签署 NNN。'] },
-    { t: ['현지 가격 협상', 'On-site price negotiation', '现场价格谈判'], d: ['공장에서 직접 협상하고, 사양 · 납기 · 한국 도착 원가까지 정리한 견적으로 회신합니다.', 'We negotiate at the factory in person and return a quote covering spec, lead time and landed cost in Korea.', '我们亲赴工厂谈判，并提供涵盖规格、交期与韩国落地成本的报价。'] },
-    { t: ['공장 검증 · 샘플', 'Factory audit & sampling', '验厂与打样'], d: ['함께 방문하거나 우리가 대신 갑니다. 설비 · 생산능력 · 인증을 확인하고 결정 전 샘플을 받습니다.', 'Visit with us, or we go for you: equipment, capacity, certifications and a sample before you commit.', '您可同行，或由我们代为前往：确认设备、产能、认证，并在决定前提供样品。'] },
-    { t: ['계약서 작성 후 양산', 'Contract, then mass production', '签订合同后再量产'], d: ['계약서 확정 후 양산을 시작합니다. 기준은 보안 · 계약 섹션을 참고하세요.', 'Production starts once the contract is signed — see the Security section for terms.', '合同确定后开始量产，详见保密与合同部分。'] },
-    { t: ['생산 중 · 출하 전 QC', 'In-line & pre-shipment QC', '生产中与出货前 QC'], d: ['현지 직원이 공장에서 검사하고, 포장 전 사진 · 영상 리포트를 공유합니다.', 'Our staff inspect at the plant and share photo and video reports before anything is boxed.', '我方员工在厂内检验，装箱前提供照片与视频报告。'] },
-    { t: ['배송 · 통관', 'Shipping & customs clearance', '运输与通关'], d: ['해상 · 항공 운송, 수출 서류, 한국 수입 통관과 관세까지 하나의 업무로 처리합니다.', 'Sea or air, export paperwork, Korean import clearance and duties — arranged by us as one job.', '海运或空运、出口单证、韩国进口清关与关税，均由我们统一处理。'] },
-    { t: ['고객사 납품', 'Delivered to your site', '送达贵司现场'], d: ['국내 공장 · 창고까지 배송하고, A/S 요청도 같은 계정에서 처리합니다.', 'Domestic delivery to your factory or warehouse, with after-sales requests handled through the same account.', '国内配送至贵司工厂或仓库，售后同样通过该账号处理。'], highlight: true },
+    { phase: 'dev', t: ['문의 · 요구사항 정리', 'Inquiry & requirements', '咨询与需求整理'], d: ['아이디어 한 문장, 스케치, 도면 어느 단계든 괜찮습니다. 용도 · 사양 · 수량 · 목표 단가를 함께 정리합니다.', 'A one-line idea, a sketch or a full drawing — any stage works. We define use, spec, quantity and target price with you.', '一句话创意、草图或完整图纸，任何阶段都可以。我们与您共同确定用途、规格、数量与目标价格。'] },
+    { phase: 'dev', t: ['컨셉 · 설계', 'Concept & design', '概念与设计'], d: ['한국과 중국 개발팀이 함께 외형 · 기구 · 회로를 설계합니다. 처음부터 금형과 공정을 고려해 양산에 맞는 구조로 잡습니다.', 'Our Korea and China teams design the exterior, mechanics and circuits together, planning for tooling and process from the start so the design suits mass production.', '韩国与中国开发团队共同设计外观、结构与电路，从一开始就考虑模具与工艺，形成适合量产的结构。'] },
+    { phase: 'dev', t: ['시제품 · 시험', 'Prototype & testing', '样机与测试'], d: ['중국 현지에서 시제품을 만들어 시험하고, 결과를 버전마다 기록해 다음 시제품에 반영합니다.', 'We build and test prototypes in China, log the results per version and feed them into the next round.', '在中国当地制作并测试样机，按版本记录结果并反映到下一版样机。'] },
+    { phase: 'prod', t: ['공장 선정 · 원가 확정', 'Factory & cost', '选定工厂与确定成本'], d: ['NNN을 체결한 협력 공장의 개발팀과 공정 · 단가를 맞추고, 여러 공장을 비교해 한국 도착 원가까지 정리한 견적을 드립니다.', 'We align process and price with the engineering teams of partner factories under NNN, compare factories, and quote you the landed cost in Korea.', '与签署 NNN 的合作工厂开发团队对齐工艺与单价，多家比较后提供含韩国落地成本的报价。'] },
+    { phase: 'prod', t: ['금형 · 양산 준비', 'Tooling & readiness', '模具与量产准备'], d: ['금형을 만들고 초도 샘플로 치수 · 외관을 확인합니다. 사양 · 검사 기준 · 불량 처리를 계약서로 확정한 뒤 라인을 엽니다.', 'Moulds are built and first-shot samples checked for dimensions and finish. Spec, inspection standard and defect handling are fixed in a contract before the line starts.', '制作模具并用首批样品确认尺寸与外观。规格、检验标准与不良处理以合同确定后再开线。'] },
+    { phase: 'prod', t: ['양산 · QC', 'Mass production & QC', '量产与 QC'], d: ['현지 직원이 공장 생산을 직접 관리하고, 생산 중 · 출하 전 검사 결과를 사진 · 영상 리포트로 공유합니다.', 'Our staff manage production at the plant and share in-line and pre-shipment inspection results as photo and video reports.', '本地员工直接管理工厂生产，并以照片与视频报告分享生产中及出货前的检验结果。'] },
+    { phase: 'prod', t: ['배송 · 통관', 'Shipping & customs clearance', '运输与通关'], d: ['해상 · 항공 운송, 수출 서류, 한국 수입 통관과 관세까지 하나의 업무로 처리합니다.', 'Sea or air, export paperwork, Korean import clearance and duties — arranged by us as one job.', '海运或空运、出口单证、韩国进口清关与关税，均由我们统一处理。'] },
+    { phase: 'prod', t: ['고객사 납품', 'Delivered to your site', '送达贵司现场'], d: ['국내 공장 · 창고까지 배송하고, A/S 요청도 같은 계정에서 처리합니다.', 'Domestic delivery to your factory or warehouse, with after-sales requests handled through the same account.', '国内配送至贵司工厂或仓库，售后同样通过该账号处理。'], highlight: true },
   ],
 };
 
@@ -176,11 +185,11 @@ export const trust = {
 export const contact = {
   eyebrow: '09 — GET STARTED',
   h2: ['만들고 싶은 것을 알려주세요', 'Send us what you want made', '告诉我们您想生产什么'],
-  body: ['도면, 사진, 혹은 문장 하나로도 시작할 수 있습니다. 영업일 기준 1일 이내 회신드리며, 견적 · QC 리포트 · 물류 현황을 한곳에서 보는 AEGIS Cloud 계정을 발급해 드립니다.', 'A drawing, a photo or a sentence is enough to start. We reply within one business day, and open an AEGIS Cloud account where your quote, QC reports and shipping status live in one place.', '一张图纸、一张照片或一句话即可开始。我们将在一个工作日内回复，并开通 AEGIS Cloud 账号，报价、QC 报告与物流状态集中可见。'],
+  body: ['아이디어 한 문장부터 완성된 제품까지, 어느 단계든 시작할 수 있습니다. 영업일 기준 1일 이내 회신드리며, 견적 · QC 리포트 · 물류 현황을 한곳에서 보는 AEGIS Cloud 계정을 발급해 드립니다.', 'From a one-line idea to a finished product, you can start at any stage. We reply within one business day, and open an AEGIS Cloud account where your quote, QC reports and shipping status live in one place.', '从一句话的创意到已完成的产品，任何阶段都可以开始。我们将在一个工作日内回复，并开通 AEGIS Cloud 账号，报价、QC 报告与物流状态集中可见。'],
   hqLabel: ['한국 본사', 'KOREA HQ', '韩国总部'],
-  hq: ['계약 · 정산 · 지원 업무', 'All contracts, settlement and support', '合同、结算与支持'],
-  szLabel: ['중국 광둥성 지사', 'GUANGDONG BRANCH', '广东省分公司'],
-  sz: ['가격 협상 · 공장 검증 · QC · 출하', 'Negotiation, factory audit, QC, shipping', '议价、验厂、QC、运输'],
+  hq: ['제품 기획 · 설계 · 계약 · 정산 · 고객 지원', 'Planning, design, contracts, settlement and support', '产品策划、设计、合同、结算与支持'],
+  szLabel: ['중국 동관 지사', 'DONGGUAN BRANCH, CHINA', '中国东莞分公司'],
+  sz: ['현지 개발 · 시제품 · 양산 관리 · QC · 출하', 'Local development, prototypes, production control, QC, shipping', '本地开发、样机、量产管理、QC、出货'],
 };
 
 export const form = {
@@ -223,7 +232,7 @@ export const formTags = [
 ];
 
 export const footer = {
-  tagline: ['한국 본사 · 중국 광둥성 지사 · 공장 소싱, QC, 배송 및 통관', 'Korean HQ · Guangdong branch · Factory sourcing, QC, shipping and customs', '韩国总部 · 广东省分公司 · 工厂采购、QC、运输与清关'],
+  tagline: ['한국 본사 · 중국 동관 지사 · 제품 개발, 양산, QC, 배송 및 통관', 'Korea HQ · Dongguan branch · Product development, mass production, QC, shipping and customs', '韩国总部 · 东莞分公司 · 产品开发、量产、QC、运输与清关'],
   copyright: '© 2026 AEGIS',
   // 주소는 현지 표기 그대로 둔다 (본사는 한국어, 지사는 중국어). 라벨만 언어별로 바뀐다.
   addresses: [

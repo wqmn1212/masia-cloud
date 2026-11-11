@@ -9,14 +9,16 @@ import { cn } from '@/lib/utils';
 import LandingHeader from '@/components/landing/LandingHeader';
 import LandingFooter from '@/components/landing/LandingFooter';
 import PortfolioCard from '@/components/landing/PortfolioCard';
+import { DevCaseStudy } from '@/components/landing/DevCaseSection';
+import { devCase } from '@/lib/devCaseContent';
 import '@/components/landing/landingMinimal.css';
 
 const T = {
-  h1: ['제조 포트폴리오', 'Manufacturing portfolio', '制造案例'],
-  sub: ['광둥성 공장에서 AEGIS가 진행한 작업 사례와 취급 품목입니다.', 'Work and products AEGIS has delivered with factories across Guangdong.', 'AEGIS 与广东工厂合作完成的案例与产品。'],
+  h1: ['개발 · 제조 포트폴리오', 'Development & manufacturing portfolio', '开发与制造案例'],
+  sub: ['AEGIS가 진행한 개발 · 양산 사례와 취급 품목입니다.', 'Development and production work AEGIS has delivered, and the products we make.', 'AEGIS 完成的开发与量产案例及承接品类。'],
   empty: ['해당 카테고리의 사례가 아직 없습니다.', 'No items in this category yet.', '该品类暂无案例。'],
-  cta: ['비슷한 제품을 만들고 싶으신가요?', 'Want something similar made?', '想生产类似产品？'],
-  ctaBtn: ['견적 요청', 'Request a quote', '索取报价'],
+  cta: ['비슷한 제품을 개발하거나 만들고 싶으신가요?', 'Want something similar developed or made?', '想开发或生产类似产品？'],
+  ctaBtn: ['개발·제조 문의하기', 'Start a project', '咨询开发·制造'],
 };
 
 export default function PortfolioList() {
@@ -51,6 +53,12 @@ export default function PortfolioList() {
             {list.map((p, i) => <PortfolioCard key={`${p.slug || p.cat}-${i}`} item={p} lang={lang} />)}
           </div>
         )}
+        <div className="mt-16 border-t border-landing-line pt-12">
+          <div className="text-[12px] font-bold tracking-[.08em] text-landing-brand">{devCase.eyebrow}</div>
+          <h2 className="mt-3 text-[26px] md:text-[32px] font-extrabold tracking-[-1px] leading-[1.3]">{tx(devCase.h2, lang)}</h2>
+          <p className="mt-3 max-w-[760px] text-[15.5px] leading-[1.75] text-landing-muted">{tx(devCase.sub, lang)}</p>
+          <div className="mt-8"><DevCaseStudy lang={lang} /></div>
+        </div>
         <div className="mt-14 rounded-[13px] bg-landing-tint p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <p className="text-[18px] font-bold">{tx(T.cta, lang)}</p>
           <a href="/#contact" className="lm-portfolio-cta self-start bg-landing-ink hover:bg-landing-brand-hover text-white text-sm font-bold px-5 py-3 rounded-[9px]">{tx(T.ctaBtn, lang)}</a>
