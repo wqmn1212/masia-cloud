@@ -73,6 +73,8 @@ export default async function (req) {
         tenant_id: hqTenantId,
         company_type: 'CLIENT',
         company_name: lead.company,
+        // 과금 방식: 제조팀 구독 상담이면 월정액, 나머지는 턴키 (고객사 화면에서 바꿀 수 있다)
+        billing_mode: lead.inquiry_type === 'monthly' ? 'MONTHLY' : 'TURNKEY',
         contact_person: lead.contact_name,
         phone: lead.phone,
         email: lead.email,

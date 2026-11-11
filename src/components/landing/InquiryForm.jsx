@@ -30,7 +30,7 @@ export default function InquiryForm({ lang }) {
   const [files, setFiles] = useState([]);
   const [status, setStatus] = useState('idle');
   const [errorMsg, setErrorMsg] = useState('');
-  const [inquiryType, setInquiryType] = useState('sourcing');
+  const [inquiryType, setInquiryType] = useState('turnkey');
 
   const [interest, setInterest] = useState(() =>
     new URLSearchParams(window.location.search).get('interest') === 'enterprise' ? 'ENTERPRISE' : ''
@@ -83,7 +83,7 @@ export default function InquiryForm({ lang }) {
     }
   };
 
-  const reset = () => { setValues(EMPTY); setTags([]); setInquiryType('sourcing'); setInterest(''); setFiles([]); setStatus('idle'); setErrorMsg(''); };
+  const reset = () => { setValues(EMPTY); setTags([]); setInquiryType('turnkey'); setInterest(''); setFiles([]); setStatus('idle'); setErrorMsg(''); };
 
   if (status === 'done') {
     return (

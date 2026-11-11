@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
-import { resolveMargin, fillMargins } from '../../shared/marginRule.ts';
+import { resolveMargin, fillMargins, billingModeReader } from '../../shared/marginRule.ts';
 
 // AI 비서용 새 견적 등록 (엑셀 견적서 미리보기를 사용자가 승인한 뒤에만 부른다).
 // 화면의 견적 등록과 같이 서버에서 팀 범위를 고정하고, 원가 줄만 받는다: 마진·수수료·최종 고객가는 받아도 버린다.
@@ -53,7 +53,7 @@ export default async function (req: Request) {
     const included = options.filter((o: any) => !o.optional);
     if (allCny) { record.factory_total_cost = included.reduce((t: number, o: any) => t + o.quantity * o.unit_price, 0); record.factory_cost_currency = 'CNY'; }
     const setting = (await db.OperationSetting.filter({ tenant_id: card.tenant_id }, '-updated_date', 1).catch(() => []))[0] || null;
-    const rule = resolveMargin(setting, card);
+    const rule = resolveMargin(setting, card, await billingModeReader(db)(card));
     record.quote_options = fillMargins(record.quote_options, rule.default_pct);
     record.internal_notes = [`기준 마진 ${rule.default_pct}% 채움 (${rule.default_label}) · AI 비서 등록`, record.internal_notes].filter(Boolean).join('\n');
     const rates = (await db.ExchangeRate.list('-rate_date', 1).catch(() => []))[0];

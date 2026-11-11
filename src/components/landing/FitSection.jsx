@@ -19,7 +19,7 @@ export default function FitSection({ lang }) {
           ))}
         </div>
         <h3 className="mt-12 text-lg font-bold tracking-[-0.5px] text-landing-ink">{tx(fit.modelTitle, lang)}</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
           {fit.models.map((m, i) => (
             <div key={i} className={cn('rounded-[13px] p-[22px]', m.highlight ? 'bg-landing-tint-soft border-[1.5px] border-landing-brand' : 'bg-white border border-landing-line')}>
               <div className="text-sm text-landing-muted">{tx(m.k, lang)}</div>

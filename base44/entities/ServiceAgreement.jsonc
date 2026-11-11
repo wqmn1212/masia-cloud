@@ -35,7 +35,7 @@
     },
     "term_months": {
       "type": "number",
-      "description": "\uacc4\uc57d \uae30\uac04 (\uac1c\uc6d4, 3~12)"
+      "description": "\uacc4\uc57d \uae30\uac04 (\uac1c\uc6d4). \uae30\ubcf8 12\uac1c\uc6d4"
     },
     "monthly_fee": {
       "type": "number",
@@ -96,54 +96,10 @@
       "default": "KRW",
       "description": "\uacc4\uc57d\ub8cc \ud1b5\ud654"
     },
-    "factory_rebate_percent": {
-      "type": "number",
-      "default": 10,
-      "description": "\uacf5\uc7a5 \ud398\uc774\ubc31 \ube44\uc728 (\uacc4\uc57d \uace0\uac1d 10, \ubbf8\uacc4\uc57d 20). \ub0b4\ubd80 \uc804\uc6a9 \u2014 \uace0\uac1d \uacc4\uc815\uc5d0 \ub178\ucd9c \uae08\uc9c0",
-      "rls": {
-        "read": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "$and": [
-                {
-                  "data.tenant_id": "{{user.data.tenant_id}}"
-                },
-                {
-                  "user_condition": {
-                    "data.account_tier": "service"
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        "write": {
-          "$or": [
-            {
-              "user_condition": {
-                "data.account_tier": "master"
-              }
-            },
-            {
-              "$and": [
-                {
-                  "data.tenant_id": "{{user.data.tenant_id}}"
-                },
-                {
-                  "user_condition": {
-                    "data.account_tier": "service"
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      }
+    "plan": {
+      "type": "string",
+      "enum": ["LITE", "STANDARD", "PRO", "ENTERPRISE"],
+      "description": "월정액 제조팀 플랜 (대행 범위). LITE=구매 담당, STANDARD=구매+품질, PRO=제조팀 전체, ENTERPRISE=별도 협의"
     },
     "status": {
       "type": "string",

@@ -59,10 +59,10 @@ export default function Agreements() {
     setRenewing(a.id);
     try {
       const next = new Date(Date.parse(`${a.end_date}T00:00:00Z`) + 86400000).toISOString().slice(0, 10);
-      const term = a.term_months || 3;
+      const term = a.term_months || 12;
       const created = await base44.entities.ServiceAgreement.create({
         company_id: a.company_id, company_name: a.company_name, title: a.title, start_date: next, term_months: term, end_date: endDateOf(next, term),
-        monthly_fee: a.monthly_fee ?? null, currency: a.currency || 'KRW', factory_rebate_percent: a.factory_rebate_percent ?? 10,
+        monthly_fee: a.monthly_fee ?? null, currency: a.currency || 'KRW', ...(a.plan ? { plan: a.plan } : {}),
         assigned_user_ids: a.assigned_user_ids || [], status: 'DRAFT', renewal_of: a.id, note: a.note || '',
       });
       await base44.entities.ServiceAgreement.update(a.id, { status: 'RENEWED' });
@@ -76,11 +76,11 @@ export default function Agreements() {
     }
   };
 
-  // 대표 보고용 계약 목록 (내부 전용: 월 계약료·페이백 포함)
+  // 대표 보고용 계약 목록 (내부 전용: 월 계약료 포함)
   const exportCsv = () => downloadCsv(`AEGIS_Agreements_${fileDate()}`,
-    ['고객사', '계약명', '계약 번호', '시작일', '종료일', '남은 일수', '상태', '월 계약료', '통화', '페이백 %', '진행 중 프로젝트', `${Number(month.slice(5))}월 청구`, '담당'],
+    ['고객사', '계약명', '계약 번호', '시작일', '종료일', '남은 일수', '상태', '월 계약료', '통화', '플랜', '진행 중 프로젝트', `${Number(month.slice(5))}월 청구`, '담당'],
     agreements.map((a) => [a.company_name, a.title, a.agreement_no, a.start_date, a.end_date, a.status === 'ACTIVE' ? daysLeft(a.end_date) : '', (AGREEMENT_STATUS[a.status] || {}).label || a.status,
-      a.monthly_fee ?? '', a.currency || 'KRW', a.factory_rebate_percent ?? '', linkedCards.filter((c) => c.agreement_id === a.id && !['DONE', 'CANCELLED'].includes(c.status)).length,
+      a.monthly_fee ?? '', a.currency || 'KRW', a.plan || '', linkedCards.filter((c) => c.agreement_id === a.id && !['DONE', 'CANCELLED'].includes(c.status)).length,
       invoiceOf(a) ? (INVOICE_STATUS[invoiceOf(a).status] || {}).label : '', (a.assigned_user_ids || []).map((id) => names.get(id)).filter(Boolean).join(', ')]));
 
   return (

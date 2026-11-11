@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { approvalQueue } from '../../shared/quoteReview.ts';
-import { resolveMargin } from '../../shared/marginRule.ts';
+import { resolveMargin, billingModeReader } from '../../shared/marginRule.ts';
 import { pickOwner } from '../../shared/inquiryIntake.ts';
 import { teamOf } from '../../shared/intakeServer.ts';
 import { kstToday } from '../../shared/chinaHoliday.ts';
@@ -125,7 +125,10 @@ export default async function (req: Request) {
       if (topic === 'quotes') {
         const settings = new Map<string, any>();
         for (const t of [...new Set(cards.map((c: any) => c.tenant_id))] as string[]) settings.set(t, (await db.OperationSetting.filter({ tenant_id: t }, '-updated_date', 1).catch(() => []))[0] || null);
-        const queue = approvalQueue(quotes, cardMap, today, (c: any) => resolveMargin(settings.get(c.tenant_id), c));
+        const modeOf = billingModeReader(db);
+        const modes: Record<string, string> = {};
+        for (const id of [...new Set(quotes.map((q: any) => q.card_id))] as string[]) modes[id] = await modeOf(cardMap[id]);
+        const queue = approvalQueue(quotes, cardMap, today, (c: any) => resolveMargin(settings.get(c.tenant_id), c, modes[c.id]));
         const row = (r: any) => ({ quotation_id: r.id, card_title: r.card_title, client_name: r.client_name, title: r.quote_title, status: r.status, requested_by: r.requested_by_name, requested_date: kstDate(r.requested_at), waiting_days: r.requested_at ? days(r.requested_at) : null, note: r.review_note,
           ...(approver ? { client_total: r.summary.total, currency: r.summary.currency, margin_pct: r.summary.margin_pct } : {}), blocks: r.checks.filter((c: any) => c.level === 'block').map((c: any) => c.text), warnings: approver ? r.checks.filter((c: any) => c.level === 'warn').map((c: any) => c.text) : [] });
         const factoryWaiting = [];

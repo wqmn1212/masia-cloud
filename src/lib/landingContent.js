@@ -60,12 +60,12 @@ export const header = {
 
 export const hero = {
   badge: ['중국 광둥성 지사 운영 · 한국 본사 업무 진행', 'Guangdong branch · Korean HQ operations', '广东省分公司 · 韩国总部运营'],
-  h1a: ['중국 공장과 직거래,', 'Direct from the Chinese factory floor,', '直连中国工厂，'],
-  h1b: ['한국 문 앞까지 한 번에.', 'delivered to your door in Korea.', '直送韩国客户手中。'],
+  h1a: ['개발부터 납품까지,', 'From development to delivery,', '从开发到交付，'],
+  h1b: ['이지스가 만들어 드립니다.', 'AEGIS builds it for you.', '由 AEGIS 为您打造。'],
   body: [
-    'AEGIS는 한국에 본사를, 중국 광둥성에 지사와 직원을 두고 공장과 직접 만나 가격을 협상합니다. 온라인에서 공장처럼 활동하는 유통사보다 낮은 단가로 직거래가 가능하며, 공장 검증과 QC, 배송과 통관까지 한 번에 진행합니다.',
-    'AEGIS has its own branch and staff on the ground in Guangdong. We negotiate with factories face to face, so you buy below the price online trading companies posing as factories can offer. Verification, QC, shipping and customs are handled in one line.',
-    'AEGIS 在广东省设有分公司和常驻员工，直接与工厂面对面谈判价格，因此价格低于线上冒充工厂的贸易商。验厂、QC、运输与清关一站式完成。',
+    '한국 본사와 중국 광둥성 지사가 공장을 직접 만나 협상하고, 시제품·양산·QC·배송·통관까지 한 번에 맡습니다.',
+    'Our Korean HQ and Guangdong branch meet factories face to face to negotiate, then take care of prototypes, mass production, QC, shipping and customs in one line.',
+    '韩国总部与中国广东分公司直接与工厂面对面谈判，并一站式负责样品、量产、QC、运输与清关。',
   ],
   cta1: ['제조 문의하기', 'Request a quote', '索取报价'],
   cta2: ['진행 방식 보기', 'See how it works', '查看进行流程'],
@@ -91,7 +91,7 @@ export const supply = {
 export const stats = [
   { value: '1,200', unit: '+', label: ['누적 프로젝트', 'Projects delivered', '累计项目数'] },
   { value: '380', unit: '+', label: ['검증 공장', 'Verified factories', '已验证工厂数'] },
-  { value: '27', unit: '%', label: ['평균 단가 절감률', 'Avg. unit cost saved', '平均单价降幅'] },
+  { value: '99.3', unit: '%', label: ['납기 준수율', 'On-time delivery', '交期达成率'] },
   { value: '32', unit: ['일', 'd', '天'], label: ['평균 리드타임', 'Avg. lead time', '平均交期'] },
 ];
 

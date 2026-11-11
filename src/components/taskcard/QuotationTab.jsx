@@ -256,6 +256,16 @@ export default function QuotationTab({ card, user }) {
       setFormError('최종 금액을 직접 입력했다면 수정 사유를 적어 주세요.');
       return;
     }
+    // 과금 방식별 마진 범위 (원가에 얹은 비율). 최종 금액을 직접 고친 견적은 승인 확인에서 본다
+    if (marginRule && baseUSD > 0 && quoteCalc.manual == null) {
+      const markup = Math.round(((optionsMarginUSD + feeUSD) / baseUSD) * 1000) / 10;
+      const monthly = marginRule.billing_mode === 'MONTHLY';
+      const msg = monthly
+        ? (markup > 0.5 ? `월정액 고객은 공장 가격 그대로 전달합니다. 항목 마진과 수수료를 0으로 맞춰 주세요 (지금 ${markup}%).` : '')
+        : markup < marginRule.min_pct ? `마진이 ${markup}%입니다. 최소 ${marginRule.min_pct}% 이상으로 맞춰 주세요 (기준 ${marginRule.default_pct}%).`
+          : marginRule.max_pct != null && markup > marginRule.max_pct ? `마진이 ${markup}%입니다. 상한 ${marginRule.max_pct}% 이하로 맞춰 주세요.` : '';
+      if (msg) { setFormError(msg); return; }
+    }
     setFormError('');
     const usdR = Number(form.exchange_rate_usd) || 0;
     const cnyR = Number(form.exchange_rate_usd_cny) || 0;
@@ -462,8 +472,12 @@ export default function QuotationTab({ card, user }) {
           <div className="border rounded-xl p-3 bg-background">
             {marginRule && (
               <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-muted/40 px-2.5 py-1.5 text-micro">
-                <span>기준 마진 <b>{marginRule.default_pct}%</b> <span className="text-muted-foreground">({marginRule.default_label})</span></span>
-                <span>최소 <b>{marginRule.min_pct}%</b> <span className="text-muted-foreground">({marginRule.min_label})</span></span>
+                {marginRule.billing_mode === 'MONTHLY' ? (
+                  <span><b>월정액 고객</b> · 공장 가격 그대로 전달합니다 (마진 0%)</span>
+                ) : (<>
+                  <span>턴키 납품 · 기준 마진 <b>{marginRule.default_pct}%</b> <span className="text-muted-foreground">({marginRule.default_label})</span></span>
+                  <span>조정 범위 <b>{marginRule.min_pct}~{marginRule.max_pct ?? 100}%</b> <span className="text-muted-foreground">(원가에 얹는 비율)</span></span>
+                </>)}
                 {form.quote_options.some((o) => o.margin_percent === '' || o.margin_percent == null) && (
                   <Button type="button" size="sm" variant="outline" className="ml-auto h-6 px-2 text-micro" onClick={() => setForm((f) => ({ ...f, quote_options: fillMargins(f.quote_options, marginRule.default_pct) }))}>빈 마진에 기준 채우기</Button>
                 )}

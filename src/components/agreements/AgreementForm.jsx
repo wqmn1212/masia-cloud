@@ -6,12 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/components/ui/use-toast';
-import { AGREEMENT_STATUS, TERM_OPTIONS, endDateOf, kstToday } from '@/lib/agreements';
+import { AGREEMENT_STATUS, AGREEMENT_PLANS, DEFAULT_TERM, TERM_OPTIONS, endDateOf, kstToday } from '@/lib/agreements';
 
 const select = 'mt-1 h-9 w-full rounded-md border bg-background px-2 text-body';
-const blank = () => ({ company_id: '', title: '', agreement_no: '', start_date: kstToday(), term_months: 3, end_date: endDateOf(kstToday(), 3), monthly_fee: '', currency: 'KRW', factory_rebate_percent: 10, assigned_user_ids: [], status: 'DRAFT', note: '' });
+const blank = () => ({ company_id: '', title: '', agreement_no: '', start_date: kstToday(), term_months: DEFAULT_TERM, end_date: endDateOf(kstToday(), DEFAULT_TERM), plan: '', monthly_fee: '', currency: 'KRW', assigned_user_ids: [], status: 'DRAFT', note: '' });
 
-// 월 계약 기본 정보. 월 계약료·페이백 비율은 필드 보안으로 대표·팀 관리자만 읽고 쓴다.
+// 월정액 제조팀 계약 기본 정보. 월 계약료는 필드 보안으로 대표·팀 관리자만 읽고 쓴다.
+// 계약을 '진행 중'으로 저장하면 고객사 과금 방식을 월정액으로 맞춘다 (견적에 마진을 얹지 않는다).
 export default function AgreementForm({ agreement, companies, team, onSaved }) {
   const [f, setF] = useState(blank);
   const [saving, setSaving] = useState(false);
@@ -29,11 +30,14 @@ export default function AgreementForm({ agreement, companies, team, onSaved }) {
       const data = {
         company_id: f.company_id, company_name: company?.company_name || f.company_name || '', title: f.title.trim(), agreement_no: f.agreement_no.trim(),
         start_date: f.start_date, end_date: f.end_date, term_months: Number(f.term_months), currency: f.currency,
-        monthly_fee: f.monthly_fee === '' ? null : Number(f.monthly_fee), factory_rebate_percent: Number(f.factory_rebate_percent),
+        monthly_fee: f.monthly_fee === '' ? null : Number(f.monthly_fee), ...(f.plan ? { plan: f.plan } : {}),
         assigned_user_ids: f.assigned_user_ids, status: f.status, note: f.note,
       };
       const saved = agreement?.id ? await base44.entities.ServiceAgreement.update(agreement.id, data) : await base44.entities.ServiceAgreement.create(data);
-      toast({ title: agreement?.id ? '계약을 저장했습니다' : '계약을 만들었습니다' });
+      // 진행 중인 월정액 계약이면 고객사 과금 방식을 월정액으로 맞춘다
+      const toMonthly = data.status === 'ACTIVE' && company && company.billing_mode !== 'MONTHLY';
+      if (toMonthly) await base44.entities.Company.update(company.id, { billing_mode: 'MONTHLY' }).catch(() => {});
+      toast({ title: agreement?.id ? '계약을 저장했습니다' : '계약을 만들었습니다', description: toMonthly ? `${company.company_name} 과금 방식을 월정액으로 바꿨습니다. 이 고객 견적에는 마진을 얹지 않습니다.` : undefined });
       onSaved({ ...agreement, ...data, ...saved });
     } catch (e) {
       toast({ title: '저장하지 못했습니다', description: e.message, variant: 'destructive' });
@@ -71,7 +75,12 @@ export default function AgreementForm({ agreement, companies, team, onSaved }) {
             <select className={select} value={f.currency} onChange={(e) => set('currency', e.target.value)}>{['KRW', 'USD', 'CNY'].map((c) => <option key={c}>{c}</option>)}</select>
           </label>
         </div>
-        <div><Label className="text-caption">공장 페이백 비율 % (내부 전용)</Label><Input type="number" min={0} max={100} value={f.factory_rebate_percent} onChange={(e) => set('factory_rebate_percent', e.target.value)} /></div>
+        <label className="text-caption">플랜 (대행 범위)
+          <select className={select} value={f.plan || ''} onChange={(e) => set('plan', e.target.value)}>
+            <option value="">선택 안 함</option>
+            {Object.entries(AGREEMENT_PLANS).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+          </select>
+        </label>
       </div>
       <div>
         <Label className="text-caption">담당 팀 (고객 포털에 이름이 보입니다)</Label>

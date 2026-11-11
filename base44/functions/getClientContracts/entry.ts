@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { requireClient } from '../../shared/clientAccess.ts';
 
 // 고객 포털 '계약·월간 리포트': 계약 기간·담당 팀·청구 상태와 발행된 월간 리포트.
-// 월 계약료·공장 페이백 비율 같은 내부 금액은 응답에 넣지 않는다 (청구 금액도 제외, 상태만).
+// 월 계약료 같은 내부 금액은 응답에 넣지 않는다 (청구 금액도 제외, 상태만).
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);

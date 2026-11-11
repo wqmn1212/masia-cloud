@@ -59,9 +59,9 @@ assert.ok(r.data.link.endsWith(`/contracts?contract=${ct.id}`));
 // ── 견적 등록 ──
 r = await call('assistantCreateQuotation', { card_id: 'c1', factory_name: '공장 다', product_name: '상판', quote_options: [{ option_name: '상판', quantity: 500, unit_price: 140, currency: 'cny', margin_percent: 30 }], final_client_price: 99999, status: 'ACCEPTED', tenant_id: 't2' });
 const q = globalThis.__db.Quotation.at(-1);
-assert.deepEqual([q.status, q.tenant_id, q.factory_total_cost, q.final_client_price, q.quote_options[0].margin_percent, q.quote_options[0].currency], ['DRAFT', 't1', 70000, undefined, 15, 'CNY'], '상태·팀 고정, 비서가 보낸 마진(30)·최종가는 버리고 마진 규칙 기준(앱 기본 15%)');
-assert.match(q.internal_notes || '', /기준 마진 15% 채움 \(앱 기본값\) · AI 비서 등록/);
-assert.equal(r.data.margin_rule.default_pct, 15);
+assert.deepEqual([q.status, q.tenant_id, q.factory_total_cost, q.final_client_price, q.quote_options[0].margin_percent, q.quote_options[0].currency], ['DRAFT', 't1', 70000, undefined, 20, 'CNY'], '상태·팀 고정, 비서가 보낸 마진(30)·최종가는 버리고 마진 규칙 기준(앱 기본 20%)');
+assert.match(q.internal_notes || '', /기준 마진 20% 채움 \(앱 기본값\) · AI 비서 등록/);
+assert.equal(r.data.margin_rule.default_pct, 20);
 r = await call('assistantCreateQuotation', { card_id: 'c9', quote_options: [{ option_name: 'x', unit_price: 1 }] });
 assert.equal(r.status, 404);
 
