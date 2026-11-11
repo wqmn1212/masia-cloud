@@ -9,6 +9,7 @@ import ConceptStartForm from '@/components/prototype/concept/ConceptStartForm';
 import ConceptCircuitPanel from '@/components/prototype/concept/ConceptCircuitPanel';
 import ConceptMoldPanel from '@/components/prototype/concept/ConceptMoldPanel';
 import ConceptNotes from '@/components/prototype/concept/ConceptNotes';
+import ConceptHistoryPanel from '@/components/prototype/concept/history/ConceptHistoryPanel';
 import PdfButton from '@/components/reports/PdfButton';
 import { useProtoProject } from '@/lib/prototypeApi';
 import { conceptKey, useProtoConcepts } from '@/lib/conceptApi';
@@ -69,6 +70,8 @@ export default function PrototypeConcept() {
           </div>
         </>
       )}
+
+      <ConceptHistoryPanel concepts={concepts} concept={concept} onSelect={select} onChanged={refresh} />
     </div>
   );
 }
