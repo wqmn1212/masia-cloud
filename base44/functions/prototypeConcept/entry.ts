@@ -68,9 +68,27 @@ export default async function(req) {
       return p?.tenant_id && (user.account_tier === 'master' || p.tenant_id === user.tenant_id) ? p : null;
     };
     const nextNo = async (projectId) => Math.max(0, ...(await base44.entities.ProtoConcept.filter({ project_id: projectId }, '-version_no', 100)).map((c) => Number(c.version_no) || 0)) + 1;
-    const renderImage = (text: string) => svc.integrations.Core.GenerateImage({ prompt: `Photorealistic industrial design concept render of a single product, three-quarter view, soft studio lighting, clean light gray seamless background, no text, no logos, no people. Product: ${text.slice(0, 1500)}` });
-    // 참고 자료: 프로젝트에 올린 사진·도면을 AI 가 읽을 수 있게 서명 링크로 바꾼다
-    const refFiles = (p) => (p?.files || []).filter((f) => f.uri && AI_FILE.test(f.name || '') && ['DRAWING', 'PHOTO', 'REFERENCE', 'SCHEMATIC', 'MOLD_DRAWING'].includes(f.category)).slice(0, 6);
+    // 참고 사진이 있으면 렌더 이미지가 그 형태·비율을 따르게 한다
+    const renderImage = (text: string, refs: string[] = []) => svc.integrations.Core.GenerateImage({
+      prompt: `Photorealistic industrial design concept render of a single product, three-quarter view, soft studio lighting, clean light gray seamless background, no text, no logos, no people.${refs.length ? ' Match the shape, proportions and details shown in the attached reference images.' : ''} Product: ${text.slice(0, 1500)}`,
+      ...(refs.length ? { existing_image_urls: refs } : {}),
+    });
+    // 참고 자료: 프로젝트에 올린 사진·도면을 AI 가 읽을 수 있게 서명 링크로 바꾼다 (최근에 올린 것부터 6개)
+    const refFiles = (p) => (p?.files || []).filter((f) => f.uri && AI_FILE.test(f.name || '') && ['DRAWING', 'PHOTO', 'REFERENCE', 'SCHEMATIC', 'MOLD_DRAWING'].includes(f.category)).slice(-6);
+    const photoFiles = (p) => refFiles(p).filter((f) => /\.(png|jpe?g|webp)$/i.test(f.name || '') && ['PHOTO', 'REFERENCE'].includes(f.category)).slice(-3);
+    // 새로 올린 참고 자료는 서버가 직접 비공개 저장소에 올린다 (화면이 보낸 파일 주소는 받지 않는다)
+    const saveUploads = async () => {
+      const uploads = (Array.isArray(body.uploads) ? body.uploads : []).filter((u) => AI_FILE.test(str(u?.name, 200))).slice(0, MAX_UPLOADS);
+      return (await uploadPrivateAttachments(svc, uploads)).map((a) => ({
+        id: crypto.randomUUID(), name: a.name, uri: a.url, category: 'REFERENCE', size: a.size, version_no: null, note: '컨셉 참고 자료',
+        uploaded_at: now(), uploaded_by_name: by,
+      }));
+    };
+    // 프로젝트 파일에 넣어 이후 형상·렌더·검토 단계에서도 쓴다
+    const addUploads = async (p) => {
+      const added = await saveUploads();
+      return added.length ? { project: await svc.entities.ProtoProject.update(p.id, { files: [...(p.files || []), ...added] }), added } : { project: p, added };
+    };
     const refUrls = async (list) => (await Promise.allSettled(list.map((f) => svc.integrations.Core.CreateFileSignedUrl({ file_uri: f.uri, expires_in: 900 }))))
       .filter((r) => r.status === 'fulfilled' && r.value?.signed_url).map((r) => r.value.signed_url);
 
@@ -84,13 +102,7 @@ export default async function(req) {
         project = await loadProject(body.project_id);
         if (!project) return Response.json({ error: '시제품을 찾을 수 없습니다.' }, { status: 404 });
       } else if (!user.tenant_id) return Response.json({ error: '소속 팀이 없어 시제품을 만들 수 없습니다.' }, { status: 400 });
-      // 새로 올린 참고 자료는 서버가 직접 비공개 저장소에 올린다 (화면이 보낸 파일 주소는 받지 않는다).
-      // 프로젝트 파일에 넣어 이후 형상·검토 단계에서도 쓴다
-      const uploads = (Array.isArray(body.uploads) ? body.uploads : []).filter((u) => AI_FILE.test(str(u?.name, 200))).slice(0, MAX_UPLOADS);
-      const newFiles = (await uploadPrivateAttachments(svc, uploads)).map((a) => ({
-        id: crypto.randomUUID(), name: a.name, uri: a.url, category: 'REFERENCE', size: a.size, version_no: null, note: '컨셉 참고 자료',
-        uploaded_at: now(), uploaded_by_name: by,
-      }));
+      const newFiles = await saveUploads();
       const attach = [...refFiles(project), ...newFiles];
       const attachUrls = await refUrls(attach);
       const attachNames = attach.map((f) => f.name).join(', ') || '없음';
@@ -128,7 +140,7 @@ ${project ? `[시제품 요구사항] 목표: ${project.goal || '-'} / 사용 �
 
     const concept = body.concept_id ? await base44.entities.ProtoConcept.get(body.concept_id).catch(notFound) : null;
     if (!concept) return Response.json({ error: '컨셉을 찾을 수 없습니다.' }, { status: 404 });
-    const project = await loadProject(concept.project_id);
+    let project = await loadProject(concept.project_id);
     if (!project || project.tenant_id !== concept.tenant_id) return Response.json({ error: '시제품을 찾을 수 없습니다.' }, { status: 404 });
     const link = `/prototypes/${project.id}/concept`;
     const conditions = (qs) => (qs || []).map((q) => (q.answer ? `- ${q.question} → ${q.answer} (사용자 확인)` : `- ${q.question} → ${q.default_assumption || '미정'} (가정)`)).join('\n') || '없음';
@@ -142,10 +154,12 @@ ${conditions(qs)}
     if (action === 'generate') {
       const answers = Array.isArray(body.answers) ? body.answers : [];
       const questions = (concept.questions || []).map((q) => { const a = answers.find((x) => x?.id === q.id); return { ...q, answer: a ? str(a.answer, 500).trim() : (q.answer || '') }; });
+      ({ project } = await addUploads(project));
       const genFiles = refFiles(project);
+      const photoUrls = await refUrls(photoFiles(project));
       const [sceneR, imgR] = await Promise.allSettled([
         llm(`너는 산업 디자이너다. 아래 아이디어를 기본 도형 부품으로 조립한 3D 컨셉 형상으로 만든다.\n\n${briefText(questions)}\n[첨부 자료] ${genFiles.map((f) => f.name).join(', ') || '없음'}\n\n${SCENE_RULES}\n- (가정)으로 표시된 조건을 쓴 부분은 assumptions 에 다시 적는다.\n- 첨부 자료의 치수·비율·형태를 형상에 반영한다. 자료에 없는 치수는 지어내지 않고 가정으로 둔다.`, SCENE_SCHEMA, await refUrls(genFiles)),
-        renderImage(`${concept.idea}. ${concept.known_info || ''} ${questions.filter((q) => q.answer).map((q) => q.answer).join(', ')}`),
+        renderImage(`${concept.idea}. ${concept.known_info || ''} ${questions.filter((q) => q.answer).map((q) => q.answer).join(', ')}`, photoUrls),
       ]);
       if (sceneR.status !== 'fulfilled') throw sceneR.reason;
       const scene = cleanScene(sceneR.value);
@@ -157,11 +171,15 @@ ${conditions(qs)}
 
     // ── 3. 변경 요청 → 새 버전
     if (action === 'revise') {
-      const change = str(body.change_request, 2000).trim();
+      const hasUploads = Array.isArray(body.uploads) && body.uploads.length > 0;
+      const change = str(body.change_request, 2000).trim() || (hasUploads ? '새로 첨부한 자료의 형태·치수에 맞춰 형상을 수정' : '');
       if (!change) return Response.json({ error: '변경 요청을 입력해 주세요.' }, { status: 400 });
       if (!concept.preview?.parts?.length) return Response.json({ error: '먼저 3D 프리뷰를 만들어 주세요.' }, { status: 400 });
+      const up = await addUploads(project);
+      project = up.project;
+      const addedNames = up.added.map((f) => f.name).join(', ');
       const [sceneR] = await Promise.allSettled([
-        llm(`너는 산업 디자이너다. 기존 3D 컨셉 형상에 변경 요청을 반영한 새 형상 전체를 만든다.\n\n${briefText(concept.questions)}\n[첨부 자료] ${refFiles(project).map((f) => f.name).join(', ') || '없음'}\n[기존 형상 v${concept.version_no}] ${JSON.stringify({ overall_mm: concept.preview.overall_mm, parts: concept.preview.parts }).slice(0, 14000)}\n[변경 요청] ${change}\n\n${SCENE_RULES}\n- 변경 요청과 관계없는 부품은 그대로 둔다. change_summary 에 무엇을 어떻게 바꿨는지 쓴다.`, SCENE_SCHEMA, await refUrls(refFiles(project))),
+        llm(`너는 산업 디자이너다. 기존 3D 컨셉 형상에 변경 요청을 반영한 새 형상 전체를 만든다.\n\n${briefText(concept.questions)}\n[첨부 자료] ${refFiles(project).map((f) => f.name).join(', ') || '없음'}\n[이번 변경 요청과 함께 새로 첨부한 자료] ${addedNames || '없음'}\n[기존 형상 v${concept.version_no}] ${JSON.stringify({ overall_mm: concept.preview.overall_mm, parts: concept.preview.parts }).slice(0, 14000)}\n[변경 요청] ${change}\n\n${SCENE_RULES}\n- 변경 요청과 관계없는 부품은 그대로 둔다. change_summary 에 무엇을 어떻게 바꿨는지 쓴다.\n- 새로 첨부한 자료가 있으면 그 사진·도면의 형태·비율·치수·표기를 먼저 읽고 형상을 그에 맞게 고친다. 자료에서 읽은 내용은 change_summary 에, 자료에 없어 추정한 치수는 assumptions 에 적는다.`, SCENE_SCHEMA, await refUrls(refFiles(project))),
       ]);
       if (sceneR.status !== 'fulfilled') throw sceneR.reason;
       const scene = cleanScene(sceneR.value);
@@ -186,7 +204,7 @@ ${conditions(qs)}
       const parts = concept.preview.parts.filter((p) => p.layer === 'SHELL' || p.layer === 'UI').slice(0, 12).map((p) => `${p.name}(${p.shape}, ${p.color}${p.material ? `, ${p.material}` : ''})`).join(', ');
       const text = `${concept.idea}. ${concept.known_info || ''} ${answers}. ${concept.preview.summary || ''}${concept.change_request ? ` Latest change: ${concept.change_request}.` : ''} Visible parts: ${parts}`;
       try {
-        const img = await renderImage(text);
+        const img = await renderImage(text, await refUrls(photoFiles(project)));
         if (!img?.url) throw new Error('이미지 주소를 받지 못했습니다');
         const saved = await svc.entities.ProtoConcept.update(concept.id, { preview: { ...concept.preview, render_url: img.url, render_version: concept.version_no, render_error: '' }, last_request_id: rid });
         return Response.json({ concept: saved, link });

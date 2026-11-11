@@ -3,19 +3,21 @@ import { Box, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ConceptNotes from '@/components/prototype/concept/ConceptNotes';
+import ConceptFilePicker from '@/components/prototype/concept/ConceptFilePicker';
 import { runConcept } from '@/lib/conceptApi';
 import { errorText } from '@/lib/prototypeApi';
 
 // 프리뷰를 만들기 전: AI 질문에 답하고 가정을 확인한다. 답이 없는 질문은 가정으로 진행된다.
 export default function ConceptBriefPanel({ concept, onChanged }) {
   const [answers, setAnswers] = useState(() => Object.fromEntries((concept.questions || []).map((q) => [q.id, q.answer || ''])));
+  const [files, setFiles] = useState([]);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
 
   const generate = async () => {
     setBusy('3D 프리뷰와 렌더 이미지를 만드는 중… (1~2분)'); setError('');
     try {
-      const res = await runConcept('generate', { concept_id: concept.id, answers: Object.entries(answers).map(([id, answer]) => ({ id, answer })) }, () => setBusy('시간이 걸리고 있습니다. 결과를 확인하는 중…'));
+      const res = await runConcept('generate', { concept_id: concept.id, answers: Object.entries(answers).map(([id, answer]) => ({ id, answer })), uploads: files }, () => setBusy('시간이 걸리고 있습니다. 결과를 확인하는 중…'));
       onChanged(res.concept);
     } catch (e) { setError(errorText(e)); }
     setBusy('');
@@ -36,6 +38,7 @@ export default function ConceptBriefPanel({ concept, onChanged }) {
             <Input value={answers[q.id] || ''} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} placeholder={q.default_assumption ? `비우면 가정: ${q.default_assumption}` : '답을 입력하세요'} />
           </div>
         ))}
+        <ConceptFilePicker files={files} onChange={setFiles} disabled={!!busy} hint="사진·PDF·도면을 더 첨부하면 그 자료의 형태·치수대로 3D 형상을 만듭니다. (최대 5개, 10MB 이하, 비공개 저장)" />
         {error && <p className="text-caption text-destructive">{error}</p>}
         <div className="flex flex-wrap items-center justify-end gap-3">
           {busy && <p className="text-caption text-muted-foreground">{busy}</p>}
