@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { simulate } from '../../shared/protoSim.ts';
 import { moldRuleChecks, MOLD_MATERIAL_KEYS } from '../../shared/protoMold.ts';
 import { BRIEF_SCHEMA, SCENE_SCHEMA, SCENE_RULES, cleanScene, strList } from '../../shared/protoConcept.ts';
+import { cleanFiles } from '../../shared/prototype.ts';
 
 // 시제품 컨셉: 아이디어 정리(brief) → 미팅용 3D 프리뷰(generate·revise) → 회로 검토(circuit) → 사출·금형 검토(mold)
 // 결과는 모두 검토용 초안이며, 가정·미확인 항목을 따로 기록한다.
@@ -66,6 +67,10 @@ export default async function(req) {
     };
     const nextNo = async (projectId) => Math.max(0, ...(await base44.entities.ProtoConcept.filter({ project_id: projectId }, '-version_no', 100)).map((c) => Number(c.version_no) || 0)) + 1;
     const renderImage = (text) => svc.integrations.Core.GenerateImage({ prompt: `Photorealistic industrial design concept render of a single product, three-quarter view, soft studio lighting, clean light gray seamless background, no text, no logos, no people. Product: ${text.slice(0, 1500)}` });
+    // 참고 자료: 프로젝트에 올린 사진·도면을 AI 가 읽을 수 있게 서명 링크로 바꾼다
+    const refFiles = (p) => (p?.files || []).filter((f) => f.uri && AI_FILE.test(f.name || '') && ['DRAWING', 'PHOTO', 'REFERENCE', 'SCHEMATIC', 'MOLD_DRAWING'].includes(f.category)).slice(0, 6);
+    const refUrls = async (list) => (await Promise.allSettled(list.map((f) => svc.integrations.Core.CreateFileSignedUrl({ file_uri: f.uri, expires_in: 900 }))))
+      .filter((r) => r.status === 'fulfilled' && r.value?.signed_url).map((r) => r.value.signed_url);
 
     // ── 1. 아이디어 정리: 확인 질문과 가정을 뽑는다 (아직 아무것도 확정하지 않는다)
     if (action === 'brief') {
@@ -77,23 +82,33 @@ export default async function(req) {
         project = await loadProject(body.project_id);
         if (!project) return Response.json({ error: '시제품을 찾을 수 없습니다.' }, { status: 404 });
       } else if (!user.tenant_id) return Response.json({ error: '소속 팀이 없어 시제품을 만들 수 없습니다.' }, { status: 400 });
+      // 새로 올린 참고 자료는 프로젝트 파일에 넣어 이후 형상·검토 단계에서도 쓴다
+      const newFiles = cleanFiles(body.files);
+      const attach = [...refFiles(project), ...newFiles];
+      const attachUrls = await refUrls(attach);
+      const attachNames = attach.map((f) => f.name).join(', ') || '없음';
 
       const ai = await llm(`너는 제품 개발 PM이다. 고객 미팅에서 보여 줄 컨셉 3D 시각화를 만들기 전에 아이디어를 정리한다.
 
 [아이디어] ${idea}
 [사용자가 알려 준 정보] ${known || '없음'}
+[첨부 자료] ${attachNames}
 ${project ? `[시제품 요구사항] 목표: ${project.goal || '-'} / 사용 조건: ${project.use_conditions || '-'} / 전원: ${project.power_requirements || '-'} / 입출력: ${project.io_requirements || '-'} / 제약: ${project.constraints || '-'}` : ''}
 
 규칙:
 - 한국어. title 은 제품을 부르는 짧은 이름, summary 는 이해한 내용 2~3문장.
+- 첨부 자료가 있으면 그 안의 치수·형태·표기·재질을 먼저 읽고 아이디어 이해에 반영한다. 자료에서 확인한 내용은 summary 에 적고, 자료가 없어 추정한 부분은 assumptions 에 쓴다. 자료에 없는 치수를 지어내지 않는다.
 - questions: 형상·크기·재료·전원·입출력·사용 환경 중 결과를 크게 바꾸는데 아직 모르는 조건만 최대 6개. 사용자가 이미 말한 것은 묻지 않는다. why 는 왜 필요한지 한 줄, default_assumption 은 답이 없을 때 둘 기본 가정.
-- assumptions: 질문과 별개로 네가 전제한 내용. 사실처럼 쓰지 말고 '~로 가정' 형태로 쓴다.`, BRIEF_SCHEMA);
+- assumptions: 질문과 별개로 네가 전제한 내용. 사실처럼 쓰지 말고 '~로 가정' 형태로 쓴다.`, BRIEF_SCHEMA, attachUrls);
 
       if (!project) {
         project = await base44.entities.ProtoProject.create({
           tenant_id: user.tenant_id, title: str(body.title, 120).trim() || str(ai?.title, 120) || idea.slice(0, 40), goal: idea, stage: 'REQUIREMENTS',
-          owner_id: user.id, owner_name: by, files: [], open_risk_count: 0,
+          owner_id: user.id, owner_name: by, files: newFiles, open_risk_count: 0,
         });
+      } else if (newFiles.length) {
+        const ids = new Set((project.files || []).map((f) => f.id));
+        project = await svc.entities.ProtoProject.update(project.id, { files: [...(project.files || []), ...newFiles.filter((f) => !ids.has(f.id))] });
       }
       const concept = await svc.entities.ProtoConcept.create({
         tenant_id: project.tenant_id, project_id: project.id, version_no: await nextNo(project.id), status: 'BRIEF',
@@ -120,8 +135,9 @@ ${conditions(qs)}
     if (action === 'generate') {
       const answers = Array.isArray(body.answers) ? body.answers : [];
       const questions = (concept.questions || []).map((q) => { const a = answers.find((x) => x?.id === q.id); return { ...q, answer: a ? str(a.answer, 500).trim() : (q.answer || '') }; });
+      const genFiles = refFiles(project);
       const [sceneR, imgR] = await Promise.allSettled([
-        llm(`너는 산업 디자이너다. 아래 아이디어를 기본 도형 부품으로 조립한 3D 컨셉 형상으로 만든다.\n\n${briefText(questions)}\n\n${SCENE_RULES}\n- (가정)으로 표시된 조건을 쓴 부분은 assumptions 에 다시 적는다.`, SCENE_SCHEMA),
+        llm(`너는 산업 디자이너다. 아래 아이디어를 기본 도형 부품으로 조립한 3D 컨셉 형상으로 만든다.\n\n${briefText(questions)}\n[첨부 자료] ${genFiles.map((f) => f.name).join(', ') || '없음'}\n\n${SCENE_RULES}\n- (가정)으로 표시된 조건을 쓴 부분은 assumptions 에 다시 적는다.\n- 첨부 자료의 치수·비율·형태를 형상에 반영한다. 자료에 없는 치수는 지어내지 않고 가정으로 둔다.`, SCENE_SCHEMA, await refUrls(genFiles)),
         renderImage(`${concept.idea}. ${concept.known_info || ''} ${questions.filter((q) => q.answer).map((q) => q.answer).join(', ')}`),
       ]);
       if (sceneR.status !== 'fulfilled') throw sceneR.reason;
@@ -138,7 +154,7 @@ ${conditions(qs)}
       if (!change) return Response.json({ error: '변경 요청을 입력해 주세요.' }, { status: 400 });
       if (!concept.preview?.parts?.length) return Response.json({ error: '먼저 3D 프리뷰를 만들어 주세요.' }, { status: 400 });
       const [sceneR, imgR] = await Promise.allSettled([
-        llm(`너는 산업 디자이너다. 기존 3D 컨셉 형상에 변경 요청을 반영한 새 형상 전체를 만든다.\n\n${briefText(concept.questions)}\n[기존 형상 v${concept.version_no}] ${JSON.stringify({ overall_mm: concept.preview.overall_mm, parts: concept.preview.parts }).slice(0, 14000)}\n[변경 요청] ${change}\n\n${SCENE_RULES}\n- 변경 요청과 관계없는 부품은 그대로 둔다. change_summary 에 무엇을 어떻게 바꿨는지 쓴다.`, SCENE_SCHEMA),
+        llm(`너는 산업 디자이너다. 기존 3D 컨셉 형상에 변경 요청을 반영한 새 형상 전체를 만든다.\n\n${briefText(concept.questions)}\n[첨부 자료] ${refFiles(project).map((f) => f.name).join(', ') || '없음'}\n[기존 형상 v${concept.version_no}] ${JSON.stringify({ overall_mm: concept.preview.overall_mm, parts: concept.preview.parts }).slice(0, 14000)}\n[변경 요청] ${change}\n\n${SCENE_RULES}\n- 변경 요청과 관계없는 부품은 그대로 둔다. change_summary 에 무엇을 어떻게 바꿨는지 쓴다.`, SCENE_SCHEMA, await refUrls(refFiles(project))),
         renderImage(`${concept.idea}. ${concept.known_info || ''} Change: ${change}`),
       ]);
       if (sceneR.status !== 'fulfilled') throw sceneR.reason;
