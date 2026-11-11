@@ -95,26 +95,14 @@ export const stats = [
   { value: '32', unit: ['일', 'd', '天'], label: ['평균 리드타임', 'Avg. lead time', '平均交期'] },
 ];
 
-export const about = {
-  eyebrow: '01 — WHAT WE DO',
-  h2: ['중국의 공장과 한국의 기업을 연결하고, 도착할 때까지 사이에 남습니다.', 'We connect Korean companies with Chinese factories — and stay in the middle until it lands.', '我们连接韩国企业与中国工厂，并全程负责到货为止。'],
-  cards: [
-    { t: ['광둥성 현지 지사와 직원', 'A branch and staff in Guangdong', '广东省设有分公司与常驻员工'], d: ['이지스의 주 활동지는 중국 광둥성입니다. 우리 직원이 공장을 직접 찾아가 만나기 때문에, 중간에 말을 옮기는 대신 가격을 직접 협상합니다. 중국 전역의 공장에도 대응할 수 있으며, 광둥성을 중심으로 업무를 진행합니다.', 'AEGIS primarily operates in Guangdong, China. Our own staff visit factories in person to negotiate prices directly, rather than relaying messages through a middleman. We can also work with factories across China, while keeping Guangdong as our main focus.', 'AEGIS 的主要业务区域是中国广东省。我们的员工亲赴工厂洽谈，直接议价，而非通过中间人转达。我们也可对接中国各地的工厂，同时以广东省为业务重心。'] },
-    { t: ['유통사보다 낮은 단가', "Lower than a trading company's price", '低于贸易商的价格'], d: ['온라인에서 공장처럼 활동하는 판매자 상당수는 마진을 얹은 유통사입니다. 직접 협상은 그 층을 걷어냅니다.', 'Many sellers online present themselves as factories but are resellers with a margin layered on top. Direct negotiation removes that layer.', '线上许多卖家自称工厂，实为加价转售的中间商。直接谈判去除了这一层。'] },
-    { t: ['모든 공장은 방문 가능', 'Every factory can be visited', '所有工厂均可实地走访'], d: ['고객사가 직접 방문해 검증할 수 있습니다. 방문이 어려울 경우 우리가 직접 가서 검증하고, 제품 QC를 함께 진행합니다.', 'You may visit and verify any factory yourself. If a visit is difficult, we go on your behalf, verify the site and run product QC together with you.', '您可亲自走访并验证任何一家工厂。若不便前往，我们代为实地验证，并与您一同进行产品 QC。'] },
-    { t: ['배송 · 통관 원스톱', 'Shipping and customs in one line', '运输与清关一次搞定'], d: ['제품을 만드는 것 외에도 한국까지 배송, 통관 처리, 고객사 배송까지 모든 과정을 한 번에 처리합니다.', 'Beyond making the product, we ship it to Korea, clear customs and deliver to your door — the whole chain handled at once.', '除生产之外，运抵韩国、清关直至送达贵公司，全流程一次性完成。'] },
-    { t: ['보안 · 계약은 한 곳에서', 'Security and contracts', '保密与合同'], d: ['NNN 계약, 계약 후 양산, 한국 본사 단일 창구 원칙은 아래 보안 · 계약 섹션에 정리했습니다.', 'Our NNN, contract-first and single Korean counterpart principles are summarised in the Security section below.', 'NNN、先签合同后量产、韩国总部单一窗口等原则，详见下方保密与合同部分。'] },
-  ],
-};
-
 export const process = {
-  eyebrow: '02 — PROCESS',
+  eyebrow: '04 — PROCESS',
   h2: ['문의 한 번에서 납품까지, 끊기지 않는 한 줄', 'From first inquiry to the pallet at your gate', '从首次询价到货物送达贵司门口'],
   sub: ['각 단계는 AEGIS Cloud 계정에 기록되어, 지금 어디까지 왔는지 항상 확인할 수 있습니다.', 'Each step is logged in your AEGIS Cloud account, so you always know where the order stands.', '每个环节都记录在您的 AEGIS Cloud 账号中，随时掌握订单进度。'],
   steps: [
     { t: ['제조 문의 · 요구사항 정리', 'Inquiry & requirements', '询价与需求整理'], d: ['도면, 샘플, 또는 설명만으로도 가능합니다. 사양 · 수량 · 목표 단가를 함께 정리합니다.', 'Send drawings, samples or just a description. We define specs, quantity and target price with you.', '提交图纸、样品或简单描述均可。我们与您共同确定规格、数量与目标价格。'] },
     { t: ['공장 매칭 · NNN 체결', 'Factory matching & NNN', '工厂匹配与 NNN 签署'], d: ['현지 직원이 NNN 계약이 체결된 중국의 공장을 선별.', 'Our Guangdong staff shortlist factories that actually make your item, and sign NNN before any file is shared.', '广东省团队筛选真正能生产该品项的工厂，并在共享任何文件前签署 NNN。'] },
-    { t: ['현지 가격 협상', 'On-site price negotiation', '现场价格谈判'], d: ['공장에서 직접 협상하고, 원가 구성이 보이는 견적으로 회신합니다.', 'We negotiate at the factory in person and return a quote with the cost breakdown visible.', '我们亲赴工厂谈判，并提供含成本明细的报价。'] },
+    { t: ['현지 가격 협상', 'On-site price negotiation', '现场价格谈判'], d: ['공장에서 직접 협상하고, 사양 · 납기 · 한국 도착 원가까지 정리한 견적으로 회신합니다.', 'We negotiate at the factory in person and return a quote covering spec, lead time and landed cost in Korea.', '我们亲赴工厂谈判，并提供涵盖规格、交期与韩国落地成本的报价。'] },
     { t: ['공장 검증 · 샘플', 'Factory audit & sampling', '验厂与打样'], d: ['함께 방문하거나 우리가 대신 갑니다. 설비 · 생산능력 · 인증을 확인하고 결정 전 샘플을 받습니다.', 'Visit with us, or we go for you: equipment, capacity, certifications and a sample before you commit.', '您可同行，或由我们代为前往：确认设备、产能、认证，并在决定前提供样品。'] },
     { t: ['계약서 작성 후 양산', 'Contract, then mass production', '签订合同后再量产'], d: ['계약서 확정 후 양산을 시작합니다. 기준은 보안 · 계약 섹션을 참고하세요.', 'Production starts once the contract is signed — see the Security section for terms.', '合同确定后开始量产，详见保密与合同部分。'] },
     { t: ['생산 중 · 출하 전 QC', 'In-line & pre-shipment QC', '生产中与出货前 QC'], d: ['현지 직원이 공장에서 검사하고, 포장 전 사진 · 영상 리포트를 공유합니다.', 'Our staff inspect at the plant and share photo and video reports before anything is boxed.', '我方员工在厂内检验，装箱前提供照片与视频报告。'] },
@@ -124,7 +112,7 @@ export const process = {
 };
 
 export const categories = {
-  eyebrow: '05 — CATEGORIES',
+  eyebrow: '07 — CATEGORIES',
   h2: ['우리가 다루는 품목', 'What we make', '我们承接的品类'],
   sub: ['기계설비부터 굿즈까지. 카테고리를 선택하면 대표 사례를 볼 수 있습니다.', 'Machinery to goods — pick a category to see representative work.', '从机械设备到周边商品，选择品类查看代表案例。'],
   footnote: ['목록에 없는 품목도 문의해 주세요. 대부분 광둥성에서 제작 가능합니다.', 'Not on the list? Send the drawing anyway — most items we have not listed are still made in Guangdong.', '未列出的品类也可咨询。广东省大多可以生产。'],
@@ -176,7 +164,7 @@ export const portfolio = [
 ];
 
 export const trust = {
-  eyebrow: '06 — SECURITY & CONTRACT',
+  eyebrow: '08 — SECURITY & CONTRACT',
   h2: ['도면은 유출되지 않습니다', 'Your drawings do not leave the room', '您的图纸不会外流'],
   cards: [
     { t: ['NNN 계약 선행', 'NNN agreement, always first', 'NNN 协议，始终优先'], d: ['비공개 · 비사용 · 우회금지. 도면이나 샘플을 공유하기 전, 협력하는 모든 공장과 체결합니다.', 'Non-disclosure, non-use, non-circumvention — signed with every partner factory before drawings or samples are shared.', '不披露、不使用、不规避 —— 在共享图纸或样品之前，与每一家合作工厂签署。'] },
@@ -186,7 +174,7 @@ export const trust = {
 };
 
 export const contact = {
-  eyebrow: '07 — GET STARTED',
+  eyebrow: '09 — GET STARTED',
   h2: ['만들고 싶은 것을 알려주세요', 'Send us what you want made', '告诉我们您想生产什么'],
   body: ['도면, 사진, 혹은 문장 하나로도 시작할 수 있습니다. 영업일 기준 1일 이내 회신드리며, 견적 · QC 리포트 · 물류 현황을 한곳에서 보는 AEGIS Cloud 계정을 발급해 드립니다.', 'A drawing, a photo or a sentence is enough to start. We reply within one business day, and open an AEGIS Cloud account where your quote, QC reports and shipping status live in one place.', '一张图纸、一张照片或一句话即可开始。我们将在一个工作日内回复，并开通 AEGIS Cloud 账号，报价、QC 报告与物流状态集中可见。'],
   hqLabel: ['한국 본사', 'KOREA HQ', '韩国总部'],
