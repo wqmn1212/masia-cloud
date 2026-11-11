@@ -149,6 +149,12 @@ ${project ? `[시제품 요구사항] 목표: ${project.goal || '-'} / 사용 �
 [조건]
 ${conditions(qs)}
 [AI가 둔 가정] ${(concept.assumptions || []).join(' / ') || '없음'}`;
+    // 렌더 이미지용 설명: 아이디어 + 확인된 답 + 지금 형상의 겉으로 보이는 부품
+    const renderText = (preview, change) => {
+      const answers = (concept.questions || []).filter((q) => q.answer).map((q) => q.answer).join(', ');
+      const parts = (preview.parts || []).filter((p) => p.layer === 'SHELL' || p.layer === 'UI').slice(0, 12).map((p) => `${p.name}(${p.shape}, ${p.color}${p.material ? `, ${p.material}` : ''})`).join(', ');
+      return `${concept.idea}. ${concept.known_info || ''} ${answers}. ${preview.summary || ''}${change ? ` Latest change: ${change}.` : ''} Visible parts: ${parts}`;
+    };
 
     // ── 2. 사용자가 조건을 확인한 뒤 미팅용 3D 프리뷰를 만든다
     if (action === 'generate') {
@@ -184,12 +190,21 @@ ${conditions(qs)}
       if (sceneR.status !== 'fulfilled') throw sceneR.reason;
       const scene = cleanScene(sceneR.value);
       if (!scene.parts.length) return Response.json({ error: '변경한 3D 형상을 만들지 못했습니다. 요청을 조금 더 구체적으로 적어 주세요.' }, { status: 422 });
+      const versionNo = await nextNo(project.id);
+      // 렌더 이미지: 사진을 새로 첨부했으면 그 사진대로 다시 만들고, 아니면 이전 렌더를 남겨 어느 버전 기준인지 표시한다 (필요하면 action=render)
+      let render = { render_url: concept.preview.render_url || '', render_version: concept.preview.render_url ? (concept.preview.render_version ?? concept.version_no) : null, render_error: '' };
+      if (up.added.some((f) => /\.(png|jpe?g|webp)$/i.test(f.name || ''))) {
+        try {
+          const img = await renderImage(renderText(scene, change), await refUrls(photoFiles(project)));
+          if (!img?.url) throw new Error('이미지 주소를 받지 못했습니다');
+          render = { render_url: img.url, render_version: versionNo, render_error: '' };
+        } catch (e) { render.render_error = String(e?.message || e).slice(0, 200); }
+      }
       const created = await svc.entities.ProtoConcept.create({
-        tenant_id: project.tenant_id, project_id: project.id, version_no: await nextNo(project.id), based_on_id: concept.id, change_request: change, status: 'READY',
+        tenant_id: project.tenant_id, project_id: project.id, version_no: versionNo, based_on_id: concept.id, change_request: change, status: 'READY',
         title: concept.title, idea: concept.idea, known_info: concept.known_info, brief_summary: concept.brief_summary, questions: concept.questions || [], assumptions: concept.assumptions || [],
         confirmed_at: now(), confirmed_by_name: by, created_by_name: by, last_request_id: rid,
-        // 렌더 이미지는 다시 만들지 않는다. 이전 렌더를 남기고 어느 버전 기준인지 표시한다 (필요하면 action=render)
-        preview: { title: concept.title, ...scene, render_url: concept.preview.render_url || '', render_version: concept.preview.render_url ? (concept.preview.render_version ?? concept.version_no) : null, render_error: '', generated_at: now(), generated_by_name: by },
+        preview: { title: concept.title, ...scene, ...render, generated_at: now(), generated_by_name: by },
         // 이전 검토는 참고용으로 넘기되 '형상이 바뀜' 표시를 붙인다
         ...(concept.circuit ? { circuit: { ...concept.circuit, stale: true } } : {}),
         ...(concept.mold ? { mold: { ...concept.mold, stale: true } } : {}),
@@ -200,9 +215,7 @@ ${conditions(qs)}
     // ── 3-1. 렌더 이미지: 사용자가 요청할 때만 지금 버전의 형상 설명으로 다시 만든다
     if (action === 'render') {
       if (!concept.preview?.parts?.length) return Response.json({ error: '먼저 3D 프리뷰를 만들어 주세요.' }, { status: 400 });
-      const answers = (concept.questions || []).filter((q) => q.answer).map((q) => q.answer).join(', ');
-      const parts = concept.preview.parts.filter((p) => p.layer === 'SHELL' || p.layer === 'UI').slice(0, 12).map((p) => `${p.name}(${p.shape}, ${p.color}${p.material ? `, ${p.material}` : ''})`).join(', ');
-      const text = `${concept.idea}. ${concept.known_info || ''} ${answers}. ${concept.preview.summary || ''}${concept.change_request ? ` Latest change: ${concept.change_request}.` : ''} Visible parts: ${parts}`;
+      const text = renderText(concept.preview, concept.change_request);
       try {
         const img = await renderImage(text, await refUrls(photoFiles(project)));
         if (!img?.url) throw new Error('이미지 주소를 받지 못했습니다');

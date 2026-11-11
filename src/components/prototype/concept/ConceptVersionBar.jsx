@@ -17,7 +17,8 @@ export default function ConceptVersionBar({ concepts, concept, onSelect, onChang
 
   const revise = async () => {
     if (!change.trim() && !files.length) return;
-    setBusy('변경을 반영한 새 버전을 만드는 중… (1~3분, 렌더 이미지는 따로 만듭니다)'); setError('');
+    const withPhoto = files.some((f) => /\.(png|jpe?g|webp)$/i.test(f.name));
+    setBusy(`변경을 반영한 새 버전을 만드는 중… (1~3분, ${withPhoto ? '첨부한 사진대로 렌더 이미지도 다시 만듭니다' : '렌더 이미지는 따로 만듭니다'})`); setError('');
     try {
       const res = await runConcept('revise', { concept_id: concept.id, change_request: change, uploads: files }, () => setBusy('시간이 걸리고 있습니다. 결과를 확인하는 중…'));
       setChange(''); setFiles([]);
@@ -41,7 +42,7 @@ export default function ConceptVersionBar({ concepts, concept, onSelect, onChang
           </div>
         )}
       </div>
-      {canRevise && <ConceptFilePicker files={files} onChange={setFiles} disabled={!!busy} hint="사진·PDF·도면을 첨부하면 그 자료대로 3D 형상을 수정한 새 버전을 만듭니다. 렌더 이미지도 첨부 사진을 참고해 다시 만들 수 있습니다. (최대 5개, 10MB 이하, 비공개 저장)" />}
+      {canRevise && <ConceptFilePicker files={files} onChange={setFiles} disabled={!!busy} hint="사진·PDF·도면을 첨부하면 그 자료대로 3D 형상을 수정한 새 버전을 만듭니다. 사진을 첨부하면 렌더 이미지도 그 사진대로 자동으로 다시 만듭니다. (최대 5개, 10MB 이하, 비공개 저장)" />}
       {concept?.change_request && <p className="px-1 text-caption text-muted-foreground">v{concept.version_no} 변경 요청: {concept.change_request}{concept.preview?.change_summary ? ` → ${concept.preview.change_summary}` : ''}</p>}
       {busy && <p className="px-1 text-caption text-muted-foreground">{busy}</p>}
       {error && <p className="px-1 text-caption text-destructive">{error}</p>}
