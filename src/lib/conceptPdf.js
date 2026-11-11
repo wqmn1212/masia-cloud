@@ -1,3 +1,4 @@
+import { base44 } from '@/api/base44Client';
 import { createDoc, heading, paragraph, table, metricGrid, finish, M, CW } from '@/lib/reportPdf';
 import { imageToJpeg } from '@/lib/pdfFonts';
 import { conceptSnapshot } from '@/lib/conceptSnapshot';
@@ -5,7 +6,14 @@ import { CONCEPT_LAYERS, CONCEPT_DISCLAIMER, MOLD_CATEGORIES } from '@/lib/conce
 import { REVIEW_VERDICT, SEVERITY } from '@/lib/prototype';
 import { fileDate, safeName } from '@/lib/csv';
 
+const LOGO_URL = 'https://media.base44.com/images/public/6a0c1b56a385588fbd4454f5/b5bab8215_2x.png';
 const ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+
+/** 이 시제품에 연결된 업무 카드의 고객사 이름 (없으면 빈 값) */
+export async function conceptClientName(project) {
+  if (!project?.card_id) return '';
+  try { return (await base44.entities.TaskCard.get(project.card_id))?.client_name || ''; } catch { return ''; }
+}
 const sev = (s) => (SEVERITY[s] || SEVERITY.MEDIUM).label;
 const bullets = (d, title, items) => { if (items?.length) { heading(d, title); paragraph(d, items.map((x) => `· ${x}`).join('\n'), 8.5); } };
 
@@ -26,10 +34,13 @@ function imageRow(d, images) {
 }
 
 /** 컨셉 스튜디오 결과를 고객 미팅용 PDF 로 저장한다 (프리뷰 + 실행한 회로·사출 검토) */
-export async function generateConceptPDF(concept, project) {
+export async function generateConceptPDF(concept, project, clientName = '') {
   const p = concept.preview;
   const size = p.overall_mm;
-  const d = await createDoc(concept.title || project.title, `제품 컨셉 제안 · v${concept.version_no}${size ? ` · 약 ${size.x} × ${size.z} × ${size.y} mm` : ''}`);
+  const logo = await imageToJpeg(LOGO_URL, 700, { x: 0.29, y: 0.3, w: 0.42, h: 0.4 }).catch(() => null);
+  const d = await createDoc(concept.title || project.title,
+    [clientName && `고객사 ${clientName}`, `제품 컨셉 제안 · v${concept.version_no}`, size && `약 ${size.x} × ${size.z} × ${size.y} mm`].filter(Boolean).join(' · '),
+    logo);
 
   const images = [{ ...conceptSnapshot(p.parts), caption: '3D 컨셉 형상' }];
   if (p.render_url) {

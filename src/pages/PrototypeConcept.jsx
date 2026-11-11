@@ -40,7 +40,10 @@ export default function PrototypeConcept() {
           <div className="mt-2 flex items-center gap-2 text-primary"><Sparkles className="w-5 h-5" /><span className="text-label font-semibold">컨셉 스튜디오</span></div>
           <h1 className="mt-1 text-2xl font-bold tracking-tight">{concept?.title || '아이디어를 미팅에서 바로 보여 주는 3D 프리뷰'}</h1>
         </div>
-        {ready && <PdfButton label="미팅용 PDF로 저장" size="default" generate={async () => (await import('@/lib/conceptPdf')).generateConceptPDF(concept, project)} />}
+        {ready && <PdfButton label="미팅용 PDF로 저장" size="default" generate={async () => {
+          const { generateConceptPDF, conceptClientName } = await import('@/lib/conceptPdf');
+          await generateConceptPDF(concept, project, await conceptClientName(project));
+        }} />}
       </div>
 
       {concepts.length > 0 && <ConceptVersionBar concepts={concepts} concept={concept} onSelect={select} onChanged={refresh} />}
