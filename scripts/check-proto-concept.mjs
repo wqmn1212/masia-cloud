@@ -94,13 +94,18 @@ assert.deepEqual(calls.llm[0].file_urls, ['https://files.example/private://sketc
 let concept = r.data.concept;
 assert.deepEqual([concept.version_no, concept.status, concept.questions[0].id], [1, 'BRIEF', 'q1']);
 
-// 3D 프리뷰: 처음 만들 때는 렌더 이미지도 만든다
+// 3D 프리뷰: 형상만 저장하고 렌더는 이어서 render 로 만든다 (한 요청에 묶으면 실행 시간 제한에 걸린다)
 r = await call({ action: 'generate', concept_id: concept.id, answers: [{ id: 'q1', answer: '180mm' }] });
 assert.equal(r.status, 200, JSON.stringify(r.data));
 concept = r.data.concept;
 assert.deepEqual([concept.status, concept.questions[0].answer, concept.preview.parts.length], ['READY', '180mm', 2]);
-assert.deepEqual([concept.preview.render_url, concept.preview.render_version], ['https://img.example/r1.png', 1]);
-assert.equal(calls.img.length, 1);
+assert.deepEqual([concept.preview.render_url, concept.preview.render_pending, r.data.render_pending], ['', true, true]);
+assert.equal(calls.img.length, 0, 'generate 는 이미지를 만들지 않는다');
+r = await call({ action: 'render', concept_id: concept.id });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+concept = r.data.concept;
+assert.deepEqual([concept.preview.render_url, concept.preview.render_version, concept.preview.render_pending], ['https://img.example/r1.png', 1, false]);
+assert.equal(calls.img[0].existing_image_urls, undefined, '첨부 사진이 없으면 참고 이미지를 넣지 않는다');
 
 // 다른 팀은 컨셉을 다룰 수 없다
 globalThis.__user = OTHER;
@@ -135,6 +140,34 @@ const after = globalThis.__db.ProtoConcept.find((c) => c.id === v2.id);
 assert.equal(after.preview.render_url, 'https://img.example/r2.png', '실패해도 기존 렌더는 남긴다');
 assert.match(after.preview.render_error, /quota/);
 imgFail = false;
+
+// 사진을 첨부한 변경: 새 버전은 바로 저장하고, 렌더는 그 사진을 참고 이미지로 넣어 이어서 만든다
+const filesBefore = globalThis.__db.ProtoProject.find((p) => p.id === project.id).files.length;
+const photo = { name: 'new-look.jpg', type: 'image/jpeg', data: b64('jpeg-bytes') };
+r = await call({ action: 'revise', concept_id: v2.id, change_request: '', uploads: [photo, { name: 'spec.pdf', type: 'application/pdf', data: b64('pdf') }] });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+const v3 = r.data.concept;
+const imgCount = calls.img.length;
+assert.equal(imgCount, 3, '변경 요청 안에서는 이미지를 만들지 않는다');
+assert.match(v3.change_request, /새로 첨부한 자료/, '글 없이 자료만 올려도 변경 요청이 된다');
+assert.deepEqual([v3.preview.render_pending, r.data.render_pending, v3.preview.render_url, v3.preview.render_ref_ids.length], [true, true, 'https://img.example/r2.png', 1], '사진만 참고 이미지로, 이전 렌더는 남긴다');
+let files = globalThis.__db.ProtoProject.find((p) => p.id === project.id).files;
+assert.equal(files.length, filesBefore + 2);
+const photoFile = files.find((f) => f.id === v3.preview.render_ref_ids[0]);
+assert.equal(photoFile.name, 'new-look.jpg');
+r = await call({ action: 'render', concept_id: v3.id });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+assert.deepEqual(calls.img[imgCount].existing_image_urls, [`https://files.example/${photoFile.uri}`], '첨부 사진을 참고 이미지로 넣는다');
+assert.deepEqual([r.data.concept.preview.render_version, r.data.concept.preview.render_pending], [3, false]);
+// 같은 파일로 다시 시도해도 프로젝트 파일에 두 번 저장하지 않는다
+r = await call({ action: 'revise', concept_id: v3.id, change_request: '색을 조금 더 밝게', uploads: [photo] });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+files = globalThis.__db.ProtoProject.find((p) => p.id === project.id).files;
+assert.equal(files.length, filesBefore + 2, '이름·크기가 같은 파일은 다시 쓴다');
+assert.deepEqual(r.data.concept.preview.render_ref_ids, [photoFile.id]);
+// PDF 만 올린 변경은 렌더를 다시 만들지 않는다
+r = await call({ action: 'revise', concept_id: v3.id, change_request: '', uploads: [{ name: 'spec2.pdf', type: 'application/pdf', data: b64('pdf2') }] });
+assert.deepEqual([r.data.concept.preview.render_pending, r.data.render_pending], [false, false]);
 
 // 사출·금형 검토: 판정·위치·분류를 정리하고 규칙 계산을 붙인다
 r = await call({ action: 'mold', concept_id: v2.id, inputs: { material: 'ABS', wall_mm: 2, draft_deg: 0.2 } });

@@ -90,7 +90,7 @@
     },
     "preview": {
       "type": "object",
-      "description": "{title, summary, overall_mm{x,y,z}, parts[{id,name,role,layer,shape,size,position,rotation_deg,color,finish,material}], design_notes[], assumptions[], unverified[], render_url, render_version(렌더를 만든 버전 번호), render_error, change_summary, generated_at, generated_by_name}"
+      "description": "{title, summary, overall_mm{x,y,z}, parts[{id,name,role,layer,shape,size,position,rotation_deg,color,finish,material}], design_notes[], assumptions[], unverified[], render_url, render_version(렌더를 만든 버전 번호), render_error, render_pending(형상 저장 뒤 render 로 만들 렌더가 남음), render_ref_ids(렌더 참고 사진의 프로젝트 파일 id), change_summary, generated_at, generated_by_name}"
     },
     "circuit": {
       "type": "object",

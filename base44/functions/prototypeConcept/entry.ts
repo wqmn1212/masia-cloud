@@ -5,7 +5,9 @@ import { BRIEF_SCHEMA, SCENE_SCHEMA, SCENE_RULES, cleanScene, strList } from '..
 import { uploadPrivateAttachments } from '../../shared/privateAttachments.ts';
 
 // 시제품 컨셉: 아이디어 정리(brief) → 미팅용 3D 프리뷰(generate·revise) → 렌더 이미지(render) → 회로 검토(circuit) → 사출·금형 검토(mold)
-// 렌더 이미지는 처음 만들 때(generate)와 render 요청 때만 만든다. 변경(revise)은 형상만 새로 만들고 이전 렌더를 '이전 버전 기준'으로 남긴다.
+// 렌더 이미지는 형상과 따로 render 요청으로 만든다 (형상 생성과 한 요청에 묶으면 실행 시간 제한에 걸린다).
+// generate 와 사진을 첨부한 revise 는 preview.render_pending 을 켜 두고, 화면(또는 AI 비서)이 이어서 render 를 호출한다.
+// 사진 없이 바꾼 revise 는 이전 렌더를 '이전 버전 기준'으로 남긴다.
 // 결과는 모두 검토용 초안이며, 가정·미확인 항목을 따로 기록한다.
 const MODEL = 'claude_opus_5_5';
 // 3D 형상과 렌더 이미지 설명처럼 이미지를 다루는 단계는 이 모델로 만든다
@@ -13,6 +15,9 @@ const IMAGE_MODEL = 'gpt_6_astra';
 const ACTIONS = ['brief', 'generate', 'revise', 'render', 'circuit', 'mold'];
 const MAX_UPLOADS = 5;
 const AI_FILE = /\.(png|jpe?g|webp|pdf)$/i;
+const PHOTO_FILE = /\.(png|jpe?g|webp)$/i;
+// base64 문자열의 실제 바이트 수 (같은 파일을 다시 올렸는지 비교용)
+const b64Size = (d) => (typeof d === 'string' ? Math.floor((d.length * 3) / 4) - (d.endsWith('==') ? 2 : d.endsWith('=') ? 1 : 0) : 0);
 const KINDS = ['ROTARY_MOTOR', 'SERVO', 'LINEAR', 'SOLENOID', 'PUMP_FAN', 'HEATER', 'LED', 'SENSOR', 'OTHER'];
 const SEV = ['HIGH', 'MEDIUM', 'LOW'];
 const MOLD_CATS = ['THICKNESS', 'SINK', 'DRAFT', 'GATE', 'UNDERCUT', 'WARP', 'WELD', 'EJECT', 'PARTING', 'FLOW', 'OTHER'];
@@ -81,26 +86,35 @@ export default async function(req) {
       return p?.tenant_id && (user.account_tier === 'master' || p.tenant_id === user.tenant_id) ? p : null;
     };
     const nextNo = async (projectId) => Math.max(0, ...(await base44.entities.ProtoConcept.filter({ project_id: projectId }, '-version_no', 100)).map((c) => Number(c.version_no) || 0)) + 1;
-    // 참고 자료(주석이 있는 도면 시트 등)를 이미지 생성에 직접 넣으면 치수선·설명 글자가 그대로 찍힌다.
-    // 자료는 AI 가 읽어 외형 설명으로 바꾸고(renderPrompt), 이미지는 그 설명만으로 만든다
-    const renderImage = (text: string) => svc.integrations.Core.GenerateImage({
-      prompt: `Photorealistic industrial design concept render of a single product, three-quarter view, soft studio lighting, clean light gray seamless background, no people. A clean product photograph only: no callouts, dimension lines, arrows, captions, spec labels or any overlay text anywhere; the only lettering allowed is what is physically printed or displayed on the product itself. Product: ${text.slice(0, 2800)}`,
+    // 렌더 이미지: AI 가 형상·자료를 읽어 쓴 외형 설명(renderPrompt)으로 만든다.
+    // 사용자가 그 버전에 직접 첨부한 사진만 참고 이미지로 함께 넣는다. 도면·PDF 처럼 치수선·글자가 있는 자료는 넣지 않는다 (그림에 그대로 찍힌다)
+    const renderImage = (text: string, refs: string[] = []) => svc.integrations.Core.GenerateImage({
+      prompt: `Photorealistic industrial design concept render of a single product, three-quarter view, soft studio lighting, clean light gray seamless background, no people. A clean product photograph only: no callouts, dimension lines, arrows, captions, spec labels or any overlay text anywhere; the only lettering allowed is what is physically printed or displayed on the product itself.${refs.length ? ' Use the attached reference photo as the visual guide for the product\'s shape, proportions, colors, materials and finish, and follow the description below where they differ. Do not copy any background, hands, text, arrows or annotations from the reference.' : ''} Product: ${text.slice(0, 2800)}`,
+      ...(refs.length ? { existing_image_urls: refs } : {}),
     });
     // 참고 자료: 프로젝트에 올린 사진·도면을 AI 가 읽을 수 있게 서명 링크로 바꾼다 (최근에 올린 것부터 6개)
     const refFiles = (p) => (p?.files || []).filter((f) => f.uri && AI_FILE.test(f.name || '') && ['DRAWING', 'PHOTO', 'REFERENCE', 'SCHEMATIC', 'MOLD_DRAWING'].includes(f.category)).slice(-6);
     // 새로 올린 참고 자료는 서버가 직접 비공개 저장소에 올린다 (화면이 보낸 파일 주소는 받지 않는다)
-    const saveUploads = async () => {
-      const uploads = (Array.isArray(body.uploads) ? body.uploads : []).filter((u) => AI_FILE.test(str(u?.name, 200))).slice(0, MAX_UPLOADS);
+    const saveUploads = async (list?) => {
+      const uploads = list || (Array.isArray(body.uploads) ? body.uploads : []).filter((u) => AI_FILE.test(str(u?.name, 200))).slice(0, MAX_UPLOADS);
       return (await uploadPrivateAttachments(svc, uploads)).map((a) => ({
         id: crypto.randomUUID(), name: a.name, uri: a.url, category: 'REFERENCE', size: a.size, version_no: null, note: '컨셉 참고 자료',
         uploaded_at: now(), uploaded_by_name: by,
       }));
     };
-    // 프로젝트 파일에 넣어 이후 형상·렌더·검토 단계에서도 쓴다
+    // 프로젝트 파일에 넣어 이후 형상·렌더·검토 단계에서도 쓴다.
+    // 실패 후 같은 파일로 다시 시도해도 두 번 저장하지 않는다: 이름·크기가 같은 기존 파일은 그대로 다시 쓴다
     const addUploads = async (p) => {
-      const added = await saveUploads();
-      return added.length ? { project: await svc.entities.ProtoProject.update(p.id, { files: [...(p.files || []), ...added] }), added } : { project: p, added };
+      const files = p.files || [];
+      const same = (u) => files.find((f) => f.name === str(u?.name, 200) && Number(f.size) === b64Size(u?.data) && f.note === '컨셉 참고 자료');
+      const list = (Array.isArray(body.uploads) ? body.uploads : []).filter((u) => AI_FILE.test(str(u?.name, 200))).slice(0, MAX_UPLOADS);
+      const reused = list.map(same).filter(Boolean);
+      const fresh = await saveUploads(list.filter((u) => !same(u)));
+      const added = [...reused, ...fresh];
+      return { project: fresh.length ? await svc.entities.ProtoProject.update(p.id, { files: [...files, ...fresh] }) : p, added };
     };
+    // 이번 요청에 올린 사진 → 렌더 참고 이미지로 쓸 파일 id
+    const photoIds = (added) => added.filter((f) => PHOTO_FILE.test(f.name || '')).map((f) => f.id).slice(0, 3);
     const refUrls = async (list) => (await Promise.allSettled(list.map((f) => svc.integrations.Core.CreateFileSignedUrl({ file_uri: f.uri, expires_in: 900 }))))
       .filter((r) => r.status === 'fulfilled' && r.value?.signed_url).map((r) => r.value.signed_url);
 
@@ -114,8 +128,11 @@ export default async function(req) {
         project = await loadProject(body.project_id);
         if (!project) return Response.json({ error: '시제품을 찾을 수 없습니다.' }, { status: 404 });
       } else if (!user.tenant_id) return Response.json({ error: '소속 팀이 없어 시제품을 만들 수 없습니다.' }, { status: 400 });
-      const newFiles = await saveUploads();
-      const attach = [...refFiles(project), ...newFiles];
+      // 기존 시제품이면 바로 프로젝트 파일에 넣는다 (같은 파일을 다시 올리면 기존 것을 쓴다)
+      let newFiles;
+      if (project) ({ project, added: newFiles } = await addUploads(project));
+      else newFiles = await saveUploads();
+      const attach = [...new Map([...refFiles(project), ...newFiles].map((f) => [f.id, f])).values()];
       const attachUrls = await refUrls(attach);
       const attachNames = attach.map((f) => f.name).join(', ') || '없음';
 
@@ -137,9 +154,6 @@ ${project ? `[시제품 요구사항] 목표: ${project.goal || '-'} / 사용 �
           tenant_id: user.tenant_id, title: str(body.title, 120).trim() || str(ai?.title, 120) || idea.slice(0, 40), goal: idea, stage: 'REQUIREMENTS',
           owner_id: user.id, owner_name: by, files: newFiles, open_risk_count: 0,
         });
-      } else if (newFiles.length) {
-        const ids = new Set((project.files || []).map((f) => f.id));
-        project = await svc.entities.ProtoProject.update(project.id, { files: [...(project.files || []), ...newFiles.filter((f) => !ids.has(f.id))] });
       }
       const concept = await svc.entities.ProtoConcept.create({
         tenant_id: project.tenant_id, project_id: project.id, version_no: await nextNo(project.id), status: 'BRIEF',
@@ -193,28 +207,30 @@ Rules:
     if (action === 'generate') {
       const answers = Array.isArray(body.answers) ? body.answers : [];
       const questions = (concept.questions || []).map((q) => { const a = answers.find((x) => x?.id === q.id); return { ...q, answer: a ? str(a.answer, 500).trim() : (q.answer || '') }; });
-      ({ project } = await addUploads(project));
+      const up = await addUploads(project);
+      project = up.project;
       const genFiles = refFiles(project);
-      const [sceneR, imgR] = await Promise.allSettled([
+      const [sceneR] = await Promise.allSettled([
         llm(`너는 산업 디자이너다. 아래 아이디어를 기본 도형 부품으로 조립한 3D 컨셉 형상으로 만든다.\n\n${briefText(questions)}\n[첨부 자료] ${genFiles.map((f) => f.name).join(', ') || '없음'}\n\n${SCENE_RULES}\n- (가정)으로 표시된 조건을 쓴 부분은 assumptions 에 다시 적는다.\n- 첨부 자료의 치수·비율·형태를 형상에 반영한다. 자료에 없는 치수는 지어내지 않고 가정으로 둔다.`, SCENE_SCHEMA, await refUrls(genFiles), IMAGE_MODEL),
-        renderImage(`${concept.idea}. ${concept.known_info || ''} ${questions.filter((q) => q.answer).map((q) => q.answer).join(', ')}`),
       ]);
       if (sceneR.status !== 'fulfilled') throw sceneR.reason;
       const scene = cleanScene(sceneR.value);
       if (!scene.parts.length) return Response.json({ error: '3D 형상을 만들지 못했습니다. 아이디어를 조금 더 구체적으로 적어 다시 시도해 주세요.' }, { status: 422 });
-      const preview = { title: concept.title, ...scene, render_url: imgR.status === 'fulfilled' ? imgR.value?.url || '' : '', render_version: concept.version_no, render_error: imgR.status === 'rejected' ? String(imgR.reason?.message || imgR.reason).slice(0, 200) : '', generated_at: now(), generated_by_name: by };
+      // 렌더 이미지는 이 형상이 저장된 뒤 render 로 만든다 (형상과 같은 모양이 되도록 형상 설명으로 만든다)
+      const preview = { title: concept.title, ...scene, render_url: '', render_version: null, render_error: '', render_pending: true, render_ref_ids: photoIds(up.added), generated_at: now(), generated_by_name: by };
       const saved = await svc.entities.ProtoConcept.update(concept.id, { questions, preview, status: 'READY', confirmed_at: now(), confirmed_by_name: by, last_request_id: rid });
-      return Response.json({ concept: saved, link, summary: scene.summary, part_count: scene.parts.length, next: '컨셉 스튜디오(link)에서 3D 프리뷰를 확인하고 회로 검토와 사출·금형 검토를 실행합니다. 미팅용 개념 시각화이며 CAD 가 아닙니다.' });
+      return Response.json({ concept: saved, link, summary: scene.summary, part_count: scene.parts.length, render_pending: true, next: '이어서 action=render(concept_id)로 렌더 이미지를 만듭니다. 그다음 컨셉 스튜디오(link)에서 3D 프리뷰를 확인하고 회로 검토와 사출·금형 검토를 실행합니다. 미팅용 개념 시각화이며 CAD 가 아닙니다.' });
     }
 
     // ── 3. 변경 요청 → 새 버전
     if (action === 'revise') {
-      const hasUploads = Array.isArray(body.uploads) && body.uploads.length > 0;
+      const hasUploads = Array.isArray(body.uploads) && body.uploads.some((u) => AI_FILE.test(str(u?.name, 200)));
       const change = str(body.change_request, 2000).trim() || (hasUploads ? '새로 첨부한 자료의 형태·치수에 맞춰 형상을 수정' : '');
       if (!change) return Response.json({ error: '변경 요청을 입력해 주세요.' }, { status: 400 });
       if (!concept.preview?.parts?.length) return Response.json({ error: '먼저 3D 프리뷰를 만들어 주세요.' }, { status: 400 });
       const up = await addUploads(project);
       project = up.project;
+      const refIds = photoIds(up.added);
       const addedNames = up.added.map((f) => f.name).join(', ');
       const [sceneR] = await Promise.allSettled([
         llm(`너는 산업 디자이너다. 기존 3D 컨셉 형상에 변경 요청을 반영한 새 형상 전체를 만든다.\n\n${briefText(concept.questions)}\n[첨부 자료] ${refFiles(project).map((f) => f.name).join(', ') || '없음'}\n[이번 변경 요청과 함께 새로 첨부한 자료] ${addedNames || '없음'}\n[기존 형상 v${concept.version_no}] ${JSON.stringify({ overall_mm: concept.preview.overall_mm, parts: concept.preview.parts }).slice(0, 14000)}\n[변경 요청] ${change}\n\n${SCENE_RULES}\n- 변경 요청과 관계없는 부품은 그대로 둔다. change_summary 에 무엇을 어떻게 바꿨는지 쓴다.\n- 새로 첨부한 자료가 있으면 그 사진·도면의 형태·비율·치수·표기를 먼저 읽고 형상을 그에 맞게 고친다. 자료에서 읽은 내용은 change_summary 에, 자료에 없어 추정한 치수는 assumptions 에 적는다.`, SCENE_SCHEMA, await refUrls(refFiles(project)), IMAGE_MODEL),
@@ -223,15 +239,8 @@ Rules:
       const scene = cleanScene(sceneR.value);
       if (!scene.parts.length) return Response.json({ error: '변경한 3D 형상을 만들지 못했습니다. 요청을 조금 더 구체적으로 적어 주세요.' }, { status: 422 });
       const versionNo = await nextNo(project.id);
-      // 렌더 이미지: 사진을 새로 첨부했으면 그 사진대로 다시 만들고, 아니면 이전 렌더를 남겨 어느 버전 기준인지 표시한다 (필요하면 action=render)
-      let render = { render_url: concept.preview.render_url || '', render_version: concept.preview.render_url ? (concept.preview.render_version ?? concept.version_no) : null, render_error: '' };
-      if (up.added.some((f) => /\.(png|jpe?g|webp)$/i.test(f.name || ''))) {
-        try {
-          const img = await renderImage(await renderPrompt(scene, change));
-          if (!img?.url) throw new Error('이미지 주소를 받지 못했습니다');
-          render = { render_url: img.url, render_version: versionNo, render_error: '' };
-        } catch (e) { render.render_error = String(e?.message || e).slice(0, 200); }
-      }
+      // 렌더 이미지: 이전 렌더를 남겨 어느 버전 기준인지 표시한다. 사진을 첨부했으면 render_pending 을 켜고 이어서 render 로 그 사진을 참고해 다시 만든다
+      const render = { render_url: concept.preview.render_url || '', render_version: concept.preview.render_url ? (concept.preview.render_version ?? concept.version_no) : null, render_error: '', render_pending: refIds.length > 0, render_ref_ids: refIds };
       const created = await svc.entities.ProtoConcept.create({
         tenant_id: project.tenant_id, project_id: project.id, version_no: versionNo, based_on_id: concept.id, change_request: change, status: 'READY',
         title: concept.title, idea: concept.idea, known_info: concept.known_info, brief_summary: concept.brief_summary, questions: concept.questions || [], assumptions: concept.assumptions || [],
@@ -241,19 +250,22 @@ Rules:
         ...(concept.circuit ? { circuit: { ...concept.circuit, stale: true } } : {}),
         ...(concept.mold ? { mold: { ...concept.mold, stale: true } } : {}),
       });
-      return Response.json({ concept: created, link, change_summary: scene.change_summary });
+      return Response.json({ concept: created, link, change_summary: scene.change_summary, render_pending: render.render_pending, ...(render.render_pending ? { next: '첨부한 사진으로 렌더 이미지를 다시 만들려면 이어서 action=render(concept_id=새 버전 id)를 호출합니다.' } : {}) });
     }
 
     // ── 3-1. 렌더 이미지: 사용자가 요청할 때만 지금 버전의 형상 설명으로 다시 만든다
     if (action === 'render') {
       if (!concept.preview?.parts?.length) return Response.json({ error: '먼저 3D 프리뷰를 만들어 주세요.' }, { status: 400 });
       try {
-        const img = await renderImage(await renderPrompt(concept.preview, concept.change_request));
+        // 그 버전에 첨부한 사진을 참고 이미지로 넣는다 (프로젝트 파일에 남아 있는 것만)
+        const ids = Array.isArray(concept.preview.render_ref_ids) ? concept.preview.render_ref_ids : [];
+        const photos = (project.files || []).filter((f) => ids.includes(f.id) && f.uri && PHOTO_FILE.test(f.name || ''));
+        const img = await renderImage(await renderPrompt(concept.preview, concept.change_request), await refUrls(photos));
         if (!img?.url) throw new Error('이미지 주소를 받지 못했습니다');
-        const saved = await svc.entities.ProtoConcept.update(concept.id, { preview: { ...concept.preview, render_url: img.url, render_version: concept.version_no, render_error: '' }, last_request_id: rid });
+        const saved = await svc.entities.ProtoConcept.update(concept.id, { preview: { ...concept.preview, render_url: img.url, render_version: concept.version_no, render_error: '', render_pending: false }, last_request_id: rid });
         return Response.json({ concept: saved, link });
       } catch (e) {
-        await svc.entities.ProtoConcept.update(concept.id, { preview: { ...concept.preview, render_error: String(e?.message || e).slice(0, 200) } }).catch(() => {});
+        await svc.entities.ProtoConcept.update(concept.id, { preview: { ...concept.preview, render_error: String(e?.message || e).slice(0, 200), render_pending: false } }).catch(() => {});
         return Response.json({ error: `렌더 이미지를 만들지 못했습니다: ${String(e?.message || e).slice(0, 120)}` }, { status: 502 });
       }
     }
