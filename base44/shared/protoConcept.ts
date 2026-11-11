@@ -20,7 +20,7 @@ export const SCENE_SCHEMA = {
   properties: {
     summary: { type: 'string' }, change_summary: { type: 'string' }, overall_mm: xyz,
     parts: { type: 'array', items: { type: 'object', properties: {
-      name: { type: 'string' }, role: { type: 'string' }, layer: { type: 'string', enum: LAYERS }, shape: { type: 'string', enum: SHAPES },
+      name: { type: 'string' }, ref_key: { type: 'string' }, role: { type: 'string' }, layer: { type: 'string', enum: LAYERS }, shape: { type: 'string', enum: SHAPES },
       size: xyz, position: xyz, rotation_deg: xyz, color: { type: 'string' }, finish: { type: 'string', enum: FINISHES }, material: { type: 'string' } } } },
     design_notes: list, assumptions: list, unverified: list,
   },
@@ -44,7 +44,7 @@ const pick = (v: any, allowed: string[], d: string) => (allowed.includes(v) ? v 
 /** AI 장면을 저장 가능한 모양으로 정리. 부품 id 는 서버가 p1.. 로 붙인다 */
 export function cleanScene(ai: any) {
   const parts = (Array.isArray(ai?.parts) ? ai.parts : []).filter((p: any) => p && p.size).slice(0, 40).map((p: any, i: number) => ({
-    id: `p${i + 1}`, name: str(p.name, 80) || `부품 ${i + 1}`, role: str(p.role, 200), layer: pick(p.layer, LAYERS, 'OTHER'), shape: pick(p.shape, SHAPES, 'box'),
+    id: `p${i + 1}`, name: str(p.name, 80) || `부품 ${i + 1}`, ...(str(p.ref_key, 40) ? { ref_key: str(p.ref_key, 40).toLowerCase().replace(/[^a-z0-9_]+/g, '_') } : {}), role: str(p.role, 200), layer: pick(p.layer, LAYERS, 'OTHER'), shape: pick(p.shape, SHAPES, 'box'),
     size: { x: n2(p.size.x, 10, 0.1, 5000), y: n2(p.size.y, 10, 0.1, 5000), z: n2(p.size.z, n2(p.size.x, 10, 0.1, 5000), 0.1, 5000) },
     position: { x: n2(p.position?.x, 0, -5000, 5000), y: n2(p.position?.y, 0, -5000, 5000), z: n2(p.position?.z, 0, -5000, 5000) },
     rotation_deg: { x: n2(p.rotation_deg?.x, 0, -360, 360), y: n2(p.rotation_deg?.y, 0, -360, 360), z: n2(p.rotation_deg?.z, 0, -360, 360) },

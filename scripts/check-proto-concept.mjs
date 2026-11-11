@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { cleanScene } from '../base44/shared/protoConcept.ts';
 import { moldRuleChecks } from '../base44/shared/protoMold.ts';
+import { imageSize, cleanVision, measureVision, fitScene, visionHint, sceneBounds } from '../base44/shared/protoVision.ts';
 
 // ── 형상 정리: id 는 서버가 p1.. 로, 범위 밖 값은 자르고, 잘못된 값은 기본값
 const scene = cleanScene({
@@ -41,6 +42,63 @@ m = moldRuleChecks({ material: 'PC', length_mm: 400, width_mm: 300, height_mm: 2
 assert.ok(m.checks.some((c) => c.severity === 'HIGH' && c.category === 'FLOW'), `PC 유동 길이비 초과 (${m.metrics.flow_ratio})`);
 assert.equal(moldRuleChecks({ material: 'XYZ' }).metrics.material_name, 'ABS', '모르는 재질은 ABS 기준');
 assert.equal(moldRuleChecks({}).unknowns.length, 3);
+// ── 이미지 크기 읽기: PNG·JPEG(EXIF 회전)·WebP
+const png = (w, h) => { const b = new Uint8Array(40); b.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]); const v = new DataView(b.buffer); v.setUint32(16, w); v.setUint32(20, h); return b; };
+assert.deepEqual(imageSize(png(600, 400)), { w: 600, h: 400 });
+const jpeg = (w, h, orient) => {
+  const exif = [0x45, 0x78, 0x69, 0x66, 0, 0, 0x4d, 0x4d, 0, 0x2a, 0, 0, 0, 8, 0, 1, 0x01, 0x12, 0, 3, 0, 0, 0, 1, 0, orient, 0, 0, 0, 0, 0, 0];
+  const app1 = [0xff, 0xe1, 0, exif.length + 2, ...exif];
+  const sof = [0xff, 0xc0, 0, 17, 8, h >> 8, h & 255, w >> 8, w & 255, 3, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1];
+  return new Uint8Array([0xff, 0xd8, ...app1, ...sof, 0, 0, 0, 0]);
+};
+assert.deepEqual(imageSize(jpeg(400, 300, 1)), { w: 400, h: 300 });
+assert.deepEqual(imageSize(jpeg(400, 300, 6)), { w: 300, h: 400 }, '휴대폰 세로 사진(EXIF 회전)은 가로·세로를 바꾼다');
+const webp = new Uint8Array(40); webp.set([...'RIFF'].map((c) => c.charCodeAt(0))); webp.set([...'WEBPVP8X'].map((c) => c.charCodeAt(0)), 8); webp.set([0xff, 0x03, 0x00, 0xc7, 0x02, 0x00], 24);
+assert.deepEqual(imageSize(webp), { w: 1024, h: 712 });
+assert.equal(imageSize(new Uint8Array(40)), null);
+
+// ── 측정: 정면(폭/높이 0.5)·측면(깊이/높이 0.375)·높이 200mm 표기 → 100 × 200 × 75
+const AI_VISION = {
+  images: [
+    { image_index: 0, kind: 'PHOTO', orientation: 'SQUARE', views: [{ view: 'FRONT', perspective: 'LOW', front_side: 'UNKNOWN', box: [300, 100, 700, 900], parts: [{ key: 'body', name: '본체', box: [300, 100, 700, 900] }, { key: 'display', name: '화면', box: [450, 300, 550, 350] }] }], dimensions: [{ text: 'H 200', value_mm: 200, axis: 'HEIGHT', target: 'overall' }], product_text: ['AEGIS'] },
+    { image_index: 1, kind: 'PHOTO', orientation: 'SQUARE', views: [{ view: 'SIDE', perspective: 'LOW', front_side: 'RIGHT', box: [350, 100, 650, 900], parts: [{ key: 'display', box: [640, 300, 650, 350] }] }], dimensions: [] },
+    { image_index: 2, kind: 'PHOTO', orientation: 'LANDSCAPE', views: [{ view: 'PERSPECTIVE', perspective: 'HIGH', box: [100, 100, 900, 900], parts: [] }] },
+  ],
+  appearance: 'white matte body', notes: [],
+};
+const vision = cleanVision(AI_VISION, [{ id: 'f1', name: 'front.jpg', width_px: 1000, height_px: 1000 }, { id: 'f2', name: 'side.jpg', width_px: 1000, height_px: 1000 }, { id: 'f3', name: 'angle.jpg', width_px: 1000, height_px: 750 }]);
+const meas = measureVision(vision);
+assert.deepEqual(meas.ratios, { xy: 0.5, zy: 0.38 });
+assert.deepEqual(meas.overall_mm, { x: 100, y: 200, z: 75 });
+assert.deepEqual([meas.used.FRONT, meas.used.SIDE, meas.skipped.length], [1, 1, 1], '비스듬한 사진은 비율 측정에서 뺀다');
+const disp = meas.parts.find((p) => p.key === 'display');
+assert.deepEqual([disp.fx, disp.fy, disp.fw].map((v) => Math.round(v * 1000) / 1000), [0, 0.719, 0.25]);
+assert.ok(disp.fz > 0.45, '측면에서 앞쪽(오른쪽)에 있으면 z 가 +');
+assert.match(visionHint(vision, meas), /폭\/높이 0\.5[\s\S]*display/);
+// 세로로 본 사진인데 픽셀 크기가 가로면(EXIF 차이) 바꿔서 계산한다
+assert.deepEqual([cleanVision({ images: [{ image_index: 0, orientation: 'PORTRAIT', views: [] }] }, [{ id: 'a', name: 'a.jpg', width_px: 400, height_px: 300 }]).images[0].w], [300]);
+
+// ── 보정: AI 형상이 정사각에 가깝게 나와도 이미지 비율·치수와 겉 부품 위치에 맞춘다
+const rawScene = cleanScene({ overall_mm: { x: 120, y: 160, z: 100 }, parts: [
+  { name: '본체', ref_key: 'body', layer: 'SHELL', shape: 'box', size: { x: 120, y: 160, z: 100 }, position: { x: 0, y: 80, z: 0 } },
+  { name: '화면', ref_key: 'display', layer: 'UI', shape: 'box', size: { x: 60, y: 30, z: 2 }, position: { x: 20, y: 60, z: 51 } },
+  { name: '팬', layer: 'INTERNAL', shape: 'cylinder', size: { x: 80, y: 30, z: 80 }, position: { x: 0, y: 120, z: 0 } },
+] });
+const { scene: fitted, fit } = fitScene(rawScene, meas);
+const fb = sceneBounds(fitted.parts);
+assert.ok(Math.abs(fb.size.y - 200) < 3 && Math.abs(fb.size.x / fb.size.y - 0.5) < 0.03 && Math.abs(fb.size.z / fb.size.y - 0.375) < 0.05, `전체 크기 ${JSON.stringify(fb.size)}`);
+const dispPart = fitted.parts.find((p) => p.ref_key === 'display');
+assert.ok(Math.abs(dispPart.position.x) < 1 && Math.abs(dispPart.position.y - 0.719 * fb.size.y) < 3 && Math.abs(dispPart.size.x - 0.25 * fb.size.x) < 1, `화면 위치 ${JSON.stringify(dispPart)}`);
+assert.equal(fitted.parts.find((p) => p.name === '팬').size.y, 37.5, '내부 부품은 전체 배율만 따른다');
+assert.deepEqual(fit.ratios.map((r) => r.label), ['폭/높이', '깊이/높이']);
+assert.ok(fit.ratios[0].after === 0.5 && fit.ratios[0].before === 0.75);
+assert.ok(fit.snapped.some((s) => s.key === 'display'));
+// 측정이 형상과 지나치게 다르면 한 번에 1.6배까지만 보정하고 알린다
+const { fit: fit2 } = fitScene(rawScene, { ...meas, overall_mm: { x: 20, y: 200, z: 75 }, ratios: { xy: 0.1, zy: 0.38 } });
+assert.ok(fit2.warnings.some((w) => /크게 달라/.test(w)));
+// 측정값이 없으면 형상을 그대로 둔다
+assert.deepEqual(fitScene(rawScene, null).scene, rawScene);
+
 console.log('proto-concept modules ok');
 
 // ── 서버 함수
@@ -64,10 +122,12 @@ globalThis.__llm = (a) => {
   if (keys.includes('questions')) return { title: '미니 공기청정기', summary: '책상용', questions: [{ question: '높이는?', why: '형상', default_assumption: '200mm' }], assumptions: ['USB 전원으로 가정'] };
   if (keys.includes('parts')) return SCENE;
   if (keys.includes('actuators')) return { summary: '팬 1개', actuators: [{ id: 'fan', label: '팬', kind: 'PUMP_FAN', rated_voltage_v: 5, rated_current_a: 0.3, value_source: 'ASSUMED' }], steps: [{ name: '운전', duration_s: 10, states: [{ actuator_id: 'fan', on: true }] }], assumptions: ['팬 0.3A 로 가정'] };
+  if (keys.includes('images')) { if (globalThis.__visionFail) throw new Error('vision down'); return AI_VISION; }
   if (keys.includes('verdict')) return { verdict: 'MAYBE', summary: '보완 필요', findings: [{ part_id: 'p1', category: 'DRAFT', severity: 'HIGH', title: '구배' }, { part_id: 'zzz', category: 'NOPE', title: '모르는 위치' }] };
   throw new Error('unexpected schema');
 };
 let imgFail = false;
+globalThis.fetch = async () => ({ ok: false, arrayBuffer: async () => new ArrayBuffer(0) });
 globalThis.__img = (a) => { calls.img.push(a); if (imgFail) throw new Error('quota'); return { url: `https://img.example/r${calls.img.length}.png` }; };
 const b64 = (s) => Buffer.from(s).toString('base64');
 
@@ -101,6 +161,13 @@ concept = r.data.concept;
 assert.deepEqual([concept.status, concept.questions[0].answer, concept.preview.parts.length], ['READY', '180mm', 2]);
 assert.deepEqual([concept.preview.render_url, concept.preview.render_pending, r.data.render_pending], ['', true, true]);
 assert.equal(calls.img.length, 0, 'generate 는 이미지를 만들지 않는다');
+// 첨부 이미지(sketch.png)를 먼저 분석하고, 측정값을 형상 AI 에 넘긴 뒤 보정 기록을 남긴다
+const visionCall = calls.llm.find((c) => 'images' in c.response_json_schema.properties);
+assert.ok(visionCall && visionCall.file_urls.length === 1);
+assert.match(calls.llm.find((c) => 'parts' in c.response_json_schema.properties).prompt, /\[이미지 측정값/);
+assert.deepEqual(concept.preview.image_fit.files, ['sketch.png']);
+assert.match(concept.preview.image_fit.warnings.join(' '), /이미지 크기를 읽지 못한/, '픽셀 크기를 모르면 비율은 쓰지 않는다');
+assert.equal(concept.preview.vision_appearance, 'white matte body');
 r = await call({ action: 'render', concept_id: concept.id });
 assert.equal(r.status, 200, JSON.stringify(r.data));
 concept = r.data.concept;
@@ -165,6 +232,16 @@ assert.equal(r.status, 200, JSON.stringify(r.data));
 files = globalThis.__db.ProtoProject.find((p) => p.id === project.id).files;
 assert.equal(files.length, filesBefore + 2, '이름·크기가 같은 파일은 다시 쓴다');
 assert.deepEqual(r.data.concept.preview.render_ref_ids, [photoFile.id]);
+// 이미지 분석이 실패해도 형상은 만들고 그 사실을 남긴다. 글로만 바꾼 변경은 이미지 보정을 하지 않는다
+assert.ok(!r.data.concept.preview.image_fit || r.data.concept.preview.image_fit.files.length, '사진을 다시 쓴 변경은 그 사진으로 측정');
+globalThis.__visionFail = true;
+r = await call({ action: 'revise', concept_id: v3.id, change_request: '', uploads: [{ name: 'other.png', type: 'image/png', data: Buffer.from(png(800, 600)).toString('base64') }] });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+assert.match(r.data.concept.preview.image_fit.warnings[0], /이미지 분석에 실패/);
+assert.deepEqual(globalThis.__db.ProtoProject.find((p) => p.id === project.id).files.filter((f) => f.name === 'other.png').map((f) => [f.width_px, f.height_px]), [[800, 600]], '올린 사진의 픽셀 크기를 저장한다');
+globalThis.__visionFail = false;
+r = await call({ action: 'revise', concept_id: v3.id, change_request: '모서리를 둥글게' });
+assert.equal(r.data.concept.preview.image_fit, undefined);
 // PDF 만 올린 변경은 렌더를 다시 만들지 않는다
 r = await call({ action: 'revise', concept_id: v3.id, change_request: '', uploads: [{ name: 'spec2.pdf', type: 'application/pdf', data: b64('pdf2') }] });
 assert.deepEqual([r.data.concept.preview.render_pending, r.data.render_pending], [false, false]);

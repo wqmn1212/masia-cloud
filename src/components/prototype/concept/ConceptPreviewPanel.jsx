@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { runConcept } from '@/lib/conceptApi';
 import { errorText } from '@/lib/prototypeApi';
 import ConceptCanvas from '@/components/prototype/concept/ConceptCanvas';
+import ConceptImageFit from '@/components/prototype/concept/ConceptImageFit';
 import { CONCEPT_LAYERS, CONCEPT_DISCLAIMER } from '@/lib/concept';
 
 const Chip = ({ active, onClick, icon: Icon, children }) => (
@@ -13,7 +14,7 @@ const Chip = ({ active, onClick, icon: Icon, children }) => (
 );
 
 // 고객 미팅용 프리뷰: 돌려 보는 3D + 렌더 이미지 + 구성 부품
-// 렌더 이미지는 처음 만들 때만 자동으로 생기고, 변경한 버전은 '이 버전으로 렌더'를 눌러야 다시 만든다 (이미지 생성 비용)
+// 렌더 이미지는 처음 만들 때와 사진을 첨부한 변경 때 자동으로 이어서 만들고, 글로만 바꾼 버전은 '이 버전으로 렌더'를 눌러야 다시 만든다 (이미지 생성 비용)
 export default function ConceptPreviewPanel({ preview, version, conceptId, onChanged, highlightId, onHighlight }) {
   const [mode, setMode] = useState('3d');
   const [xray, setXray] = useState(false);
@@ -68,6 +69,7 @@ export default function ConceptPreviewPanel({ preview, version, conceptId, onCha
             </div>
           )}
         </div>
+        <ConceptImageFit fit={preview.image_fit} />
         <div className="rounded-2xl border bg-card p-3 flex-1 max-h-[420px] overflow-y-auto">
           <p className="px-2 py-1.5 text-caption font-semibold text-muted-foreground">구성 부품 {preview.parts?.length || 0}</p>
           {(preview.parts || []).map((p) => (

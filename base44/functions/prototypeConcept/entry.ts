@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { simulate } from '../../shared/protoSim.ts';
 import { moldRuleChecks, MOLD_MATERIAL_KEYS } from '../../shared/protoMold.ts';
 import { BRIEF_SCHEMA, SCENE_SCHEMA, SCENE_RULES, cleanScene, strList } from '../../shared/protoConcept.ts';
+import { VISION_PROMPT, VISION_SCHEMA, MAX_VISION_IMAGES, imageSize, b64Bytes, cleanVision, measureVision, visionHint, fitScene } from '../../shared/protoVision.ts';
 import { uploadPrivateAttachments } from '../../shared/privateAttachments.ts';
 
 // 시제품 컨셉: 아이디어 정리(brief) → 미팅용 3D 프리뷰(generate·revise) → 렌더 이미지(render) → 회로 검토(circuit) → 사출·금형 검토(mold)
@@ -97,10 +98,15 @@ export default async function(req) {
     // 새로 올린 참고 자료는 서버가 직접 비공개 저장소에 올린다 (화면이 보낸 파일 주소는 받지 않는다)
     const saveUploads = async (list?) => {
       const uploads = list || (Array.isArray(body.uploads) ? body.uploads : []).filter((u) => AI_FILE.test(str(u?.name, 200))).slice(0, MAX_UPLOADS);
-      return (await uploadPrivateAttachments(svc, uploads)).map((a) => ({
-        id: crypto.randomUUID(), name: a.name, uri: a.url, category: 'REFERENCE', size: a.size, version_no: null, note: '컨셉 참고 자료',
-        uploaded_at: now(), uploaded_by_name: by,
-      }));
+      return (await uploadPrivateAttachments(svc, uploads)).map((a) => {
+        // 사진은 픽셀 크기를 같이 남긴다 (이미지 측정에 쓴다)
+        const src = uploads.find((u) => str(u?.name, 200) === a.name);
+        const px = PHOTO_FILE.test(a.name) && src ? imageSize(b64Bytes(src.data)) : null;
+        return {
+          id: crypto.randomUUID(), name: a.name, uri: a.url, category: 'REFERENCE', size: a.size, version_no: null, note: '컨셉 참고 자료',
+          uploaded_at: now(), uploaded_by_name: by, ...(px ? { width_px: px.w, height_px: px.h } : {}),
+        };
+      });
     };
     // 프로젝트 파일에 넣어 이후 형상·렌더·검토 단계에서도 쓴다.
     // 실패 후 같은 파일로 다시 시도해도 두 번 저장하지 않는다: 이름·크기가 같은 기존 파일은 그대로 다시 쓴다
@@ -115,6 +121,42 @@ export default async function(req) {
     };
     // 이번 요청에 올린 사진 → 렌더 참고 이미지로 쓸 파일 id
     const photoIds = (added) => added.filter((f) => PHOTO_FILE.test(f.name || '')).map((f) => f.id).slice(0, 3);
+    // 이미지 분석: AI 는 시점·위치 상자·적힌 치수만 기록하고, 비율·위치 계산은 앱이 한다 (protoVision.ts)
+    const analyzeImages = async (files) => {
+      const imgs = files.filter((f) => f.uri && PHOTO_FILE.test(f.name || '')).slice(-MAX_VISION_IMAGES);
+      if (!imgs.length) return null;
+      const list = [];
+      for (const f of imgs) {
+        const url = await svc.integrations.Core.CreateFileSignedUrl({ file_uri: f.uri, expires_in: 900 }).then((r) => r?.signed_url || null).catch(() => null);
+        if (!url) continue;
+        let file = f;
+        // 픽셀 크기가 없는 예전 파일은 앞부분만 받아 머리말에서 읽는다
+        if (!(Number(f.width_px) > 0)) {
+          const px = await fetch(url, { headers: { Range: 'bytes=0-262143' } }).then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => (b ? imageSize(new Uint8Array(b)) : null)).catch(() => null);
+          if (px) file = { ...f, width_px: px.w, height_px: px.h };
+        }
+        list.push({ file, url });
+      }
+      if (!list.length) return null;
+      try {
+        const vision = cleanVision(await llm(VISION_PROMPT, VISION_SCHEMA, list.map((x) => x.url), IMAGE_MODEL), list.map((x) => x.file));
+        return { vision, measure: measureVision(vision), names: list.map((x) => x.file.name) };
+      } catch (e) {
+        return { vision: null, measure: null, names: list.map((x) => x.file.name), error: String(e?.message || e).slice(0, 160) };
+      }
+    };
+    // 형상에 측정값을 맞추고 화면에 보여 줄 기록을 붙인다
+    const applyVision = (scene, va) => {
+      if (!va) return scene;
+      if (!va.measure) return { ...scene, image_fit: { files: va.names, warnings: [`이미지 분석에 실패해 이미지 측정 없이 만들었습니다: ${va.error || '알 수 없는 오류'}`] } };
+      const { scene: fitted, fit } = fitScene(scene, va.measure);
+      return {
+        ...fitted,
+        image_fit: fit ? { ...fit, files: va.names, analyzed_at: now() } : { files: va.names, warnings: va.measure.warnings },
+        vision_appearance: va.vision.appearance || '',
+        vision_text: [...new Set(va.vision.images.flatMap((i) => i.product_text))].slice(0, 10),
+      };
+    };
     const refUrls = async (list) => (await Promise.allSettled(list.map((f) => svc.integrations.Core.CreateFileSignedUrl({ file_uri: f.uri, expires_in: 900 }))))
       .filter((r) => r.status === 'fulfilled' && r.value?.signed_url).map((r) => r.value.signed_url);
 
@@ -199,7 +241,7 @@ Rules:
 [Current design summary] ${str(preview.summary, 1200)}
 [Latest change] ${str(change, 300) || 'none'} ${str(preview.change_summary, 1200)}
 [Overall size] ${JSON.stringify(preview.overall_mm || {})}
-[Visible parts] ${JSON.stringify(visible).slice(0, 9000)}`, { type: 'object', properties: { description: { type: 'string' } } }, await refUrls(refFiles(project)), IMAGE_MODEL).catch(() => null);
+[Visible parts] ${JSON.stringify(visible).slice(0, 9000)}${preview.vision_appearance ? `\n[Appearance read from the reference images] ${str(preview.vision_appearance, 1200)}` : ''}${preview.vision_text?.length ? `\n[Lettering on the product] ${preview.vision_text.join(', ')}` : ''}`, { type: 'object', properties: { description: { type: 'string' } } }, await refUrls(refFiles(project)), IMAGE_MODEL).catch(() => null);
       return str(ai?.description, 2500) || renderText(preview, change);
     };
 
@@ -210,12 +252,15 @@ Rules:
       const up = await addUploads(project);
       project = up.project;
       const genFiles = refFiles(project);
+      const va = await analyzeImages(genFiles);
+      const hint = va?.measure ? visionHint(va.vision, va.measure) : '';
       const [sceneR] = await Promise.allSettled([
-        llm(`너는 산업 디자이너다. 아래 아이디어를 기본 도형 부품으로 조립한 3D 컨셉 형상으로 만든다.\n\n${briefText(questions)}\n[첨부 자료] ${genFiles.map((f) => f.name).join(', ') || '없음'}\n\n${SCENE_RULES}\n- (가정)으로 표시된 조건을 쓴 부분은 assumptions 에 다시 적는다.\n- 첨부 자료의 치수·비율·형태를 형상에 반영한다. 자료에 없는 치수는 지어내지 않고 가정으로 둔다.`, SCENE_SCHEMA, await refUrls(genFiles), IMAGE_MODEL),
+        llm(`너는 산업 디자이너다. 아래 아이디어를 기본 도형 부품으로 조립한 3D 컨셉 형상으로 만든다.\n\n${briefText(questions)}\n[첨부 자료] ${genFiles.map((f) => f.name).join(', ') || '없음'}\n${hint}\n\n${SCENE_RULES}\n- (가정)으로 표시된 조건을 쓴 부분은 assumptions 에 다시 적는다.\n- 첨부 자료의 치수·비율·형태를 형상에 반영한다. 자료에 없는 치수는 지어내지 않고 가정으로 둔다.`, SCENE_SCHEMA, await refUrls(genFiles), IMAGE_MODEL),
       ]);
       if (sceneR.status !== 'fulfilled') throw sceneR.reason;
-      const scene = cleanScene(sceneR.value);
-      if (!scene.parts.length) return Response.json({ error: '3D 형상을 만들지 못했습니다. 아이디어를 조금 더 구체적으로 적어 다시 시도해 주세요.' }, { status: 422 });
+      const raw = cleanScene(sceneR.value);
+      if (!raw.parts.length) return Response.json({ error: '3D 형상을 만들지 못했습니다. 아이디어를 조금 더 구체적으로 적어 다시 시도해 주세요.' }, { status: 422 });
+      const scene = applyVision(raw, va);
       // 렌더 이미지는 이 형상이 저장된 뒤 render 로 만든다 (형상과 같은 모양이 되도록 형상 설명으로 만든다)
       const preview = { title: concept.title, ...scene, render_url: '', render_version: null, render_error: '', render_pending: true, render_ref_ids: photoIds(up.added), generated_at: now(), generated_by_name: by };
       const saved = await svc.entities.ProtoConcept.update(concept.id, { questions, preview, status: 'READY', confirmed_at: now(), confirmed_by_name: by, last_request_id: rid });
@@ -232,12 +277,16 @@ Rules:
       project = up.project;
       const refIds = photoIds(up.added);
       const addedNames = up.added.map((f) => f.name).join(', ');
+      // 이번에 새로 첨부한 이미지만 측정한다 (글로만 바꾼 변경은 예전 사진에 다시 맞추지 않는다)
+      const va = await analyzeImages(up.added);
+      const hint = va?.measure ? visionHint(va.vision, va.measure) : '';
       const [sceneR] = await Promise.allSettled([
-        llm(`너는 산업 디자이너다. 기존 3D 컨셉 형상에 변경 요청을 반영한 새 형상 전체를 만든다.\n\n${briefText(concept.questions)}\n[첨부 자료] ${refFiles(project).map((f) => f.name).join(', ') || '없음'}\n[이번 변경 요청과 함께 새로 첨부한 자료] ${addedNames || '없음'}\n[기존 형상 v${concept.version_no}] ${JSON.stringify({ overall_mm: concept.preview.overall_mm, parts: concept.preview.parts }).slice(0, 14000)}\n[변경 요청] ${change}\n\n${SCENE_RULES}\n- 변경 요청과 관계없는 부품은 그대로 둔다. change_summary 에 무엇을 어떻게 바꿨는지 쓴다.\n- 새로 첨부한 자료가 있으면 그 사진·도면의 형태·비율·치수·표기를 먼저 읽고 형상을 그에 맞게 고친다. 자료에서 읽은 내용은 change_summary 에, 자료에 없어 추정한 치수는 assumptions 에 적는다.`, SCENE_SCHEMA, await refUrls(refFiles(project)), IMAGE_MODEL),
+        llm(`너는 산업 디자이너다. 기존 3D 컨셉 형상에 변경 요청을 반영한 새 형상 전체를 만든다.\n\n${briefText(concept.questions)}\n[첨부 자료] ${refFiles(project).map((f) => f.name).join(', ') || '없음'}\n[이번 변경 요청과 함께 새로 첨부한 자료] ${addedNames || '없음'}\n[기존 형상 v${concept.version_no}] ${JSON.stringify({ overall_mm: concept.preview.overall_mm, parts: concept.preview.parts }).slice(0, 14000)}\n[변경 요청] ${change}\n${hint}\n\n${SCENE_RULES}\n- 변경 요청과 관계없는 부품은 그대로 둔다. change_summary 에 무엇을 어떻게 바꿨는지 쓴다.\n- 새로 첨부한 자료가 있으면 그 사진·도면의 형태·비율·치수·표기를 먼저 읽고 형상을 그에 맞게 고친다. 자료에서 읽은 내용은 change_summary 에, 자료에 없어 추정한 치수는 assumptions 에 적는다.`, SCENE_SCHEMA, await refUrls(refFiles(project)), IMAGE_MODEL),
       ]);
       if (sceneR.status !== 'fulfilled') throw sceneR.reason;
-      const scene = cleanScene(sceneR.value);
-      if (!scene.parts.length) return Response.json({ error: '변경한 3D 형상을 만들지 못했습니다. 요청을 조금 더 구체적으로 적어 주세요.' }, { status: 422 });
+      const raw = cleanScene(sceneR.value);
+      if (!raw.parts.length) return Response.json({ error: '변경한 3D 형상을 만들지 못했습니다. 요청을 조금 더 구체적으로 적어 주세요.' }, { status: 422 });
+      const scene = applyVision(raw, va);
       const versionNo = await nextNo(project.id);
       // 렌더 이미지: 이전 렌더를 남겨 어느 버전 기준인지 표시한다. 사진을 첨부했으면 render_pending 을 켜고 이어서 render 로 그 사진을 참고해 다시 만든다
       const render = { render_url: concept.preview.render_url || '', render_version: concept.preview.render_url ? (concept.preview.render_version ?? concept.version_no) : null, render_error: '', render_pending: refIds.length > 0, render_ref_ids: refIds };
