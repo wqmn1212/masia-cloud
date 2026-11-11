@@ -49,7 +49,8 @@
     "check:factory-quote": "node --import ./scripts/fnmock/register.mjs scripts/check-factory-quote.mjs",
     "check:margin-rule": "node --import ./scripts/fnmock/register.mjs scripts/check-margin-rule.mjs",
     "check:inquiry-intake": "node --import ./scripts/fnmock/register.mjs scripts/check-inquiry-intake.mjs",
-    "check:quote-alerts": "node scripts/check-quote-alerts.mjs"
+    "check:quote-alerts": "node scripts/check-quote-alerts.mjs",
+    "check:proto-concept": "node --import ./scripts/fnmock/register.mjs scripts/check-proto-concept.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.59",

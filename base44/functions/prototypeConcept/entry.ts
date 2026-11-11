@@ -2,12 +2,14 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { simulate } from '../../shared/protoSim.ts';
 import { moldRuleChecks, MOLD_MATERIAL_KEYS } from '../../shared/protoMold.ts';
 import { BRIEF_SCHEMA, SCENE_SCHEMA, SCENE_RULES, cleanScene, strList } from '../../shared/protoConcept.ts';
-import { cleanFiles } from '../../shared/prototype.ts';
+import { uploadPrivateAttachments } from '../../shared/privateAttachments.ts';
 
-// 시제품 컨셉: 아이디어 정리(brief) → 미팅용 3D 프리뷰(generate·revise) → 회로 검토(circuit) → 사출·금형 검토(mold)
+// 시제품 컨셉: 아이디어 정리(brief) → 미팅용 3D 프리뷰(generate·revise) → 렌더 이미지(render) → 회로 검토(circuit) → 사출·금형 검토(mold)
+// 렌더 이미지는 처음 만들 때(generate)와 render 요청 때만 만든다. 변경(revise)은 형상만 새로 만들고 이전 렌더를 '이전 버전 기준'으로 남긴다.
 // 결과는 모두 검토용 초안이며, 가정·미확인 항목을 따로 기록한다.
 const MODEL = 'claude_opus_5_5';
-const ACTIONS = ['brief', 'generate', 'revise', 'circuit', 'mold'];
+const ACTIONS = ['brief', 'generate', 'revise', 'render', 'circuit', 'mold'];
+const MAX_UPLOADS = 5;
 const AI_FILE = /\.(png|jpe?g|webp|pdf)$/i;
 const KINDS = ['ROTARY_MOTOR', 'SERVO', 'LINEAR', 'SOLENOID', 'PUMP_FAN', 'HEATER', 'LED', 'SENSOR', 'OTHER'];
 const SEV = ['HIGH', 'MEDIUM', 'LOW'];
@@ -66,7 +68,7 @@ export default async function(req) {
       return p?.tenant_id && (user.account_tier === 'master' || p.tenant_id === user.tenant_id) ? p : null;
     };
     const nextNo = async (projectId) => Math.max(0, ...(await base44.entities.ProtoConcept.filter({ project_id: projectId }, '-version_no', 100)).map((c) => Number(c.version_no) || 0)) + 1;
-    const renderImage = (text) => svc.integrations.Core.GenerateImage({ prompt: `Photorealistic industrial design concept render of a single product, three-quarter view, soft studio lighting, clean light gray seamless background, no text, no logos, no people. Product: ${text.slice(0, 1500)}` });
+    const renderImage = (text: string) => svc.integrations.Core.GenerateImage({ prompt: `Photorealistic industrial design concept render of a single product, three-quarter view, soft studio lighting, clean light gray seamless background, no text, no logos, no people. Product: ${text.slice(0, 1500)}` });
     // 참고 자료: 프로젝트에 올린 사진·도면을 AI 가 읽을 수 있게 서명 링크로 바꾼다
     const refFiles = (p) => (p?.files || []).filter((f) => f.uri && AI_FILE.test(f.name || '') && ['DRAWING', 'PHOTO', 'REFERENCE', 'SCHEMATIC', 'MOLD_DRAWING'].includes(f.category)).slice(0, 6);
     const refUrls = async (list) => (await Promise.allSettled(list.map((f) => svc.integrations.Core.CreateFileSignedUrl({ file_uri: f.uri, expires_in: 900 }))))
@@ -82,8 +84,13 @@ export default async function(req) {
         project = await loadProject(body.project_id);
         if (!project) return Response.json({ error: '시제품을 찾을 수 없습니다.' }, { status: 404 });
       } else if (!user.tenant_id) return Response.json({ error: '소속 팀이 없어 시제품을 만들 수 없습니다.' }, { status: 400 });
-      // 새로 올린 참고 자료는 프로젝트 파일에 넣어 이후 형상·검토 단계에서도 쓴다
-      const newFiles = cleanFiles(body.files);
+      // 새로 올린 참고 자료는 서버가 직접 비공개 저장소에 올린다 (화면이 보낸 파일 주소는 받지 않는다).
+      // 프로젝트 파일에 넣어 이후 형상·검토 단계에서도 쓴다
+      const uploads = (Array.isArray(body.uploads) ? body.uploads : []).filter((u) => AI_FILE.test(str(u?.name, 200))).slice(0, MAX_UPLOADS);
+      const newFiles = (await uploadPrivateAttachments(svc, uploads)).map((a) => ({
+        id: crypto.randomUUID(), name: a.name, uri: a.url, category: 'REFERENCE', size: a.size, version_no: null, note: '컨셉 참고 자료',
+        uploaded_at: now(), uploaded_by_name: by,
+      }));
       const attach = [...refFiles(project), ...newFiles];
       const attachUrls = await refUrls(attach);
       const attachNames = attach.map((f) => f.name).join(', ') || '없음';
@@ -143,7 +150,7 @@ ${conditions(qs)}
       if (sceneR.status !== 'fulfilled') throw sceneR.reason;
       const scene = cleanScene(sceneR.value);
       if (!scene.parts.length) return Response.json({ error: '3D 형상을 만들지 못했습니다. 아이디어를 조금 더 구체적으로 적어 다시 시도해 주세요.' }, { status: 422 });
-      const preview = { title: concept.title, ...scene, render_url: imgR.status === 'fulfilled' ? imgR.value?.url || '' : '', render_error: imgR.status === 'rejected' ? String(imgR.reason?.message || imgR.reason).slice(0, 200) : '', generated_at: now(), generated_by_name: by };
+      const preview = { title: concept.title, ...scene, render_url: imgR.status === 'fulfilled' ? imgR.value?.url || '' : '', render_version: concept.version_no, render_error: imgR.status === 'rejected' ? String(imgR.reason?.message || imgR.reason).slice(0, 200) : '', generated_at: now(), generated_by_name: by };
       const saved = await svc.entities.ProtoConcept.update(concept.id, { questions, preview, status: 'READY', confirmed_at: now(), confirmed_by_name: by, last_request_id: rid });
       return Response.json({ concept: saved, link, summary: scene.summary, part_count: scene.parts.length, next: '컨셉 스튜디오(link)에서 3D 프리뷰를 확인하고 회로 검토와 사출·금형 검토를 실행합니다. 미팅용 개념 시각화이며 CAD 가 아닙니다.' });
     }
@@ -153,9 +160,8 @@ ${conditions(qs)}
       const change = str(body.change_request, 2000).trim();
       if (!change) return Response.json({ error: '변경 요청을 입력해 주세요.' }, { status: 400 });
       if (!concept.preview?.parts?.length) return Response.json({ error: '먼저 3D 프리뷰를 만들어 주세요.' }, { status: 400 });
-      const [sceneR, imgR] = await Promise.allSettled([
+      const [sceneR] = await Promise.allSettled([
         llm(`너는 산업 디자이너다. 기존 3D 컨셉 형상에 변경 요청을 반영한 새 형상 전체를 만든다.\n\n${briefText(concept.questions)}\n[첨부 자료] ${refFiles(project).map((f) => f.name).join(', ') || '없음'}\n[기존 형상 v${concept.version_no}] ${JSON.stringify({ overall_mm: concept.preview.overall_mm, parts: concept.preview.parts }).slice(0, 14000)}\n[변경 요청] ${change}\n\n${SCENE_RULES}\n- 변경 요청과 관계없는 부품은 그대로 둔다. change_summary 에 무엇을 어떻게 바꿨는지 쓴다.`, SCENE_SCHEMA, await refUrls(refFiles(project))),
-        renderImage(`${concept.idea}. ${concept.known_info || ''} Change: ${change}`),
       ]);
       if (sceneR.status !== 'fulfilled') throw sceneR.reason;
       const scene = cleanScene(sceneR.value);
@@ -164,12 +170,30 @@ ${conditions(qs)}
         tenant_id: project.tenant_id, project_id: project.id, version_no: await nextNo(project.id), based_on_id: concept.id, change_request: change, status: 'READY',
         title: concept.title, idea: concept.idea, known_info: concept.known_info, brief_summary: concept.brief_summary, questions: concept.questions || [], assumptions: concept.assumptions || [],
         confirmed_at: now(), confirmed_by_name: by, created_by_name: by, last_request_id: rid,
-        preview: { title: concept.title, ...scene, render_url: imgR.status === 'fulfilled' ? imgR.value?.url || '' : '', render_error: imgR.status === 'rejected' ? String(imgR.reason?.message || imgR.reason).slice(0, 200) : '', generated_at: now(), generated_by_name: by },
+        // 렌더 이미지는 다시 만들지 않는다. 이전 렌더를 남기고 어느 버전 기준인지 표시한다 (필요하면 action=render)
+        preview: { title: concept.title, ...scene, render_url: concept.preview.render_url || '', render_version: concept.preview.render_url ? (concept.preview.render_version ?? concept.version_no) : null, render_error: '', generated_at: now(), generated_by_name: by },
         // 이전 검토는 참고용으로 넘기되 '형상이 바뀜' 표시를 붙인다
         ...(concept.circuit ? { circuit: { ...concept.circuit, stale: true } } : {}),
         ...(concept.mold ? { mold: { ...concept.mold, stale: true } } : {}),
       });
       return Response.json({ concept: created, link, change_summary: scene.change_summary });
+    }
+
+    // ── 3-1. 렌더 이미지: 사용자가 요청할 때만 지금 버전의 형상 설명으로 다시 만든다
+    if (action === 'render') {
+      if (!concept.preview?.parts?.length) return Response.json({ error: '먼저 3D 프리뷰를 만들어 주세요.' }, { status: 400 });
+      const answers = (concept.questions || []).filter((q) => q.answer).map((q) => q.answer).join(', ');
+      const parts = concept.preview.parts.filter((p) => p.layer === 'SHELL' || p.layer === 'UI').slice(0, 12).map((p) => `${p.name}(${p.shape}, ${p.color}${p.material ? `, ${p.material}` : ''})`).join(', ');
+      const text = `${concept.idea}. ${concept.known_info || ''} ${answers}. ${concept.preview.summary || ''}${concept.change_request ? ` Latest change: ${concept.change_request}.` : ''} Visible parts: ${parts}`;
+      try {
+        const img = await renderImage(text);
+        if (!img?.url) throw new Error('이미지 주소를 받지 못했습니다');
+        const saved = await svc.entities.ProtoConcept.update(concept.id, { preview: { ...concept.preview, render_url: img.url, render_version: concept.version_no, render_error: '' }, last_request_id: rid });
+        return Response.json({ concept: saved, link });
+      } catch (e) {
+        await svc.entities.ProtoConcept.update(concept.id, { preview: { ...concept.preview, render_error: String(e?.message || e).slice(0, 200) } }).catch(() => {});
+        return Response.json({ error: `렌더 이미지를 만들지 못했습니다: ${String(e?.message || e).slice(0, 120)}` }, { status: 502 });
+      }
     }
 
     // ── 4. 회로 구성 제안 + 정격값 기반 동작 계산

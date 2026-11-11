@@ -59,7 +59,7 @@ export default function PrototypeConcept() {
       {concept && !ready && <ConceptBriefPanel key={concept.id} concept={concept} onChanged={refresh} />}
       {ready && (
         <>
-          <ConceptPreviewPanel key={concept.id} preview={concept.preview} highlightId={highlightId} onHighlight={setHighlightId} />
+          <ConceptPreviewPanel key={concept.id} preview={concept.preview} version={concept.version_no} conceptId={concept.id} onChanged={refresh} highlightId={highlightId} onHighlight={setHighlightId} />
           <ConceptNotes groups={[
             { title: '형상에 둔 가정', kind: 'assume', items: concept.preview.assumptions },
             { title: '실제 설계에서 확인할 것', kind: 'unverified', items: concept.preview.unverified },
