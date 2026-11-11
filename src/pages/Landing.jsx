@@ -5,7 +5,9 @@ import { getHomePath } from '@/lib/menuPermissions';
 import usePublicPortfolio from '@/lib/usePublicPortfolio';
 import LandingHeader from '@/components/landing/LandingHeader';
 import HeroSection from '@/components/landing/HeroSection';
-import AboutSection from '@/components/landing/AboutSection';
+import CapabilitySection from '@/components/landing/CapabilitySection';
+import ValueSection from '@/components/landing/ValueSection';
+import CloudFeatureSection from '@/components/landing/CloudFeatureSection';
 import BrandSection from '@/components/landing/BrandSection';
 import ProcessSection from '@/components/landing/ProcessSection';
 import GuangdongSection from '@/components/landing/GuangdongSection';
@@ -38,10 +40,13 @@ export default function Landing() {
         onLogin={navigateToLogin}
       />
       <main>
+      {/* 순서: 기술력 → 합리적인 가격 → 고객 편의 기능 → 진행 방식 → 브랜드 → 현장·물류 → 구독 → 대상 → 품목 → 보안 → 문의 */}
       <HeroSection lang={lang} />
-      <BrandSection lang={lang} />
-      <AboutSection lang={lang} />
+      <CapabilitySection lang={lang} />
+      <ValueSection lang={lang} />
+      <CloudFeatureSection lang={lang} />
       <ProcessSection lang={lang} />
+      <BrandSection lang={lang} />
       <GuangdongSection lang={lang} />
       <FastShippingSection lang={lang} />
       <TeamServiceSection lang={lang} />

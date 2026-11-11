@@ -15,7 +15,7 @@ export default function ConceptVersionBar({ concepts, concept, onSelect, onChang
 
   const revise = async () => {
     if (!change.trim()) return;
-    setBusy('변경을 반영한 새 버전을 만드는 중… (1~2분)'); setError('');
+    setBusy('변경을 반영한 새 버전을 만드는 중… (1~3분, 렌더 이미지는 따로 만듭니다)'); setError('');
     try {
       const res = await runConcept('revise', { concept_id: concept.id, change_request: change }, () => setBusy('시간이 걸리고 있습니다. 결과를 확인하는 중…'));
       setChange('');

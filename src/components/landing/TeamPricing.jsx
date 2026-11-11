@@ -1,7 +1,7 @@
 import React from 'react';
 import { team } from '@/lib/landingTeamContent';
 import { tx } from '@/lib/landingContent';
-import { planCards, recommendedLabel, terms, termsNote, page } from '@/lib/pricingContent';
+import { planCards, recommendedLabel, page } from '@/lib/pricingContent';
 import { PLAN_THEME } from '@/lib/planTheme';
 import { cn } from '@/lib/utils';
 import EnterpriseCard from '@/components/landing/EnterpriseCard';
@@ -37,15 +37,6 @@ export default function TeamPricing({ lang }) {
         ); })}
         <EnterpriseCard lang={lang} />
       </div>
-      <dl className="mt-4 bg-white border border-landing-line rounded-[13px] divide-y divide-landing-line">
-        {terms.map(([k, v], i) => (
-          <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6 px-[22px] py-3.5">
-            <dt className="sm:w-40 shrink-0 text-[13px] font-bold text-landing-muted">{tx(k, lang)}</dt>
-            <dd className="text-[14.5px] text-landing-ink">{tx(v, lang)}</dd>
-          </div>
-        ))}
-      </dl>
-      <p className="mt-3 text-[12.5px] text-landing-muted2">{tx(termsNote, lang)}</p>
       <div className="mt-5 flex flex-wrap gap-2">
         <a
           href="#contact"

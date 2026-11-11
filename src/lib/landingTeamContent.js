@@ -1,6 +1,6 @@
 // 제조팀 구독 콘텐츠 (담당 팀 배정 방식) — 모든 문구는 [ko, en, zh]
 export const team = {
-  eyebrow: '03 — MANUFACTURING TEAM SUBSCRIPTION',
+  eyebrow: '05 — MANUFACTURING TEAM SUBSCRIPTION',
   h2: ['귀사의 중국 현지 팀이 되어 드립니다', 'Your own team on the ground in China', '成为贵司在中国的现场团队'],
   sub: [
     '중국 생산을 계속 맡기려면 제조팀 구독을 더하세요. 한국 1명과 중국 2명이 귀사의 제조팀으로 공장 방문, 가격 협상, 출고 전 검수, 물류를 맡습니다. 제품 대금은 공장에 직접 결제하고, 이지스에는 월 관리 비용만 냅니다.',
@@ -35,7 +35,7 @@ export const team = {
 };
 
 export const fit = {
-  eyebrow: '04 — WHO IT IS FOR',
+  eyebrow: '06 — WHO IT IS FOR',
   h2: ['이런 회사에 맞습니다', 'Built for companies like these', '适合这样的企业'],
   targets: [
     { t: ['품질 · 납기가 불안한 회사', 'Unsure about quality or delivery', '质量与交期不稳定的企业'], d: ['이미 중국 공장과 거래 중이지만 불량과 일정 지연이 반복되는 경우', 'Already buying from a Chinese factory, but defects and delays keep coming back.', '已与中国工厂合作，但不良与延期反复出现。'] },

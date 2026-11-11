@@ -90,7 +90,7 @@
     },
     "preview": {
       "type": "object",
-      "description": "{title, summary, overall_mm{x,y,z}, parts[{id,name,role,layer,shape,size,position,rotation_deg,color,finish,material}], design_notes[], assumptions[], unverified[], render_url, render_error, change_summary, generated_at, generated_by_name}"
+      "description": "{title, summary, overall_mm{x,y,z}, parts[{id,name,role,layer,shape,size,position,rotation_deg,color,finish,material}], design_notes[], assumptions[], unverified[], render_url, render_version(렌더를 만든 버전 번호), render_error, change_summary, generated_at, generated_by_name}"
     },
     "circuit": {
       "type": "object",

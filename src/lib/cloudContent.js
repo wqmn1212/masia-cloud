@@ -33,7 +33,7 @@ export const cloud = {
     { t: ['초대 메일', 'Invitation email', '邀请邮件'], d: ['영업일 기준 1일 이내에 회신하고, 계정 초대 메일을 보내 드립니다.', 'We reply within one business day and send your account invitation.', '一个工作日内回复，并发送账号邀请邮件。'] },
     { t: ['바로 사용', 'Start right away', '立即使用'], d: ['비밀번호를 정하고 메일로 온 인증 코드를 넣으면 시작합니다.', "Set a password, enter the code we email you, and you're in.", '设置密码并输入邮件中的验证码即可开始。'] },
   ],
-  accountNote: ['모든 구독 플랜과 단건 상품에 포함되며, 따로 드는 비용은 없습니다.', 'Included with every plan and single service at no extra cost.', '所有订阅方案和单次服务均包含，无额外费用。'],
+  accountNote: ['턴키 납품, 제조팀 구독, 단건 상품 모두 포함되며 따로 드는 비용은 없습니다.', 'Included with turnkey delivery, every team plan and single services at no extra cost.', '交钥匙交付、制造团队订阅与单次服务均包含，无额外费用。'],
   finalTitle: ['프로젝트를 맡기고, 화면으로 확인하세요', 'Hand over your project and follow it on screen', '把项目交给我们，在画面上随时确认'],
   finalCta: ['견적 요청하고 AEGIS Cloud 계정 받기', 'Request a quote & get an AEGIS Cloud account', '索取报价并开通 AEGIS Cloud 账号'],
 };

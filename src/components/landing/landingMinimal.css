@@ -124,6 +124,7 @@
 .landing-minimal .lm-cases h3 { font-size: 16px; line-height: 1.5; }
 .landing-minimal .lm-cases p { font-size: 14px; line-height: 1.75; }
 .landing-minimal #trust { background: var(--landing-ink); color: var(--landing-paper); }
+.landing-minimal #value { background: var(--landing-soft); }
 .landing-minimal #trust .lm-section-heading > div { color: #8db5ff; }
 .landing-minimal #trust .lm-section-heading h2 { color: var(--landing-paper); }
 .landing-minimal #trust .grid { gap: 14px; margin-top: 24px; }

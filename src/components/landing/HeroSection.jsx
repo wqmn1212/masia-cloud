@@ -1,5 +1,5 @@
 import React from 'react';
-import { hero, regionCities, tx } from '@/lib/landingContent';
+import { hero, tx } from '@/lib/landingContent';
 import SupplyStructureCard from './SupplyStructureCard';
 import StatsRow from './StatsRow';
 
