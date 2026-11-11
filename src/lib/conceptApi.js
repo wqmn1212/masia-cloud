@@ -25,6 +25,16 @@ const fileToUpload = (file) => new Promise((resolve, reject) => {
 export const RECOVER_TRIES = 36;
 export const RECOVER_INTERVAL_MS = 10000;
 
+/**
+ * 형상을 만든 뒤 렌더 이미지가 남아 있으면(preview.render_pending) 이어서 만든다.
+ * 렌더가 실패해도 형상은 이미 저장돼 있으므로 그 컨셉과 오류를 함께 돌려준다.
+ */
+export async function renderIfPending(concept, onWaiting) {
+  if (!concept?.preview?.render_pending) return { concept, error: null };
+  try { return { concept: (await runConcept('render', { concept_id: concept.id }, onWaiting)).concept, error: null }; }
+  catch (e) { return { concept: (await base44.entities.ProtoConcept.get(concept.id).catch(() => null)) || concept, error: e }; }
+}
+
 /** 컨셉 생성·검토 실행 (화면 요청이 끊기면 RECOVER_TRIES × RECOVER_INTERVAL_MS 동안 결과를 찾는다) */
 export async function runConcept(action, params, onWaiting) {
   // 참고 자료는 파일 그대로 보내고 서버가 비공개 저장소에 올린다

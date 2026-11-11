@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ConceptNotes from '@/components/prototype/concept/ConceptNotes';
 import ConceptFilePicker from '@/components/prototype/concept/ConceptFilePicker';
-import { runConcept } from '@/lib/conceptApi';
+import { renderIfPending, runConcept } from '@/lib/conceptApi';
 import { errorText } from '@/lib/prototypeApi';
 
 // 프리뷰를 만들기 전: AI 질문에 답하고 가정을 확인한다. 답이 없는 질문은 가정으로 진행된다.
@@ -15,10 +15,13 @@ export default function ConceptBriefPanel({ concept, onChanged }) {
   const [error, setError] = useState('');
 
   const generate = async () => {
-    setBusy('3D 프리뷰와 렌더 이미지를 만드는 중… (1~2분)'); setError('');
+    setBusy('3D 프리뷰를 만드는 중… (1~2분)'); setError('');
     try {
       const res = await runConcept('generate', { concept_id: concept.id, answers: Object.entries(answers).map(([id, answer]) => ({ id, answer })), uploads: files }, () => setBusy('시간이 걸리고 있습니다. 결과를 확인하는 중…'));
-      onChanged(res.concept);
+      // 형상이 저장된 뒤 그 형상대로 렌더 이미지를 만든다 (실패해도 프리뷰 화면에서 다시 만들 수 있다)
+      setBusy('3D 프리뷰를 만들었습니다. 렌더 이미지를 만드는 중… (약 30초~1분)');
+      const done = await renderIfPending(res.concept);
+      onChanged(done.concept);
     } catch (e) { setError(errorText(e)); }
     setBusy('');
   };

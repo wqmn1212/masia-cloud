@@ -28,6 +28,7 @@ export default function ConceptFilePicker({ files, onChange, disabled, hint }) {
         </Button>
         {hint && <span className="text-caption text-muted-foreground">{hint}</span>}
       </div>
+      <p className="text-micro text-muted-foreground">정확도를 높이려면: 정면·측면을 똑바로 찍은 사진(비스듬한 사진은 비율 측정에서 빠짐), 단순한 배경, 치수가 적힌 도면이나 사진을 함께 올려 주세요.</p>
       {files.length > 0 && (
         <ul className="space-y-1">
           {files.map((f, i) => (

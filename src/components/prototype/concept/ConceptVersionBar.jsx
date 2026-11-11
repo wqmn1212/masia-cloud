@@ -3,7 +3,7 @@ import { Loader2, PencilLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ConceptFilePicker from '@/components/prototype/concept/ConceptFilePicker';
-import { runConcept } from '@/lib/conceptApi';
+import { renderIfPending, runConcept } from '@/lib/conceptApi';
 import { errorText } from '@/lib/prototypeApi';
 import { fmtDate } from '@/lib/prototype';
 
@@ -18,11 +18,17 @@ export default function ConceptVersionBar({ concepts, concept, onSelect, onChang
   const revise = async () => {
     if (!change.trim() && !files.length) return;
     const withPhoto = files.some((f) => /\.(png|jpe?g|webp)$/i.test(f.name));
-    setBusy(`변경을 반영한 새 버전을 만드는 중… (1~3분, ${withPhoto ? '첨부한 사진대로 렌더 이미지도 다시 만듭니다' : '렌더 이미지는 따로 만듭니다'})`); setError('');
+    setBusy(`변경을 반영한 새 버전을 만드는 중… (1~3분${withPhoto ? ', 이어서 첨부한 사진을 참고해 렌더 이미지도 다시 만듭니다' : ''})`); setError('');
     try {
       const res = await runConcept('revise', { concept_id: concept.id, change_request: change, uploads: files }, () => setBusy('시간이 걸리고 있습니다. 결과를 확인하는 중…'));
       setChange(''); setFiles([]);
       onChanged(res.concept);
+      if (res.concept?.preview?.render_pending) {
+        setBusy(`v${res.concept.version_no}을 만들었습니다. 첨부한 사진을 참고해 렌더 이미지를 만드는 중… (약 30초~1분)`);
+        const done = await renderIfPending(res.concept);
+        onChanged(done.concept);
+        if (done.error) setError(`새 버전은 만들었지만 렌더 이미지는 만들지 못했습니다: ${errorText(done.error)}`);
+      }
     } catch (e) { setError(errorText(e)); }
     setBusy('');
   };
@@ -42,7 +48,7 @@ export default function ConceptVersionBar({ concepts, concept, onSelect, onChang
           </div>
         )}
       </div>
-      {canRevise && <ConceptFilePicker files={files} onChange={setFiles} disabled={!!busy} hint="사진·PDF·도면을 첨부하면 그 자료대로 3D 형상을 수정한 새 버전을 만듭니다. 사진을 첨부하면 렌더 이미지도 그 사진대로 자동으로 다시 만듭니다. (최대 5개, 10MB 이하, 비공개 저장)" />}
+      {canRevise && <ConceptFilePicker files={files} onChange={setFiles} disabled={!!busy} hint="사진·PDF·도면을 첨부하면 그 자료대로 3D 형상을 수정한 새 버전을 만듭니다. 사진을 첨부하면 그 사진을 참고해 렌더 이미지도 다시 만듭니다. (최대 5개, 10MB 이하, 비공개 저장)" />}
       {concept?.change_request && <p className="px-1 text-caption text-muted-foreground">v{concept.version_no} 변경 요청: {concept.change_request}{concept.preview?.change_summary ? ` → ${concept.preview.change_summary}` : ''}</p>}
       {busy && <p className="px-1 text-caption text-muted-foreground">{busy}</p>}
       {error && <p className="px-1 text-caption text-destructive">{error}</p>}
