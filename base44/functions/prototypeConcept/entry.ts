@@ -8,6 +8,8 @@ import { uploadPrivateAttachments } from '../../shared/privateAttachments.ts';
 // 렌더 이미지는 처음 만들 때(generate)와 render 요청 때만 만든다. 변경(revise)은 형상만 새로 만들고 이전 렌더를 '이전 버전 기준'으로 남긴다.
 // 결과는 모두 검토용 초안이며, 가정·미확인 항목을 따로 기록한다.
 const MODEL = 'claude_opus_5_5';
+// 3D 형상과 렌더 이미지 설명처럼 이미지를 다루는 단계는 이 모델로 만든다
+const IMAGE_MODEL = 'gpt_6_astra';
 const ACTIONS = ['brief', 'generate', 'revise', 'render', 'circuit', 'mold'];
 const MAX_UPLOADS = 5;
 const AI_FILE = /\.(png|jpe?g|webp|pdf)$/i;
@@ -72,7 +74,7 @@ export default async function(req) {
     const by = user.full_name || user.email;
     const rid = typeof body.request_id === 'string' ? body.request_id.slice(0, 80) : null;
     const now = () => new Date().toISOString();
-    const llm = (prompt, schema, file_urls) => svc.integrations.Core.InvokeLLM({ prompt, response_json_schema: schema, model: MODEL, ...(file_urls?.length ? { file_urls } : {}) });
+    const llm = (prompt, schema, file_urls, model = MODEL) => svc.integrations.Core.InvokeLLM({ prompt, response_json_schema: schema, model, ...(file_urls?.length ? { file_urls } : {}) });
     // 사용자 권한으로 읽어 팀 격리(RLS)를 지킨다
     const loadProject = async (id) => {
       const p = await base44.entities.ProtoProject.get(id).catch(notFound);
@@ -183,7 +185,7 @@ Rules:
 [Current design summary] ${str(preview.summary, 1200)}
 [Latest change] ${str(change, 300) || 'none'} ${str(preview.change_summary, 1200)}
 [Overall size] ${JSON.stringify(preview.overall_mm || {})}
-[Visible parts] ${JSON.stringify(visible).slice(0, 9000)}`, { type: 'object', properties: { description: { type: 'string' } } }, await refUrls(refFiles(project))).catch(() => null);
+[Visible parts] ${JSON.stringify(visible).slice(0, 9000)}`, { type: 'object', properties: { description: { type: 'string' } } }, await refUrls(refFiles(project)), IMAGE_MODEL).catch(() => null);
       return str(ai?.description, 2500) || renderText(preview, change);
     };
 
@@ -194,7 +196,7 @@ Rules:
       ({ project } = await addUploads(project));
       const genFiles = refFiles(project);
       const [sceneR, imgR] = await Promise.allSettled([
-        llm(`너는 산업 디자이너다. 아래 아이디어를 기본 도형 부품으로 조립한 3D 컨셉 형상으로 만든다.\n\n${briefText(questions)}\n[첨부 자료] ${genFiles.map((f) => f.name).join(', ') || '없음'}\n\n${SCENE_RULES}\n- (가정)으로 표시된 조건을 쓴 부분은 assumptions 에 다시 적는다.\n- 첨부 자료의 치수·비율·형태를 형상에 반영한다. 자료에 없는 치수는 지어내지 않고 가정으로 둔다.`, SCENE_SCHEMA, await refUrls(genFiles)),
+        llm(`너는 산업 디자이너다. 아래 아이디어를 기본 도형 부품으로 조립한 3D 컨셉 형상으로 만든다.\n\n${briefText(questions)}\n[첨부 자료] ${genFiles.map((f) => f.name).join(', ') || '없음'}\n\n${SCENE_RULES}\n- (가정)으로 표시된 조건을 쓴 부분은 assumptions 에 다시 적는다.\n- 첨부 자료의 치수·비율·형태를 형상에 반영한다. 자료에 없는 치수는 지어내지 않고 가정으로 둔다.`, SCENE_SCHEMA, await refUrls(genFiles), IMAGE_MODEL),
         renderImage(`${concept.idea}. ${concept.known_info || ''} ${questions.filter((q) => q.answer).map((q) => q.answer).join(', ')}`),
       ]);
       if (sceneR.status !== 'fulfilled') throw sceneR.reason;
@@ -215,7 +217,7 @@ Rules:
       project = up.project;
       const addedNames = up.added.map((f) => f.name).join(', ');
       const [sceneR] = await Promise.allSettled([
-        llm(`너는 산업 디자이너다. 기존 3D 컨셉 형상에 변경 요청을 반영한 새 형상 전체를 만든다.\n\n${briefText(concept.questions)}\n[첨부 자료] ${refFiles(project).map((f) => f.name).join(', ') || '없음'}\n[이번 변경 요청과 함께 새로 첨부한 자료] ${addedNames || '없음'}\n[기존 형상 v${concept.version_no}] ${JSON.stringify({ overall_mm: concept.preview.overall_mm, parts: concept.preview.parts }).slice(0, 14000)}\n[변경 요청] ${change}\n\n${SCENE_RULES}\n- 변경 요청과 관계없는 부품은 그대로 둔다. change_summary 에 무엇을 어떻게 바꿨는지 쓴다.\n- 새로 첨부한 자료가 있으면 그 사진·도면의 형태·비율·치수·표기를 먼저 읽고 형상을 그에 맞게 고친다. 자료에서 읽은 내용은 change_summary 에, 자료에 없어 추정한 치수는 assumptions 에 적는다.`, SCENE_SCHEMA, await refUrls(refFiles(project))),
+        llm(`너는 산업 디자이너다. 기존 3D 컨셉 형상에 변경 요청을 반영한 새 형상 전체를 만든다.\n\n${briefText(concept.questions)}\n[첨부 자료] ${refFiles(project).map((f) => f.name).join(', ') || '없음'}\n[이번 변경 요청과 함께 새로 첨부한 자료] ${addedNames || '없음'}\n[기존 형상 v${concept.version_no}] ${JSON.stringify({ overall_mm: concept.preview.overall_mm, parts: concept.preview.parts }).slice(0, 14000)}\n[변경 요청] ${change}\n\n${SCENE_RULES}\n- 변경 요청과 관계없는 부품은 그대로 둔다. change_summary 에 무엇을 어떻게 바꿨는지 쓴다.\n- 새로 첨부한 자료가 있으면 그 사진·도면의 형태·비율·치수·표기를 먼저 읽고 형상을 그에 맞게 고친다. 자료에서 읽은 내용은 change_summary 에, 자료에 없어 추정한 치수는 assumptions 에 적는다.`, SCENE_SCHEMA, await refUrls(refFiles(project)), IMAGE_MODEL),
       ]);
       if (sceneR.status !== 'fulfilled') throw sceneR.reason;
       const scene = cleanScene(sceneR.value);
