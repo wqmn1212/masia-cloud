@@ -45,6 +45,17 @@ const MOLD_SCHEMA = {
 const str = (v, n = 300) => (typeof v === 'string' ? v.slice(0, n) : '');
 const num = (v) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? null : Number(v));
 const notFound = (e) => (e.status === 404 ? null : Promise.reject(e));
+// #RRGGBB → 이미지 생성용 색 이름 (예: light warm gray)
+const colorName = (hex) => {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2, d = max - min;
+  const tone = l > 0.85 ? 'very light' : l > 0.65 ? 'light' : l > 0.4 ? 'medium' : l > 0.2 ? 'dark' : 'very dark';
+  if (d < 0.03) return l > 0.93 ? 'white' : l < 0.1 ? 'black' : `${tone} neutral gray`;
+  const h = ((max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60 + 360) % 360;
+  if (d < 0.15) return `${tone} ${h < 90 || h > 300 ? 'warm' : 'cool'} gray`;
+  const hue = h < 20 ? 'red' : h < 45 ? 'orange' : h < 70 ? 'yellow' : h < 165 ? 'green' : h < 200 ? 'cyan' : h < 260 ? 'blue' : h < 300 ? 'purple' : h < 340 ? 'pink' : 'red';
+  return `${tone} ${hue}`;
+};
 const partBrief = (parts) => JSON.stringify((parts || []).map((p) => ({ id: p.id, name: p.name, role: p.role, layer: p.layer, shape: p.shape, size: p.size, position: p.position, material: p.material })));
 
 export default async function(req) {
@@ -68,14 +79,13 @@ export default async function(req) {
       return p?.tenant_id && (user.account_tier === 'master' || p.tenant_id === user.tenant_id) ? p : null;
     };
     const nextNo = async (projectId) => Math.max(0, ...(await base44.entities.ProtoConcept.filter({ project_id: projectId }, '-version_no', 100)).map((c) => Number(c.version_no) || 0)) + 1;
-    // 참고 사진이 있으면 렌더 이미지가 그 형태·비율을 따르게 한다
-    const renderImage = (text: string, refs: string[] = []) => svc.integrations.Core.GenerateImage({
-      prompt: `Photorealistic industrial design concept render of a single product, three-quarter view, soft studio lighting, clean light gray seamless background, no text, no logos, no people.${refs.length ? ' Match the shape, proportions and details shown in the attached reference images.' : ''} Product: ${text.slice(0, 1500)}`,
-      ...(refs.length ? { existing_image_urls: refs } : {}),
+    // 참고 자료(주석이 있는 도면 시트 등)를 이미지 생성에 직접 넣으면 치수선·설명 글자가 그대로 찍힌다.
+    // 자료는 AI 가 읽어 외형 설명으로 바꾸고(renderPrompt), 이미지는 그 설명만으로 만든다
+    const renderImage = (text: string) => svc.integrations.Core.GenerateImage({
+      prompt: `Photorealistic industrial design concept render of a single product, three-quarter view, soft studio lighting, clean light gray seamless background, no people. A clean product photograph only: no callouts, dimension lines, arrows, captions, spec labels or any overlay text anywhere; the only lettering allowed is what is physically printed or displayed on the product itself. Product: ${text.slice(0, 2800)}`,
     });
     // 참고 자료: 프로젝트에 올린 사진·도면을 AI 가 읽을 수 있게 서명 링크로 바꾼다 (최근에 올린 것부터 6개)
     const refFiles = (p) => (p?.files || []).filter((f) => f.uri && AI_FILE.test(f.name || '') && ['DRAWING', 'PHOTO', 'REFERENCE', 'SCHEMATIC', 'MOLD_DRAWING'].includes(f.category)).slice(-6);
-    const photoFiles = (p) => refFiles(p).filter((f) => /\.(png|jpe?g|webp)$/i.test(f.name || '') && ['PHOTO', 'REFERENCE'].includes(f.category)).slice(-3);
     // 새로 올린 참고 자료는 서버가 직접 비공개 저장소에 올린다 (화면이 보낸 파일 주소는 받지 않는다)
     const saveUploads = async () => {
       const uploads = (Array.isArray(body.uploads) ? body.uploads : []).filter((u) => AI_FILE.test(str(u?.name, 200))).slice(0, MAX_UPLOADS);
@@ -149,11 +159,32 @@ ${project ? `[시제품 요구사항] 목표: ${project.goal || '-'} / 사용 �
 [조건]
 ${conditions(qs)}
 [AI가 둔 가정] ${(concept.assumptions || []).join(' / ') || '없음'}`;
-    // 렌더 이미지용 설명: 아이디어 + 확인된 답 + 지금 형상의 겉으로 보이는 부품
+    // 렌더 이미지용 설명: 지금 버전의 형상(요약·변경 내용·겉으로 보이는 부품)을 앞에 두고, 처음 아이디어는 배경으로만 쓴다.
+    // 처음 아이디어를 앞에 두면 이후 버전에서 바꾼 재질·버튼 배치가 렌더에 반영되지 않는다
     const renderText = (preview, change) => {
-      const answers = (concept.questions || []).filter((q) => q.answer).map((q) => q.answer).join(', ');
-      const parts = (preview.parts || []).filter((p) => p.layer === 'SHELL' || p.layer === 'UI').slice(0, 12).map((p) => `${p.name}(${p.shape}, ${p.color}${p.material ? `, ${p.material}` : ''})`).join(', ');
-      return `${concept.idea}. ${concept.known_info || ''} ${answers}. ${preview.summary || ''}${change ? ` Latest change: ${change}.` : ''} Visible parts: ${parts}`;
+      const o = preview.overall_mm;
+      // 색상 코드·치수를 그대로 넣으면 이미지에 글자로 찍힌다: 색은 이름으로, 크기는 비율로만 알려 준다
+      const parts = (preview.parts || []).filter((p) => p.layer === 'SHELL' || p.layer === 'UI').slice(0, 14)
+        .map((p) => `${p.name} [${p.shape}, proportions ${p.size.x}:${p.size.y}:${p.size.z}, ${colorName(p.color)}, ${p.finish}${p.material ? `, ${p.material}` : ''}]`).join('; ');
+      return `${concept.title || ''}. CURRENT DESIGN (authoritative): ${str(preview.summary, 600)}${o ? ` Overall proportions width:height:depth = ${o.x}:${o.y}:${o.z}.` : ''}${change ? ` Latest change: ${str(change, 200)}. ${str(preview.change_summary, 500)}` : ''} Visible parts with exact colors and finishes: ${parts}. Background only, ignore wherever it conflicts with the current design: ${str(concept.idea, 300)}`;
+    };
+    // 렌더 프롬프트: AI 가 지금 형상 데이터와 참고 자료를 읽고 외형을 글로 풀어 쓴다 (실패하면 renderText 로 만든다)
+    const renderPrompt = async (preview, change) => {
+      const visible = (preview.parts || []).filter((p) => p.layer === 'SHELL' || p.layer === 'UI').slice(0, 20)
+        .map((p) => ({ name: p.name, role: p.role, shape: p.shape, size: p.size, position: p.position, rotation_deg: p.rotation_deg, color: colorName(p.color), finish: p.finish, material: p.material }));
+      const ai = await llm(`You write the text prompt for a photorealistic product render. Describe ONLY the final appearance of the product in plain English prose, 120 to 200 words: overall silhouette and proportions, every visible exterior part and exactly where it sits (front, back, side, top; on the main body or on the base), colors as plain color words, materials and finishes, and any lettering physically shown on the product (display digits, logo).
+
+Rules:
+- No dimensions, no numbers with units, no hex codes, no part ids, no callouts or annotations.
+- The design data below is authoritative. Coordinates are in mm, Y is up, the origin is the center of the bottom face, +Z is the front.
+- Attached reference files may be design sheets with notes, arrows and small photos of an older design. Use them only to understand the revised target look (shape, proportions, colors, materials). Never describe the notes or the older design.
+
+[Product] ${concept.title || ''}
+[Current design summary] ${str(preview.summary, 1200)}
+[Latest change] ${str(change, 300) || 'none'} ${str(preview.change_summary, 1200)}
+[Overall size] ${JSON.stringify(preview.overall_mm || {})}
+[Visible parts] ${JSON.stringify(visible).slice(0, 9000)}`, { type: 'object', properties: { description: { type: 'string' } } }, await refUrls(refFiles(project))).catch(() => null);
+      return str(ai?.description, 2500) || renderText(preview, change);
     };
 
     // ── 2. 사용자가 조건을 확인한 뒤 미팅용 3D 프리뷰를 만든다
@@ -162,10 +193,9 @@ ${conditions(qs)}
       const questions = (concept.questions || []).map((q) => { const a = answers.find((x) => x?.id === q.id); return { ...q, answer: a ? str(a.answer, 500).trim() : (q.answer || '') }; });
       ({ project } = await addUploads(project));
       const genFiles = refFiles(project);
-      const photoUrls = await refUrls(photoFiles(project));
       const [sceneR, imgR] = await Promise.allSettled([
         llm(`너는 산업 디자이너다. 아래 아이디어를 기본 도형 부품으로 조립한 3D 컨셉 형상으로 만든다.\n\n${briefText(questions)}\n[첨부 자료] ${genFiles.map((f) => f.name).join(', ') || '없음'}\n\n${SCENE_RULES}\n- (가정)으로 표시된 조건을 쓴 부분은 assumptions 에 다시 적는다.\n- 첨부 자료의 치수·비율·형태를 형상에 반영한다. 자료에 없는 치수는 지어내지 않고 가정으로 둔다.`, SCENE_SCHEMA, await refUrls(genFiles)),
-        renderImage(`${concept.idea}. ${concept.known_info || ''} ${questions.filter((q) => q.answer).map((q) => q.answer).join(', ')}`, photoUrls),
+        renderImage(`${concept.idea}. ${concept.known_info || ''} ${questions.filter((q) => q.answer).map((q) => q.answer).join(', ')}`),
       ]);
       if (sceneR.status !== 'fulfilled') throw sceneR.reason;
       const scene = cleanScene(sceneR.value);
@@ -195,7 +225,7 @@ ${conditions(qs)}
       let render = { render_url: concept.preview.render_url || '', render_version: concept.preview.render_url ? (concept.preview.render_version ?? concept.version_no) : null, render_error: '' };
       if (up.added.some((f) => /\.(png|jpe?g|webp)$/i.test(f.name || ''))) {
         try {
-          const img = await renderImage(renderText(scene, change), await refUrls(photoFiles(project)));
+          const img = await renderImage(await renderPrompt(scene, change));
           if (!img?.url) throw new Error('이미지 주소를 받지 못했습니다');
           render = { render_url: img.url, render_version: versionNo, render_error: '' };
         } catch (e) { render.render_error = String(e?.message || e).slice(0, 200); }
@@ -215,9 +245,8 @@ ${conditions(qs)}
     // ── 3-1. 렌더 이미지: 사용자가 요청할 때만 지금 버전의 형상 설명으로 다시 만든다
     if (action === 'render') {
       if (!concept.preview?.parts?.length) return Response.json({ error: '먼저 3D 프리뷰를 만들어 주세요.' }, { status: 400 });
-      const text = renderText(concept.preview, concept.change_request);
       try {
-        const img = await renderImage(text, await refUrls(photoFiles(project)));
+        const img = await renderImage(await renderPrompt(concept.preview, concept.change_request));
         if (!img?.url) throw new Error('이미지 주소를 받지 못했습니다');
         const saved = await svc.entities.ProtoConcept.update(concept.id, { preview: { ...concept.preview, render_url: img.url, render_version: concept.version_no, render_error: '' }, last_request_id: rid });
         return Response.json({ concept: saved, link });
