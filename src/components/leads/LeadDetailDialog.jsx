@@ -48,8 +48,8 @@ export default function LeadDetailDialog({ lead, open, onClose, onSave, saving }
         <div className="grid grid-cols-2 gap-4">
           <Field label="문의 유형">
             {lead.inquiry_type === 'monthly'
-              ? <Badge className="bg-primary/10 text-primary hover:bg-primary/10">월 계약 상담</Badge>
-              : '단발 소싱'}
+              ? <Badge className="bg-primary/10 text-primary hover:bg-primary/10">제조팀 구독 상담</Badge>
+              : lead.inquiry_type === 'sourcing' ? '단건 상품' : '턴키 납품 의뢰'}
           </Field>
           <Field label="담당자">{lead.contact_name}</Field>
           <Field label="연락처">{lead.phone}</Field>

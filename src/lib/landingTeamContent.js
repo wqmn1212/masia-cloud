@@ -3,9 +3,9 @@ export const team = {
   eyebrow: '03 — MANUFACTURING TEAM SUBSCRIPTION',
   h2: ['귀사의 중국 현지 팀이 되어 드립니다', 'Your own team on the ground in China', '成为贵司在中国的现场团队'],
   sub: [
-    '한국 1명과 중국 2명이 공장 방문, 가격 협상, 출고 전 검수를 맡습니다. 공장 견적서 원본을 보여드리고, 월 계약을 맺으시면 공장 단가가 내려갑니다.',
-    'One PM in Korea and two in China handle factory visits, price negotiation and pre-shipment inspection. We show you the original factory quote, and with a monthly contract your factory unit price goes down.',
-    '韩国 1 人与中国 2 人负责工厂走访、价格谈判与出货前检验。我们向您展示工厂报价原件，签订月度合同后工厂单价随之下降。',
+    '중국 생산을 계속 맡기려면 제조팀 구독을 더하세요. 한국 1명과 중국 2명이 귀사의 제조팀으로 공장 방문, 가격 협상, 출고 전 검수, 물류를 맡습니다. 제품 대금은 공장에 직접 결제하고, 이지스에는 월 관리 비용만 냅니다.',
+    'To keep your China production running, add a manufacturing team plan. One PM in Korea and two in China act as your manufacturing team: factory visits, price negotiation, pre-shipment inspection and logistics. You pay the factory directly for products and pay AEGIS a monthly management fee.',
+    '如需持续托管在华生产，可追加制造团队订阅。韩国 1 人与中国 2 人作为贵司的制造团队，负责工厂走访、价格谈判、出货前检验与物流。货款直接支付给工厂，AEGIS 只收取月度管理费。',
   ],
   roles: [
     { count: ['1명', '1 person', '1 人'], t: ['한국 PM', 'Korea PM', '韩国 PM'], d: ['고객 응대, 견적 검증, 기술 판단, 계약 조율', 'Client contact, quote review, technical judgement, contract coordination', '客户对接、报价核验、技术判断、合同协调'] },
@@ -45,6 +45,7 @@ export const fit = {
   modelTitle: ['나에게 맞는 모델', 'Which model fits', '适合您的模式'],
   models: [
     { k: ['한 번만 확인하면 될 때', 'When you need a one-time check', '只需确认一次时'], v: ['단건 상품 (공장 실사 · 출고 검품 · 견적 검증)', 'Single services (factory audit, pre-shipment inspection, quote review)', '单项服务（验厂、出货检验、报价核验）'] },
-    { k: ['3개월 이상 꾸준한 생산', 'Steady production for 3+ months', '3 个月以上的持续生产'], v: ['제조팀 구독 (라이트 · 스탠다드 · 프로)', 'Manufacturing team subscription (Lite, Standard, Pro)', '制造团队订阅（轻量版、标准版、专业版）'], highlight: true },
+    { k: ['제품 하나를 개발부터 양산까지 맡길 때', 'One product, from development to mass production', '将 1 个产品从开发到量产全部委托时'], v: ['턴키 납품 (기본) · 이지스가 만들어 납품', 'Turnkey delivery (default) · we build and deliver it', '交钥匙交付（基本）· 由 AEGIS 生产并交付'], highlight: true },
+    { k: ['중국 생산 전체를 계속 맡길 때 (12개월)', 'Ongoing China production (12 months)', '持续托管在华全部生产时（12 个月）'], v: ['제조팀 구독 (라이트 · 스탠다드 · 프로)', 'Manufacturing team subscription (Lite, Standard, Pro)', '制造团队订阅（轻量版、标准版、专业版）'] },
   ],
 };

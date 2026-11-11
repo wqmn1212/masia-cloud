@@ -44,8 +44,9 @@ export default async function (req) {
       ? body.categories.filter((c) => CATEGORIES.includes(c))
       : [];
     const lang = ['ko', 'en', 'zh'].includes(body.lang) ? body.lang : 'ko';
-    const inquiryType = body.inquiry_type === 'monthly' ? 'monthly' : 'sourcing';
-    const typeLabel = inquiryType === 'monthly' ? '월 계약 상담' : '단발 소싱';
+    // 문의 유형: turnkey(턴키 납품 의뢰, 기본) · monthly(제조팀 구독 상담) · sourcing(단건 상품)
+    const inquiryType = ['turnkey', 'monthly', 'sourcing'].includes(body.inquiry_type) ? body.inquiry_type : 'turnkey';
+    const typeLabel = { turnkey: '턴키 납품 의뢰', monthly: '제조팀 구독 상담', sourcing: '단건 상품' }[inquiryType as 'turnkey'];
     const interest = INTERESTS.includes(body.interest) ? body.interest : 'UNDECIDED';
     const isEnt = interest === 'ENTERPRISE';
     const expectedVolume = isEnt ? clean(body.expected_volume, 200) : '';
@@ -84,7 +85,7 @@ export default async function (req) {
     // 문의 접수 즉시 본사 팀 TaskCard 자동 생성 (고객 공개는 팀 발급 후 수동 토글)
     const card = await svc.entities.TaskCard.create({
       tenant_id: tenant.id,
-      title: `[${isEnt ? '엔터프라이즈' : inquiryType === 'monthly' ? '월 계약 상담' : '문의'}] ${lead.company} · ${categories[0] || '미분류'}`,
+      title: `[${isEnt ? '엔터프라이즈' : inquiryType === 'monthly' ? '제조팀 구독 상담' : inquiryType === 'sourcing' ? '단건 상품' : '턴키 문의'}] ${lead.company} · ${categories[0] || '미분류'}`,
       status: 'TODO',
       priority: isEnt ? 'HIGH' : 'MEDIUM',
       source: 'landing_lead',
