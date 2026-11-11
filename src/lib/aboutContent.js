@@ -1,6 +1,6 @@
 // 회사소개(/about) 다국어 콘텐츠 — [ko, en, zh]
 export const about = {
-  title: ['회사소개 | AEGIS 중국 OEM 제작 · 광둥성 공장 직거래', 'About AEGIS | China OEM manufacturing in Guangdong', '关于 AEGIS | 广东工厂直连 OEM 制造'],
+  title: ['회사소개 | AEGIS 중국 OEM 제작 · 개발부터 납품까지', 'About AEGIS | China OEM manufacturing, from development to delivery', '关于 AEGIS | 中国 OEM 制造 · 从开发到交付'],
   desc: ['AEGIS는 광둥성 현지 직원이 공장을 직접 방문하고 단가를 직접 협상하는 중국 OEM 제작 · 소싱 파트너입니다.', 'AEGIS is a China OEM and sourcing partner whose Guangdong staff visit factories and negotiate prices directly.', 'AEGIS 是中国 OEM 制造与采购伙伴，广东本地员工亲自走访工厂并直接议价。'],
   eyebrow: ['ABOUT AEGIS', 'ABOUT AEGIS', 'ABOUT AEGIS'],
   h1: ['공장은 만들고, AEGIS는 지킵니다.', 'Factories build. AEGIS protects.', '工厂负责制造，AEGIS 负责守护。'],
