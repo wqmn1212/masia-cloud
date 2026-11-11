@@ -53,8 +53,15 @@ export function buildConceptGroup(parts) {
     const dir = it.home.clone().sub(center);
     if (dir.length() < radius * 0.05) dir.set(0, it.layer === 'SHELL' ? radius * 0.5 : 0, 0);
     it.explode = dir.multiplyScalar(it.layer === 'SHELL' ? 1.4 : 0.8);
+    // 세로로 긴 제품에서 위아래 부품이 화면 밖으로 날아가지 않게 이동 거리를 제한한다
+    if (it.explode.length() > radius * 0.9) it.explode.setLength(radius * 0.9);
   });
-  return { group, items, center, radius };
+  // 분해했을 때의 범위: 카메라가 분해 보기로 바뀌면 이 범위가 다 보이게 물러난다
+  const exploded = new THREE.Box3();
+  items.forEach((it) => { const b = new THREE.Box3().setFromObject(it.mesh); exploded.union(b.translate(it.explode)); });
+  const explodedCenter = exploded.getCenter(new THREE.Vector3());
+  const explodedRadius = Math.max(exploded.getSize(new THREE.Vector3()).length() / 2, radius);
+  return { group, items, center, radius, explodedCenter, explodedRadius };
 }
 
 const tmp = new THREE.Vector3();

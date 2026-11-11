@@ -47,7 +47,23 @@ export default function ConceptCanvas({ parts, xray, explode, autoRotate, highli
     ro.observe(host);
 
     let raf;
+    // 분해 보기를 켜고 끌 때 카메라가 그 범위에 맞게 부드럽게 따라간다 (보는 방향은 유지)
+    let lastExplode = false;
+    let fitFrames = 0;
+    const dir = new THREE.Vector3();
     const loop = () => {
+      const ex = !!state.current.explode;
+      if (ex !== lastExplode) { lastExplode = ex; fitFrames = 50; }
+      if (fitFrames > 0) {
+        fitFrames -= 1;
+        const r = ex ? built.explodedRadius : built.radius;
+        controls.target.lerp(ex ? built.explodedCenter : built.center, 0.12);
+        dir.copy(camera.position).sub(controls.target);
+        const len = dir.length();
+        dir.setLength(len + (r * 3.8 - len) * 0.12);
+        camera.position.copy(controls.target).add(dir);
+        controls.maxDistance = Math.max(controls.maxDistance, r * 12);
+      }
       controls.autoRotate = !!state.current.autoRotate;
       stepView(built.items, state.current);
       controls.update();

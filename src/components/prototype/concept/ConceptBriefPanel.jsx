@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ConceptNotes from '@/components/prototype/concept/ConceptNotes';
 import ConceptFilePicker from '@/components/prototype/concept/ConceptFilePicker';
+import ConceptSketchPanel from '@/components/prototype/concept/ConceptSketchPanel';
 import { renderIfPending, runConcept } from '@/lib/conceptApi';
 import { errorText } from '@/lib/prototypeApi';
 
@@ -11,6 +12,10 @@ import { errorText } from '@/lib/prototypeApi';
 export default function ConceptBriefPanel({ concept, onChanged }) {
   const [answers, setAnswers] = useState(() => Object.fromEntries((concept.questions || []).map((q) => [q.id, q.answer || ''])));
   const [files, setFiles] = useState([]);
+  const [sketchBusy, setSketchBusy] = useState(false);
+  // 손 스케치로 판단했거나 이미 정리를 시작했으면 스케치 정리 칸을 보여 준다. 사진·도면으로 판단했어도 사용자가 열 수 있다
+  const [sketchOpen, setSketchOpen] = useState(concept.reference_kind === 'SKETCH' || !!concept.sketch);
+  const sketchReady = concept.sketch?.status === 'READY';
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
 
@@ -41,11 +46,14 @@ export default function ConceptBriefPanel({ concept, onChanged }) {
             <Input value={answers[q.id] || ''} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} placeholder={q.default_assumption ? `비우면 가정: ${q.default_assumption}` : '답을 입력하세요'} />
           </div>
         ))}
-        <ConceptFilePicker files={files} onChange={setFiles} disabled={!!busy} hint="사진·PDF·도면을 더 첨부하면 그 자료의 형태·치수대로 3D 형상을 만듭니다. (최대 5개, 10MB 이하, 비공개 저장)" />
+        {sketchOpen
+          ? <ConceptSketchPanel concept={concept} onChanged={onChanged} disabled={!!busy} onBusy={setSketchBusy} />
+          : ['PHOTO', 'DRAWING'].includes(concept.reference_kind) && <button type="button" onClick={() => setSketchOpen(true)} className="text-caption text-primary hover:underline">올린 이미지가 손 스케치라면: 스케치 정리 단계로 정확도 높이기</button>}
+        <ConceptFilePicker files={files} onChange={setFiles} disabled={!!busy || sketchBusy} hint="사진·PDF·도면을 더 첨부하면 그 자료의 형태·치수대로 3D 형상을 만듭니다. (최대 5개, 10MB 이하, 비공개 저장)" />
         {error && <p className="text-caption text-destructive">{error}</p>}
         <div className="flex flex-wrap items-center justify-end gap-3">
           {busy && <p className="text-caption text-muted-foreground">{busy}</p>}
-          <Button onClick={generate} disabled={!!busy}>{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Box className="w-4 h-4" />}확인하고 3D 프리뷰 만들기</Button>
+          <Button onClick={generate} disabled={!!busy || sketchBusy}>{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Box className="w-4 h-4" />}{sketchReady ? '정리한 정면·측면으로 3D 프리뷰 만들기' : sketchOpen && concept.sketch?.status === 'CHOOSE' ? '스케치 그대로 3D 프리뷰 만들기' : '확인하고 3D 프리뷰 만들기'}</Button>
         </div>
       </div>
       <div className="space-y-3">

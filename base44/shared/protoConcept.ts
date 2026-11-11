@@ -1,4 +1,5 @@
 // 시제품 컨셉 공용: AI 응답 스키마와 저장 전 정리 (prototypeConcept 함수와 검산이 같이 쓴다)
+import { koFix } from './protoSketch.ts';
 
 export const SHAPES = ['box', 'rounded_box', 'cylinder', 'sphere', 'capsule', 'cone', 'torus'];
 export const LAYERS = ['SHELL', 'INTERNAL', 'PCB', 'UI', 'OTHER'];
@@ -10,6 +11,7 @@ export const BRIEF_SCHEMA = {
   type: 'object',
   properties: {
     title: { type: 'string' }, summary: { type: 'string' },
+    reference_kind: { type: 'string', enum: ['PHOTO', 'DRAWING', 'SKETCH', 'NONE'] },
     questions: { type: 'array', items: { type: 'object', properties: { question: { type: 'string' }, why: { type: 'string' }, default_assumption: { type: 'string' } } } },
     assumptions: list,
   },
@@ -34,10 +36,11 @@ export const SCENE_RULES = `형상 규칙:
 - 부품은 8~30개. 제품의 실루엣이 한눈에 읽히도록 큰 형상부터 잡고 디테일(버튼·다리·그릴·손잡이)을 더한다.
 - color 는 #RRGGBB, finish 는 matte·gloss·metal·glass·rubber 중 하나. material 은 예상 재질.
 - 입력에 있는 치수는 그대로 쓰고, 없는 치수는 같은 종류 제품의 일반적인 값으로 정한 뒤 assumptions 에 적는다.
-- 이 형상은 고객 미팅용 개념 시각화다. 실제 설계에서 확인해야 할 것은 unverified 에 적는다. 한국어로 쓴다.`;
+- 이 형상은 고객 미팅용 개념 시각화다. 실제 설계에서 확인해야 할 것은 unverified 에 적는다.
+- 모든 문장은 한국어로 쓴다. 중국어 한자(约·左右 등)나 일본어를 섞지 않는다.`;
 
 const str = (v: unknown, n = 300) => (typeof v === 'string' ? v.slice(0, n) : '');
-export const strList = (v: unknown, max = 20, n = 400) => (Array.isArray(v) ? v : []).filter((x) => typeof x === 'string' && x.trim()).slice(0, max).map((x) => x.slice(0, n));
+export const strList = (v: unknown, max = 20, n = 400) => (Array.isArray(v) ? v : []).filter((x) => typeof x === 'string' && x.trim()).slice(0, max).map((x) => koFix(x.slice(0, n)));
 const n2 = (v: any, d: number, lo: number, hi: number) => { const x = Number(v); return Number.isFinite(x) ? Math.max(lo, Math.min(hi, Math.round(x * 100) / 100)) : d; };
 const pick = (v: any, allowed: string[], d: string) => (allowed.includes(v) ? v : d);
 
@@ -52,7 +55,7 @@ export function cleanScene(ai: any) {
   }));
   const o = ai?.overall_mm;
   return {
-    summary: str(ai?.summary, 1200), change_summary: str(ai?.change_summary, 600),
+    summary: koFix(str(ai?.summary, 1200)), change_summary: koFix(str(ai?.change_summary, 600)),
     overall_mm: o && Number(o.x) > 0 && Number(o.y) > 0 ? { x: n2(o.x, 0, 0, 5000), y: n2(o.y, 0, 0, 5000), z: n2(o.z, n2(o.x, 0, 0, 5000), 0, 5000) } : null,
     parts, design_notes: strList(ai?.design_notes), assumptions: strList(ai?.assumptions), unverified: strList(ai?.unverified),
   };
