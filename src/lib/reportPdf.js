@@ -89,13 +89,15 @@ function metricGrid(d, items) {
   d.y += 2;
 }
 
-function finish(d, filename) {
+export { createDoc, heading, paragraph, table, metricGrid, finish, M, CW };
+
+function finish(d, filename, footer = 'AEGIS Cloud에서 만든 보고용 자료입니다. 최신 내용은 고객 포털에서 확인해 주세요.') {
   const { pdf } = d;
   const pages = pdf.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
     pdf.setPage(i);
     d.font(7); d.color(MUTED);
-    pdf.text('AEGIS Cloud에서 만든 보고용 자료입니다. 최신 내용은 고객 포털에서 확인해 주세요.', M, H - 8);
+    pdf.text(footer, M, H - 8);
     pdf.text(`${i} / ${pages}`, W - M, H - 8, { align: 'right' });
   }
   pdf.save(filename);
