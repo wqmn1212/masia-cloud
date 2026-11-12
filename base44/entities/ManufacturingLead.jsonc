@@ -168,6 +168,15 @@
       "type": "string",
       "description": "\uc804\ud658\ub41c Quotation id"
     },
+    "sketch_token": {
+      "type": "string",
+      "description": "\uba54\uc778\ud398\uc774\uc9c0 \uc2a4\ucf00\uce58 \uc2dc\uc548 \uccb4\ud5d8 \ubc88\ud638 (\ud654\uba74\uc774 \uacb0\uacfc\ub97c \ub2e4\uc2dc \ubc1b\uc744 \ub54c \uc4f4\ub2e4)"
+    },
+    "sketch_trial": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "\uc2a4\ucf00\uce58 \uc2dc\uc548 \uccb4\ud5d8 \uacb0\uacfc: status(PENDING/READY/FAILED), variants[{label,style,url}], chosen, inquired_at"
+    },
     "task_card_id": {
       "type": "string",
       "description": "\ubb38\uc758 \uc811\uc218 \uc2dc \uc790\ub3d9 \uc0dd\uc131\ub41c TaskCard id"

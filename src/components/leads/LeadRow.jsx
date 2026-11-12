@@ -12,7 +12,10 @@ export default function LeadRow({ lead, onClick }) {
       <TableCell className="text-caption text-muted-foreground whitespace-nowrap">
         {lead.created_date ? format(new Date(lead.created_date), 'MM.dd HH:mm') : '-'}
       </TableCell>
-      <TableCell className="font-medium">{lead.company}</TableCell>
+      <TableCell className="font-medium">
+        {lead.company}
+        {lead.source === 'sketch_tool' && <Badge className="ml-2 border-0 bg-primary/10 text-primary hover:bg-primary/10 text-micro">스케치 시안{lead.sketch_trial?.inquired_at ? ' · 견적 문의' : ''}</Badge>}
+      </TableCell>
       <TableCell>{lead.contact_name}</TableCell>
       <TableCell className="text-body text-muted-foreground">{lead.email}</TableCell>
       <TableCell className="text-body">
