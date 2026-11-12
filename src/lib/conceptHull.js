@@ -125,19 +125,22 @@ export function buildHullGeometry(front, side, { heightMm = 100, rows = 220, seg
 }
 
 /** 정면·측면 이미지를 면 방향에 따라 섞어 입히는 재질 (사진에 이미 빛이 있어 조명은 약하게만) */
-export function hullMaterial(texFront, texSide, { opacity = 1, top = [0.92, 0.9, 0.86], capFrom = 1e9, capTo = 1e9, useSide = true, frontCx = 0.5 } = {}) {
+export function hullMaterial(texFront, texSide, { opacity = 1, top = [0.92, 0.9, 0.86], capFrom = 1e9, capTo = 1e9, useSide = true, frontCx = 0.5, frontHalf = 0.3, sideCx = 0.5 } = {}) {
   return new THREE.ShaderMaterial({
-    uniforms: { tF: { value: texFront }, tS: { value: texSide }, opacity: { value: opacity }, topC: { value: new THREE.Vector3(...top) }, capFrom: { value: capFrom }, capTo: { value: capTo }, useSide: { value: useSide ? 1 : 0 }, fcx: { value: frontCx }, light: { value: new THREE.Vector3(0.5, 0.8, 0.6).normalize() } },
+    uniforms: { tF: { value: texFront }, tS: { value: texSide }, opacity: { value: opacity }, topC: { value: new THREE.Vector3(...top) }, capFrom: { value: capFrom }, capTo: { value: capTo }, useSide: { value: useSide ? 1 : 0 }, fcx: { value: frontCx }, fhw: { value: frontHalf }, scx: { value: sideCx }, light: { value: new THREE.Vector3(0.5, 0.8, 0.6).normalize() } },
     vertexShader: `attribute vec2 uvF; attribute vec2 uvS; varying vec2 vF; varying vec2 vS; varying vec3 vN; varying float vY;
       void main(){ vF = uvF; vS = uvS; vN = normalize(normal); vY = position.y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-    fragmentShader: `uniform sampler2D tF; uniform sampler2D tS; uniform float opacity; uniform vec3 light; uniform vec3 topC; uniform float capFrom; uniform float capTo; uniform float useSide; uniform float fcx; varying vec2 vF; varying vec2 vS; varying vec3 vN; varying float vY;
+    fragmentShader: `uniform sampler2D tF; uniform sampler2D tS; uniform float opacity; uniform vec3 light; uniform vec3 topC; uniform float capFrom; uniform float capTo; uniform float useSide; uniform float fcx; uniform float fhw; uniform float scx; varying vec2 vF; varying vec2 vS; varying vec3 vN; varying float vY;
       void main(){ vec3 n = normalize(vN);
-        float wf = pow(abs(n.z), 4.0) + 1e-3; float ws = pow(abs(n.x), 4.0);
+        // 앞을 보는 면은 정면 이미지, 옆은 측면 이미지. 뒤를 보는 면에는 정면을 그대로 통과시키지 않는다
+        // (버튼·글자가 뒷면에 거울처럼 찍히므로) → 측면 이미지의 뒤쪽 가장자리 색을 같은 높이로 이어 쓴다
+        float wf = pow(max(n.z, 0.0), 4.0) + 1e-3; float ws = pow(abs(n.x), 4.0); float wb = pow(max(-n.z, 0.0), 4.0);
         vec3 cf = texture2D(tF, vF).rgb;
-        // 측면 이미지를 믿기 어려우면 옆면은 정면 이미지의 가장자리 색을 이어 쓴다
+        // 측면 이미지를 믿기 어려우면 옆·뒷면은 정면 이미지의 가장자리 색을 이어 쓴다
+        vec3 edgeF = texture2D(tF, vec2(fcx - fhw * 0.93, vF.y)).rgb;
         vec3 cs = useSide > 0.5 ? texture2D(tS, vS).rgb : texture2D(tF, vec2(fcx + (vF.x - fcx) * 0.95, vF.y)).rgb;
-        vec3 c = (cf * wf + cs * ws) / (wf + ws);
-        // 위·아래를 보는 면은 이미지에 정보가 없어 몸통 색으로 칠한다
+        vec3 cb = useSide > 0.5 ? texture2D(tS, vec2(scx + (vS.x - scx) * 0.95, vS.y)).rgb : edgeF;
+        vec3 c = (cf * wf + cs * ws + cb * wb) / (wf + ws + wb);
         // 정면 이미지 맨 위 띠는 윗면이 비스듬히 찍힌 부분이라 옆면에 그대로 입히면 구멍이 두 번 보인다 → 몸통 색으로
         float wt = max(smoothstep(0.55, 0.9, abs(n.y)), smoothstep(capFrom, capTo, vY)); c = mix(c, topC, wt);
         float l = 0.9 + 0.2 * max(dot(n, light), 0.0); gl_FragColor = vec4(c * l, opacity); }`,
