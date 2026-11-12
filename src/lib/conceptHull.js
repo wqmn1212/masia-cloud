@@ -125,15 +125,18 @@ export function buildHullGeometry(front, side, { heightMm = 100, rows = 220, seg
 }
 
 /** 정면·측면 이미지를 면 방향에 따라 섞어 입히는 재질 (사진에 이미 빛이 있어 조명은 약하게만) */
-export function hullMaterial(texFront, texSide, { opacity = 1, top = [0.92, 0.9, 0.86], capFrom = 1e9, capTo = 1e9 } = {}) {
+export function hullMaterial(texFront, texSide, { opacity = 1, top = [0.92, 0.9, 0.86], capFrom = 1e9, capTo = 1e9, useSide = true, frontCx = 0.5 } = {}) {
   return new THREE.ShaderMaterial({
-    uniforms: { tF: { value: texFront }, tS: { value: texSide }, opacity: { value: opacity }, topC: { value: new THREE.Vector3(...top) }, capFrom: { value: capFrom }, capTo: { value: capTo }, light: { value: new THREE.Vector3(0.5, 0.8, 0.6).normalize() } },
+    uniforms: { tF: { value: texFront }, tS: { value: texSide }, opacity: { value: opacity }, topC: { value: new THREE.Vector3(...top) }, capFrom: { value: capFrom }, capTo: { value: capTo }, useSide: { value: useSide ? 1 : 0 }, fcx: { value: frontCx }, light: { value: new THREE.Vector3(0.5, 0.8, 0.6).normalize() } },
     vertexShader: `attribute vec2 uvF; attribute vec2 uvS; varying vec2 vF; varying vec2 vS; varying vec3 vN; varying float vY;
       void main(){ vF = uvF; vS = uvS; vN = normalize(normal); vY = position.y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-    fragmentShader: `uniform sampler2D tF; uniform sampler2D tS; uniform float opacity; uniform vec3 light; uniform vec3 topC; uniform float capFrom; uniform float capTo; varying vec2 vF; varying vec2 vS; varying vec3 vN; varying float vY;
+    fragmentShader: `uniform sampler2D tF; uniform sampler2D tS; uniform float opacity; uniform vec3 light; uniform vec3 topC; uniform float capFrom; uniform float capTo; uniform float useSide; uniform float fcx; varying vec2 vF; varying vec2 vS; varying vec3 vN; varying float vY;
       void main(){ vec3 n = normalize(vN);
         float wf = pow(abs(n.z), 4.0) + 1e-3; float ws = pow(abs(n.x), 4.0);
-        vec3 c = (texture2D(tF, vF).rgb * wf + texture2D(tS, vS).rgb * ws) / (wf + ws);
+        vec3 cf = texture2D(tF, vF).rgb;
+        // 측면 이미지를 믿기 어려우면 옆면은 정면 이미지의 가장자리 색을 이어 쓴다
+        vec3 cs = useSide > 0.5 ? texture2D(tS, vS).rgb : texture2D(tF, vec2(fcx + (vF.x - fcx) * 0.95, vF.y)).rgb;
+        vec3 c = (cf * wf + cs * ws) / (wf + ws);
         // 위·아래를 보는 면은 이미지에 정보가 없어 몸통 색으로 칠한다
         // 정면 이미지 맨 위 띠는 윗면이 비스듬히 찍힌 부분이라 옆면에 그대로 입히면 구멍이 두 번 보인다 → 몸통 색으로
         float wt = max(smoothstep(0.55, 0.9, abs(n.y)), smoothstep(capFrom, capTo, vY)); c = mix(c, topC, wt);
@@ -142,4 +145,50 @@ export function hullMaterial(texFront, texSide, { opacity = 1, top = [0.92, 0.9,
     depthWrite: opacity >= 1,
     side: THREE.DoubleSide,
   });
+}
+
+/**
+ * 측면 이미지가 사실상 정면·뒷면인지 (AI 가 측면 대신 뒷면을 그리는 경우가 있다).
+ * 높이마다 폭 비율이 정면과 거의 같고, 전체 폭도 같으면 측면이 아닌 것으로 본다.
+ */
+export function sideLooksLikeFront(front, side) {
+  if (!front || !side) return false;
+  const wf = front.width / front.height, ws = side.width / side.height;
+  if (Math.abs(wf - ws) / wf > 0.06) return false;
+  let diff = 0, n = 0;
+  for (let i = 1; i < 20; i++) {
+    const f = rowAt(front, front.top + (front.height * i) / 20), s = rowAt(side, side.top + (side.height * i) / 20);
+    diff += Math.abs((f.r - f.l) / front.width - (s.r - s.l) / side.width); n++;
+  }
+  return diff / n < 0.03;
+}
+
+/** 측면 윤곽의 가로를 주어진 깊이 비율(깊이/높이)에 맞게 늘이거나 줄인다 (측면을 믿기 어려울 때) */
+export function rescaleSide(side, depthOverHeight) {
+  const k = (depthOverHeight * side.height) / side.width;
+  const rows = side.rows.map((r) => ({ y: r.y, l: side.cx + (r.l - side.cx) * k, r: side.cx + (r.r - side.cx) * k }));
+  return { ...side, rows, width: side.width * k, unreliable: true };
+}
+
+/** 외형 위로 튀어나온 작은 부품(윗면 분무구·버튼 등): 이미지에는 비스듬히만 보여 형상으로 따로 올린다 */
+export function topDetailParts(parts, overall) {
+  const H = Number(overall?.y) || 0;
+  const fx = Number(overall?.x) || 1, fz = Number(overall?.z) || 1;
+  if (!H) return [];
+  return (parts || []).filter((p) => {
+    if (!['SHELL', 'UI', 'OTHER'].includes(p.layer)) return false;
+    const top = (Number(p.position?.y) || 0) + (Number(p.size?.y) || 0) / 2;
+    const foot = ((Number(p.size?.x) || 0) * (Number(p.size?.z) || 0)) / (fx * fz);
+    return top >= H * 0.94 && foot > 0 && foot < 0.35;
+  });
+}
+
+/** 컨셉 부품을 외형 크기에 맞춰 옮긴다 (가로·깊이·높이 비율대로, 조금 안쪽으로) */
+export function fitPartsToHull(parts, overall, size, shrink = 1) {
+  const sx = size.x / (Number(overall?.x) || size.x), sy = size.y / (Number(overall?.y) || size.y), sz = size.z / (Number(overall?.z) || size.z);
+  return (parts || []).map((p) => ({
+    ...p,
+    size: { x: (Number(p.size?.x) || 0) * sx * shrink, y: (Number(p.size?.y) || 0) * sy, z: (Number(p.size?.z) || 0) * sz * shrink },
+    position: { x: (Number(p.position?.x) || 0) * sx, y: (Number(p.position?.y) || 0) * sy, z: (Number(p.position?.z) || 0) * sz },
+  }));
 }
