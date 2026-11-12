@@ -60,6 +60,7 @@ export function buildHullScene(m, parts, overall) {
   const material = hullMaterial(tF, tS, {
     top, capFrom: m.heightMm * 0.82, capTo: m.heightMm * 0.9,
     useSide: !m.side.unreliable, frontCx: m.front.cx / m.front.imgW,
+    frontHalf: m.front.width / 2 / m.front.imgW, sideCx: m.side.cx / m.side.imgW,
   });
   material.transparent = true;
   const shell = new THREE.Mesh(hull.geometry, material);

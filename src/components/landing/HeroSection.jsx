@@ -19,7 +19,7 @@ export default function HeroSection({ lang }) {
           <p className="mt-6 text-[17px] leading-[1.68] text-landing-ink3 max-w-[520px] [text-wrap:pretty]">{tx(hero.body, lang)}</p>
           <div className="lm-hero-actions flex flex-wrap gap-2.5 mt-8">
             <a href="#contact" className="bg-landing-ink hover:bg-landing-brand-hover text-white text-[15px] font-bold px-6 py-3.5 rounded-[10px] transition-colors">{tx(hero.cta1, lang)}</a>
-            <a href="#process" className="bg-white text-landing-ink border border-landing-line3 hover:border-landing-brand hover:text-landing-brand text-[15px] font-bold px-6 py-3.5 rounded-[10px] transition-colors">{tx(hero.cta2, lang)}</a>
+            <a href="#sketch" className="bg-white text-landing-ink border border-landing-line3 hover:border-landing-brand hover:text-landing-brand text-[15px] font-bold px-6 py-3.5 rounded-[10px] transition-colors">{tx(hero.cta2, lang)}</a>
           </div>
           <p className="mt-3.5 text-[13px] text-landing-muted2">{tx(hero.note, lang)}</p>
         </div>

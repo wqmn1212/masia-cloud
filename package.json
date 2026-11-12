@@ -51,7 +51,8 @@
     "check:inquiry-intake": "node --import ./scripts/fnmock/register.mjs scripts/check-inquiry-intake.mjs",
     "check:quote-alerts": "node scripts/check-quote-alerts.mjs",
     "check:proto-concept": "node --import ./scripts/fnmock/register.mjs scripts/check-proto-concept.mjs",
-    "check:concept-hull": "node scripts/check-concept-hull.mjs"
+    "check:concept-hull": "node scripts/check-concept-hull.mjs",
+    "check:sketch-trial": "node --import ./scripts/fnmock/register.mjs scripts/check-sketch-trial.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.60",

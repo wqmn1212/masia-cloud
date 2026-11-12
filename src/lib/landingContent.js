@@ -68,7 +68,7 @@ export const hero = {
     '韩国与中国的开发团队共同设计，并在中国当地亲自管理样机、模具、量产与 QC。已有成品的，也可以只委托量产。',
   ],
   cta1: ['개발·제조 문의하기', 'Start a project', '咨询开发·制造'],
-  cta2: ['진행 방식 보기', 'See how it works', '查看进行流程'],
+  cta2: ['스케치로 시안 받아보기', 'Try it: sketch to design', '用草图体验设计方案'],
   note: [
     '문의 접수 시 AEGIS Cloud 계정이 발급되어 견적 · QC · 물류 현황을 직접 확인할 수 있습니다.',
     'Submit a request and we issue an AEGIS Cloud account to track quotes, QC and shipping.',
