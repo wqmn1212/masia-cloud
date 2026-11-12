@@ -34,7 +34,11 @@ const BASE = 'Clean studio product photograph on a plain light gray seamless bac
 
 export const frontPrompt = (shape: string, style: string) => `${BASE} Pure orthographic straight-on FRONT view: camera level with the product center, no perspective tilt, no three-quarter angle. Keep the shape and proportions exactly as in the attached sketch: ${shape.slice(0, 1400)} Styling: ${style.slice(0, 300)}`;
 
-export const sidePrompt = (shape: string, style: string) => `${BASE} The exact same product as in the first reference image (same proportions, colors, materials and details), now seen from a pure orthographic RIGHT SIDE view at 90 degrees: camera level with the product center, the front of the product faces the left edge of the image. Shape reference: ${shape.slice(0, 1200)} Styling: ${style.slice(0, 300)}`;
+// 정사각에 가까운 제품은 측면 대신 뒷면을 그리는 일이 많아, 앞(버튼 쪽)이 왼쪽을 보고 앞·뒷면은 보이지 않게 못 박는다
+export const sidePrompt = (shape: string, style: string, retry = false) => `${BASE} The exact same product as in the first reference image (same proportions, colors, materials and details), turned 90 degrees so we see its RIGHT SIDE face in a pure orthographic side view: camera level with the product center. The FRONT face (the face that carries the main button or display in the reference) now points to the LEFT edge of the image and is seen only edge-on; the BACK face (ports, cables) points to the RIGHT edge and is also seen only edge-on. Do not show the front face or the back face toward the camera, and do not show any button or port facing the viewer.${retry ? ' IMPORTANT: a previous attempt showed the back or front instead of the side. Show only the plain side face; any front button may appear only as a tiny bump on the left silhouette edge.' : ''} Shape reference: ${shape.slice(0, 1200)} Styling: ${style.slice(0, 300)}`;
+
+/** 측면 이미지가 정말 측면인지: 분석 결과(cleanVision)의 두 번째 이미지에 원근이 강하지 않은 SIDE 시점이 있어야 한다 */
+export const isSideView = (vision: any, index = 1) => (vision?.images?.[index]?.views || []).some((v: any) => v.view === 'SIDE' && v.perspective !== 'HIGH');
 
 /** 분석 결과(cleanVision)에서 이미지별 정면 비율(폭/높이). 원근이 강하거나 정면 시점이 없으면 null */
 export function frontRatios(vision: any) {
