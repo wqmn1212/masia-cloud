@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, ClipboardCheck, Sparkles } from 'lucide-react';
+import { ArrowLeft, Loader2, ClipboardCheck, Sparkles, Workflow } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
@@ -24,7 +24,9 @@ export default function PrototypeDetail() {
   const { projectId } = useParams();
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [tab, setTab] = useState('req');
+  const [params] = useSearchParams();
+  // ?tab=viewer 처럼 주소로 탭을 열 수 있다 (개발 워크벤치의 바로 가기)
+  const [tab, setTab] = useState(() => (TABS.some(([k]) => k === params.get('tab')) ? params.get('tab') : 'req'));
   const { data: project, isLoading, error } = useProtoProject(projectId);
   const { data: versions = [] } = useProtoVersions(projectId);
   const { data: tests = [] } = useProtoTests(projectId);
@@ -48,6 +50,7 @@ export default function PrototypeDetail() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline"><Link to={`/prototypes/${project.id}/concept`}><Sparkles className="w-4 h-4" />컨셉 스튜디오 (3D 프리뷰)</Link></Button>
+            <Button asChild variant="outline"><Link to={`/prototypes/${project.id}/develop`}><Workflow className="w-4 h-4" />개발 워크벤치 (3D 도면·회로·블루투스)</Link></Button>
             <Button asChild><Link to={`/prototypes/${project.id}/review`}><ClipboardCheck className="w-4 h-4" />설계 검토 워크스페이스</Link></Button>
           </div>
         </div>

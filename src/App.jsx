@@ -70,6 +70,7 @@ const Prototypes = lazy(() => import('@/pages/Prototypes'));
 const PrototypeDetail = lazy(() => import('@/pages/PrototypeDetail'));
 const PrototypeReview = lazy(() => import('@/pages/PrototypeReview'));
 const PrototypeConcept = lazy(() => import('@/pages/PrototypeConcept'));
+const PrototypeDevelop = lazy(() => import('@/pages/PrototypeDevelop'));
 const CircuitLab = lazy(() => import('@/pages/CircuitLab'));
 
 const Spinner = () => (
@@ -174,6 +175,7 @@ const AuthenticatedApp = () => {
         <Route path="/prototypes/:projectId" element={<PrototypeDetail />} />
         <Route path="/prototypes/:projectId/review" element={<PrototypeReview />} />
         <Route path="/prototypes/:projectId/concept" element={<PrototypeConcept />} />
+        <Route path="/prototypes/:projectId/develop" element={<PrototypeDevelop />} />
         <Route path="/circuit-lab" element={<CircuitLab />} />
         <Route path="/agreements" element={<Agreements />} />
         <Route path="/logistics-rates" element={<LogisticsRates />} />

@@ -120,6 +120,10 @@
       "type": "object",
       "description": "PCB \ubd80\ud488 \ud655\uc815 {version_id, version_no, rows[{ref, name, part_no, manufacturer, qty, comment, footprint, lcsc, lcsc_type: BASIC|EXTENDED|\"\"}], updated_by_name, updated_at}"
     },
+    "dev": {
+      "type": "object",
+      "description": "개발 워크벤치 설정 {device_name, mcu: esp32c3|esp32s3|esp32, supply_v, uuid_base, features[{id, kind, name, pin, uuid, note}], cad{shape, width, depth, height, wall, corner, pocket, concept_id}, updated_at, updated_by_name}"
+    },
     "open_risk_count": {
       "type": "number",
       "default": 0,
