@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { actorName, errorText } from '@/lib/prototypeApi';
+import ProjectCircuits from '@/components/circuit/ProjectCircuits';
 import { LCSC_TYPES, isLcsc, isSmt, jlcBomRows, lcscSearchUrl, normalizeLcsc, pcbSummary, seedPcbRows, toCsv } from '@/lib/pcb';
 
 // PCB 부품 확정: 승인 설계의 부품표마다 LCSC 부품번호·실장 모양을 확정하고 JLCPCB 양식 부품표로 내보낸다.
@@ -43,7 +44,7 @@ export default function PcbTab({ project, versions, user, onChanged }) {
     if (gaps || sum.noFootprint) toast({ title: '빈 칸이 있는 채로 내보냈습니다', description: `LCSC 번호 미확정 ${gaps}개 · 실장 모양 빈칸 ${sum.noFootprint}개 — 공장에 보내기 전에 채워 주세요.` });
   };
 
-  if (!v) return <div className="rounded-xl border border-dashed bg-card p-10 text-center text-body text-muted-foreground">설계 버전을 승인하면 그 부품표로 PCB 부품을 확정할 수 있습니다.</div>;
+  if (!v) return <div className="space-y-4"><ProjectCircuits project={project} /><div className="rounded-xl border border-dashed bg-card p-10 text-center text-body text-muted-foreground">설계 버전을 승인하면 그 부품표로 PCB 부품을 확정할 수 있습니다.</div></div>;
 
   const tiles = [
     ['LCSC 번호 확정 (SMT 대상)', `${sum.confirmed} / ${sum.total}`, sum.confirmed < sum.total],
@@ -56,6 +57,7 @@ export default function PcbTab({ project, versions, user, onChanged }) {
 
   return (
     <div className="space-y-4">
+      <ProjectCircuits project={project} />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {tiles.map(([l, n, warn]) => (
           <div key={l} className="rounded-xl border bg-card p-4"><p className="text-caption text-muted-foreground">{l}</p><p className={`mt-1 text-2xl font-bold tabular-nums ${warn ? 'text-warning-text' : ''}`}>{n}</p></div>
