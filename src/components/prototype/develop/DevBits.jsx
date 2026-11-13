@@ -54,10 +54,14 @@ export const CodeView = ({ text, maxH = 'max-h-80' }) => (
   <pre className={`${maxH} overflow-auto rounded-lg border bg-secondary/60 p-3 font-mono text-micro leading-relaxed whitespace-pre`}>{text}</pre>
 );
 
-export const Field = ({ label, children, hint }) => (
-  <label className="block space-y-1 min-w-0">
-    <span className="block text-caption font-medium text-muted-foreground">{label}</span>
-    {children}
-    {hint && <span className="block text-micro text-muted-foreground">{hint}</span>}
-  </label>
-);
+// group: 여러 컨트롤(슬라이더·버튼)을 묶을 때는 label 대신 div 로 (label 은 안의 첫 컨트롤만 가리킨다)
+export const Field = ({ label, children, hint, group = false }) => {
+  const Tag = group ? 'div' : 'label';
+  return (
+    <Tag className="block space-y-1 min-w-0" {...(group ? { role: 'group', 'aria-label': typeof label === 'string' ? label : undefined } : {})}>
+      <span className="block text-caption font-medium text-muted-foreground">{label}</span>
+      {children}
+      {hint && <span className="block text-micro text-muted-foreground">{hint}</span>}
+    </Tag>
+  );
+};

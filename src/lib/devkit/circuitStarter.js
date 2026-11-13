@@ -12,6 +12,8 @@ const BLOCKS = {
     P('resistor', 8, 0, 8, 4, { r: 10000 }), P('switch', 8, 4, 8, 8, { closed: false }), W(8, 8, 0, 8),
     P('probe', 8, 4, 11, 4),
   ],
+  tilt: (P, W) => BLOCKS.button(P, W),
+  lid: (P, W) => BLOCKS.button(P, W),
   led: (P, W, f) => [
     P('pulse', 0, 8, 0, 0, { high: 3.3, low: 0, freq: f.freq, duty: 0.5 }), P('ground', 0, 8, 0, 9), W(0, 0, 8, 0),
     P('resistor', 8, 0, 8, 4, { r: 330 }), P('led', 8, 4, 8, 8, { color: 'green' }), W(8, 8, 0, 8),

@@ -6,6 +6,8 @@ import { randomBase, uuidAt, isUuid, buildGatt, pinUuids, encodeValue, decodeVal
 import { starterCircuit, featureBlock, hasBlock } from '../src/lib/devkit/circuitStarter.js';
 import { defaultCadParams, topCutouts, solidcraftScript, mcpBrief, conceptBounds, cadParts } from '../src/lib/devkit/solidcraft.js';
 import { Simulator } from '../src/lib/circuit/solver.js';
+import { defaultRules, applyPress, effectiveLevels, describeRule } from '../src/lib/devkit/rules.js';
+import { createSim, stepSim, setInput, appWrite, appValues, runtimeHours, ocv } from '../src/lib/devkit/deviceSim.js';
 import { operatingPoint } from '../src/lib/circuit/analysis.js';
 import { buildTopology } from '../src/lib/circuit/topology.js';
 
@@ -222,6 +224,133 @@ ok('컨셉 부품 → 기능 추정: 이름 우선, 기판 설명은 무시', ()
     { name: '물탱크', layer: 'SHELL', role: '배터리 없음' },
   ]);
   assert.deepEqual(got.map((f) => [f.kind, f.name]), [['button', '전원 및 모드 버튼'], ['led', '상태 표시등'], ['motor', '초음파 진동자']]);
+});
+
+// ── 동작 규칙·동작 시뮬레이션 ──
+const kit = ['button', 'motor', 'heater', 'temp', 'tilt', 'lid', 'led', 'battery'].map((k) => makeFeature(k));
+const fid = (k) => kit.find((f) => f.kind === k).id;
+const kitRules = defaultRules(kit);
+
+ok('기본 규칙: 버튼→모터 단계, 뚜껑·기울기·배터리→구동부 끄기, 온도→히터 끄기, 표시등', () => {
+  const text = kitRules.map((r) => describeRule(r, kit));
+  assert.deepEqual(text, [
+    '버튼 입력 을(를) 누르면 → DC 모터 (속도) 단계 바꾸기',
+    '뚜껑 열림 감지 이(가) 열려 있으면 → 모든 구동부 끄기',
+    '기울기 감지 이(가) 기울어지면 → 모든 구동부 끄기',
+    '온도 센서 (NTC) 이(가) 70°C 이상이면 → 히터 (세기) 끄기',
+    '배터리 잔량 이(가) 5% 이하이면 → 모든 구동부 끄기',
+    '모든 구동부 이(가) 동작하면 → 표시 LED (밝기) 켜기',
+  ]);
+});
+
+ok('버튼 규칙: 단계 바꾸기 0→40→70→100→0, 켜고 끄기', () => {
+  let lv = {};
+  const seq = [];
+  for (let i = 0; i < 5; i++) { lv = applyPress(fid('button'), kitRules, kit, lv); seq.push(lv[fid('motor')]); }
+  assert.deepEqual(seq, [40, 70, 100, 0, 40]);
+  const t = [{ id: 'x', type: 'event', src: fid('button'), dst: fid('heater'), action: 'toggle' }];
+  assert.equal(applyPress(fid('button'), t, kit, {})[fid('heater')], 100);
+  assert.equal(applyPress(fid('button'), t, kit, { [fid('heater')]: 50 })[fid('heater')], 0);
+});
+
+ok('안전 조건: 뚜껑이 열리면 구동부만 꺼지고 표시등은 구동부를 따라 꺼진다', () => {
+  const lv = { [fid('motor')]: 70, [fid('heater')]: 100 };
+  const closed = effectiveLevels(lv, kitRules, kit, { [fid('lid')]: false, [fid('temp')]: 25, [fid('battery')]: 80 });
+  assert.equal(closed.out[fid('motor')], 70); assert.equal(closed.out[fid('led')], 100);
+  const open = effectiveLevels(lv, kitRules, kit, { [fid('lid')]: true, [fid('temp')]: 25, [fid('battery')]: 80 });
+  assert.equal(open.out[fid('motor')], 0); assert.equal(open.out[fid('heater')], 0); assert.equal(open.out[fid('led')], 0);
+  const hot = effectiveLevels(lv, kitRules, kit, { [fid('temp')]: 71, [fid('battery')]: 80 });
+  assert.equal(hot.out[fid('heater')], 0); assert.equal(hot.out[fid('motor')], 70);
+});
+
+const press = (s, id) => { setInput(s, { pressed: { [id]: true } }); stepSim(s, 0.1); setInput(s, { pressed: {} }); stepSim(s, 0.1); };
+
+ok('시뮬레이션: 버튼으로 모터가 돌고, 넘어지면 멈췄다가 세우면 다시 돈다 (배터리)', () => {
+  const s = createSim({ features: kit, rules: kitRules, supply_v: 5 }, { source: 'battery', battery_mah: 2000, soc0: 80 });
+  press(s, fid('button'));
+  stepSim(s, 2);
+  assert.equal(s.out[fid('motor')], 40);
+  near(s.phys.motor[fid('motor')], 0.4, 0.02, '모터 속도');
+  assert.ok(s.rails.i > 0.1 && s.rails.i < 0.3, `전류 ${s.rails.i}`);
+  setInput(s, { tilt: { pitch: 80, roll: 0 } }); stepSim(s, 0.5);
+  assert.equal(s.out[fid('motor')], 0);
+  assert.ok(s.events.some((e) => e.kind === 'safe'));
+  setInput(s, { tilt: { pitch: 10, roll: 5 } }); stepSim(s, 0.5);
+  assert.equal(s.out[fid('motor')], 40, '세우면 요청값으로 돌아온다');
+  assert.equal(s.mcu.resets, 0);
+  const h = runtimeHours(s);
+  assert.ok(h > 5 && h < 15, `사용 시간 ${h}`);
+});
+
+ok('기동 전류: 0.3 A 어댑터에 모터를 100 % 로 켜면 전압이 무너져 MCU 가 리셋되고, 출력이 꺼진 채 다시 부팅', () => {
+  const full = [{ id: 'on', type: 'event', src: fid('button'), dst: fid('motor'), action: 'on' }];
+  const s = createSim({ features: kit, rules: full, supply_v: 5 }, { source: 'adapter', adapter_v: 5, adapter_a: 0.3 });
+  stepSim(s, 0.2);
+  press(s, fid('button'));
+  stepSim(s, 1);
+  assert.ok(s.mcu.resets >= 1, '리셋');
+  assert.ok(s.warnings['brownout-limit'], '한도 초과 경고');
+  assert.equal(s.mcu.on, true, '다시 부팅');
+  assert.equal(s.out[fid('motor')] || 0, 0, '부팅 후 꺼진 상태');
+  // 1.5 A 어댑터면 리셋 없음
+  const ok2 = createSim({ features: kit, rules: full, supply_v: 5 }, { source: 'adapter', adapter_v: 5, adapter_a: 1.5 });
+  press(ok2, fid('button')); stepSim(ok2, 1);
+  assert.equal(ok2.mcu.resets, 0);
+});
+
+ok('배터리 잔량이 적을 때 히터를 켜면 전압 강하로 리셋 (승압 5 W)', () => {
+  const f2 = kit.filter((f) => f.kind !== 'battery');
+  const s = createSim({ features: f2, rules: [], supply_v: 5 }, { source: 'battery', soc0: 3 });
+  s.levels = { [fid('heater')]: 100 };
+  stepSim(s, 0.5);
+  assert.ok(s.mcu.resets >= 1);
+  assert.ok(s.warnings['brownout-low']);
+  near(ocv(50), 3.78, 1e-9, 'OCV 50 %');
+});
+
+ok('히터 온도: 규칙이 없으면 90 °C 넘게 올라 경고, 70 °C 규칙이 있으면 그 근처에서 끊긴다', () => {
+  const run = (rules) => { const s = createSim({ features: kit, rules, supply_v: 5 }, { source: 'usb', usb_limit: 3, ambient: 25 }); s.levels = { [fid('heater')]: 100 }; let max = 0; for (let i = 0; i < 1500; i++) { stepSim(s, 1); max = Math.max(max, s.phys.heaterT); } return { s, max }; };
+  const free = run([]);
+  assert.ok(free.max > 90 && free.max < 95, `최고 ${free.max}`);
+  assert.ok(free.s.warnings.hot);
+  const guarded = run(kitRules);
+  assert.ok(guarded.max < 72, `최고 ${guarded.max}`);
+  assert.ok(!guarded.s.warnings.hot);
+});
+
+ok('설계 점검: 기울기 감지가 없으면 넘어져도 계속 도는 것을 알린다', () => {
+  const f3 = [makeFeature('button'), makeFeature('motor')];
+  const s = createSim({ features: f3, rules: defaultRules(f3), supply_v: 5 }, { source: 'usb' });
+  press(s, f3[0].id);
+  setInput(s, { tilt: { pitch: 85, roll: 0 } }); stepSim(s, 0.3);
+  assert.ok(s.warnings.fallen);
+  assert.ok(s.out[f3[1].id] > 0);
+});
+
+ok('앱 명령: 연결됐을 때만 쓰이고, 안전 조건이 걸리면 실제 출력은 0', () => {
+  const s = createSim({ features: kit, rules: kitRules, supply_v: 5 }, { source: 'battery', usb_plugged: true });
+  stepSim(s, 0.1);
+  assert.equal(appWrite(s, fid('motor'), 60), false);
+  setInput(s, { app: true });
+  assert.equal(appWrite(s, fid('motor'), 60), true);
+  stepSim(s, 0.1);
+  assert.equal(appValues(s)[fid('motor')], 60);
+  setInput(s, { lid: 1 }); stepSim(s, 0.1);
+  assert.equal(appValues(s)[fid('motor')], 0);
+  assert.equal(appValues(s)[fid('lid')], 1);
+  // USB 전원인데 배터리 잔량 기능이 있으면 0 % 로 읽혀 막히고 경고
+  const u = createSim({ features: kit, rules: kitRules, supply_v: 5 }, { source: 'usb' });
+  setInput(u, { app: true }); stepSim(u, 0.1); appWrite(u, fid('motor'), 60); stepSim(u, 0.1);
+  assert.equal(appValues(u)[fid('motor')], 0);
+  assert.ok(u.warnings.nobatt);
+});
+
+ok('펌웨어: 동작 규칙이 C++ 로 들어간다', () => {
+  const d = pinUuids({ uuid_base: randomBase(), device_name: 'K', mcu: 'esp32s3', features: assignPins(kit, 'esp32s3'), rules: kitRules });
+  const code = firmwareSketch(d);
+  ['void refreshOutputs()', 'onPress', 'nextStep', '>= 700', '<= 5', '동작 중 표시', 'digitalRead(PIN_F6_LID) == HIGH'].forEach((t) => assert.ok(code.includes(t), t));
+  const count = (ch) => code.split(ch).length - 1;
+  assert.equal(count('{'), count('}'));
 });
 
 console.log(`\n${n}개 검산 통과`);

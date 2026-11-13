@@ -61,7 +61,7 @@ export default function BleStep({ project, dev, change, dirty }) {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="ESP32 펌웨어 뼈대" icon={FileCode2} tag={(MCUS[dev.mcu] || MCUS.esp32c3).board}
           actions={<><CopyButton text={fw} /><DownloadButton text={fw} name={`${base}.ino`} variant="default" /></>}>
-          <p className="text-caption text-muted-foreground">Arduino IDE (ESP32 보드 패키지 3.x) 에서 바로 올릴 수 있는 스케치입니다. 핀 설정·블루투스 광고·쓰기 처리·센서 알림까지 들어 있고, 동작 로직은 TODO 자리에 덧붙입니다.</p>
+          <p className="text-caption text-muted-foreground">Arduino IDE (ESP32 보드 패키지 3.x) 에서 바로 올릴 수 있는 스케치입니다. 핀 설정·블루투스 광고·센서 알림과 함께, 동작 시뮬레이션에서 정한 동작 규칙(버튼 동작·안전 조건·표시등)이 그대로 들어 있습니다. 그 밖의 로직은 TODO 자리에 덧붙입니다.</p>
           <CodeView text={fw} maxH="max-h-[440px]" />
         </Card>
         <Card title="앱 개발팀용 통신 문서" icon={FileText}

@@ -122,7 +122,7 @@
     },
     "dev": {
       "type": "object",
-      "description": "개발 워크벤치 설정 {device_name, mcu: esp32c3|esp32s3|esp32, supply_v, uuid_base, features[{id, kind, name, pin, uuid, note}], cad{shape, width, depth, height, wall, corner, pocket, concept_id}, updated_at, updated_by_name}"
+      "description": "개발 워크벤치 설정 {device_name, mcu: esp32c3|esp32s3|esp32, supply_v, uuid_base, features[{id, kind, name, pin, uuid, part_id, note}], cad{shape, width, depth, height, wall, corner, pocket, concept_id}, rules[{id, type: event|guard|show, src, dst, action, cond, value}], power{source, usb_limit, adapter_v, adapter_a, battery_mah, soc0, usb_plugged, ambient}, lid_part_id, updated_at, updated_by_name}"
     },
     "open_risk_count": {
       "type": "number",

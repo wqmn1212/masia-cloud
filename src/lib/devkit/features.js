@@ -56,6 +56,20 @@ export const FEATURE_KINDS = {
     bom: [['릴레이 5 V', 1], ['NPN S8050', 1], ['저항 1 kΩ (베이스)', 1], ['다이오드 1N4148', 1]],
     housing: { kind: 'none' },
   },
+  tilt: {
+    label: '기울기 감지', group: 'in', pin: 'gpio',
+    block: '볼 타입 기울기 스위치(SW-520D) + 내부 풀업. 바로 서 있으면 닫힘(0 V), 약 45° 넘게 기울면 열림(3.3 V).',
+    ble: { access: ['read', 'notify'], type: 'u8', unit: '', min: 0, max: 1, desc: '1 = 기울어짐·넘어짐, 0 = 바로 섬' },
+    bom: [['기울기 스위치 SW-520D', 1]],
+    housing: { kind: 'none' },
+  },
+  lid: {
+    label: '뚜껑 열림 감지', group: 'in', pin: 'gpio',
+    block: '리드 스위치 + 뚜껑 쪽 자석 + 내부 풀업. 닫히면 0 V, 열면 3.3 V.',
+    ble: { access: ['read', 'notify'], type: 'u8', unit: '', min: 0, max: 1, desc: '1 = 열림, 0 = 닫힘' },
+    bom: [['리드 스위치 (또는 홀 센서)', 1], ['네오디뮴 자석 Ø5×2', 1]],
+    housing: { kind: 'mount', note: '리드 스위치·자석 고정 리브' },
+  },
   temp: {
     label: '온도 센서 (NTC)', group: 'in', pin: 'adc',
     block: '3.3 V → 10 kΩ → (측정점) → NTC 10 kΩ → GND. 측정점 전압으로 온도를 계산합니다.',
@@ -153,6 +167,8 @@ export function featureBom(features, mcu = 'esp32c3') {
 
 // 컨셉 부품 이름 → 기능 추정 (미팅에서 만든 컨셉으로 기능 목록을 빨리 시작하려고)
 const HINTS = [
+  [/기울|전도|tilt/i, 'tilt'],
+  [/뚜껑\s*(감지|센서)|리드|reed|lid\s*sensor/i, 'lid'],
   [/버튼|스위치|button|switch|key/i, 'button'],
   [/LED|표시등|라이트|조명|light|indicator/i, 'led'],
   [/모터|팬|펌프|motor|fan|pump/i, 'motor'],
@@ -175,7 +191,25 @@ export function suggestFeatures(parts, existing = []) {
     const name = String(p.name || FEATURE_KINDS[hit[1]].label).slice(0, 40);
     if (have.has(`${hit[1]}:${name}`)) return;
     have.add(`${hit[1]}:${name}`);
-    out.push(makeFeature(hit[1], name));
+    out.push({ ...makeFeature(hit[1], name), part_id: p.id || null });
   });
   return out;
+}
+
+// 출력(구동부) 종류별 값: 켰을 때 값, 단계 바꾸기 순서
+export const OUTPUT_LEVELS = {
+  led: { on: 100, steps: [0, 30, 100] },
+  motor: { on: 100, steps: [0, 40, 70, 100] },
+  heater: { on: 100, steps: [0, 50, 100] },
+  buzzer: { on: 2000, steps: [0, 1000, 2000] },
+  servo: { on: 180, steps: [0, 90, 180] },
+  relay: { on: 1, steps: [0, 1] },
+};
+export const isOutput = (kind) => !!OUTPUT_LEVELS[kind];
+// 넘어짐·뚜껑 열림 같은 안전 조건에서 "모든 구동부"로 함께 끄는 대상 (표시등·부저는 알림으로 남긴다)
+export const DRIVE_KINDS = ['motor', 'heater', 'relay'];
+
+/** 컨셉 부품 중 뚜껑으로 보이는 것 (외장, 이름에 뚜껑·커버·상부·lid) */
+export function findLidPart(parts) {
+  return (parts || []).find((p) => p.layer === 'SHELL' && /뚜껑|커버|상부|상단|lid|cover|cap/i.test(p.name || '')) || null;
 }

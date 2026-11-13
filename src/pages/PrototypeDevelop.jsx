@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, Save, Workflow, Sparkles, Box, ListChecks, CircuitBoard, Bluetooth, FlaskConical, Check } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Workflow, Sparkles, Box, ListChecks, CircuitBoard, Bluetooth, FlaskConical, Check, Activity } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
@@ -16,6 +16,7 @@ import FeaturesStep from '@/components/prototype/develop/FeaturesStep';
 import CircuitStep from '@/components/prototype/develop/CircuitStep';
 import BleStep from '@/components/prototype/develop/BleStep';
 import TestStep from '@/components/prototype/develop/TestStep';
+import SimStep from '@/components/prototype/develop/SimStep';
 
 const STEPS = [
   { key: 'concept', label: '스케치·컨셉', icon: Sparkles },
@@ -23,6 +24,7 @@ const STEPS = [
   { key: 'features', label: '기능 정의', icon: ListChecks },
   { key: 'circuit', label: '회로 설계', icon: CircuitBoard },
   { key: 'ble', label: '블루투스·앱', icon: Bluetooth },
+  { key: 'sim', label: '동작 시뮬레이션', icon: Activity },
   { key: 'test', label: '시험·양산', icon: FlaskConical },
 ];
 
@@ -75,6 +77,7 @@ export default function PrototypeDevelop() {
     features: (project.dev?.features || []).length > 0,
     circuit: circuits.length > 0,
     ble: !!project.dev?.uuid_base && (project.dev?.features || []).length > 0,
+    sim: Array.isArray(project.dev?.rules),
     test: ['TEST', 'IMPROVE'].includes(project.stage),
   };
   const problems = pinProblems(features, view.mcu);
@@ -95,7 +98,7 @@ export default function PrototypeDevelop() {
         </div>
       </div>
 
-      <nav className="grid grid-cols-3 gap-2 md:grid-cols-6" aria-label="개발 단계">
+      <nav className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7" aria-label="개발 단계">
         {STEPS.map((s, i) => {
           const Icon = s.icon;
           const active = s.key === step;
@@ -118,6 +121,7 @@ export default function PrototypeDevelop() {
       {step === 'features' && <FeaturesStep {...props} />}
       {step === 'circuit' && <CircuitStep {...props} />}
       {step === 'ble' && <BleStep {...props} />}
+      {step === 'sim' && <SimStep {...props} />}
       {step === 'test' && <TestStep {...props} />}
     </div>
   );

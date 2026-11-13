@@ -13,6 +13,7 @@ export default function TestStep({ project, concept, circuits, dev }) {
     ['기능 목록 저장', (project.dev?.features || []).length > 0],
     ['회로 시작안·시뮬레이션', circuits.length > 0],
     ['블루투스 UUID 고정', !!project.dev?.uuid_base],
+    ['동작 규칙 저장 (동작 시뮬레이션)', Array.isArray(project.dev?.rules)],
     ['펌웨어 버전 기록 (제작 탭)', !!project.build?.firmware_version],
   ];
   const links = [
