@@ -23,9 +23,9 @@ export const PARTS = {
   acv: { label: '교류 전원', group: '전원', terminals: 2, prefix: 'V', defaults: { amp: 5, freq: 60, offset: 0, phase: 0 }, fields: [['amp', '진폭', 'V'], ['freq', '주파수', 'Hz'], ['offset', '직류 성분', 'V'], ['phase', '위상', '°']] },
   pulse: { label: '펄스(PWM) 전원', group: '전원', terminals: 2, prefix: 'V', defaults: { high: 5, low: 0, freq: 1000, duty: 0.5 }, fields: [['high', '높은 전압', 'V'], ['low', '낮은 전압', 'V'], ['freq', '주파수', 'Hz'], ['duty', '듀티비', '0~1']] },
   dci: { label: '전류원', group: '전원', terminals: 2, prefix: 'I', defaults: { i: 0.01 }, fields: [['i', '전류', 'A']] },
-  diode: { label: '다이오드', group: '반도체', terminals: 2, prefix: 'D', defaults: { is: 1e-14, n: 1 }, fields: [['is', '포화 전류', 'A'], ['n', '이상 계수', '']] },
-  zener: { label: '제너 다이오드', group: '반도체', terminals: 2, prefix: 'D', defaults: { is: 1e-14, n: 1, vz: 5.1 }, fields: [['vz', '제너 전압', 'V']] },
-  led: { label: 'LED', group: '반도체', terminals: 2, prefix: 'D', defaults: { color: 'red', imax: 0.02 }, fields: [['color', '색', '', 'select', LED_COLORS], ['imax', '정격 전류', 'A']] },
+  diode: { label: '다이오드', group: '반도체', terminals: 2, prefix: 'D', defaults: { is: 1e-14, n: 1, rs: 0 }, fields: [['is', '포화 전류', 'A'], ['n', '이상 계수', ''], ['rs', '직렬 저항', 'Ω']] },
+  zener: { label: '제너 다이오드', group: '반도체', terminals: 2, prefix: 'D', defaults: { is: 1e-14, n: 1, vz: 5.1, rs: 0 }, fields: [['vz', '제너 전압', 'V'], ['rs', '직렬 저항', 'Ω']] },
+  led: { label: 'LED', group: '반도체', terminals: 2, prefix: 'D', defaults: { color: 'red', imax: 0.02, rs: 0 }, fields: [['color', '색', '', 'select', LED_COLORS], ['imax', '정격 전류', 'A'], ['rs', '직렬 저항', 'Ω']] },
   npn: { label: 'NPN 트랜지스터', group: '반도체', terminals: 3, prefix: 'Q', defaults: { beta: 100, is: 1e-14, flip: false }, fields: [['beta', '전류 증폭률(β)', ''], ['flip', '좌우 뒤집기', '', 'bool']] },
   pnp: { label: 'PNP 트랜지스터', group: '반도체', terminals: 3, prefix: 'Q', defaults: { beta: 100, is: 1e-14, flip: false }, fields: [['beta', '전류 증폭률(β)', ''], ['flip', '좌우 뒤집기', '', 'bool']] },
   nmos: { label: 'N채널 MOSFET', group: '반도체', terminals: 3, prefix: 'M', defaults: { vth: 1.5, kp: 0.2, lambda: 0.01, body: true, flip: false }, fields: [['vth', '문턱 전압', 'V'], ['kp', '전달 계수', 'A/V²'], ['body', '바디 다이오드', '', 'bool'], ['flip', '좌우 뒤집기', '', 'bool']] },
@@ -119,6 +119,7 @@ export function formatSI(v, unit = '', digits = 3) {
 /** 부품 한 줄 설명 (화면 라벨) */
 export function valueLabel(p) {
   const q = p.props || {};
+  if (q.model) return String(q.model);
   switch (p.type) {
     case 'resistor': return formatSI(q.r, 'Ω');
     case 'capacitor': return formatSI(q.c, 'F');
@@ -131,4 +132,16 @@ export function valueLabel(p) {
     case 'zener': return `${formatSI(q.vz, 'V')}`;
     default: return '';
   }
+}
+
+/** 부품 참조 이름 (R1, C1, Q1 …): 회로 안 순서대로 */
+export function refNames(parts) {
+  const count = {}, out = new Map();
+  (parts || []).forEach((p) => {
+    const pre = PARTS[p.type]?.prefix;
+    if (!pre) return;
+    count[pre] = (count[pre] || 0) + 1;
+    out.set(p.id, `${pre}${count[pre]}`);
+  });
+  return out;
 }

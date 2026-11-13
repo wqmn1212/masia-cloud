@@ -54,11 +54,11 @@ export function hitTest(parts, gx, gy) {
  * 회로도 캔버스. 그리기와 마우스 조작을 맡는다.
  * 시뮬레이션은 simRef.current, 실행 여부·속도는 live ref 로 받아 매 프레임 진행한다.
  */
-export default function CircuitCanvas({ circuit, onChange, selectedId, onSelect, tool, setTool, simRef, live, recorder, viewRef, onFrame }) {
+export default function CircuitCanvas({ circuit, onChange, selectedId, onSelect, tool, setTool, simRef, live, recorder, viewRef, onFrame, marks = [], showLive = true }) {
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
   const props = useRef({});
-  props.current = { circuit, onChange, selectedId, onSelect, tool, setTool };
+  props.current = { circuit, onChange, selectedId, onSelect, tool, setTool, marks, showLive };
   const drag = useRef(null);
   const hover = useRef(null);
   const phases = useRef(new Map());
@@ -107,8 +107,9 @@ export default function CircuitCanvas({ circuit, onChange, selectedId, onSelect,
     const dpr = window.devicePixelRatio || 1;
     const view = viewRef.current;
     const theme = themeOf(isDark());
-    const { circuit: c, selectedId: sel, tool: tl } = props.current;
-    const sim = simRef.current;
+    const { circuit: c, selectedId: sel, tool: tl, showLive: live2 } = props.current;
+    // 정밀 해석 중에는 실시간 계산 값(멈춘 상태)을 섞어 보이지 않는다
+    const sim = live2 === false ? null : simRef.current;
     const W = cv.width / dpr, H = cv.height / dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = theme.bg; ctx.fillRect(0, 0, W, H);
@@ -179,6 +180,29 @@ export default function CircuitCanvas({ circuit, onChange, selectedId, onSelect,
         });
       }
     }
+
+    // 정밀 해석 그래프에 올린 것 표시: 전류는 부품 테두리, 전압은 깃발
+    const mk = props.current.marks || [];
+    mk.filter((m) => m.partId).forEach((m) => {
+      const part = parts.find((p) => p.id === m.partId);
+      if (!part) return;
+      ctx.save(); ctx.strokeStyle = m.color; ctx.globalAlpha = 0.45; ctx.lineWidth = 10 * s; ctx.lineCap = 'round';
+      outline(part).forEach(([u, w]) => { const A = toScreen(view, u.x, u.y), B = toScreen(view, w.x, w.y); ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke(); });
+      ctx.restore();
+    });
+    mk.filter((m) => m.at).forEach((m) => {
+      const pt = toScreen(view, m.at.x, m.at.y);
+      ctx.save();
+      ctx.font = `600 ${Math.round(11 * s)}px ui-monospace, monospace`;
+      const w = ctx.measureText(m.label).width + 10 * s, h = 17 * s;
+      const x = pt.x + 6 * s, y = pt.y - h - 6 * s;
+      ctx.fillStyle = m.color; ctx.globalAlpha = 0.95;
+      ctx.beginPath(); ctx.moveTo(pt.x, pt.y); ctx.lineTo(x, y + h); ctx.lineTo(x + 6 * s, y + h); ctx.closePath(); ctx.fill();
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#fff'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+      ctx.fillText(m.label, x + 5 * s, y + h / 2);
+      ctx.restore();
+    });
 
     // 끌고 있는 부품·새로 놓을 부품 미리보기
     ctx.save(); ctx.globalAlpha = 0.65;

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CircuitBoard, Play, Pause, RotateCcw, Save, FolderOpen, Download, Upload, Undo2, Redo2, FilePlus2, AlertTriangle, Loader2 } from 'lucide-react';
+import { CircuitBoard, Play, Pause, RotateCcw, Save, FolderOpen, Download, Upload, Undo2, Redo2, FilePlus2, AlertTriangle, Loader2, Activity, LineChart } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -10,10 +10,11 @@ import { toast } from '@/components/ui/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CircuitCanvas, { fitView } from '@/components/circuit/CircuitCanvas';
 import { PartPalette, PropertiesPanel, ScopePanel } from '@/components/circuit/CircuitPanels';
+import AnalysisPanel, { defaultSettings, buildRequest, checkRequest, TRACE_COLORS } from '@/components/circuit/AnalysisPanel';
 import { Simulator } from '@/lib/circuit/solver';
 import { ScopeRecorder, traceLabel } from '@/lib/circuit/scope';
 import { EXAMPLES, exampleCircuit, emptyCircuit } from '@/lib/circuit/examples';
-import { PARTS, formatSI, newId } from '@/lib/circuit/parts';
+import { PARTS, formatSI, newId, refNames, terminals, TERMINAL_NAMES } from '@/lib/circuit/parts';
 import { toSpice } from '@/lib/circuit/spice';
 import { actorName, errorText } from '@/lib/prototypeApi';
 
@@ -57,6 +58,16 @@ export default function CircuitLab() {
   const [, setTick] = useState(0);
   const [scopeVersion, setScopeVersion] = useState(0);
   const [dirty, setDirty] = useState(false);
+  // 정밀 해석
+  const [mode, setMode] = useState('live'); // live | analysis
+  const [aSettings, setASettings] = useState(() => defaultSettings(exampleCircuit('led')));
+  const [aOut, setAOut] = useState(null);
+  const [aRunning, setARunning] = useState(false);
+  const [aProgress, setAProgress] = useState(0);
+  const [aCircuit, setACircuit] = useState(null); // 해석을 돌린 회로 (바뀌었는지 알리려고)
+  const [traces, setTraces] = useState([]);
+  const [probeOn, setProbeOn] = useState(true);
+  const workerRef = useRef(null);
 
   const simRef = useRef(null);
   const recorder = useMemo(() => new ScopeRecorder(), []);
@@ -137,7 +148,7 @@ export default function CircuitLab() {
       if (k === 'escape') { setTool('select'); return; }
       if (k === 'delete' || k === 'backspace') { e.preventDefault(); remove(); return; }
       if (k === 'r' && selected) { rotate(); return; }
-      if (k === ' ') { e.preventDefault(); setRunning((r) => !r); return; }
+      if (k === ' ') { e.preventDefault(); if (mode === 'live') setRunning((r) => !r); return; }
       if (SHORTCUT[k]) setTool(SHORTCUT[k]);
     };
     window.addEventListener('keydown', onKey);
@@ -158,6 +169,8 @@ export default function CircuitLab() {
     setRunning(true);
     recorder.traces.splice(0);
     setScopeVersion((v) => v + 1);
+    setASettings(defaultSettings(c));
+    setAOut(null); setTraces([]); setACircuit(null);
     setTimeout(() => fit(c.parts), 0);
   };
 
@@ -180,6 +193,90 @@ export default function CircuitLab() {
     recorder.clear();
     setScopeVersion((v) => v + 1);
   };
+
+  // ── 정밀 해석 ──
+  const refs = useMemo(() => refNames(circuit.parts), [circuit.parts]);
+  const nodeName = (n) => (n === 0 ? '0 (접지)' : `N${n}`);
+  const stopWorker = () => { workerRef.current?.terminate(); workerRef.current = null; };
+  useEffect(() => stopWorker, []);
+
+  const runAnalysisNow = () => {
+    const req = buildRequest(aSettings);
+    const bad = checkRequest(req);
+    if (bad) { setAOut({ runs: [], error: bad }); return; }
+    stopWorker();
+    const w = new Worker(new URL('../lib/circuit/analysis.worker.js', import.meta.url), { type: 'module' });
+    workerRef.current = w;
+    const id = Date.now();
+    const snap = JSON.parse(JSON.stringify(circuit));
+    setARunning(true); setAProgress(0);
+    w.onmessage = (e) => {
+      if (e.data.id !== id) return;
+      if (e.data.progress != null) setAProgress(e.data.progress);
+      if (e.data.done) {
+        setARunning(false); stopWorker();
+        setAOut(e.data.out); setACircuit(snap);
+        // 그래프가 비어 있으면 그럴듯한 노드 하나를 먼저 올린다
+        if (!e.data.out.error && e.data.out.type !== 'op' && traces.length === 0) {
+          const guess = circuit.parts.find((p) => p.type === 'probe') || circuit.parts.find((p) => ['capacitor', 'led'].includes(p.type));
+          const n = guess ? simRef.current?.nodeAt(guess.x1, guess.y1) : 0;
+          if (n) setTraces([{ id: `v${n}`, kind: 'v', node: n, label: `V(${nodeName(n)})`, color: TRACE_COLORS[0], at: { x: guess.x1, y: guess.y1 } }]);
+        }
+      }
+    };
+    w.onerror = (err) => { setARunning(false); stopWorker(); setAOut({ runs: [], error: `해석을 시작하지 못했습니다: ${err.message || ''}` }); };
+    w.postMessage({ id, circuit: snap, settings: req });
+  };
+
+  const toggleTrace = (t) => {
+    setTraces((list) => {
+      if (list.some((x) => x.id === t.id)) return list.filter((x) => x.id !== t.id);
+      const used = new Set(list.map((x) => x.color));
+      const color = TRACE_COLORS.find((c) => !used.has(c)) || TRACE_COLORS[list.length % TRACE_COLORS.length];
+      return [...list.slice(-7), { ...t, color }];
+    });
+  };
+  const nodeTrace = (n, at) => ({ id: `v${n}`, kind: 'v', node: n, label: `V(${nodeName(n)})`, at });
+  const partTrace = (p) => ({ id: `i${p.id}`, kind: 'i', partId: p.id, label: `I(${refs.get(p.id) || PARTS[p.type]?.label})` });
+
+  const onCanvasSelect = (id) => {
+    setSelectedId(id);
+    if (mode !== 'analysis' || !probeOn || !id || !aOut || aOut.error || aOut.type === 'op') return;
+    const p = circuit.parts.find((x) => x.id === id);
+    const sim = simRef.current;
+    if (!p || !sim) return;
+    if (p.type === 'wire' || p.type === 'probe') {
+      const n = sim.nodeAt(p.x1, p.y1);
+      if (n) toggleTrace(nodeTrace(n, { x: (p.x1 + (p.type === 'wire' ? p.x2 : p.x1)) / 2, y: (p.y1 + (p.type === 'wire' ? p.y2 : p.y1)) / 2 }));
+    } else if (!['ground', 'voltmeter'].includes(p.type)) toggleTrace(partTrace(p));
+  };
+
+  const switchMode = (m) => {
+    setMode(m);
+    if (m === 'analysis') { setRunning(false); if (!aOut) setASettings((s0) => ({ ...defaultSettings(circuit), type: s0.type })); }
+    else { stopWorker(); setARunning(false); setRunning(true); }
+  };
+  const stale = mode === 'analysis' && aOut && aCircuit && JSON.stringify(aCircuit.parts) !== JSON.stringify(circuit.parts);
+  // 노드마다 이어진 부품 이름 (동작점 표·노드 표시에 쓴다)
+  const nodeParts = (n) => {
+    const sim = simRef.current;
+    if (!sim) return '';
+    return sim.els.filter((e) => e.n.includes(n) && refs.get(e.id)).map((e) => refs.get(e.id)).filter((v, i, a) => a.indexOf(v) === i).join(', ');
+  };
+  // 동작점 결과는 회로도의 노드마다 전압을 적는다 (LTspice 처럼)
+  const opMarks = () => {
+    const sim = simRef.current, r = aOut?.runs?.[0]?.result;
+    if (!sim || !r?.nodes || stale) return [];
+    const seen = new Set(), out = [];
+    const pts = [...sim.topo.segments.map((g) => ({ x: (g.ax + g.bx) / 2, y: (g.ay + g.by) / 2, n: g.node })), ...[...sim.topo.pointNode].map(([k, n]) => { const [x, y] = k.split(',').map(Number); return { x, y, n }; })];
+    pts.forEach((p) => {
+      if (!p.n || seen.has(p.n) || out.length >= 40) return;
+      seen.add(p.n);
+      out.push({ id: `op${p.n}`, at: { x: p.x, y: p.y }, color: '#475569', label: `N${p.n} ${formatSI(r.nodes[p.n - 1], 'V', 3)}` });
+    });
+    return out;
+  };
+  const marks = mode !== 'analysis' ? [] : aOut?.type === 'op' && !aOut.error ? opMarks() : traces.map((t) => ({ ...t }));
 
   const save = async () => {
     if (!title.trim()) { toast({ title: '회로 이름을 적어 주세요', variant: 'destructive' }); return; }
@@ -237,12 +334,27 @@ export default function CircuitLab() {
           <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4" />불러오기</Button>
           <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importJson(f); e.target.value = ''; }} />
           <Button variant="outline" size="sm" onClick={() => download(`${title || 'circuit'}.json`, JSON.stringify({ title, dt, parts: circuit.parts }, null, 1), 'application/json')}><Download className="h-4 w-4" />JSON</Button>
-          <Button variant="outline" size="sm" onClick={() => download(`${title || 'circuit'}.cir`, toSpice(circuit, { title, dt, stop: Math.max(dt * 2000, span) }), 'text/plain')}><Download className="h-4 w-4" />SPICE</Button>
+          <Button variant="outline" size="sm" onClick={() => download(`${title || 'circuit'}.cir`, toSpice(circuit, mode === 'analysis' ? { title, analysis: buildRequest(aSettings) } : { title, dt, stop: Math.max(dt * 2000, span) }), 'text/plain')}><Download className="h-4 w-4" />SPICE</Button>
           <Button size="sm" onClick={save} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}저장</Button>
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card px-3 py-2">
+        <div className="flex rounded-lg bg-muted p-0.5" role="tablist" aria-label="시뮬레이션 방식">
+          {[['live', '실시간', Activity], ['analysis', '정밀 해석', LineChart]].map(([k, l, Icon]) => (
+            <button key={k} type="button" role="tab" aria-selected={mode === k} onClick={() => switchMode(k)}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-label ${mode === k ? 'bg-card font-semibold shadow-sm' : 'text-muted-foreground'}`}><Icon className="h-3.5 w-3.5" />{l}</button>
+          ))}
+        </div>
+        <span className="mx-1 h-5 w-px bg-border" />
+        {mode === 'analysis' ? (
+          <>
+            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={undo} title="되돌리기 (Ctrl+Z)"><Undo2 className="h-4 w-4" /></Button>
+            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={redo} title="다시 하기 (Ctrl+Y)"><Redo2 className="h-4 w-4" /></Button>
+            <span className="text-caption text-muted-foreground">해석을 실행한 뒤 회로도의 전선(전압)이나 부품(전류)을 누르면 그래프에 올라갑니다.</span>
+            {stale && <span className="text-caption font-medium text-warning-text">회로가 바뀌었습니다. 다시 실행하세요.</span>}
+          </>
+        ) : (<>
         <Button size="sm" variant={running ? 'secondary' : 'default'} onClick={() => { if (error) return; setRunning(!running); }} disabled={!!error}>
           {running ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}{running ? '일시정지' : '실행'}
         </Button>
@@ -260,6 +372,7 @@ export default function CircuitLab() {
         </label>
         <span className="font-mono text-caption tabular-nums text-muted-foreground">t = {formatSI(sim?.t || 0, 's')} · 실제 1초에 {formatSI(dt * speed * 60, 's', 2)} 진행</span>
         {sim?.slow > 0 && <span className="text-caption text-warning-text">수렴 지연 {sim.slow}회</span>}
+        </>)}
       </div>
 
       {(error || warnings.length > 0) && (
@@ -275,14 +388,35 @@ export default function CircuitLab() {
         </div>
         <div className="order-1 min-w-0 space-y-4 lg:order-2">
           <div ref={canvasBox} className="h-[460px] lg:h-[620px]">
-            <CircuitCanvas circuit={circuit} onChange={change} selectedId={selectedId} onSelect={setSelectedId} tool={tool} setTool={setTool}
-              simRef={simRef} live={live} recorder={recorder} viewRef={viewRef} />
+            <CircuitCanvas circuit={circuit} onChange={change} selectedId={selectedId} onSelect={onCanvasSelect} tool={tool} setTool={setTool}
+              simRef={simRef} live={live} recorder={recorder} viewRef={viewRef} marks={marks} showLive={mode === 'live'} />
           </div>
-          <ScopePanel recorder={recorder} span={span} onSpan={setSpan} version={scopeVersion} dark={isDark()} onRemove={(i) => { recorder.remove(i); setScopeVersion((v) => v + 1); }} />
+          {mode === 'analysis' ? (
+            <AnalysisPanel circuit={circuit} settings={aSettings} setSettings={setASettings} out={aOut} running={aRunning} progress={aProgress}
+              onRun={runAnalysisNow} onCancel={() => { stopWorker(); setARunning(false); }} traces={traces} setTraces={setTraces}
+              probeOn={probeOn} setProbeOn={setProbeOn} nodeName={nodeName} nodeParts={nodeParts} />
+          ) : (
+            <ScopePanel recorder={recorder} span={span} onSpan={setSpan} version={scopeVersion} dark={isDark()} onRemove={(i) => { recorder.remove(i); setScopeVersion((v) => v + 1); }} />
+          )}
         </div>
         <div className="order-3 rounded-xl border bg-card p-4 lg:max-h-[620px] lg:overflow-y-auto">
           {selected ? (
-            <PropertiesPanel part={selected} info={info} onProps={(props) => updateSelected((p) => ({ ...p, props }))} onRotate={rotate} onDelete={remove} onScope={addScope} />
+            <PropertiesPanel part={selected} info={mode === 'live' ? info : null} refName={refs.get(selected.id)} onProps={(props) => updateSelected((p) => ({ ...p, props }))} onRotate={rotate} onDelete={remove} onScope={mode === 'live' ? addScope : null}>
+              {mode === 'analysis' && aOut && !aOut.error && aOut.type !== 'op' && !['wire', 'ground'].includes(selected.type) && (
+                <div className="space-y-1.5">
+                  <p className="text-caption text-muted-foreground">결과 그래프에 올리기</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selected.type !== 'probe' && selected.type !== 'voltmeter' && <Button size="sm" variant="outline" onClick={() => toggleTrace(partTrace(selected))}>전류</Button>}
+                    {terminals(selected).map((t, k) => {
+                      const n = simRef.current?.nodeAt(t.x, t.y);
+                      if (!n) return null;
+                      const nm = TERMINAL_NAMES[selected.type]?.[k] || (terminals(selected).length === 1 ? '' : k === 0 ? '1번' : '2번');
+                      return <Button key={k} size="sm" variant="outline" onClick={() => toggleTrace(nodeTrace(n, t))}>{nm ? `${nm} 단자 ` : ''}전압 V({nodeName(n)})</Button>;
+                    })}
+                  </div>
+                </div>
+              )}
+            </PropertiesPanel>
           ) : (
             <div className="space-y-3 text-label">
               <p className="text-title font-semibold">사용 방법</p>
@@ -293,7 +427,7 @@ export default function CircuitLab() {
                 <li>R 돌리기 · Delete 지우기 · Ctrl+Z 되돌리기 · 스페이스 실행/정지 · 휠 확대 · 빈 곳 끌기 화면 이동</li>
                 <li>선 색은 전압(초록 +, 빨강 −), 노란 점은 전류의 방향과 크기입니다.</li>
               </ul>
-              <p className="text-caption text-muted-foreground">이 계산은 이상적인 부품 모델로 동작을 확인하는 용도입니다. 정밀 검증은 SPICE 로 내보내 LTspice·ngspice 에서 확인하세요.</p>
+              <p className="text-caption text-muted-foreground">위쪽의 ‘정밀 해석’에서 동작점·과도·교류(보드 선도)·직류 스윕과 부품 오차(몬테카를로)·온도 해석을 할 수 있습니다. 부품 모델은 데이터시트 대표값 근사이므로, 제조사 모델로 최종 확인할 때는 SPICE 로 내보내 LTspice 에서 확인하세요.</p>
               {EXAMPLES.find((x) => x.title === title)?.note && <p className="rounded-lg bg-primary/5 p-3 text-caption text-foreground">{EXAMPLES.find((x) => x.title === title).note}</p>}
             </div>
           )}

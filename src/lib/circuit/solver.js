@@ -3,8 +3,13 @@
 import { buildTopology, wireCurrents } from './topology.js';
 import { LED_COLORS, terminals } from './parts.js';
 
-const VT = 0.025852; // 27 °C 열전압
-const GMIN = 1e-10;
+const K_Q = 8.617333e-5; // 볼츠만 상수 / 전하 (V/K)
+export const vtAt = (tempC) => K_Q * (tempC + 273.15);
+const VT = vtAt(27); // 27 °C 열전압
+const TNOM = 300.15;
+const EG = 1.11; // 실리콘 띠 간격 (eV)
+const GMIN = 1e-12; // SPICE 기본값과 같은 최소 컨덕턴스
+const G_SHORT = 1e6; // 직류 해석에서 코일을 단락으로 볼 때
 const R_ON = 1e-3; // 닫힌 스위치·전류계 대신 쓰는 아주 작은 저항
 const NONLINEAR = new Set(['diode', 'zener', 'led', 'npn', 'pnp', 'nmos', 'pmos', 'opamp']);
 const BRANCH = new Set(['dcv', 'acv', 'pulse', 'ammeter', 'opamp']);
@@ -63,10 +68,10 @@ function zenerModel(vd, is, nvt, vz) {
   return { i: f.i - IBV * e, g: f.g + (IBV * e) / nvt };
 }
 /** NPN 에버스-몰(전달형). vbe, vbc → 컬렉터·베이스로 들어가는 전류와 미분 */
-function bjtModel(vbe, vbc, is, bf, br) {
-  const ef = safeExp(vbe / VT), er = safeExp(vbc / VT);
+function bjtModel(vbe, vbc, is, bf, br, vt = VT) {
+  const ef = safeExp(vbe / vt), er = safeExp(vbc / vt);
   const iF = is * (ef - 1), iR = is * (er - 1);
-  const gf = (is * ef) / VT, gr = (is * er) / VT;
+  const gf = (is * ef) / vt, gr = (is * er) / vt;
   return {
     ic: iF - iR * (1 + 1 / br), ib: iF / bf + iR / br,
     dic_be: gf, dic_bc: -gr * (1 + 1 / br), dib_be: gf / bf, dib_bc: gr / br,
@@ -89,16 +94,58 @@ function mosModel(vgs, vds, vth, kp, lambda) {
   const r = mosCore(vgs - vds, -vds, vth, kp, lambda);
   return { id: -r.id, gm: -r.gm, gds: r.gm + r.gds, region: r.region };
 }
-const ledIs = (vf) => 0.02 / (Math.exp(vf / (2 * VT)) - 1);
+const ledIs = (vf) => 0.02 / (Math.exp(vf / (2 * VT)) - 1); // 27 °C 기준 값
 
 export class Simulator {
-  constructor(circuit, { dt = 1e-5, method = 'trap' } = {}) {
+  /**
+   * mode: 'tran'(시간 진행) · 'dc'(직류 동작점: 콘덴서 개방, 코일 단락) · 'acbase'(교류 해석용 선형화 행렬)
+   * temp: 온도(°C). 열전압·포화 전류·MOSFET 문턱 전압에 반영
+   */
+  constructor(circuit, { dt = 1e-5, method = 'trap', temp = 27, mode = 'tran' } = {}) {
     this.dt = dt;
     this.method = method;
+    this.mode = mode;
+    this.override = null; // 직류 스윕: { id, value } 로 전원 값을 바꿔 끼운다
+    this.gminExtra = 0; // 수렴 보조: 모든 노드에 더하는 컨덕턴스
+    this.srcScale = 1; // 수렴 보조: 전원 크기 배율
+    this.setTemp(temp);
     this.t = 0;
     this.error = '';
     this.slow = 0; // 수렴하지 못한 단계 수
     this.load(circuit);
+  }
+
+  setTemp(temp) {
+    this.temp = Number.isFinite(Number(temp)) ? Number(temp) : 27;
+    this.vt = vtAt(this.temp);
+    this.cache = null;
+  }
+
+  /** 온도에 따른 포화 전류 (SPICE: IS·(T/Tnom)^(3/N)·exp(EG/(N·Vt)·(T/Tnom−1))) */
+  isT(is, n = 1) {
+    const r = (this.temp + 273.15) / TNOM;
+    if (Math.abs(r - 1) < 1e-9) return is;
+    return is * Math.pow(r, 3 / n) * Math.exp((EG / (n * this.vt)) * (r - 1));
+  }
+
+  /** 다이오드 계열의 모델 값 (온도 반영) */
+  diodeParams(el) {
+    const q = el.part.props || {};
+    if (el.type === 'led') {
+      const n = 2;
+      return { is: this.isT(ledIs(LED_COLORS[q.color]?.vf ?? 2), n), nvt: n * this.vt, rs: Math.max(Number(q.rs) || 0, 0) };
+    }
+    const n = Number(q.n) || 1;
+    return { is: this.isT(Number(q.is) || 1e-14, n), nvt: n * this.vt, rs: Math.max(Number(q.rs) || 0, 0) };
+  }
+
+  mosParams(q) {
+    const dT = this.temp - 27;
+    return {
+      vth: Math.max(Math.abs(Number(q.vth) || 1.5) - 0.003 * dT, 0.05),
+      kp: Math.max(Number(q.kp) || 0.2, 1e-9) * Math.pow((this.temp + 273.15) / TNOM, -1.5),
+      lambda: Math.max(Number(q.lambda) || 0, 0),
+    };
   }
 
   load(circuit) {
@@ -106,13 +153,18 @@ export class Simulator {
     const topo = buildTopology(circuit);
     this.topo = topo;
     this.warnings = topo.warnings;
-    this.nNodes = topo.nodeCount - 1;
-    let br = this.nNodes;
-    this.els = topo.elements.map((e) => {
+    this.nTopo = topo.nodeCount - 1; // 화면의 노드 수
+    let inner = this.nTopo;
+    const els = topo.elements.map((e) => {
       const el = { id: e.part.id, type: e.part.type, part: e.part, n: e.nodes, st: {} };
-      if (BRANCH.has(el.type)) el.br = br++;
+      // 직렬 저항이 있는 다이오드는 내부 노드를 하나 더 둔다 (애노드 → 저항 → 내부 노드 → 접합 → 캐소드)
+      if (['diode', 'led', 'zener'].includes(el.type) && Number(e.part.props?.rs) > 0) el.ni = ++inner;
       return el;
     });
+    this.nNodes = inner;
+    let br = this.nNodes;
+    els.forEach((el) => { if (BRANCH.has(el.type)) el.br = br++; });
+    this.els = els;
     this.size = br;
     this.x = new Float64Array(this.size);
     this.nonlinear = this.els.some((e) => NONLINEAR.has(e.type));
@@ -151,7 +203,12 @@ export class Simulator {
 
   V(node) { return node === 0 ? 0 : this.x[node - 1]; }
   sourceValue(el, t) {
+    return this.srcScale * this.rawSource(el, t);
+  }
+
+  rawSource(el, t) {
     const q = el.part.props || {};
+    if (this.override && this.override.id === el.id) return this.override.value;
     if (el.type === 'dcv') return Number(q.v) || 0;
     if (el.type === 'ammeter') return 0;
     if (el.type === 'acv') return (Number(q.offset) || 0) + (Number(q.amp) || 0) * Math.sin(2 * Math.PI * (Number(q.freq) || 0) * t + ((Number(q.phase) || 0) * Math.PI) / 180);
@@ -183,7 +240,8 @@ export class Simulator {
     };
     const Vx = (node) => (node === 0 ? 0 : x[node - 1]);
 
-    for (let i = 0; i < this.nNodes; i++) A[i * S + i] += GMIN;
+    const mode = this.mode, vt = this.vt;
+    for (let i = 0; i < this.nNodes; i++) A[i * S + i] += GMIN + this.gminExtra;
 
     for (const el of this.els) {
       const q = el.part.props || {};
@@ -198,6 +256,7 @@ export class Simulator {
           break;
         }
         case 'capacitor': {
+          if (mode !== 'tran') break; // 직류에서는 개방, 교류 해석에서는 따로 더한다
           const C = Math.max(Number(q.c) || 0, 1e-18);
           const g = (trap ? 2 : 1) * C / dt;
           addG(a, c, g);
@@ -205,24 +264,27 @@ export class Simulator {
           break;
         }
         case 'inductor': {
+          if (mode === 'dc') { addG(a, c, G_SHORT); break; }
+          if (mode !== 'tran') break;
           const L = Math.max(Number(q.l) || 0, 1e-12);
           const g = dt / ((trap ? 2 : 1) * L);
           addG(a, c, g);
           addI(a, c, trap ? el.st.i + g * el.st.v : el.st.i);
           break;
         }
-        case 'dci': addI(a, c, Number(q.i) || 0); break;
+        case 'dci': if (mode !== 'acbase') addI(a, c, this.override?.id === el.id ? this.override.value * this.srcScale : (Number(q.i) || 0) * this.srcScale); break;
         case 'dcv': case 'acv': case 'pulse': case 'ammeter': {
           const j = el.br;
           if (a) { A[idx(a) * S + j] += 1; A[j * S + idx(a)] -= 1; }
           if (c) { A[idx(c) * S + j] -= 1; A[j * S + idx(c)] += 1; }
-          b[j] = this.sourceValue(el, t);
+          b[j] = mode === 'acbase' ? 0 : this.sourceValue(el, mode === 'dc' ? this.t : t);
           break;
         }
         case 'diode': case 'led': case 'zener': {
-          const vdRaw = Vx(a) - Vx(c);
-          const nvt = (el.type === 'led' ? 2 : Number(q.n) || 1) * VT;
-          const is = el.type === 'led' ? ledIs(LED_COLORS[q.color]?.vf ?? 2) : Number(q.is) || 1e-14;
+          const { is, nvt, rs } = this.diodeParams(el);
+          const an = el.ni || a; // 직렬 저항이 있으면 접합의 애노드는 내부 노드
+          if (el.ni) addG(a, el.ni, 1 / rs);
+          const vdRaw = Vx(an) - Vx(c);
           let vd = pnjlim(vdRaw, el.st.vdLin ?? el.st.vd, nvt, vcritOf(is, nvt));
           if (el.type === 'zener' && vd < 0) {
             const vz = Number(q.vz) || 5.1;
@@ -232,21 +294,21 @@ export class Simulator {
           if (Math.abs(vd - vdRaw) > 1e-9) this.limited = true;
           const m = el.type === 'zener' ? zenerModel(vd, is, nvt, Number(q.vz) || 5.1) : diodeModel(vd, is, nvt);
           const g = m.g + 1e-12;
-          addG(a, c, g);
-          addI(a, c, m.i - g * vd);
+          addG(an, c, g);
+          addI(an, c, m.i - g * vd);
           break;
         }
         case 'npn': case 'pnp': {
           const s = el.type === 'npn' ? 1 : -1;
-          const is = Number(q.is) || 1e-14, bf = Math.max(Number(q.beta) || 100, 1), br = 1;
-          const vcrit = vcritOf(is, VT);
+          const is = this.isT(Number(q.is) || 1e-14), bf = Math.max(Number(q.beta) || 100, 1), br = 1;
+          const vcrit = vcritOf(is, vt);
           const B = a, C = c, E = d;
           const rbe = s * (Vx(B) - Vx(E)), rbc = s * (Vx(B) - Vx(C));
-          const vbe = pnjlim(rbe, el.st.vbeLin ?? el.st.vbe, VT, vcrit);
-          const vbc = pnjlim(rbc, el.st.vbcLin ?? el.st.vbc, VT, vcrit);
+          const vbe = pnjlim(rbe, el.st.vbeLin ?? el.st.vbe, vt, vcrit);
+          const vbc = pnjlim(rbc, el.st.vbcLin ?? el.st.vbc, vt, vcrit);
           if (Math.abs(vbe - rbe) > 1e-9 || Math.abs(vbc - rbc) > 1e-9) this.limited = true;
           el.st.vbeLin = vbe; el.st.vbcLin = vbc;
-          const m = bjtModel(vbe, vbc, is, bf, br);
+          const m = bjtModel(vbe, vbc, is, bf, br, vt);
           // 노드 전압에 대한 선형화: I = s·f0 + f_be(VB−VE) + f_bc(VB−VC) − s(f_be·vbe0 + f_bc·vbc0)
           const lin = (f0, fbe, fbc) => ({ terms: [[B, fbe + fbc], [E, -fbe], [C, -fbc]], c: s * (f0 - fbe * vbe - fbc * vbc) });
           const ic = lin(m.ic, m.dic_be, m.dic_bc);
@@ -260,7 +322,7 @@ export class Simulator {
         case 'nmos': case 'pmos': {
           const s = el.type === 'nmos' ? 1 : -1;
           const G = a, D = c, Sn = d;
-          const vth = Math.abs(Number(q.vth) || 1.5), kp = Math.max(Number(q.kp) || 0.2, 1e-9), lambda = Math.max(Number(q.lambda) || 0, 0);
+          const { vth, kp, lambda } = this.mosParams(q);
           const rgs = s * (Vx(G) - Vx(Sn)), rds = s * (Vx(D) - Vx(Sn));
           const vgs = clampStep(rgs, el.st.vgsLin ?? el.st.vgs, 1);
           const vds = clampStep(rds, el.st.vdsLin ?? el.st.vds, 2);
@@ -275,7 +337,7 @@ export class Simulator {
           if (q.body !== false) {
             // 바디 다이오드: N채널은 소스→드레인, P채널은 드레인→소스
             const an = s > 0 ? Sn : D, ca = s > 0 ? D : Sn;
-            const nvt = VT, isb = 1e-12;
+            const nvt = vt, isb = this.isT(1e-12);
             const raw = Vx(an) - Vx(ca);
             const vd = pnjlim(raw, el.st.vdbLin ?? el.st.vdb, nvt, vcritOf(isb, nvt));
             if (Math.abs(vd - raw) > 1e-9) this.limited = true;
@@ -326,28 +388,95 @@ export class Simulator {
       this.stamp(A2, b, x, t);
       x = luSolve(this.cache.A, this.cache.piv, b, S);
     } else {
-      let ok = false;
-      for (let it = 0; it < 120; it++) {
-        const A = new Float64Array(S * S), b = new Float64Array(S);
-        this.limited = false;
-        this.stamp(A, b, x, t);
-        const piv = luFactor(A, S);
-        if (!piv) return this.fail();
-        const xn = luSolve(A, piv, b, S);
-        let conv = !this.limited;
-        for (let i = 0; i < S; i++) {
-          if (!Number.isFinite(xn[i])) return this.fail('계산 값이 발산했습니다. 부품 값이나 연결을 확인하세요.');
-          if (Math.abs(xn[i] - x[i]) > 1e-6 + 1e-5 * Math.abs(xn[i])) conv = false;
-        }
-        x = xn;
-        if (conv && it > 0) { ok = true; break; }
-      }
-      if (!ok) this.slow++;
+      const r = this.newton(x, t, 120);
+      if (r.fatal) return this.fail(r.fatal === 'singular' ? undefined : r.fatal);
+      x = r.x;
+      if (!r.ok) this.slow++;
     }
     this.x = x;
     this.t = t;
     this.commit();
     return true;
+  }
+
+  /** 뉴턴 반복. { x, ok, fatal } */
+  newton(x0, t, maxIter) {
+    const S = this.size;
+    let x = x0;
+    for (let it = 0; it < maxIter; it++) {
+      const A = new Float64Array(S * S), b = new Float64Array(S);
+      this.limited = false;
+      this.stamp(A, b, x, t);
+      const piv = luFactor(A, S);
+      if (!piv) return { x, ok: false, fatal: 'singular' };
+      const xn = luSolve(A, piv, b, S);
+      let conv = !this.limited;
+      for (let i = 0; i < S; i++) {
+        if (!Number.isFinite(xn[i])) return { x, ok: false, fatal: '계산 값이 발산했습니다. 부품 값이나 연결을 확인하세요.' };
+        if (Math.abs(xn[i] - x[i]) > 1e-6 + 1e-5 * Math.abs(xn[i])) conv = false;
+      }
+      x = xn;
+      if (conv && it > 0) return { x, ok: true };
+    }
+    return { x, ok: false };
+  }
+
+  /**
+   * 직류 동작점: 콘덴서 개방·코일 단락으로 푼다. 안 풀리면 gmin 을 줄여 가며, 그래도 안 되면 전원을 키워 가며 푼다.
+   * 성공하면 true. 상태(접합 전압)는 이 해로 맞춰진다.
+   */
+  solveDC(maxIter = 200) {
+    const prev = this.mode;
+    this.mode = 'dc';
+    const S = this.size;
+    const restore = (ok) => { this.mode = prev; this.gminExtra = 0; this.srcScale = 1; return ok; };
+    if (!S) return restore(true);
+    const tryAt = (x) => this.newton(x, this.t, maxIter);
+    let r = tryAt(this.x);
+    if (r.fatal === 'singular') { this.fail(); return restore(false); }
+    if (!r.ok) {
+      // gmin 단계 줄이기
+      let x = this.x;
+      let fine = true;
+      for (const g of [1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 0]) {
+        this.gminExtra = g;
+        const s = tryAt(x);
+        if (!s.ok) { fine = false; break; }
+        x = s.x;
+      }
+      if (fine) r = { x, ok: true };
+    }
+    if (!r.ok) {
+      // 전원 단계 올리기
+      this.gminExtra = 0;
+      let x = new Float64Array(S);
+      let fine = true;
+      for (let k = 1; k <= 10; k++) {
+        this.srcScale = k / 10;
+        const s = tryAt(x);
+        if (!s.ok) { fine = false; break; }
+        x = s.x;
+      }
+      if (fine) r = { x, ok: true };
+    }
+    if (!r.ok) { this.fail('직류 동작점을 찾지 못했습니다. 떠 있는 노드나 극단적인 부품 값이 있는지 확인하세요.'); return restore(false); }
+    this.x = r.x;
+    restore(true);
+    this.syncFromSolution();
+    return true;
+  }
+
+  /** 현재 해 x 로 콘덴서 전압·코일 전류·접합 전압을 맞춘다 (과도 해석을 동작점에서 시작할 때) */
+  syncFromSolution() {
+    for (const el of this.els) {
+      const [a, c] = el.n;
+      const v = this.V(a) - this.V(c);
+      if (el.type === 'capacitor') { el.st.v = v; el.st.i = 0; }
+      else if (el.type === 'inductor') { el.st.i = v * G_SHORT; el.st.v = 0; }
+    }
+    this.cache = null;
+    this.commitJunctions();
+    this.compute();
   }
 
   fail(msg) {
@@ -371,15 +500,25 @@ export class Simulator {
         const L = Math.max(Number(q.l) || 0, 1e-12);
         el.st.i = trap ? el.st.i + (dt / (2 * L)) * (v + el.st.v) : el.st.i + (dt / L) * v;
         el.st.v = v;
-      } else if (el.type === 'diode' || el.type === 'led' || el.type === 'zener') {
+      } else if (el.type === 'led') {
+        // 눈에 보이는 밝기: 약 10 ms 평균 (PWM 감광이 깜빡이지 않고 평균 밝기로 보이도록)
+        const { is, nvt } = this.diodeParams(el);
+        const i = diodeModel(this.V(el.ni || a) - this.V(c), is, nvt).i;
+        const k = Math.min(1, dt / 0.01);
+        el.st.avgI = (el.st.avgI ?? i) + (i - (el.st.avgI ?? i)) * k;
+      }
+    }
+    this.commitJunctions();
+    this.compute();
+  }
+
+  /** 접합 전압(뉴턴 반복의 기준점)을 현재 해로 맞춘다 */
+  commitJunctions() {
+    for (const el of this.els) {
+      const [a, c, d] = el.n;
+      if (el.type === 'diode' || el.type === 'led' || el.type === 'zener') {
+        const v = this.V(el.ni || a) - this.V(c);
         el.st.vd = v; el.st.vdLin = v;
-        if (el.type === 'led') {
-          // 눈에 보이는 밝기: 약 10 ms 평균 (PWM 감광이 깜빡이지 않고 평균 밝기로 보이도록)
-          const is = ledIs(LED_COLORS[q.color]?.vf ?? 2);
-          const i = diodeModel(v, is, 2 * VT).i;
-          const k = Math.min(1, dt / 0.01);
-          el.st.avgI = (el.st.avgI ?? i) + (i - (el.st.avgI ?? i)) * k;
-        }
       } else if (el.type === 'npn' || el.type === 'pnp') {
         const s = el.type === 'npn' ? 1 : -1;
         el.st.vbe = s * (this.V(a) - this.V(d)); el.st.vbc = s * (this.V(a) - this.V(c));
@@ -392,7 +531,6 @@ export class Simulator {
         el.st.vdb = this.V(an) - this.V(ca); el.st.vdbLin = el.st.vdb;
       }
     }
-    this.compute();
   }
 
   /** 화면에 쓸 소자별 전압·전류와 전선 전류를 계산 */
@@ -414,13 +552,14 @@ export class Simulator {
           ti = [i1, -i2, i2 - i1];
           break;
         }
-        case 'capacitor': case 'inductor': ti = [el.st.i, -el.st.i]; break;
+        case 'capacitor': ti = this.mode === 'tran' ? [el.st.i, -el.st.i] : [0, 0]; break;
+        case 'inductor': { const i = this.mode === 'dc' ? (Va - Vc) * G_SHORT : el.st.i; ti = [i, -i]; break; }
         case 'dci': { const i = Number(q.i) || 0; ti = [i, -i]; break; }
         case 'dcv': case 'acv': case 'pulse': case 'ammeter': { const j = this.size ? this.x[el.br] : 0; ti = [j, -j]; break; }
         case 'diode': case 'led': case 'zener': {
-          const nvt = (el.type === 'led' ? 2 : Number(q.n) || 1) * VT;
-          const is = el.type === 'led' ? ledIs(LED_COLORS[q.color]?.vf ?? 2) : Number(q.is) || 1e-14;
-          const m = el.type === 'zener' ? zenerModel(Va - Vc, is, nvt, Number(q.vz) || 5.1) : diodeModel(Va - Vc, is, nvt);
+          const { is, nvt } = this.diodeParams(el);
+          const vj = (el.ni ? this.V(el.ni) : Va) - Vc;
+          const m = el.type === 'zener' ? zenerModel(vj, is, nvt, Number(q.vz) || 5.1) : diodeModel(vj, is, nvt);
           ti = [m.i, -m.i];
           if (el.type === 'led') {
             const imax = Math.max(Number(q.imax) || 0.02, 1e-6), avg = el.st.avgI ?? m.i;
@@ -431,7 +570,7 @@ export class Simulator {
         case 'npn': case 'pnp': {
           const s = el.type === 'npn' ? 1 : -1;
           const vbe = s * (Va - Vd), vbc = s * (Va - Vc);
-          const m = bjtModel(vbe, vbc, Number(q.is) || 1e-14, Math.max(Number(q.beta) || 100, 1), 1);
+          const m = bjtModel(vbe, vbc, this.isT(Number(q.is) || 1e-14), Math.max(Number(q.beta) || 100, 1), 1, this.vt);
           const ib = s * m.ib, ic = s * m.ic;
           ti = [ib, ic, -ib - ic];
           extra = { region: vbe < 0.5 ? '차단' : vbc > 0.4 ? '포화' : '증폭' };
@@ -439,11 +578,12 @@ export class Simulator {
         }
         case 'nmos': case 'pmos': {
           const s = el.type === 'nmos' ? 1 : -1;
-          const m = mosModel(s * (Va - Vd), s * (Vc - Vd), Math.abs(Number(q.vth) || 1.5), Math.max(Number(q.kp) || 0.2, 1e-9), Math.max(Number(q.lambda) || 0, 0));
+          const mp = this.mosParams(q);
+          const m = mosModel(s * (Va - Vd), s * (Vc - Vd), mp.vth, mp.kp, mp.lambda);
           let id = s * m.id + (Vc - Vd) * 1e-9;
           if (q.body !== false) {
             const an = s > 0 ? Vd : Vc, ca = s > 0 ? Vc : Vd;
-            const ib = diodeModel(an - ca, 1e-12, VT).i;
+            const ib = diodeModel(an - ca, this.isT(1e-12), this.vt).i;
             id += s > 0 ? -ib : ib;
           }
           ti = [0, id, -id];

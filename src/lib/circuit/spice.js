@@ -15,17 +15,23 @@ export function spiceNum(v) {
   return `${Number((x / f).toPrecision(6))}${s}`;
 }
 
-export function toSpice(circuit, { title = 'AEGIS circuit', dt = 1e-5, stop = 1e-2 } = {}) {
+/**
+ * analysis 를 주면 그 해석 문장(.tran/.ac/.dc/.op, .temp, .step)을 쓴다. 없으면 dt·stop 으로 .tran
+ */
+export function toSpice(circuit, { title = 'AEGIS circuit', dt = 1e-5, stop = 1e-2, analysis = null } = {}) {
   const topo = buildTopology(circuit);
-  const nn = (n) => (n === 0 ? '0' : `N${String(n).padStart(3, '0')}`);
+  const nn = (n) => (n === 0 ? '0' : `N${n}`);
   const count = {};
   const ref = (prefix) => { count[prefix] = (count[prefix] || 0) + 1; return `${prefix}${count[prefix]}`; };
   const lines = [`* ${title}`, '* AEGIS 회로 시뮬레이터에서 내보냄'];
   const models = new Map();
   const model = (name, text) => { if (!models.has(name)) models.set(name, `.model ${name} ${text}`); return name; };
 
+  const nameOf = new Map(); // 부품 id → 넷리스트 이름 (해석 문장에서 쓴다)
+  const acId = analysis?.type === 'ac' ? analysis.sourceId : null;
   for (const { part: p, nodes: [a, b, c] } of topo.elements) {
     const q = p.props || {};
+    const before = lines.length;
     switch (p.type) {
       case 'resistor': lines.push(`${ref('R')} ${nn(a)} ${nn(b)} ${spiceNum(q.r)}`); break;
       case 'capacitor': lines.push(`${ref('C')} ${nn(a)} ${nn(b)} ${spiceNum(q.c)}`); break;
@@ -46,30 +52,37 @@ export function toSpice(circuit, { title = 'AEGIS circuit', dt = 1e-5, stop = 1e
       }
       case 'dci': lines.push(`${ref('I')} ${nn(a)} ${nn(b)} DC ${spiceNum(q.i)}`); break;
       case 'ammeter': lines.push(`${ref('VAM')} ${nn(a)} ${nn(b)} DC 0 ; 전류계`); break;
-      case 'diode': lines.push(`${ref('D')} ${nn(a)} ${nn(b)} ${model('DGEN', `D(IS=${spiceNum(q.is || 1e-14)} N=${Number(q.n) || 1})`)}`); break;
+      case 'diode': {
+        const rs = Number(q.rs) > 0 ? ` RS=${spiceNum(q.rs)}` : '';
+        const name = q.model ? `D${q.model}` : rs ? `DGEN_${lines.length}` : 'DGEN';
+        lines.push(`${ref('D')} ${nn(a)} ${nn(b)} ${model(name, `D(IS=${spiceNum(q.is || 1e-14)} N=${Number(q.n) || 1}${rs})`)}`);
+        break;
+      }
       case 'zener': {
         const vz = Number(q.vz) || 5.1;
-        lines.push(`${ref('D')} ${nn(a)} ${nn(b)} ${model(`DZ${String(vz).replace('.', 'V')}`, `D(IS=1e-14 N=1 BV=${vz} IBV=1m)`)}`);
+        const rs = Number(q.rs) > 0 ? ` RS=${spiceNum(q.rs)}` : '';
+        lines.push(`${ref('D')} ${nn(a)} ${nn(b)} ${model(q.model ? `D${q.model}` : `DZ${String(vz).replace('.', 'V')}${rs ? `_${lines.length}` : ''}`, `D(IS=1e-14 N=1 BV=${vz} IBV=1m${rs})`)}`);
         break;
       }
       case 'led': {
         const col = LED_COLORS[q.color] ? q.color : 'red';
         const vf = LED_COLORS[col].vf;
         const is = 0.02 / (Math.exp(vf / (2 * VT)) - 1);
-        lines.push(`${ref('D')} ${nn(a)} ${nn(b)} ${model(`DLED_${col.toUpperCase()}`, `D(IS=${is.toExponential(3)} N=2)`)}`);
+        const rs = Number(q.rs) > 0 ? ` RS=${spiceNum(q.rs)}` : '';
+        lines.push(`${ref('D')} ${nn(a)} ${nn(b)} ${model(q.model ? `D${q.model}` : `DLED_${col.toUpperCase()}${rs ? `_${lines.length}` : ''}`, `D(IS=${is.toExponential(3)} N=2${rs})`)}`);
         break;
       }
       case 'npn': case 'pnp': {
         const beta = Number(q.beta) || 100;
         const kind = p.type.toUpperCase();
-        const name = beta === 100 ? `Q${kind}` : `Q${kind}_B${beta}`;
+        const name = q.model ? `Q${q.model}` : beta === 100 ? `Q${kind}` : `Q${kind}_B${beta}`;
         lines.push(`${ref('Q')} ${nn(b)} ${nn(a)} ${nn(c)} ${model(name, `${kind}(IS=${spiceNum(q.is || 1e-14)} BF=${beta} BR=1)`)}`);
         break;
       }
       case 'nmos': case 'pmos': {
         const vth = Math.abs(Number(q.vth) || 1.5), kp = Number(q.kp) || 0.2, lambda = Number(q.lambda) || 0;
         const n = p.type === 'nmos';
-        const name = `M${n ? 'N' : 'P'}_${String(vth).replace('.', 'V')}`;
+        const name = q.model ? `M${q.model}` : `M${n ? 'N' : 'P'}_${String(vth).replace('.', 'V')}_${String(kp).replace('.', 'P')}`;
         lines.push(`${ref('M')} ${nn(b)} ${nn(a)} ${nn(c)} ${nn(c)} ${model(name, `${n ? 'NMOS' : 'PMOS'}(LEVEL=1 VTO=${n ? vth : -vth} KP=${kp} LAMBDA=${lambda})`)}`);
         break;
       }
@@ -83,6 +96,26 @@ export function toSpice(circuit, { title = 'AEGIS circuit', dt = 1e-5, stop = 1e
       case 'probe': lines.push(`* 전압 표시: V(${nn(a)})`); break;
       default: break;
     }
+    if (lines.length > before) {
+      const first = lines[before];
+      nameOf.set(p.id, first.split(' ')[0]);
+      // 교류 해석에 쓸 전원에는 AC 1 을 붙인다
+      if (p.id === acId && /^[VI]/.test(first)) lines[before] = first.replace(/^(\S+ \S+ \S+ )/, '$1') + ' AC 1';
+    }
   }
-  return [...lines, ...models.values(), `.tran ${spiceNum(dt)} ${spiceNum(stop)}`, '.end', ''].join('\n');
+  const tail = [];
+  if (!analysis) tail.push(`.tran ${spiceNum(dt)} ${spiceNum(stop)}`);
+  else {
+    const A = analysis;
+    if (A.type === 'op') tail.push('.op');
+    if (A.type === 'tran') tail.push(`.tran 0 ${spiceNum(A.stop)} 0 ${spiceNum(A.maxStep > 0 ? A.maxStep : A.stop / 2000)}${A.fromZero ? ' uic' : ''}`);
+    if (A.type === 'ac') tail.push(`.ac dec ${Math.round(A.perDecade || 20)} ${spiceNum(A.fStart)} ${spiceNum(A.fStop)}`);
+    if (A.type === 'dc' && nameOf.get(A.sourceId)) tail.push(`.dc ${nameOf.get(A.sourceId)} ${spiceNum(A.from)} ${spiceNum(A.to)} ${spiceNum((A.to - A.from) / Math.max(1, (A.points || 101) - 1))}`);
+    const sw = A.sweep || {};
+    if (sw.kind === 'temp' && sw.values?.length) tail.push(`.step temp list ${sw.values.join(' ')}`);
+    else if (Number.isFinite(Number(A.temp)) && Number(A.temp) !== 27) tail.push(`.temp ${Number(A.temp)}`);
+    if (sw.kind === 'param' && sw.values?.length && nameOf.get(sw.partId)) tail.push(`* 값 바꾸기: ${nameOf.get(sw.partId)} 의 ${sw.key} = ${sw.values.join(', ')} (LTspice 에서는 값을 {X} 로 바꾸고 .step param X list … 로 돌리세요)`);
+    if (sw.kind === 'mc') tail.push(`* 몬테카를로: 저항·콘덴서·코일 ±${sw.tol}% ${sw.runs}회 (LTspice 에서는 값에 mc(값, ${(Number(sw.tol) || 5) / 100}) 를 쓰세요)`);
+  }
+  return [...lines, ...models.values(), ...tail, '.end', ''].join('\n');
 }

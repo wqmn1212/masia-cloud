@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { PARTS, PART_GROUPS, LED_COLORS, parseSI, formatSI, terminals, TERMINAL_NAMES } from '@/lib/circuit/parts';
 import { traceLabel } from '@/lib/circuit/scope';
+import { PART_MODELS, modelOf } from '@/lib/circuit/library';
 
 const UNIT = { 'Ω': 'Ω', F: 'F', H: 'H', V: 'V', A: 'A', Hz: 'Hz' };
 
@@ -68,12 +69,15 @@ function NumField({ value, unit, onCommit }) {
 }
 
 /** 선택한 부품의 값과 측정값 */
-export function PropertiesPanel({ part, info, onProps, onRotate, onDelete, onScope }) {
+export function PropertiesPanel({ part, info, onProps, onRotate, onDelete, onScope, refName, children }) {
   if (!part) return null;
   const def = PARTS[part.type] || { label: part.type, fields: [] };
   const q = part.props || {};
   const n = terminals(part).length;
-  const set = (k, v) => onProps({ ...q, [k]: v });
+  // 값을 직접 바꾸면 고른 부품 모델과 달라지므로 모델 이름을 뗀다
+  const set = (k, v) => { const next = { ...q, [k]: v }; delete next.model; onProps(next); };
+  const models = PART_MODELS[part.type] || [];
+  const model = modelOf(part);
   const rows = [];
   if (info) {
     if (n === 1) rows.push(['전압', formatSI(info.volts[0], 'V')]);
@@ -92,12 +96,25 @@ export function PropertiesPanel({ part, info, onProps, onRotate, onDelete, onSco
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-title font-semibold">{def.label}</p>
+        <p className="text-title font-semibold">{def.label}{refName && <span className="ml-2 font-mono text-label text-muted-foreground">{refName}</span>}</p>
         <div className="flex gap-1">
           {part.type !== 'probe' && <Button size="icon" variant="ghost" className="h-8 w-8" title="90° 돌리기 (R)" onClick={onRotate}><RotateCw className="h-4 w-4" /></Button>}
           <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="지우기 (Delete)" onClick={onDelete}><Trash2 className="h-4 w-4" /></Button>
         </div>
       </div>
+
+      {models.length > 0 && (
+        <div className="space-y-1">
+          <label className="text-caption text-muted-foreground">부품 모델</label>
+          <select className="h-8 w-full rounded-md border bg-transparent px-2 text-label" value={model?.key || ''}
+            onChange={(e) => { const m = models.find((x) => x.key === e.target.value); if (m) onProps({ ...q, ...m.props, model: m.key }); else { const next = { ...q }; delete next.model; onProps(next); } }}>
+            <option value="">직접 입력</option>
+            {models.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
+          </select>
+          {model?.note && <p className="text-micro text-muted-foreground">{model.note}</p>}
+          {model && <p className="text-micro text-muted-foreground">데이터시트 대표값으로 맞춘 근사 모델입니다.</p>}
+        </div>
+      )}
 
       {def.fields?.length > 0 && (
         <div className="space-y-3">
@@ -132,7 +149,9 @@ export function PropertiesPanel({ part, info, onProps, onRotate, onDelete, onSco
         </div>
       )}
 
-      {canScope && (
+      {children}
+
+      {canScope && onScope && (
         <div className="flex flex-wrap gap-1.5">
           <Button size="sm" variant="outline" onClick={() => onScope('v')}><LineChart className="h-3.5 w-3.5" />{traceLabel(part, 'v', '').trim()} 스코프</Button>
           {!['probe', 'voltmeter'].includes(part.type) && <Button size="sm" variant="outline" onClick={() => onScope('i')}><LineChart className="h-3.5 w-3.5" />{traceLabel(part, 'i', '').trim()} 스코프</Button>}

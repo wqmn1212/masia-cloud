@@ -5,6 +5,8 @@ import { Simulator } from '../src/lib/circuit/solver.js';
 import { makePart, parseSI, formatSI, terminals } from '../src/lib/circuit/parts.js';
 import { toSpice } from '../src/lib/circuit/spice.js';
 import { EXAMPLES, exampleCircuit } from '../src/lib/circuit/examples.js';
+import { operatingPoint, transient, acAnalysis, dcSweep, runAnalysis, measureWave, measureBode } from '../src/lib/circuit/analysis.js';
+import { PART_MODELS } from '../src/lib/circuit/library.js';
 
 let n = 0;
 const ok = (name, fn) => { fn(); n++; console.log('✓', name); };
@@ -280,6 +282,152 @@ ok('예제 회로가 모두 오류·경고 없이 돈다', () => {
   const n2 = exampleCircuit('npn');
   const s2 = new Simulator(n2); s2.run(50);
   assert.ok(Math.abs(s2.els.find((e) => e.type === 'led').out.current) < 1e-6);
+});
+
+// ── 정밀 해석 ──
+const nodeV = (_, c, x, y) => new Simulator(c).nodeAt(x, y);
+
+ok('동작점: 분압 5 V, 콘덴서는 개방·코일은 단락', () => {
+  const c = loop(V(10), P('resistor', 8, 0, 8, 4, { r: 1000 }), P('resistor', 8, 4, 8, 8, { r: 1000 }), P('capacitor', 8, 4, 12, 4, { c: 1e-6 }), W(12, 4, 12, 8));
+  const r = operatingPoint(c);
+  assert.ok(!r.error, r.error);
+  near(r.nodes[nodeV(null, c, 8, 4) - 1], 5, 1e-6, '가운데');
+  const rl = loop(V(5), P('resistor', 8, 0, 8, 4, { r: 100 }), P('inductor', 8, 4, 8, 8, { l: 1e-3 }));
+  const r2 = operatingPoint(rl);
+  near(r2.elems.find((e) => e.type === 'inductor').current, 0.05, 1e-5, '코일 단락 전류');
+});
+
+ok('과도: 동작점에서 시작하면 정상 상태, 0 에서 시작하면 충전 곡선', () => {
+  const c = loop(V(5), P('resistor', 8, 0, 8, 4, { r: 1000 }), P('capacitor', 8, 4, 8, 8, { c: 1e-6 }));
+  const n = nodeV(null, c, 8, 4) - 1;
+  const a = transient(c, { stop: 1e-3, maxStep: 1e-6 });
+  near(a.nodes[n][0], 5, 1e-6, '동작점 시작'); near(a.nodes[n].at(-1), 5, 1e-6, '끝');
+  const b = transient(c, { stop: 1e-3, maxStep: 1e-6, fromZero: true });
+  near(b.nodes[n].at(-1), 5 * (1 - Math.exp(-1)), 0.005, '0 에서 1 ms');
+  near(b.x.at(-1), 1e-3, 1e-12, '끝 시간');
+  assert.ok(b.x.length <= 4001);
+});
+
+ok('교류: RC 저역 통과 −3 dB = 1 kHz, 위상 −45°, 10 배 위에서 −20 dB', () => {
+  const R = 1000, C = 1 / (2 * Math.PI * 1000 * R);
+  const src = P('acv', 0, 8, 0, 0, { amp: 1, freq: 1000 });
+  const c = loop(src, P('resistor', 8, 0, 8, 4, { r: R }), P('capacitor', 8, 4, 8, 8, { c: C }));
+  const r = acAnalysis(c, { sourceId: src.id, fStart: 10, fStop: 1e6, perDecade: 50 });
+  assert.ok(!r.error, r.error);
+  const n = nodeV(null, c, 8, 4) - 1;
+  const m = measureBode(r.x, r.nodesRe[n], r.nodesIm[n]);
+  near(m.f3db, 1000, 15, '−3 dB 주파수');
+  near(m.lowGain, 0, 0.01, '저주파 이득');
+  const i10k = r.x.findIndex((f) => f >= 9999);
+  near(m.db[i10k], -20.04, 0.1, '10 kHz 이득');
+  const i1k = r.x.findIndex((f) => f >= 999);
+  near(m.ph[i1k], -45, 0.5, '1 kHz 위상');
+});
+
+ok('교류: RLC 대역 통과 공진 = 1/(2π√LC)', () => {
+  const L = 1e-3, C = 1e-6, f0 = 1 / (2 * Math.PI * Math.sqrt(L * C));
+  const src = P('acv', 0, 8, 0, 0, { amp: 1 });
+  const c = { parts: [src, P('ground', 0, 8, 0, 9), W(0, 0, 4, 0), P('inductor', 4, 0, 8, 0, { l: L }), P('capacitor', 8, 0, 12, 0, { c: C }), P('resistor', 12, 0, 12, 8, { r: 10 }), W(12, 8, 0, 8)] };
+  const r = acAnalysis(c, { sourceId: src.id, fStart: 100, fStop: 100e3, perDecade: 400 });
+  const n = nodeV(null, c, 12, 0) - 1;
+  const m = measureBode(r.x, r.nodesRe[n], r.nodesIm[n]);
+  near(m.peakFreq, f0, f0 * 0.01, '공진 주파수');
+  near(m.peakGain, 0, 0.05, '공진 이득');
+});
+
+ok('교류: OP 앰프 3배 증폭 = 9.54 dB, 전류원 입력도 된다', () => {
+  const ex = exampleCircuit('opamp');
+  const src = ex.parts.find((p) => p.type === 'acv');
+  const r = acAnalysis(ex, { sourceId: src.id, fStart: 10, fStop: 1e4 });
+  const out = ex.parts.find((p) => p.type === 'opamp');
+  const n = nodeV(null, ex, out.x2, out.y2) - 1;
+  near(measureBode(r.x, r.nodesRe[n], r.nodesIm[n]).lowGain, 20 * Math.log10(3), 0.01, '이득');
+  // 전류원에 1 A 교류 → 1 kΩ 양단 1000 V (60 dB)
+  const isrc = P('dci', 8, 8, 8, 0, { i: 0 });
+  const c2 = { parts: [P('ground', 0, 8, 0, 9), W(0, 8, 8, 8), W(0, 0, 8, 0), P('resistor', 0, 0, 0, 8, { r: 1000 }), isrc] };
+  const r2 = acAnalysis(c2, { sourceId: isrc.id, fStart: 10, fStop: 100 });
+  assert.ok(!r2.error, r2.error);
+  const n2 = nodeV(null, c2, 0, 0) - 1;
+  near(measureBode(r2.x, r2.nodesRe[n2], r2.nodesIm[n2]).lowGain, 60, 0.01, '전류원 입력');
+});
+
+ok('직류 스윕: LED I-V (5 V 에서 14 mA), 다이오드 1 mA 순방향', () => {
+  const src = V(0);
+  const c = loop(src, P('resistor', 8, 0, 8, 4, { r: 220 }), P('led', 8, 4, 8, 8, { color: 'red' }));
+  const r = dcSweep(c, { sourceId: src.id, from: 0, to: 5, points: 51 });
+  assert.ok(!r.error, r.error);
+  const led = c.parts[5].id;
+  near(r.elems[led].at(-1), 0.0142, 0.0008, '5 V 전류');
+  for (let i = 1; i < r.x.length; i++) assert.ok(r.elems[led][i] >= r.elems[led][i - 1] - 1e-12, '단조 증가');
+  assert.ok(Math.abs(r.elems[led][10]) < 1e-6, '1 V 에서는 거의 0');
+});
+
+ok('부품 모델: 1N4007 1 A 순방향 0.85~1.15 V, AO3400 4.5 V 구동 1 A 에서 약 27 mV', () => {
+  const m = PART_MODELS.diode.find((x) => x.key === '1N4007');
+  const src = P('dci', 8, 8, 8, 0, { i: 1 });
+  const d = P('diode', 0, 0, 0, 8, { ...m.props, model: m.key });
+  const c = { parts: [P('ground', 0, 8, 0, 9), W(0, 0, 8, 0), W(0, 8, 8, 8), d, src] };
+  const r = operatingPoint(c);
+  const vf = r.elems.find((e) => e.id === d.id).volts;
+  const v = vf[0] - vf[1];
+  assert.ok(v > 0.85 && v < 1.15, `1N4007 Vf ${v}`);
+  const ao = PART_MODELS.nmos.find((x) => x.key === 'AO3400');
+  const mos = P('nmos', 4, 6, 8, 6, { ...ao.props });
+  const c2 = { parts: [P('dci', 12, 0, 8, 0, { i: 1 }), W(12, 0, 12, 8), P('ground', 8, 8, 8, 9), W(8, 8, 12, 8), W(8, 0, 8, 4), mos, P('dcv', 2, 8, 2, 6, { v: 4.5 }), W(2, 6, 4, 6), W(2, 8, 8, 8)] };
+  const r2 = operatingPoint(c2);
+  assert.ok(!r2.error, r2.error);
+  const vds = r2.elems.find((e) => e.id === mos.id).volts[1];
+  near(vds, 0.027, 0.004, 'AO3400 Vds');
+});
+
+ok('온도: 다이오드 순방향 전압이 약 −2 mV/°C 로 줄어든다', () => {
+  const src = P('dci', 8, 8, 8, 0, { i: 1e-3 });
+  const d = P('diode', 0, 0, 0, 8, {});
+  const c = { parts: [P('ground', 0, 8, 0, 9), W(0, 0, 8, 0), W(0, 8, 8, 8), d, src] };
+  const v = (t) => { const r = operatingPoint(c, { temp: t }); const e = r.elems.find((x) => x.id === d.id); return e.volts[0] - e.volts[1]; };
+  const slope = (v(77) - v(27)) / 50;
+  assert.ok(slope < -0.0015 && slope > -0.0025, `기울기 ${slope}`);
+});
+
+ok('반복: 저항 값 바꾸기·몬테카를로(재현 가능)·온도', () => {
+  const src = P('acv', 0, 8, 0, 0, { amp: 1 });
+  const R = P('resistor', 8, 0, 8, 4, { r: 1000 });
+  const C = 1 / (2 * Math.PI * 1000 * 1000);
+  const c = loop(src, R, P('capacitor', 8, 4, 8, 8, { c: C }));
+  const n = nodeV(null, c, 8, 4) - 1;
+  const base = { type: 'ac', sourceId: src.id, fStart: 10, fStop: 1e5, perDecade: 50 };
+  const f3 = (run) => measureBode(run.result.x, run.result.nodesRe[n], run.result.nodesIm[n]).f3db;
+  const p = runAnalysis(c, { ...base, sweep: { kind: 'param', partId: R.id, key: 'r', values: [1000, 2000] } });
+  assert.equal(p.runs.length, 2);
+  near(f3(p.runs[1]) / f3(p.runs[0]), 0.5, 0.01, '저항 두 배 → 차단 주파수 절반');
+  const mc = runAnalysis(c, { ...base, sweep: { kind: 'mc', runs: 30, tol: 5, seed: 7 } });
+  const mc2 = runAnalysis(c, { ...base, sweep: { kind: 'mc', runs: 30, tol: 5, seed: 7 } });
+  const fs = mc.runs.map(f3);
+  assert.deepEqual(fs, mc2.runs.map(f3), '같은 씨앗이면 같은 결과');
+  assert.ok(Math.min(...fs) > 900 && Math.max(...fs) < 1110 && Math.max(...fs) - Math.min(...fs) > 20, `범위 ${Math.min(...fs)}~${Math.max(...fs)}`);
+  const t = runAnalysis(c, { type: 'op', sweep: { kind: 'temp', values: [-20, 27, 85] } });
+  assert.deepEqual(t.runs.map((r) => r.temp), [-20, 27, 85]);
+});
+
+ok('SPICE 로 해석 설정 내보내기 (.ac·.dc·.op·온도)', () => {
+  const src = P('acv', 0, 8, 0, 0, { amp: 1, freq: 1000 });
+  const c = loop(src, P('resistor', 8, 0, 8, 4, { r: 1000 }), P('capacitor', 8, 4, 8, 8, { c: 1e-6 }));
+  const ac = toSpice(c, { analysis: { type: 'ac', sourceId: src.id, fStart: 10, fStop: 1e5, perDecade: 20, temp: 85, sweep: { kind: 'none' } } });
+  assert.match(ac, /^V1 N\d+ 0 SIN\(.*\) AC 1$/m);
+  assert.match(ac, /^\.ac dec 20 10 100k$/m);
+  assert.match(ac, /^\.temp 85$/m);
+  assert.doesNotMatch(ac, /^\.tran/m);
+  const dc = toSpice(c, { analysis: { type: 'dc', sourceId: src.id, from: 0, to: 5, points: 51, sweep: { kind: 'temp', values: [-20, 27, 85] } } });
+  assert.match(dc, /^\.dc V1 0 5 100m$/m);
+  assert.match(dc, /^\.step temp list -20 27 85$/m);
+  assert.match(toSpice(c, { analysis: { type: 'op', sweep: { kind: 'none' } } }), /^\.op$/m);
+  assert.match(toSpice(c, { analysis: { type: 'tran', stop: 0.01, maxStep: 1e-5, fromZero: true, sweep: { kind: 'none' } } }), /^\.tran 0 10m 0 10u uic$/m);
+});
+
+ok('측정: 사인파 실효값 0.707, 주파수, 평균 0', () => {
+  const x = Array.from({ length: 2001 }, (_, i) => i * 1e-5), y = x.map((t) => Math.sin(2 * Math.PI * 1000 * t));
+  const m = measureWave(x, y);
+  near(m.rms, Math.SQRT1_2, 0.002, '실효값'); near(m.freq, 1000, 1, '주파수'); near(m.avg, 0, 0.002, '평균'); near(m.pp, 2, 1e-3, '피크 간');
 });
 
 console.log(`\n${n}개 검산 통과`);
