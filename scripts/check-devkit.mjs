@@ -7,7 +7,7 @@ import { starterCircuit, featureBlock, hasBlock } from '../src/lib/devkit/circui
 import { defaultCadParams, topCutouts, solidcraftScript, mcpBrief, conceptBounds, cadParts } from '../src/lib/devkit/solidcraft.js';
 import { Simulator } from '../src/lib/circuit/solver.js';
 import { defaultRules, applyPress, effectiveLevels, describeRule } from '../src/lib/devkit/rules.js';
-import { createSim, stepSim, setInput, appWrite, appValues, runtimeHours, ocv, refill } from '../src/lib/devkit/deviceSim.js';
+import { createSim, stepSim, setInput, appWrite, appValues, runtimeHours, ocv, refill, turnDial, setClock, clockText, pivotClearance } from '../src/lib/devkit/deviceSim.js';
 import { shellParts, mainShellId, partParams, partCutouts } from '../src/lib/devkit/solidcraft.js';
 import { drawingSvg, pickScale } from '../src/lib/devkit/drawing.js';
 import { DEFAULT_SIM_PARAMS, SIM_PARAMS, caseThermal, monthlyCost } from '../src/lib/devkit/thermal.js';
@@ -529,6 +529,106 @@ ok('부품 값 목록: 모든 항목에 기본값·단위(선택형 제외)', ()
   SIM_PARAMS.forEach((p) => { assert.ok(p.default !== undefined, p.key); if (p.type !== 'select') assert.ok(p.unit && p.min < p.max, p.key); });
   assert.ok(featureBom(hh, 'esp32c3', 24).some((b) => b.name.startsWith('벅 컨버터 24 V')));
   assert.ok(featureBom(hh, 'esp32c3', 5).some((b) => b.name.startsWith('LDO')));
+});
+
+// ── 양면 수면 조명 (무니스): 조명 모듈·시계·다이얼·수면 일정·과열 차단·본체 기울기 ──
+const lamp = assignPins([
+  { ...makeFeature('light', '전면 기상등 (4000K)'), id: 'front', face: 'front', power_w: 5, cct: 4000 },
+  { ...makeFeature('light', '후면 수면등 (2700K)'), id: 'rear', face: 'rear', power_w: 1.8, cct: 2700 },
+  { ...makeFeature('display', '호박색 시계'), id: 'clock' },
+  { ...makeFeature('encoder', '다이얼 버튼'), id: 'dial' },
+  { ...makeFeature('switch', '수면 모드 토글'), id: 'sleep' },
+  { ...makeFeature('button', '블루투스 버튼'), id: 'bt' },
+  { ...makeFeature('temp', '전면 LED 판 온도'), id: 'ntc', watch: 'front' },
+], 'esp32c3');
+const lampRules = defaultRules(lamp);
+const pivot = { origin: { y: 18, z: 0 }, min: -15, max: 15, check: { bottom_y: 40, base_top_y: 36, half_t: 14 } };
+const lampSim = (params = {}, power = {}) => createSim({ features: lamp, rules: lampRules, supply_v: 12, pivot }, { source: 'adapter', adapter_v: 12, adapter_a: 1.5, clock0: '22:25', ...power }, { reg: 'buck', case_w: 150, case_d: 28, case_h: 150, ...params });
+const hold = (s, id, sec) => { setInput(s, { pressed: { ...s.input.pressed, [id]: true } }); stepSim(s, sec); setInput(s, { pressed: { ...s.input.pressed, [id]: false } }); stepSim(s, 0.05); };
+
+ok('조명 기본 규칙: 시계는 조명이 켜져 있을 때만, 수면 모드 스위치 → 일정, 블루투스 버튼 → 페어링', () => {
+  const t = lampRules.map((r) => describeRule(r, lamp));
+  assert.ok(t.some((x) => x.includes('호박색 시계 켜기')), t.join('\n'));
+  assert.ok(t.some((x) => x.startsWith('수면 모드 토글 이(가) 켜져 있으면 → 취침 23:00 전 30분')), t.join('\n'));
+  assert.ok(t.includes('블루투스 버튼 을(를) 누르면 → 블루투스 페어링 (앱 연결)'));
+  const fw = firmwareSketch({ features: lamp, rules: lampRules, mcu: 'esp32c3', uuid_base: randomBase(() => 0.5) });
+  assert.ok(fw.includes('ledcAttach(PIN_F') && fw.includes('TODO 수면 일정') && fw.includes('BLEDevice::startAdvertising();  // 블루투스 페어링'));
+});
+
+ok('다이얼: 짧게 누르면 뒤 수면등 60 % 가 서서히 켜지고 시계도 켜짐, 길게 누르면 앞으로, 돌리면 밝기', () => {
+  const s = lampSim();
+  hold(s, 'dial', 0.2);
+  assert.equal(s.levels.rear, 60); assert.equal(s.levels.front || 0, 0);
+  assert.ok(s.phys.light.rear > 0 && s.phys.light.rear < 60, `번쩍임 없이 서서히 ${s.phys.light.rear}`);
+  stepSim(s, 2);
+  assert.ok(Math.abs(s.phys.light.rear - 60) < 0.1 && s.out.clock === 1);
+  hold(s, 'dial', 1.0); // 길게 → 앞
+  assert.equal(s.levels.front, 60); assert.equal(s.levels.rear, 0);
+  turnDial(s, 'dial', 4); stepSim(s, 0.1);
+  assert.equal(s.levels.front, 80);
+  turnDial(s, 'dial', -20); stepSim(s, 0.1);
+  assert.ok(s.levels.front >= 1 && s.levels.front < 10, `${s.levels.front}`);
+  hold(s, 'dial', 0.2); stepSim(s, 2);
+  assert.ok(!s.levels.front && s.out.clock === 0, '끄면 시계도 꺼짐');
+});
+
+ok('광량: 전면 5 W 100 % → 45 cm 약 715 lux (500 lux 목표 + 여유), 1 % 에서는 1 lux 아래 (감마 2.2)', () => {
+  const s = lampSim();
+  s.levels = { front: 100 }; stepSim(s, 3);
+  const lux = s.phys.lux.front;
+  assert.ok(lux > 640 && lux < 720, `${lux}`); // 12 V 레일에서 드라이버까지 처짐 약간
+  s.levels = { front: 1 }; stepSim(s, 3);
+  assert.ok(s.phys.lux.front < 1 && s.phys.lux.front > 0, `${s.phys.lux.front}`);
+  s.levels = { front: 100, rear: 100 }; stepSim(s, 3);
+  assert.ok(s.powerNow.dc > 7 && s.powerNow.dc < 9.5, `양면 최대 ${s.powerNow.dc} W`);
+});
+
+ok('수면 일정: 22:30 부터 30분 감광 → 23:00 소등(시계도), 07:30 부터 기상등 증광 → 08:00 100 %', () => {
+  const s = lampSim();
+  setInput(s, { switches: { sleep: true } });
+  s.levels = { rear: 60 }; stepSim(s, 4 * 60); // 22:29
+  assert.ok(Math.abs(s.levels.rear - 60) < 0.01, `${clockText(s)} ${s.levels.rear}`);
+  stepSim(s, 16 * 60); // 22:45
+  assert.ok(Math.abs(s.levels.rear - 30) < 1, `${clockText(s)} ${s.levels.rear}`);
+  stepSim(s, 16 * 60); // 23:01
+  assert.ok(!s.levels.rear && s.out.clock === 0, `${clockText(s)}`);
+  setClock(s, '07:44'); stepSim(s, 61);
+  assert.ok(Math.abs(s.levels.front - 50) < 4, `${clockText(s)} ${s.levels.front}`);
+  stepSim(s, 16 * 60);
+  assert.equal(s.levels.front, 100); assert.equal(s.out.clock, 1);
+  assert.ok(s.events.some((e) => e.text.includes('기상 최대 밝기')));
+});
+
+ok('LED 판 과열: 방열판 없이(열저항 20) 밀폐(열전달 3)면 85 °C 하드웨어 차단 → 식으면 다시 허용', () => {
+  const s = lampSim({ led_rth: 20, case_hc: 3 });
+  s.levels = { front: 100, rear: 100 };
+  let cutAt = null, peak = 0;
+  for (let i = 0; i < 3600 && cutAt == null; i++) { stepSim(s, 1); peak = Math.max(peak, s.readings.ntc); if (s.phys.cut.front) cutAt = s.t; }
+  assert.ok(cutAt != null && s.warnings['cut-front'], '차단');
+  assert.equal(s.out.front, 0);
+  assert.ok(peak >= 83, `NTC 최고 ${peak}`);
+  for (let i = 0; i < 1200 && s.phys.cut.front; i++) stepSim(s, 1);
+  assert.ok(!s.phys.cut.front, '식으면 다시 허용');
+  const ok8 = lampSim(); ok8.levels = { front: 100, rear: 100 }; for (let i = 0; i < 3600; i++) stepSim(ok8, 1);
+  assert.ok(!ok8.phys.cut.front && ok8.thermal.nodes['led-front'] < 75, `기본 방열 ${ok8.thermal.nodes['led-front']}`);
+});
+
+ok('본체 기울기: 회전축이 받침대 가운데(높이 18)면 4 mm 갭으로 15° 에서 닿고, 갭 5 mm 면 비켜감', () => {
+  near(pivotClearance(pivot, 0), 4, 1e-9, '정자세 갭');
+  assert.ok(pivotClearance(pivot, 15) < 0 && pivotClearance(pivot, 15) > -0.6, `${pivotClearance(pivot, 15)}`);
+  assert.ok(pivotClearance({ ...pivot, check: { ...pivot.check, bottom_y: 41 } }, 15) > 0.3);
+  const s = lampSim(); setInput(s, { pivot: 15 }); stepSim(s, 0.1);
+  assert.ok(s.warnings.pivot && /4\.\d mm 이상/.test(s.warnings.pivot.text), s.warnings.pivot?.text);
+  setInput(s, { pivot: 8 }); stepSim(s, 0.1);
+  assert.ok(s.warnings.pivot.resolved);
+});
+
+ok('블루투스 버튼: 누르면 페어링되어 앱 연결, 앱에서 밝기를 바꿀 수 있다', () => {
+  const s = lampSim();
+  assert.ok(!s.input.app);
+  hold(s, 'bt', 0.1);
+  assert.ok(s.input.app && appWrite(s, 'front', 40));
+  stepSim(s, 2); assert.ok(Math.abs(appValues(s).front - 40) < 0.01);
 });
 
 console.log(`\n${n}개 검산 통과`);

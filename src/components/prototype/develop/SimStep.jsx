@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Play, Pause, RotateCcw, Hand, DoorOpen, Move3d, Battery, Plug, Zap, AlertTriangle, ShieldCheck, Cpu, Smartphone, ListTree, Link2, Droplets } from 'lucide-react';
+import { Play, Pause, RotateCcw, Hand, DoorOpen, Move3d, Battery, Plug, Zap, AlertTriangle, ShieldCheck, Cpu, Smartphone, ListTree, Link2, Droplets, Lightbulb, Clock, Minus, Plus, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
@@ -8,15 +8,18 @@ import { Card, Field } from '@/components/prototype/develop/DevBits';
 import SimCanvas, { fallbackParts } from '@/components/prototype/develop/SimCanvas';
 import SimChart from '@/components/prototype/develop/SimChart';
 import RulesEditor from '@/components/prototype/develop/RulesEditor';
-import { FEATURE_KINDS, OUTPUT_LEVELS, isOutput, findLidPart } from '@/lib/devkit/features';
+import { FEATURE_KINDS, OUTPUT_LEVELS, isOutput, findLidPart, lightSpec } from '@/lib/devkit/features';
 import { defaultRules, validRules } from '@/lib/devkit/rules';
-import { POWER_SOURCES, defaultPower, createSim, stepSim, setInput, appWrite, appValues, runtimeHours, tiltOf, refill, setParams } from '@/lib/devkit/deviceSim';
+import { POWER_SOURCES, defaultPower, createSim, stepSim, setInput, appWrite, appValues, runtimeHours, tiltOf, refill, setParams, turnDial, setClock, clockText, pivotClearance } from '@/lib/devkit/deviceSim';
+import { hhmm } from '@/lib/devkit/rules';
 import { DEFAULT_SIM_PARAMS } from '@/lib/devkit/thermal';
 import { mainShellId, partParams } from '@/lib/devkit/solidcraft';
 import { PowerPanel, HeatPanel, PartParamsPanel } from '@/components/prototype/develop/PowerHeatPanels';
 
 const SPEEDS = [1, 10, 60, 600];
-const BOOL_TEXT = { button: ['—', '눌림'], lid: ['닫힘', '열림'], tilt: ['바로 섬', '기울어짐'], water: ['물 있음', '물 부족'] };
+const BOOL_TEXT = { button: ['—', '눌림'], lid: ['닫힘', '열림'], tilt: ['바로 섬', '기울어짐'], water: ['물 있음', '물 부족'], switch: ['꺼짐', '켜짐'] };
+const FACE_TEXT = { rear: '뒤 (수면등)', front: '앞 (기상등)', both: '앞뒤 함께' };
+const minus = (t, min) => { const m = (hhmm(t) - min + 1440) % 1440; return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
 const fmtA = (i) => (i >= 1 ? `${i.toFixed(2)} A` : `${Math.round(i * 1000)} mA`);
 const fmtT = (s) => (s < 60 ? `${s.toFixed(1)}초` : s < 3600 ? `${Math.floor(s / 60)}분 ${Math.floor(s % 60)}초` : `${(s / 3600).toFixed(1)}시간`);
 const unit = (f) => FEATURE_KINDS[f.kind]?.ble.unit || '';
@@ -44,7 +47,7 @@ export default function SimStep({ concept, dev, change }) {
     const m = {};
     features.forEach((f) => {
       const pid = usingFallback ? (parts.some((p) => p.id === f.id) ? f.id : null) : (f.part_id || parts.find((p) => p.name === f.name)?.id);
-      if (pid) m[pid] = { feature_id: f.id, kind: f.kind };
+      if (pid) m[pid] = { feature_id: f.id, kind: f.kind, feature: f };
     });
     return m;
   }, [features, parts, usingFallback]);
@@ -54,7 +57,7 @@ export default function SimStep({ concept, dev, change }) {
   const [running, setRunning] = useState(true);
   const [speed, setSpeed] = useState(1);
   const [resetN, setResetN] = useState(0);
-  const shape = `${features.map((f) => `${f.id}:${f.kind}`).join(',')}|${dev.supply_v}`;
+  const shape = `${features.map((f) => `${f.id}:${f.kind}`).join(',')}|${dev.supply_v}|${JSON.stringify(dev.pivot || null)}`;
 
   useEffect(() => { simRef.current = createSim({ ...dev, features, rules, sim_params: {} }, power, simParams); setFrame((n) => n + 1); }, [shape, resetN]);
   useEffect(() => { if (simRef.current) setParams(simRef.current, simParams); }, [simParams]);
@@ -85,19 +88,28 @@ export default function SimStep({ concept, dev, change }) {
   const buttons = features.filter((f) => f.kind === 'button');
   const hasLid = !!lidPartId || features.some((f) => f.kind === 'lid');
   const warnings = Object.values(s.warnings);
+  const lights = features.filter((f) => f.kind === 'light');
+  const encoders = features.filter((f) => f.kind === 'encoder');
+  const switches = features.filter((f) => f.kind === 'switch');
+  const hasClock = features.some((f) => f.kind === 'display') || rules.some((r) => r.type === 'schedule');
+  const sched = rules.find((r) => r.type === 'schedule');
+  const tap = (id, sec) => { setInput(s, { pressed: { ...s.input.pressed, [id]: true } }); stepSim(s, sec); setInput(s, { pressed: { ...s.input.pressed, [id]: false } }); stepSim(s, 0.05); setFrame((n) => n + 1); };
+  const flip = (id) => { setInput(s, { switches: { ...s.input.switches, [id]: !s.input.switches[id] } }); stepSim(s, 0.02); setFrame((n) => n + 1); };
+  const clearance = dev.pivot ? pivotClearance(dev.pivot, s.input.pivot || 0) : null;
   const blockedName = (id) => (s.blockedBy[id] ? '안전 조건으로 꺼짐' : '');
 
   return (
     <div className="space-y-4">
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <div className="relative min-h-[460px] overflow-hidden rounded-xl border bg-gradient-to-b from-secondary to-card">
-          <SimCanvas parts={parts} links={links} lidPartId={lidPartId} simRef={simRef} onPress={press} onLid={() => setLid(s.input.lid > 0.5 ? 0 : 1)} />
+          <SimCanvas parts={parts} links={links} lidPartId={lidPartId} simRef={simRef} onPress={press} onLid={() => setLid(s.input.lid > 0.5 ? 0 : 1)} onSwitch={flip} pivot={dev.pivot} />
           <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-1.5">
             <span className={`rounded-full px-2.5 py-1 text-caption font-medium backdrop-blur ${s.mcu.on ? 'bg-success/15 text-success-text' : 'bg-destructive/15 text-destructive'}`}>{s.mcu.on ? 'MCU 동작' : 'MCU 꺼짐·재부팅'}</span>
             <span className="rounded-full bg-card/85 px-2.5 py-1 text-caption tabular-nums backdrop-blur">입력 {s.rails.vin.toFixed(2)} V · {fmtA(s.rails.i)}</span>
             {s.power.source === 'battery' && <span className="rounded-full bg-card/85 px-2.5 py-1 text-caption tabular-nums backdrop-blur">배터리 {s.phys.soc.toFixed(1)} %</span>}
             {angle > 5 && <span className="rounded-full bg-warning/15 px-2.5 py-1 text-caption text-warning-text backdrop-blur">기울기 {Math.round(angle)}°</span>}
             {s.mcu.resets > 0 && <span className="rounded-full bg-destructive/15 px-2.5 py-1 text-caption text-destructive backdrop-blur">리셋 {s.mcu.resets}회</span>}
+            {hasClock && <span className="rounded-full bg-card/85 px-2.5 py-1 text-caption font-semibold tabular-nums backdrop-blur">{clockText(s)}{sched && s.input.switches[sched.src] ? ' · 수면 모드' : ''}</span>}
           </div>
           <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-center gap-2">
             <Button size="sm" variant={running ? 'outline' : 'default'} onClick={() => setRunning(!running)}>{running ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}{running ? '멈춤' : '재생'}</Button>
@@ -119,6 +131,36 @@ export default function SimStep({ concept, dev, change }) {
                   </Button>
                 ))}
               </div>
+            )}
+            {encoders.map((f) => (
+              <Field group key={f.id} label={`${f.name} · ${FACE_TEXT[s.lamp.face]} · 밝기 ${Math.round(s.lamp.bright)} %`}>
+                <div className="flex flex-wrap gap-1.5">
+                  <Button size="sm" variant="outline" onClick={() => { turnDial(s, f.id, -1); stepSim(s, 0.02); setFrame((n) => n + 1); }} aria-label="다이얼 돌려 어둡게"><Minus className="w-4 h-4" />어둡게</Button>
+                  <Button size="sm" onClick={() => tap(f.id, 0.1)}>누르기 (켜기·끄기)</Button>
+                  <Button size="sm" variant="outline" onClick={() => tap(f.id, 0.9)}>길게 (면 바꾸기)</Button>
+                  <Button size="sm" variant="outline" onClick={() => { turnDial(s, f.id, 1); stepSim(s, 0.02); setFrame((n) => n + 1); }} aria-label="다이얼 돌려 밝게"><Plus className="w-4 h-4" />밝게</Button>
+                </div>
+              </Field>
+            ))}
+            {switches.map((f) => (
+              <label key={f.id} className="flex items-center justify-between gap-2 text-label"><span className="flex items-center gap-2"><Moon className="w-4 h-4 text-muted-foreground" />{f.name}</span><Switch checked={!!s.input.switches[f.id]} onCheckedChange={() => flip(f.id)} aria-label={f.name} /></label>
+            ))}
+            {dev.pivot && (
+              <Field group label={`본체 기울기 ${Math.round(s.input.pivot || 0)}° (+ 앞으로) · 아래 간격 ${clearance == null ? '—' : `${clearance.toFixed(1)} mm`}`}>
+                <Slider min={Number(dev.pivot.min) || -15} max={Number(dev.pivot.max) || 15} step={1} value={[s.input.pivot || 0]} onValueChange={([v]) => { setInput(s, { pivot: v }); stepSim(s, 0.02); setFrame((n) => n + 1); }} aria-label="본체 기울기" />
+                {clearance != null && clearance < 0 && <p className="mt-1 text-micro text-destructive">본체 아래 모서리가 받침대에 {Math.abs(clearance).toFixed(1)} mm 닿습니다.</p>}
+              </Field>
+            )}
+            {hasClock && (
+              <Field group label={`시각 ${clockText(s)} (RTC)`}>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <Input type="time" value={clockText(s)} onChange={(e) => { if (e.target.value) { setClock(s, e.target.value); setFrame((n) => n + 1); } }} className="h-8 w-28 tabular-nums" aria-label="시각 맞추기" />
+                  {sched && <Button size="sm" variant="outline" onClick={() => { setClock(s, minus(sched.bed, Number(sched.dim_min) + 5)); setFrame((n) => n + 1); }}>취침 감광 5분 전</Button>}
+                  {sched && <Button size="sm" variant="outline" onClick={() => { setClock(s, minus(sched.wake, Number(sched.rise_min) + 5)); setFrame((n) => n + 1); }}>기상 증광 5분 전</Button>}
+                </div>
+                {sched && <p className="mt-1 text-micro text-muted-foreground">취침 {sched.bed} (감광 {sched.dim_min}분) · 기상 {sched.wake} (증광 {sched.rise_min}분 → {sched.wake_level} %). 600× 로 두면 30분이 3초에 지나갑니다.</p>}
+              </Field>
             )}
             {hasLid && (
               <Field group label={`뚜껑 ${s.input.lid > 0.15 ? '열림' : '닫힘'}`}>
@@ -154,6 +196,26 @@ export default function SimStep({ concept, dev, change }) {
             </Field>
             <label className="flex items-center justify-between gap-2 text-label"><span className="flex items-center gap-2"><Smartphone className="w-4 h-4 text-muted-foreground" />앱 연결 (블루투스)</span><Switch checked={s.input.app} onCheckedChange={(v) => { setInput(s, { app: v }); setFrame((n) => n + 1); }} /></label>
           </Card>
+          {lights.length > 0 && (
+            <Card title="조명" icon={Lightbulb} tag={s.input.app ? '앱 연결됨' : '앱 연결 안 됨'}>
+              <div className="divide-y">
+                {lights.map((f) => {
+                  const ls = lightSpec(f);
+                  const t = s.thermal.nodes[`led-${f.id}`];
+                  return (
+                    <div key={f.id} className="py-2 text-caption">
+                      <p className="flex items-baseline gap-2"><span className="font-medium">{f.name}</span><span className="text-micro text-muted-foreground">{ls.cct} K · 최대 {ls.power_w} W</span>
+                        {s.phys.cut[f.id] && <span className="rounded bg-destructive/15 px-1.5 text-micro font-semibold text-destructive">과열 차단</span>}
+                        <span className="ml-auto font-semibold tabular-nums">{(s.phys.light[f.id] || 0).toFixed((s.phys.light[f.id] || 0) < 10 ? 1 : 0)} %</span></p>
+                      <div className="mt-1 h-1.5 rounded-full bg-muted"><div className="h-1.5 rounded-full" style={{ width: `${Math.min(100, s.phys.light[f.id] || 0)}%`, background: ls.face === 'rear' ? '#f5a35a' : '#ffd9a8' }} /></div>
+                      <p className="mt-1 tabular-nums text-muted-foreground">LED {(s.phys.ledW[f.id] || 0).toFixed(2)} W · {Math.round(s.phys.lm[f.id] || 0)} lm{ls.face !== 'rear' ? ` · 45 cm 정면 ${(s.phys.lux[f.id] || 0) < 10 ? (s.phys.lux[f.id] || 0).toFixed(2) : Math.round(s.phys.lux[f.id] || 0)} lux` : ''}{t != null ? ` · LED 판 ${t.toFixed(1)} °C / 차단 ${ls.cutoff_c} °C` : ''}</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-micro text-muted-foreground">밝기 %는 눈에 보이는 단계이고, 실제 광량은 감마 2.2 곡선으로 계산합니다 (1 % ≈ 정면 0.03 lux). 조도는 발광면을 램버시안 면광원으로 본 근사값입니다.</p>
+            </Card>
+          )}
         </div>
       </div>
 
@@ -281,7 +343,7 @@ export default function SimStep({ concept, dev, change }) {
                 {conceptParts.filter((p) => p.layer === 'SHELL').map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </Field>
-            {features.filter((f) => ['button', 'led', 'motor', 'heater', 'servo', 'buzzer', 'relay'].includes(f.kind)).map((f) => (
+            {features.filter((f) => ['button', 'led', 'motor', 'heater', 'servo', 'buzzer', 'relay', 'light', 'display', 'encoder', 'switch'].includes(f.kind)).map((f) => (
               <Field key={f.id} label={f.name}>
                 <select value={f.part_id || ''} onChange={(e) => change((d) => ({ features: (d.features || []).map((x) => (x.id === f.id ? { ...x, part_id: e.target.value || null } : x)) }))} className="h-9 w-full rounded-md border bg-background px-2 text-label">
                   <option value="">연결 안 함</option>

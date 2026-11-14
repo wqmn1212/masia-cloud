@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { Card, Field } from '@/components/prototype/develop/DevBits';
-import { FEATURE_KINDS, FEATURE_GROUPS, MCUS, makeFeature, suggestFeatures, heaterWatts } from '@/lib/devkit/features';
+import { FEATURE_KINDS, FEATURE_GROUPS, MCUS, makeFeature, suggestFeatures, heaterWatts, lightSpec } from '@/lib/devkit/features';
 
 const ACCESS = { read: '읽기', write: '쓰기', notify: '알림' };
 const PIN_KIND = { gpio: '디지털', pwm: 'PWM', adc: 'ADC', none: '-' };
@@ -65,6 +65,14 @@ export default function FeaturesStep({ concept, dev, change }) {
                     <span className="text-muted-foreground tabular-nums">구동 전원 {dev.supply_v} V 에서 약 {(heaterWatts(f) / (Number(dev.supply_v) || 5)).toFixed(2)} A · 히터 저항 {((Number(dev.supply_v) || 5) ** 2 / heaterWatts(f)).toFixed(1)} Ω</span>
                   </label>
                 )}
+                {f.kind === 'light' && (() => { const ls = lightSpec(f); return (
+                  <div className="flex flex-wrap items-center gap-2 text-caption">
+                    <select value={ls.face} onChange={(e) => update(f.id, { face: e.target.value })} className="h-8 rounded-md border bg-background px-2 text-caption" aria-label="발광면"><option value="front">앞면</option><option value="rear">뒷면</option></select>
+                    <span className="font-medium">LED</span><Input type="number" min={0.1} max={200} step="0.1" value={ls.power_w} onChange={(e) => update(f.id, { power_w: Math.max(0.1, Number(e.target.value) || 1) })} className="h-8 w-20 tabular-nums" aria-label="LED 최대 전력 W" /><span>W</span>
+                    <Input type="number" min={1800} max={6500} step="100" value={ls.cct} onChange={(e) => update(f.id, { cct: Math.max(1800, Math.min(6500, Number(e.target.value) || 4000)) })} className="h-8 w-24 tabular-nums" aria-label="색온도 K" /><span>K</span>
+                    <span className="text-muted-foreground tabular-nums">약 {Math.round(ls.power_w * ls.lm_per_w * ls.trans / 100)} lm (효율 {ls.lm_per_w} lm/W × 확산 {ls.trans} %){ls.face === 'front' ? ` · 45 cm 정면 약 ${Math.round((ls.power_w * ls.lm_per_w * ls.trans / 100) / (Math.PI * 0.2025))} lux` : ''}</span>
+                  </div>
+                ); })()}
                 <p className="text-caption text-muted-foreground">{k.block}</p>
                 <p className="flex flex-wrap gap-x-3 text-micro text-muted-foreground">
                   <span>핀 {PIN_KIND[k.pin]}{Number.isInteger(f.pin) ? ` · GPIO${f.pin}` : ''}</span>

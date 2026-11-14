@@ -1,7 +1,7 @@
 // 발열·소비전력: 매 순간 부품마다 전력(W)과 발열(W)을 나누고, 부품·외장 내부 공기·외장 표면 온도를 시간에 따라 계산한다.
 // 열 모델은 RC 근사: 부품 → (열저항 Rθ) → 외장 내부 공기 → (외장 표면적 × 대류 계수) → 주변.
 // 값은 '부품 값 수정'에서 바꿀 수 있고, 바꾸면 바로 다음 계산부터 반영된다.
-import { heaterWatts } from './features.js';
+import { heaterWatts, lightSpec } from './features.js';
 
 /** 바꿀 수 있는 부품 값 (화면의 '부품 값 수정' 표가 이 목록으로 만들어진다) */
 export const SIM_PARAMS = [
@@ -18,6 +18,8 @@ export const SIM_PARAMS = [
   { group: 'MCU·부하', key: 'mcu_tmax', label: 'MCU 모듈 최대 주변 온도', unit: '°C', default: 85, min: 50, max: 125, step: 5 },
   { group: 'MCU·부하', key: 'motor_ohm', label: 'DC 모터 권선 저항', unit: 'Ω', default: 10, min: 0.2, max: 500, step: 0.1 },
   { group: 'MCU·부하', key: 'relay_ohm', label: '릴레이 코일 저항', unit: 'Ω', default: 70, min: 5, max: 2000, step: 1 },
+  { group: '조명 LED', key: 'driver_eff', label: 'LED 드라이버 효율', unit: '%', default: 90, min: 60, max: 98, step: 1, help: '정전류 벅 LED 드라이버 ≈ 88~93 %' },
+  { group: '조명 LED', key: 'led_rth', label: 'LED 판 열저항 (판 → 내부 공기)', unit: '°C/W', default: 8, min: 1, max: 60, step: 0.5, help: 'MCPCB + 중앙 알루미늄 방열판 ≈ 6~8, 방열판 없이 FR-4 ≈ 15~25' },
   { group: '외장·열', key: 'case_w', label: '외장 폭', unit: 'mm', default: 120, min: 10, max: 2000, step: 1 },
   { group: '외장·열', key: 'case_d', label: '외장 깊이', unit: 'mm', default: 80, min: 10, max: 2000, step: 1 },
   { group: '외장·열', key: 'case_h', label: '외장 높이', unit: 'mm', default: 50, min: 5, max: 2000, step: 1 },
@@ -81,6 +83,12 @@ export function updateThermal(s, dt, K) {
       add(`fet-${f.id}`, `${f.name} 스위치 (MOSFET)`, 'fet', fet, fet, { rth: p.fet_rth, tmax: p.fet_tmax, always: true });
       if (dio > 0) add(`dio-${f.id}`, `${f.name} 환류 다이오드`, 'diode', dio, dio, { rth: 200, tmax: 125 });
       add(`motor-${f.id}`, f.name, 'motor', r.vdrive * i - fet - dio, r.vdrive * i - fet - dio);
+    } else if (f.kind === 'light') {
+      // LED 판: 들어간 전력 중 빛으로 나가는 몫(약 32 %)을 뺀 나머지가 판의 열. 드라이버 손실은 따로
+      const ls = lightSpec(f);
+      const pin = r.vdrive * i, pled = pin * (p.driver_eff / 100);
+      add(`led-${f.id}`, `${f.name} LED 판`, 'led', pled, pled * (1 - K.radiant), { rth: p.led_rth, tmax: ls.cutoff_c, always: true, rated: ls.power_w });
+      add(`drv-${f.id}`, `${f.name} 드라이버`, 'reg', pin - pled, pin - pled, { rth: K.drvRth, tmax: 125, always: true });
     } else if (load && load.rail !== '3.3V') add(`l-${f.id}`, f.name, f.kind, r.vdrive * i, r.vdrive * i);
   });
   if (r.boost) { const pd = r.vdrive * r.iDrive; const loss = pd * (100 / p.boost_eff - 1); add('boost', '승압 컨버터', 'reg', loss, loss, { rth: 40, tmax: 125 }); }
@@ -119,7 +127,7 @@ export function thermalChecks(s, warn, resolve = () => {}) {
   else resolve('ldo-vmax');
   const hot = new Set();
   s.powerNow.parts.forEach((x) => {
-    if (x.temp == null || x.tmax == null || x.temp <= x.tmax) return;
+    if (x.temp == null || x.tmax == null || x.temp <= x.tmax || x.kind === 'led') return; // LED 판은 하드웨어 차단 경고로 따로 알린다
     hot.add(`heat-${x.key}`);
     const tip = x.kind === 'fet' ? 'Rds(on) 이 낮은 MOSFET, 큰 패키지(DPAK·TO-220)나 방열판을 쓰세요.' : x.kind === 'reg' ? '입력 전압을 낮추거나 벅 컨버터로 바꾸세요.' : x.kind === 'heater' ? '온도 센서 규칙으로 더 일찍 끊으세요.' : '발열을 줄이거나 열이 빠지게 하세요.';
     warn(`heat-${x.key}`, `${x.name} 온도가 ${Math.round(x.temp)} °C 로 한계 ${x.tmax} °C 를 넘습니다 (발열 ${x.heat.toFixed(2)} W). ${tip}`, 'error');
