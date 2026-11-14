@@ -10,6 +10,8 @@ import { defaultRules, applyPress, effectiveLevels, describeRule } from '../src/
 import { createSim, stepSim, setInput, appWrite, appValues, runtimeHours, ocv, refill } from '../src/lib/devkit/deviceSim.js';
 import { shellParts, mainShellId, partParams, partCutouts } from '../src/lib/devkit/solidcraft.js';
 import { drawingSvg, pickScale } from '../src/lib/devkit/drawing.js';
+import { DEFAULT_SIM_PARAMS, SIM_PARAMS, caseThermal, monthlyCost } from '../src/lib/devkit/thermal.js';
+import { setParams } from '../src/lib/devkit/deviceSim.js';
 import { operatingPoint } from '../src/lib/circuit/analysis.js';
 import { buildTopology } from '../src/lib/circuit/topology.js';
 
@@ -314,7 +316,7 @@ ok('배터리 잔량이 적을 때 히터를 켜면 전압 강하로 리셋 (승
 ok('히터 온도: 규칙이 없으면 90 °C 넘게 올라 경고, 70 °C 규칙이 있으면 그 근처에서 끊긴다', () => {
   const run = (rules) => { const s = createSim({ features: kit, rules, supply_v: 5 }, { source: 'usb', usb_limit: 3, ambient: 25 }); s.levels = { [fid('heater')]: 100 }; let max = 0; for (let i = 0; i < 1500; i++) { stepSim(s, 1); max = Math.max(max, s.phys.heaterT); } return { s, max }; };
   const free = run([]);
-  assert.ok(free.max > 90 && free.max < 95, `최고 ${free.max}`);
+  assert.ok(free.max > 90 && free.max < 110, `최고 ${free.max}`); // 새는 열이 작은 외장 안 공기를 데워 조금 더 오른다
   assert.ok(free.s.warnings.hot);
   const guarded = run(kitRules);
   assert.ok(guarded.max < 72, `최고 ${guarded.max}`);
@@ -460,6 +462,73 @@ ok('설계 도면: A3 3면도·치수·구멍 표·표제란, 척도 자동, 글
   assert.equal(d.svg.split('class="hidden"').length - 1, 1, '뒷면 잭은 숨은선 하나');
   assert.deepEqual(pickScale(20, 15, 10), [5, '5:1']);
   assert.deepEqual(pickScale(600, 400, 900)[1], '1:10');
+});
+
+// ── 발열·소비전력·부품 값 수정 ──
+const heatSim = (params = {}, power = {}) => {
+  const s = createSim({ features: hh, rules: hhRules, supply_v: 24 }, { source: 'adapter', adapter_v: 24, adapter_a: 2.5, water_ml: 3000, ...power }, { case_w: 180, case_d: 180, case_h: 110, ...params });
+  s.levels = { [hid('heater')]: 100 };
+  return s;
+};
+const run = (s, sec) => { for (let i = 0; i < sec; i++) stepSim(s, 1); return s; };
+const sumW = (s) => s.powerNow.parts.reduce((a, x) => a + x.w, 0);
+
+ok('전력 나누기: 부품별 전력의 합 = 전원 입력 전력, 콘센트 = 입력 ÷ 어댑터 효율', () => {
+  const s = run(heatSim(), 600);
+  near(sumW(s), s.powerNow.dc, 1e-6, '부품 합');
+  near(s.powerNow.wall, s.powerNow.dc / 0.88, 1e-6, '콘센트');
+  near(s.powerNow.dc, 48.4, 0.6, 'DC 입력');
+});
+
+ok('LDO 에 24 V: (24 − 3.3) V × 전류만큼 열 → 과열·입력 초과 경고, 벅으로 바꾸면 해결됨', () => {
+  const s = run(heatSim(), 300);
+  const ldo = s.powerNow.parts.find((x) => x.key === 'reg');
+  near(ldo.heat, (s.rails.vin - 3.3) * s.rails.i33 + s.rails.vin * 0.0001, 1e-9, 'LDO 손실 (대기 전류 포함)');
+  assert.ok(ldo.temp > 125, `LDO ${ldo.temp}`);
+  assert.ok(s.warnings['ldo-vmax'] && s.warnings['heat-reg']);
+  setParams(s, { reg: 'buck' }); run(s, 120);
+  const buck = s.powerNow.parts.find((x) => x.key === 'reg');
+  assert.ok(buck.temp < 40, `벅 ${buck.temp}`);
+  assert.ok(s.warnings['ldo-vmax'].resolved && s.warnings['heat-reg'].resolved);
+  assert.ok(s.events.some((e) => e.text.startsWith('해결됨')));
+});
+
+ok('MOSFET 발열: 손실 = I² × Rds(on), 80 W 히터를 SOT-23 에 걸면 온도가 오르고 Rds·열저항을 고치면 내려간다', () => {
+  const a = run(heatSim({ reg: 'buck' }, { adapter_a: 5 }), 10);
+  a.features.find((f) => f.kind === 'heater').power_w = 80; // 화면에서 히터 W 를 바꾼 것과 같다
+  run(a, 300);
+  const fet = a.powerNow.parts.find((x) => x.kind === 'fet');
+  const ion = a.rails.vdrive / (24 * 24 / 80);
+  near(fet.heat, ion * ion * 0.045, 1e-6, 'MOSFET 손실');
+  const hotT = fet.temp;
+  setParams(a, { fet_rds: 9, fet_rth: 50 }); run(a, 120);
+  const cool = a.powerNow.parts.find((x) => x.kind === 'fet').temp;
+  assert.ok(hotT > 85 && cool < 45, `${hotT} → ${cool}`);
+});
+
+ok('외장 열: 표면적·대류 계수로 내부 공기가 오르고, 작은 밀폐 외장은 더 뜨겁다', () => {
+  const big = caseThermal({ ...DEFAULT_SIM_PARAMS, case_w: 180, case_d: 180, case_h: 110 });
+  near(big.area, 0.1440, 1e-4, '표면적'); near(big.rth, 1 / (8 * 0.144), 1e-6, '열저항');
+  const small = run(heatSim({ reg: 'buck', case_w: 80, case_d: 60, case_h: 40, case_hc: 6, inside_max: 50 }), 3000);
+  const large = run(heatSim({ reg: 'buck', inside_max: 50 }), 3000);
+  assert.ok(small.thermal.tin > large.thermal.tin + 15, `${small.thermal.tin} vs ${large.thermal.tin}`);
+  assert.ok(small.warnings['inside-hot'] && !large.warnings['inside-hot']);
+  setParams(small, { case_hc: 15 }); run(small, 3000); // 통풍구를 낸 것
+  assert.ok(small.warnings['inside-hot'].resolved, `통풍구 뒤 ${small.thermal.tin}`);
+});
+
+ok('전력량·전기요금: Wh 누적 = 평균 전력 × 시간, 월 요금 = 콘센트 W × 하루 시간 × 30 × 단가', () => {
+  const s = run(heatSim({ reg: 'buck' }), 3600);
+  assert.ok(s.energy.wh > 40 && s.energy.wh < 50, `${s.energy.wh} Wh`);
+  const c = monthlyCost(s);
+  near(c.won, Math.round(c.avgW * 8 * 30 / 1000 * 150), 1, '월 요금');
+  setParams(s, { price_kwh: 300 }); assert.ok(Math.abs(monthlyCost(s).won - c.won * 2) <= 2);
+});
+
+ok('부품 값 목록: 모든 항목에 기본값·단위(선택형 제외)', () => {
+  SIM_PARAMS.forEach((p) => { assert.ok(p.default !== undefined, p.key); if (p.type !== 'select') assert.ok(p.unit && p.min < p.max, p.key); });
+  assert.ok(featureBom(hh, 'esp32c3', 24).some((b) => b.name.startsWith('벅 컨버터 24 V')));
+  assert.ok(featureBom(hh, 'esp32c3', 5).some((b) => b.name.startsWith('LDO')));
 });
 
 console.log(`\n${n}개 검산 통과`);

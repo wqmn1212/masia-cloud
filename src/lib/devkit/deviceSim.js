@@ -3,6 +3,7 @@
 // 값은 데이터시트 수준의 근사 모델이며, 설계 초기에 "이 조합이면 무엇이 문제인가"를 찾는 용도다.
 import { FEATURE_KINDS, OUTPUT_LEVELS, DRIVE_KINDS, isOutput, heaterWatts } from './features.js';
 import { applyPress, effectiveLevels, validRules, ALL } from './rules.js';
+import { DEFAULT_SIM_PARAMS, initThermal, updateThermal, thermalChecks } from './thermal.js';
 
 export const POWER_SOURCES = {
   usb: { label: 'USB 전원', note: '5 V, PC 포트 0.5 A · 충전기 1.5~3 A' },
@@ -18,12 +19,12 @@ export const defaultPower = (features) => ({
 
 // 상수 (근사)
 const K = {
-  mcuIdle: 0.035, mcuApp: 0.012, sensor: 0.001, ldoDrop: 0.25, ldoQ: 0.0001,
+  mcuApp: 0.012, sensor: 0.001, ldoDrop: 0.25, ldoQ: 0.0001,
   brownout: 2.8, bootOk: 3.0, bootTime: 0.35,
-  usbRint: 0.25, adapterRint: 0.08, battRint: 0.15, chargeA: 0.5, boostEff: 0.85,
-  motorR: 10, motorTau: 0.3, motorBack: 0.85, motorFric: 0.04,
+  usbRint: 0.25, adapterRint: 0.08, battRint: 0.15, chargeA: 0.5,
+  motorTau: 0.3, motorBack: 0.85, motorFric: 0.04,
   heaterRth: 15, heaterC: 20, chamberMl: 60, waterC: 4.186, latent: 2260, lowWaterMl: 80, fuseC: 128,
-  buzzerA: 0.02, servoMoveA: 0.25, servoIdleA: 0.008, servoSpeed: 300, relayR: 70, ledA: 0.004,
+  buzzerA: 0.02, servoMoveA: 0.25, servoIdleA: 0.008, servoSpeed: 300, ledA: 0.004,
   tiltSwitch: 45, fallen: 60,
 };
 
@@ -37,11 +38,12 @@ export function ocv(soc) {
 
 const tiltAngle = (t) => (Math.acos(Math.max(-1, Math.min(1, Math.cos((t.pitch * Math.PI) / 180) * Math.cos((t.roll * Math.PI) / 180)))) * 180) / Math.PI;
 
-export function createSim(dev, power = {}) {
+export function createSim(dev, power = {}, params = {}) {
   const features = dev.features || [];
   const p = { ...defaultPower(features), ...power };
   const heater = features.find((f) => f.kind === 'heater');
-  return {
+  const s = {
+    params: { ...DEFAULT_SIM_PARAMS, ...(dev.sim_params || {}), ...params },
     features, rules: validRules(dev.rules, features), supplyV: Number(dev.supply_v) || 5, power: p,
     t: 0,
     input: { pressed: {}, lid: 0, tilt: { pitch: 0, roll: 0 }, dial: {}, app: false },
@@ -51,10 +53,32 @@ export function createSim(dev, power = {}) {
     out: {}, blockedBy: {}, readings: {}, rails: { vin: 0, v33: 3.3, vdrive: 0, i: 0, iDrive: 0, i33: 0, limit: Infinity, overload: false },
     loads: [], history: [], events: [], warnings: {}, hasHeater: !!heater, lastSample: -1,
   };
+  initThermal(s);
+  return s;
+}
+
+/** 부품 값 바꾸기 (다음 계산부터 반영). 고친 결과는 경고가 '해결됨'으로 바뀌는 것으로 보인다 */
+export function setParams(s, patch) {
+  const changed = Object.keys(patch).filter((k) => s.params[k] !== patch[k]);
+  if (!changed.length) return;
+  Object.assign(s.params, patch);
+  // 부품을 바꾼 것(레귤레이터 종류)은 새 부품이므로 내부 공기 온도에서 다시 시작한다
+  if (changed.includes('reg') && s.thermal) delete s.thermal.nodes.reg;
+  log(s, `부품 값 변경: ${changed.join(', ')}`);
 }
 
 const log = (s, text, kind = 'info') => { s.events.unshift({ t: s.t, text, kind }); if (s.events.length > 80) s.events.pop(); };
-const warn = (s, key, text, level = 'warn') => { if (!s.warnings[key]) { s.warnings[key] = { key, text, level, t: s.t }; log(s, text, level); } };
+const warn = (s, key, text, level = 'warn') => {
+  const w = s.warnings[key];
+  if (!w) { s.warnings[key] = { key, text, level, t: s.t }; log(s, text, level); }
+  else if (w.resolved) { Object.assign(w, { text, level, resolved: false, t: s.t }); log(s, text, level); }
+  else w.text = text; // 숫자(온도·전류)는 최신 값으로
+};
+/** 조건이 풀리면 '해결됨'으로 표시한다 (부품 값을 고친 효과가 보이게) */
+const resolve = (s, key) => {
+  const w = s.warnings[key];
+  if (w && !w.resolved) { w.resolved = true; w.resolvedT = s.t; log(s, `해결됨: ${w.text.split('.')[0]}`, 'safe'); }
+};
 
 /** 입력 바꾸기 (화면 조작) */
 export function setInput(s, patch) {
@@ -88,7 +112,7 @@ function readInputs(s, vterm) {
 /** 출력 값과 레일 전압으로 부하 전류 계산 (구동 레일, 3.3 V 레일 따로) */
 function loadsAt(s, out, vdrive, dt) {
   const loads = [];
-  let iDrive = 0, i33 = K.mcuIdle * (s.mcu.on ? 1 : 0.05) + (s.mcu.on && s.input.app ? K.mcuApp : 0);
+  let iDrive = 0, i33 = (s.params.mcu_ma / 1000) * (s.mcu.on ? 1 : 0.05) + (s.mcu.on && s.input.app ? K.mcuApp : 0);
   if (s.mcu.on) loads.push({ name: 'MCU·블루투스', rail: '3.3V', i: i33 });
   s.features.forEach((f) => {
     const v = out[f.id] || 0;
@@ -96,11 +120,11 @@ function loadsAt(s, out, vdrive, dt) {
     if (f.kind === 'led') { i = K.ledA * (v / 100); rail = '3.3V'; }
     if (f.kind === 'motor') {
       const sp = s.phys.motor[f.id] || 0;
-      i = (vdrive / K.motorR) * Math.max(0, v / 100 - K.motorBack * sp) + (v > 0 ? K.motorFric : 0);
+      i = (vdrive / s.params.motor_ohm) * Math.max(0, v / 100 - K.motorBack * sp) + (v > 0 ? K.motorFric : 0);
     }
     if (f.kind === 'heater') { const r = (s.supplyV ** 2) / heaterWatts(f); i = s.phys.fuseBlown ? 0 : (vdrive / r) * (v / 100); }
     if (f.kind === 'buzzer') i = v > 0 ? K.buzzerA : 0;
-    if (f.kind === 'relay') i = v > 0 ? vdrive / K.relayR : 0;
+    if (f.kind === 'relay') i = v > 0 ? vdrive / s.params.relay_ohm : 0;
     if (f.kind === 'servo') { const a = s.phys.servo[f.id] ?? 0; i = Math.abs(a - v) > 1 ? K.servoMoveA : K.servoIdleA; }
     if (['temp', 'analog', 'battery', 'button', 'lid', 'tilt'].includes(f.kind)) { i = K.sensor; rail = '3.3V'; }
     if (!i) return;
@@ -127,8 +151,10 @@ function solveRails(s, out, dt) {
   const demand = (v) => {
     const vdrive = boost ? s.supplyV * Math.min(1, v / Math.max(vin, 0.1)) : v;
     const r = loadsAt(s, out, vdrive, dt);
-    const iDriveSrc = boost ? (r.iDrive * vdrive) / Math.max(v, 0.5) / K.boostEff : r.iDrive;
-    return { ...r, vdrive, iSrc: iDriveSrc + r.i33 + K.ldoQ };
+    const iDriveSrc = boost ? (r.iDrive * vdrive) / Math.max(v, 0.5) / (s.params.boost_eff / 100) : r.iDrive;
+    // 3.3 V: LDO 는 출력 전류를 그대로 입력에서 끌고, 벅 컨버터는 전력 ÷ 효율 ÷ 입력 전압만큼 끈다
+    const i33Src = s.params.reg === 'buck' ? (3.3 * r.i33) / (s.params.buck_eff / 100) / Math.max(v, 0.5) : r.i33 + K.ldoQ;
+    return { ...r, vdrive, iSrc: iDriveSrc + i33Src };
   };
   // 전원이 줄 수 있는 전류 = min((vin − v)/rint, 한도). 부하 전류와 같아지는 v 를 이분법으로 찾는다
   let lo = 0, hi = vin;
@@ -140,7 +166,7 @@ function solveRails(s, out, dt) {
   const res = demand(vterm);
   const iSrc = res.iSrc;
   const want = demand(vin).iSrc; // 전압이 처지지 않았다면 부하가 끌어갈 전류
-  const v33 = Math.max(0, Math.min(3.3, vterm - K.ldoDrop));
+  const v33 = s.params.reg === 'buck' ? (vterm >= 4.2 ? 3.3 : Math.max(0, vterm - 0.9)) : Math.max(0, Math.min(3.3, vterm - K.ldoDrop));
   s.rails = { vin: vterm, v33, vdrive: res.vdrive, i: iSrc, want, iDrive: res.iDrive, i33: res.i33, limit, overload: iSrc >= limit * 0.999 && (vin - vterm) / rint > limit, battery, boost };
   s.loads = res.loads;
   return vterm;
@@ -205,7 +231,7 @@ function tick(s, dt) {
     // 가열 챔버의 물(최대 60 ml)이 열용량을 키우고, 100 °C 에서 남는 열은 물을 증발시킨다 (가습량)
     const chamber = Math.min(s.phys.water, K.chamberMl);
     const C = K.heaterC + K.waterC * chamber;
-    s.phys.heaterT += (dt * (pw - (s.phys.heaterT - P.ambient) / K.heaterRth)) / C;
+    s.phys.heaterT += (dt * (pw - (s.phys.heaterT - s.thermal.tin) / K.heaterRth)) / C; // 히터에서 새는 열은 외장 안 공기로
     let evap = 0;
     if (chamber > 0 && s.phys.heaterT > 100) {
       evap = Math.min(s.phys.water, ((s.phys.heaterT - 100) * C) / K.latent);
@@ -237,11 +263,16 @@ function tick(s, dt) {
   if (P.source !== 'battery' && s.features.some((f) => f.kind === 'battery') && Object.keys(s.blockedBy).length) warn(s, 'nobatt', '배터리 잔량 기능이 있는데 전원이 USB·어댑터라 잔량이 0 % 로 읽혀, 배터리 부족 안전 조건이 구동부를 막습니다. 전원을 배터리(+USB 충전)로 두세요.');
   if (s.rails.overload && s.mcu.on) warn(s, 'overload', `부하가 약 ${s.rails.want.toFixed(2)} A 를 끌려 해 전원 한도 ${s.rails.limit} A 에 걸리고, 전압이 ${s.rails.vin.toFixed(2)} V 로 처집니다.`);
   if (s.rails.battery && s.mcu.on && s.rails.vin < 3.4 && s.phys.soc > 0) warn(s, 'sag', `배터리 전압이 ${s.rails.vin.toFixed(2)} V 까지 처집니다. 잔량이 적을 때 구동부를 켜면 리셋될 수 있습니다.`);
+  // 6-1. 발열·소비전력
+  updateThermal(s, dt, K);
+  thermalChecks(s, (key, text, level) => warn(s, key, text, level), (key) => resolve(s, key));
+  if (!s.rails.overload) resolve(s, 'overload');
   // 7. 기록 (0.1 초마다)
   const slot = Math.floor(s.t * 10);
   if (slot !== s.lastSample) {
     s.lastSample = slot;
-    s.history.push({ t: s.t, v: s.rails.vin, v33: s.rails.v33, i: s.rails.i, soc: s.phys.soc, temp: s.hasHeater ? s.phys.heaterT : P.ambient, water: s.phys.water, steam: s.phys.steamRate });
+    const hot = s.powerNow.parts.filter((x) => x.temp != null && x.kind !== 'heater').sort((a, b) => b.temp - a.temp)[0];
+    s.history.push({ t: s.t, v: s.rails.vin, v33: s.rails.v33, i: s.rails.i, soc: s.phys.soc, temp: s.hasHeater ? s.phys.heaterT : P.ambient, water: s.phys.water, steam: s.phys.steamRate, pw: s.powerNow.dc, wall: s.powerNow.wall, tin: s.thermal.tin, thot: hot ? hot.temp : s.thermal.tin, hotName: hot?.name });
     if (s.history.length > 1200) s.history.splice(0, s.history.length - 1200);
   }
   void vterm;

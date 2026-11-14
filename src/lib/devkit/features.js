@@ -116,9 +116,10 @@ export const MCUS = {
   esp32: { label: 'ESP32 (클래식)', module: 'ESP32-WROOM-32E', board: 'ESP32 Dev Module', adc: [32, 33, 34, 35, 36, 39], io: [16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 13, 14] },
 };
 
-export const BASE_BOM = (mcu) => [
+// 구동 전원이 6 V 를 넘으면 LDO 대신 벅 컨버터 (LDO 는 입력 최대 6.5 V 이고 (입력 − 3.3 V) × 전류가 다 열이 된다)
+export const BASE_BOM = (mcu, supplyV = 5) => [
   [`MCU 모듈 ${MCUS[mcu]?.module || 'ESP32-C3-MINI-1'}`, 1],
-  ['LDO 3.3 V 600 mA (ME6211 · AP2112K)', 1],
+  Number(supplyV) > 6 ? [`벅 컨버터 ${Number(supplyV)} V → 3.3 V (MP1584 · TPS62933 등)`, 1] : ['LDO 3.3 V 600 mA (ME6211 · AP2112K)', 1],
   ['USB-C 커넥터 (전원·프로그래밍)', 1],
   ['콘덴서 10 µF ×2, 100 nF ×4', 1],
   ['리셋·부트 버튼', 2],
@@ -161,7 +162,7 @@ export function pinProblems(features, mcu = 'esp32c3') {
 }
 
 /** 부품 목록 (MCU 기본 + 기능별), 같은 이름은 합친다 */
-export function featureBom(features, mcu = 'esp32c3') {
+export function featureBom(features, mcu = 'esp32c3', supplyV = 5) {
   const map = new Map();
   const add = (name, qty, from) => {
     const cur = map.get(name) || { name, qty: 0, used_by: [] };
@@ -169,7 +170,7 @@ export function featureBom(features, mcu = 'esp32c3') {
     if (from && !cur.used_by.includes(from)) cur.used_by.push(from);
     map.set(name, cur);
   };
-  BASE_BOM(mcu).forEach(([n, q]) => add(n, q, '공통'));
+  BASE_BOM(mcu, supplyV).forEach(([n, q]) => add(n, q, '공통'));
   features.forEach((f) => (FEATURE_KINDS[f.kind]?.bom || []).forEach(([n, q]) => add(n, q, f.name)));
   return [...map.values()];
 }

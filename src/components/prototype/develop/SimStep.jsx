@@ -10,7 +10,10 @@ import SimChart from '@/components/prototype/develop/SimChart';
 import RulesEditor from '@/components/prototype/develop/RulesEditor';
 import { FEATURE_KINDS, OUTPUT_LEVELS, isOutput, findLidPart } from '@/lib/devkit/features';
 import { defaultRules, validRules } from '@/lib/devkit/rules';
-import { POWER_SOURCES, defaultPower, createSim, stepSim, setInput, appWrite, appValues, runtimeHours, tiltOf, refill } from '@/lib/devkit/deviceSim';
+import { POWER_SOURCES, defaultPower, createSim, stepSim, setInput, appWrite, appValues, runtimeHours, tiltOf, refill, setParams } from '@/lib/devkit/deviceSim';
+import { DEFAULT_SIM_PARAMS } from '@/lib/devkit/thermal';
+import { mainShellId, partParams } from '@/lib/devkit/solidcraft';
+import { PowerPanel, HeatPanel, PartParamsPanel } from '@/components/prototype/develop/PowerHeatPanels';
 
 const SPEEDS = [1, 10, 60, 600];
 const BOOL_TEXT = { button: ['—', '눌림'], lid: ['닫힘', '열림'], tilt: ['바로 섬', '기울어짐'], water: ['물 있음', '물 부족'] };
@@ -23,6 +26,16 @@ export default function SimStep({ concept, dev, change }) {
   const features = dev.features || [];
   const rules = useMemo(() => validRules(dev.rules ?? defaultRules(features), features), [dev.rules, features]);
   const power = useMemo(() => ({ ...defaultPower(features), ...(dev.power || {}) }), [dev.power, features]);
+  // 외장 크기 기본값: 3D 도면 단계의 치수 → 컨셉의 본체 부품 → 기본값
+  const caseBase = useMemo(() => {
+    const cp = concept?.preview?.parts;
+    const main = cp?.length ? partParams(cp, dev.cad?.part_id || mainShellId(cp)) : null;
+    const src = dev.cad?.width ? { ...main, ...dev.cad } : main;
+    return src ? { case_w: Number(src.width) || 120, case_d: Number(src.shape === 'round' ? src.width : src.depth) || 80, case_h: Number(src.height) || 50 } : {};
+  }, [concept?.id, dev.cad]);  
+  const simBase = useMemo(() => ({ ...DEFAULT_SIM_PARAMS, ...caseBase }), [caseBase]);
+  const simParams = useMemo(() => ({ ...simBase, ...(dev.sim_params || {}) }), [simBase, dev.sim_params]);
+  const changedParams = Object.keys(dev.sim_params || {}).filter((k) => dev.sim_params[k] !== simBase[k]).length;
   const conceptParts = concept?.preview?.parts;
   const parts = useMemo(() => (conceptParts?.length ? conceptParts : fallbackParts(features)), [conceptParts, features]);
   const usingFallback = !conceptParts?.length;
@@ -43,7 +56,9 @@ export default function SimStep({ concept, dev, change }) {
   const [resetN, setResetN] = useState(0);
   const shape = `${features.map((f) => `${f.id}:${f.kind}`).join(',')}|${dev.supply_v}`;
 
-  useEffect(() => { simRef.current = createSim({ ...dev, features, rules }, power); setFrame((n) => n + 1); }, [shape, resetN]);  
+  useEffect(() => { simRef.current = createSim({ ...dev, features, rules, sim_params: {} }, power, simParams); setFrame((n) => n + 1); }, [shape, resetN]);
+  useEffect(() => { if (simRef.current) setParams(simRef.current, simParams); }, [simParams]);
+  useEffect(() => { if (simRef.current) simRef.current.features = features; }, [features]);  
   useEffect(() => { if (simRef.current) simRef.current.rules = rules; }, [rules]);
   useEffect(() => { if (simRef.current) Object.assign(simRef.current.power, power); }, [power]);
   useEffect(() => {
@@ -142,6 +157,11 @@ export default function SimStep({ concept, dev, change }) {
         </div>
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-2">
+        <PowerPanel s={s} />
+        <HeatPanel s={s} />
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
         <Card title="전원" icon={Zap}>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -212,14 +232,20 @@ export default function SimStep({ concept, dev, change }) {
           <Card title="설계 점검" icon={warnings.length ? AlertTriangle : ShieldCheck}>
             {warnings.length === 0
               ? <p className="text-caption text-muted-foreground">아직 문제를 찾지 못했습니다. 버튼을 눌러 구동부를 켜고, 기울이거나 뚜껑을 열거나, 전원을 바꿔 보세요.</p>
-              : <ul className="space-y-1.5">{warnings.map((w) => <li key={w.key} className={`rounded-lg px-3 py-2 text-caption ${w.level === 'error' ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning-text'}`}><span className="tabular-nums opacity-70">{fmtT(w.t)}</span> {w.text}</li>)}</ul>}
+              : <ul className="space-y-1.5">{[...warnings].sort((a, b) => Number(!!a.resolved) - Number(!!b.resolved)).map((w) => <li key={w.key} className={`rounded-lg px-3 py-2 text-caption ${w.resolved ? 'bg-muted text-muted-foreground' : w.level === 'error' ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning-text'}`}>{w.resolved && <span className="mr-1.5 rounded bg-success/15 px-1.5 py-0.5 text-micro font-semibold text-success-text">해결됨 {fmtT(w.resolvedT)}</span>}<span className="tabular-nums opacity-70">{w.resolved ? `발생 ${fmtT(w.t)} · ` : fmtT(w.t)}</span> <span className={w.resolved ? 'line-through decoration-1' : ''}>{w.text}</span></li>)}</ul>}
           </Card>
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
+      <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
+        <PartParamsPanel params={simParams} changed={changedParams} features={features}
+          onChange={(k, v) => change((d) => ({ sim_params: { ...(d.sim_params || {}), [k]: v } }))}
+          onReset={() => change({ sim_params: {} })}
+          onHeaterW={(id, w) => change((d) => ({ features: (d.features || []).map((x) => (x.id === id ? { ...x, power_w: w } : x)) }))} />
         <RulesEditor features={features} rules={rules} onChange={(next) => change({ rules: next })} />
-        <div className="space-y-4">
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
           <Card title="앱 화면 (블루투스로 보이는 값)" icon={Smartphone}>
             {!s.input.app && <p className="text-caption text-muted-foreground">조작판에서 ‘앱 연결’을 켜면 앱에서 출력을 바꿔 볼 수 있습니다.</p>}
             <div className="space-y-2">
@@ -238,13 +264,12 @@ export default function SimStep({ concept, dev, change }) {
             </div>
           </Card>
           <Card title="동작 기록" icon={ListTree}>
-            <div className="max-h-56 overflow-y-auto font-mono text-micro">
+            <div className="max-h-96 overflow-y-auto font-mono text-micro">
               {s.events.length === 0 ? <p className="text-muted-foreground">아직 없음</p> : s.events.map((e, i) => (
                 <p key={i} className={`flex gap-2 py-0.5 ${e.kind === 'error' ? 'text-destructive' : e.kind === 'warn' ? 'text-warning-text' : e.kind === 'safe' ? 'text-primary' : ''}`}><span className="shrink-0 text-muted-foreground">{e.t.toFixed(2)}s</span><span>{e.text}</span></p>
               ))}
             </div>
           </Card>
-        </div>
       </div>
       {!usingFallback && (
         <Card title="3D 부품 연결" icon={Link2}>

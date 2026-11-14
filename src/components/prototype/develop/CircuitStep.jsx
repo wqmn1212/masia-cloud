@@ -18,7 +18,7 @@ export default function CircuitStep({ project, dev, user }) {
   const [busy, setBusy] = useState(false);
   const features = dev.features || [];
   const withBlock = features.filter((f) => hasBlock(f.kind));
-  const bom = useMemo(() => featureBom(features, dev.mcu), [features, dev.mcu]);
+  const bom = useMemo(() => featureBom(features, dev.mcu, dev.supply_v), [features, dev.mcu, dev.supply_v]);
   const bomText = bom.map((b) => `${b.name}\t${b.qty}\t${b.used_by.join(', ')}`).join('\n');
 
   const create = async () => {
