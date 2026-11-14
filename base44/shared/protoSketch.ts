@@ -25,12 +25,12 @@ Read the attached sketch(es) and the product context.
 ${ctx}
 
 Return:
-- shape: English, 80-160 words. The product's silhouette and proportions exactly as drawn (e.g. "about twice as tall as wide"), every visible part and where it sits (front/back/side/top, on the body or on the base). Describe only what the sketch shows or the context states. No colors or materials here.
+- shape: English, 80-160 words. The product's silhouette and proportions exactly as drawn (e.g. "about twice as tall as wide"), every visible part and where it sits (front/back/side/top, on the body or on the base). Describe only what the sketch shows or the context states. No colors or materials here. Describe the product itself only: ignore drawn effects and annotations such as steam, mist, smoke, light rays, water drops, motion lines, arrows, handwritten labels and crossed-out notes.
 - parts: short English names of the visible parts.
 - variants: exactly ${SKETCH_VARIANTS} styling directions that keep the shape identical and only change colors, materials and finish. label is a short Korean name (e.g. "화이트 무광", "우드 포인트"); style is one English sentence.
 - notes: Korean, what was unclear in the sketch (e.g. hidden back side, uncertain depth).`;
 
-const BASE = 'Clean studio product photograph on a plain light gray seamless background, soft even lighting, the whole product centered and fully visible with generous margin. No text, no logos, no dimension lines, no people, no props, no hands.';
+const BASE = 'Clean studio product photograph on a plain light gray seamless background, soft even lighting, the whole product centered and fully visible with generous margin. No text, no logos, no dimension lines, no people, no props, no hands. The product is switched off: no steam, mist, smoke, vapor, water spray, light rays, glow or any other effect coming out of or around it, even if the sketch shows such marks.';
 
 export const frontPrompt = (shape: string, style: string) => `${BASE} Pure orthographic straight-on FRONT view: camera level with the product center, no perspective tilt, no three-quarter angle. Keep the shape and proportions exactly as in the attached sketch: ${shape.slice(0, 1400)} Styling: ${style.slice(0, 300)}`;
 
