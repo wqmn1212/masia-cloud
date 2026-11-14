@@ -1,6 +1,6 @@
 // ESP32 펌웨어 뼈대 (Arduino-ESP32 코어 3.x, 내장 BLE 라이브러리)
 // 동작 시뮬레이터와 같은 동작 규칙(rules.js)을 C++ 로 옮긴다: 버튼 → 출력 요청값(lvl), 안전 조건 → 막기, 표시등 → 실제 출력(out)
-import { FEATURE_KINDS, MCUS, OUTPUT_LEVELS, DRIVE_KINDS, isOutput } from './features.js';
+import { FEATURE_KINDS, MCUS, OUTPUT_LEVELS, ALL_TARGET_KINDS, isOutput } from './features.js';
 import { buildGatt, TYPE_BYTES } from './ble.js';
 import { validRules, defaultRules, ALL } from './rules.js';
 
@@ -13,9 +13,9 @@ function setupCode(c) {
   if (!hasPin(c)) return `  // ${c.name}: 핀이 없습니다 (MCU 를 바꾸거나 핀을 정하세요)`;
   const P = PIN(c);
   switch (c.kind) {
-    case 'button': case 'lid': case 'tilt': case 'water': return `  pinMode(${P}, INPUT_PULLUP);`;
-    case 'relay': return `  pinMode(${P}, OUTPUT);\n  digitalWrite(${P}, LOW);`;
-    case 'led': case 'heater': case 'motor': return `  ledcAttach(${P}, ${FEATURE_KINDS[c.kind].freq}, 10);\n  ledcWrite(${P}, 0);`;
+    case 'button': case 'lid': case 'tilt': case 'water': case 'switch': case 'encoder': return `  pinMode(${P}, INPUT_PULLUP);`;
+    case 'relay': case 'display': return `  pinMode(${P}, OUTPUT);\n  digitalWrite(${P}, LOW);`;
+    case 'led': case 'heater': case 'motor': case 'light': return `  ledcAttach(${P}, ${FEATURE_KINDS[c.kind].freq}, 10);\n  ledcWrite(${P}, 0);`;
     case 'buzzer': return `  ledcAttach(${P}, 2000, 10);\n  ledcWriteTone(${P}, 0);`;
     case 'servo': return `  ledcAttach(${P}, 50, 14);\n  servoWrite(${P}, 0);`;
     case 'temp': case 'analog': case 'battery': return `  analogSetPinAttenuation(${P}, ADC_11db);`;
@@ -27,8 +27,8 @@ function driveCode(c) {
   if (!hasPin(c)) return '';
   const P = PIN(c);
   switch (c.kind) {
-    case 'relay': return `digitalWrite(${P}, v ? HIGH : LOW);`;
-    case 'led': case 'motor': case 'heater': return `ledcWrite(${P}, (uint32_t)(v > 100 ? 100 : v) * 1023 / 100);`;
+    case 'relay': case 'display': return `digitalWrite(${P}, v ? HIGH : LOW);`;
+    case 'led': case 'motor': case 'heater': case 'light': return `ledcWrite(${P}, (uint32_t)(v > 100 ? 100 : v) * 1023 / 100);`;
     case 'buzzer': return `ledcWriteTone(${P}, v);`;
     case 'servo': return `servoWrite(${P}, v > 180 ? 180 : v);`;
     default: return '';
@@ -39,7 +39,7 @@ function readCode(c) {
   if (!hasPin(c)) return '0';
   const P = PIN(c);
   switch (c.kind) {
-    case 'button': return `(uint8_t)(digitalRead(${P}) == LOW)`;   // 누르면 0 V
+    case 'button': case 'switch': case 'encoder': return `(uint8_t)(digitalRead(${P}) == LOW)`;   // 누르면·켜면 0 V (다이얼은 누름 스위치)
     case 'lid': case 'tilt': case 'water': return `(uint8_t)(digitalRead(${P}) == HIGH)`; // 열림·기울어짐·물 부족이면 접점이 열려 3.3 V
     case 'temp': return `readNtcTenths(${P})`;
     case 'analog': return `(uint16_t)analogReadMilliVolts(${P})`;
@@ -60,7 +60,7 @@ export function firmwareSketch(dev, { version = '0.1.0' } = {}) {
   const rules = validRules(dev?.rules ?? defaultRules(features), features); // 규칙을 아직 저장하지 않았으면 기본 규칙
   const outs = chars.filter((c) => isOutput(c.kind));
   const ins = chars.filter((c) => !isOutput(c.kind) && c.type !== 'bytes');
-  const targets = (dst) => (dst === ALL ? outs.filter((c) => DRIVE_KINDS.includes(c.kind)) : outs.filter((c) => c.feature_id === dst));
+  const targets = (dst) => (dst === ALL ? outs.filter((c) => ALL_TARGET_KINDS.includes(c.kind)) : outs.filter((c) => c.feature_id === dst));
   const L = [];
 
   L.push(`// ${g.device_name} 펌웨어 뼈대 — AEGIS 시제품 개발 워크벤치에서 만듦`);
@@ -115,13 +115,21 @@ export function firmwareSketch(dev, { version = '0.1.0' } = {}) {
   });
   outs.forEach((c) => L.push(`  if (e${c.index} != out${c.index}) { out${c.index} = e${c.index}; drive${c.index}(e${c.index}); }`));
   L.push('}', '');
+  // 시뮬레이터에만 있는 동작은 할 일로 남긴다 (실제 구현은 펌웨어 설계 때)
+  const todo = [];
+  rules.filter((r) => r.type === 'schedule').forEach((r) => todo.push(`// TODO 수면 일정: 수면 모드 스위치가 켜져 있으면 취침 ${r.bed} 전 ${r.dim_min}분 감광 → 소등, 기상 ${r.wake} 전 ${r.rise_min}분 증광 → ${r.wake_level}%. RTC 시각과 비휘발 메모리의 요일별 일정을 쓴다.`));
+  if (chars.some((c) => c.kind === 'encoder')) todo.push('// TODO 다이얼: 엔코더 A·B 상 인터럽트로 돌림 방향을 읽어 밝기 ±, 누름 0.8 초 미만 = 켜기·끄기, 이상 = 켜는 면 바꾸기 (뒤 → 앞 → 앞뒤).');
+  if (chars.some((c) => c.kind === 'light')) todo.push('// TODO 조명 감광: 감마 2.2 곡선 + 고분해능 PWM 과 아날로그 전류 조광을 섞어 1 % 아래에서도 계단·깜빡임이 보이지 않게. 밝기는 목표값으로 서서히 따라간다.');
+  if (chars.some((c) => c.kind === 'display')) todo.push('// TODO 시간 표시: RTC 시각을 정전류 표시 드라이버로 4자리 정적 구동.');
+  if (todo.length) L.push(...todo, '');
 
   // 버튼 이벤트
   chars.filter((c) => c.kind === 'button').forEach((b) => {
     const evs = rules.filter((r) => r.type === 'event' && r.src === b.feature_id);
     L.push(`void onPress${b.index}() {  // ${b.name} 누름`);
     if (!evs.length) L.push('  // TODO: 이 버튼에 연결한 동작이 없습니다');
-    evs.forEach((r) => targets(r.dst).forEach((t) => {
+    if (evs.some((r) => r.action === 'pair')) L.push('  BLEDevice::startAdvertising();  // 블루투스 페어링: 앱 연결 대기');
+    evs.filter((r) => r.action !== 'pair').forEach((r) => targets(r.dst).forEach((t) => {
       const Lv = OUTPUT_LEVELS[t.kind];
       if (r.action === 'on') L.push(`  lvl${t.index} = ${Lv.on};  // ${t.name} 켜기`);
       else if (r.action === 'off') L.push(`  lvl${t.index} = 0;  // ${t.name} 끄기`);

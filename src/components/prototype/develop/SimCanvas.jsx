@@ -2,8 +2,29 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildConceptGroup, disposeGroup } from '@/lib/conceptScene';
+import { lightSpec } from '@/lib/devkit/features';
+import { clockText } from '@/lib/devkit/deviceSim';
 
 const rad = (d) => (d * Math.PI) / 180;
+/** 색온도(K) → RGB (근사) */
+export function cctColor(k) {
+  const t = Math.max(1000, Math.min(12000, k)) / 100;
+  const r = t <= 66 ? 255 : 329.7 * (t - 60) ** -0.1332;
+  const g = t <= 66 ? 99.47 * Math.log(t) - 161.12 : 288.12 * (t - 60) ** -0.0755;
+  const b = t >= 66 ? 255 : t <= 19 ? 0 : 138.52 * Math.log(t - 10) - 305.04;
+  const c = (v) => Math.max(0, Math.min(255, v)) / 255;
+  return new THREE.Color(c(r), c(g), c(b));
+}
+// 7세그먼트 느낌의 시계 글자 (호박색)
+function drawClock(ctx, text, on, base) {
+  const { width: w, height: h } = ctx.canvas;
+  ctx.fillStyle = base; ctx.fillRect(0, 0, w, h);
+  if (!on) return;
+  ctx.fillStyle = '#ffb347'; ctx.shadowColor = '#ff9a1f'; ctx.shadowBlur = 18;
+  ctx.font = `bold ${Math.round(h * 0.78)}px "DSEG7 Classic", "Courier New", monospace`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, w / 2, h / 2 + 2);
+}
 
 /**
  * 동작 시뮬레이션 3D: 시뮬레이터 상태(simRef.current)를 매 프레임 읽어 부품을 움직인다.
@@ -12,10 +33,10 @@ const rad = (d) => (d * Math.PI) / 180;
  * - LED 는 밝기만큼 빛나고, 모터 부품은 돌고, 히터 부품은 온도만큼 붉어지고, 서보 부품은 각도만큼 돈다
  * links: { [part_id]: { feature_id, kind } }, lidPartId: 뚜껑 부품
  */
-export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, onLid }) {
+export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, onLid, onSwitch, pivot }) {
   const hostRef = useRef(null);
   const cb = useRef({});
-  cb.current = { links, lidPartId, onPress, onLid };
+  cb.current = { links, lidPartId, onPress, onLid, onSwitch };
 
   useEffect(() => {
     const host = hostRef.current;
@@ -51,6 +72,36 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
     controls.minDistance = radius * 0.8; controls.maxDistance = radius * 12;
 
     const items = new Map(built.items.map((it) => [it.id, it]));
+    // 회전부(본체 기울기): 지정한 부품을 회전축 둘레 그룹으로 옮긴다
+    const tilt = new THREE.Group();
+    if (pivot?.part_ids?.length) {
+      const o = new THREE.Vector3(0, Number(pivot.origin?.y) || 0, Number(pivot.origin?.z) || 0);
+      tilt.position.copy(o);
+      built.group.add(tilt);
+      pivot.part_ids.forEach((id) => { const it = items.get(id); if (!it) return; built.group.remove(it.mesh); it.mesh.position.sub(o); it.home = it.mesh.position.clone(); tilt.add(it.mesh); });
+    }
+    // 조명: 발광면 부품 앞(또는 뒤)에 색온도 빛을 둔다. 시간 표시: 글자 텍스처
+    const glows = new Map();
+    const clocks = new Map();
+    Object.entries(links || {}).forEach(([pid, l]) => {
+      const it = items.get(pid);
+      if (!it) return;
+      if (l.kind === 'light') {
+        const f = l.feature;
+        const ls = lightSpec(f);
+        const pl = new THREE.PointLight(cctColor(ls.cct), 0, 0, 0);
+        const dir = ls.face === 'rear' ? -1 : 1;
+        pl.position.copy(it.mesh.position).add(new THREE.Vector3(0, 0, dir * 40));
+        it.mesh.parent.add(pl);
+        glows.set(pid, { pl, color: cctColor(ls.cct), spec: ls });
+      }
+      if (l.kind === 'display') {
+        const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 84;
+        const tex = new THREE.CanvasTexture(canvas); tex.colorSpace = THREE.SRGBColorSpace;
+        it.mesh.material.map = tex; it.mesh.material.emissiveMap = tex; it.mesh.material.needsUpdate = true;
+        clocks.set(pid, { ctx: canvas.getContext('2d'), tex, last: '', base: `#${it.mesh.material.color.getHexString()}` });
+      }
+    });
     const center = built.center.clone();
     const meshToId = new Map(built.items.map((it) => [it.mesh, it.id]));
     built.items.forEach((it) => { it.baseColor = it.mesh.material.color.clone(); it.mesh.material.depthWrite = true; });
@@ -70,7 +121,8 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
       const id = hit ? meshToId.get(hit.object) : null;
       if (!id) return null;
       const link = cb.current.links?.[id];
-      if (link?.kind === 'button') return { type: 'button', id: link.feature_id };
+      if (link?.kind === 'button' || link?.kind === 'encoder') return { type: 'button', id: link.feature_id };
+      if (link?.kind === 'switch') return { type: 'switch', id: link.feature_id };
       if (id === cb.current.lidPartId) return { type: 'lid' };
       return null;
     };
@@ -81,6 +133,7 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
       controls.enabled = false;
       if (p.type === 'button') { holding = p.id; cb.current.onPress?.(p.id, true); }
       if (p.type === 'lid') cb.current.onLid?.();
+      if (p.type === 'switch') cb.current.onSwitch?.(p.id);
     };
     const up = () => { if (holding) cb.current.onPress?.(holding, false); holding = null; controls.enabled = true; };
     const move = (e) => { if (!holding) renderer.domElement.style.cursor = pick(e) ? 'pointer' : 'grab'; };
@@ -96,6 +149,7 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
       if (s) {
         pivot.rotation.x += (rad(s.input.tilt.pitch) - pivot.rotation.x) * 0.2;
         pivot.rotation.z += (rad(-s.input.tilt.roll) - pivot.rotation.z) * 0.2;
+        tilt.rotation.x += (rad(s.input.pivot || 0) - tilt.rotation.x) * 0.2;
         const lid = items.get(cb.current.lidPartId);
         if (lid) {
           const h = lid.mesh.geometry.boundingBox || (lid.mesh.geometry.computeBoundingBox(), lid.mesh.geometry.boundingBox);
@@ -110,7 +164,26 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
           const m = it.mesh.material;
           const v = s.out[l.feature_id] || 0;
           m.emissive.setHex(0x000000);
-          if (l.kind === 'button') {
+          if (l.kind === 'light') {
+            const g = glows.get(pid);
+            const lv = (s.phys.light[l.feature_id] || 0) / 100;
+            const k = Math.pow(lv, 1 / 1.6); // 눈에 보이는 밝기 (감마보다 완만하게)
+            if (g) { m.emissive.copy(g.color); m.emissiveIntensity = k * 0.75; g.pl.intensity = Math.min(3, ((s.phys.lm[l.feature_id] || 0) / 150) * 1.2); }
+          }
+          if (l.kind === 'display') {
+            const c = clocks.get(pid);
+            const on = v > 0;
+            const text = on ? clockText(s) : '';
+            if (c && c.last !== `${on}${text}`) { drawClock(c.ctx, text, on, c.base); c.tex.needsUpdate = true; c.last = `${on}${text}`; }
+            m.emissive.setHex(on ? 0xffffff : 0x000000); m.emissiveIntensity = on ? 0.9 : 0;
+          }
+          if (l.kind === 'switch') {
+            const on = !!s.input.switches[l.feature_id];
+            tmp.copy(it.home).add(new THREE.Vector3(on ? 2.5 : -2.5, 0, 0));
+            it.mesh.position.lerp(tmp, 0.4);
+            if (on) m.emissive.setHex(0x0a3d91);
+          }
+          if (l.kind === 'button' || l.kind === 'encoder') {
             const pressed = !!s.input.pressed[l.feature_id];
             tmp.copy(it.home).sub(center).normalize().multiplyScalar(pressed ? -Math.min(2, radius * 0.02) : 0).add(it.home);
             it.mesh.position.lerp(tmp, 0.5);
@@ -134,10 +207,11 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
       renderer.domElement.removeEventListener('pointerdown', down);
       window.removeEventListener('pointerup', up);
       renderer.domElement.removeEventListener('pointermove', move);
+      clocks.forEach((c) => c.tex.dispose());
       disposeGroup(built.group); floor.geometry.dispose(); floor.material.dispose();
       renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove();
     };
-  }, [parts, simRef]);
+  }, [parts, simRef, pivot]);
 
   return <div ref={hostRef} className="absolute inset-0 touch-none cursor-grab" />;
 }

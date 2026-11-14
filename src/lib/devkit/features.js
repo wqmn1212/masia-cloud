@@ -98,6 +98,34 @@ export const FEATURE_KINDS = {
     bom: [['저항 100 kΩ', 2], ['콘덴서 100 nF', 1], ['리튬 배터리 1S', 1], ['충전 IC TP4056 또는 동급', 1]],
     housing: { kind: 'compartment', note: '배터리 자리·커버' },
   },
+  light: {
+    label: '조명 LED 모듈 (밝기)', group: 'out', pin: 'pwm', freq: 20000, power_w: 5, cct: 4000, lm_per_w: 130, trans: 70, fade_s: 0.8, cutoff_c: 85,
+    block: '구동 전원(12 V) → 정전류 벅 LED 드라이버 → LED 판(미드파워 2835 직렬·병렬, 알루미늄 MCPCB). MCU 는 드라이버 DIM 에 20 kHz PWM 과 아날로그 조광을 함께 줘서 깜빡임 없이 1 % 아래까지 낮춥니다. LED 판 NTC + 비교기가 MCU 와 상관없이 85 °C 에서 드라이버 EN 을 끊습니다.',
+    ble: { access: ['read', 'write'], type: 'u8', unit: '%', min: 0, max: 100, desc: '밝기 0~100 % (감마 2.2 로 실제 광량 계산)' },
+    bom: [['정전류 벅 LED 드라이버 (PWM+아날로그 조광)', 1], ['미드파워 LED 2835 (CRI 90)', 12], ['알루미늄 MCPCB', 1], ['NTC 10 kΩ (LED 판)', 1], ['비교기 + 래치 (85 °C 하드웨어 차단)', 1]],
+    housing: { kind: 'vent', note: 'LED 판 → 방열판 → 외장 열 경로' },
+  },
+  display: {
+    label: '시간 표시 (7세그먼트)', group: 'out', pin: 'gpio',
+    block: '4자리 7세그먼트를 정전류 LED 드라이버로 정적 구동합니다(깜빡임 없음). MCU 는 켜고 끄기와 숫자만 보냅니다 (3.3 V, 약 60 mA).',
+    ble: { access: ['read', 'write'], type: 'u8', unit: '', min: 0, max: 1, desc: '1 = 표시, 0 = 끔' },
+    bom: [['4자리 7세그먼트 (호박색)', 1], ['정전류 LED 표시 드라이버', 1]],
+    housing: { kind: 'window', note: '표시 창 (패브릭 투과)' },
+  },
+  switch: {
+    label: '토글 스위치 (켜짐 유지)', group: 'in', pin: 'gpio',
+    block: '슬라이드 스위치 + 내부 풀업. 켜면 0 V, 끄면 3.3 V. 눌렀다 떼는 버튼과 달리 위치가 유지됩니다.',
+    ble: { access: ['read', 'notify'], type: 'u8', unit: '', min: 0, max: 1, desc: '1 = 켜짐, 0 = 꺼짐' },
+    bom: [['슬라이드 스위치 SS12D', 1]],
+    housing: { kind: 'hole', d: 8, note: '스위치 슬롯' },
+  },
+  encoder: {
+    label: '다이얼 (돌리기·누르기)', group: 'in', pin: 'gpio',
+    block: '로터리 엔코더(A·B상) + 누름 스위치, 모두 내부 풀업. 돌리면 밝기를 올리고 내리며, 짧게 누르면 켜기·끄기, 길게 누르면 켜는 면을 바꿉니다 (핀 3개: A, B, 누름).',
+    ble: { access: ['read', 'notify'], type: 'u8', unit: '%', min: 0, max: 100, desc: '다이얼로 정한 밝기 %' },
+    bom: [['로터리 엔코더 (누름 스위치 포함)', 1], ['콘덴서 10 nF (채터링)', 2]],
+    housing: { kind: 'hole', d: 12, note: '다이얼 구멍' },
+  },
   custom: {
     label: '사용자 정의 명령', group: 'cmd', pin: 'none',
     block: '앱 ↔ 장치 사이의 자유 형식 바이트 명령입니다. 펌웨어의 TODO 에 동작을 넣으세요.',
@@ -126,7 +154,13 @@ export const BASE_BOM = (mcu, supplyV = 5) => [
 ];
 
 const ID = () => Math.random().toString(36).slice(2, 10);
-export const makeFeature = (kind, name) => ({ id: ID(), kind, name: name || FEATURE_KINDS[kind]?.label || kind, pin: null, note: '', ...(kind === 'heater' ? { power_w: FEATURE_KINDS.heater.power_w } : {}) });
+export const makeFeature = (kind, name) => ({ id: ID(), kind, name: name || FEATURE_KINDS[kind]?.label || kind, pin: null, note: '', ...(kind === 'heater' ? { power_w: FEATURE_KINDS.heater.power_w } : {}), ...(kind === 'light' ? { power_w: FEATURE_KINDS.light.power_w, cct: FEATURE_KINDS.light.cct, face: 'front' } : {}) });
+/** 조명 LED 모듈 값 (기능에 적힌 값이 없으면 기본값) */
+export const lightSpec = (f) => {
+  const d = FEATURE_KINDS.light;
+  const n = (k) => (Number(f?.[k]) > 0 ? Number(f[k]) : d[k]);
+  return { power_w: n('power_w'), cct: n('cct'), lm_per_w: n('lm_per_w'), trans: n('trans'), fade_s: n('fade_s'), cutoff_c: n('cutoff_c'), face: f?.face === 'rear' ? 'rear' : 'front' };
+};
 /** 히터 정격 전력 (W). 기능에 적은 값, 없으면 기본값 */
 export const heaterWatts = (f) => (Number(f?.power_w) > 0 ? Number(f.power_w) : FEATURE_KINDS.heater.power_w);
 
@@ -225,10 +259,14 @@ export const OUTPUT_LEVELS = {
   buzzer: { on: 2000, steps: [0, 1000, 2000] },
   servo: { on: 180, steps: [0, 90, 180] },
   relay: { on: 1, steps: [0, 1] },
+  light: { on: 100, steps: [0, 30, 100] },
+  display: { on: 1, steps: [0, 1] },
 };
 export const isOutput = (kind) => !!OUTPUT_LEVELS[kind];
 // 넘어짐·뚜껑 열림 같은 안전 조건에서 "모든 구동부"로 함께 끄는 대상 (표시등·부저는 알림으로 남긴다)
 export const DRIVE_KINDS = ['motor', 'heater', 'relay'];
+// 규칙의 '모든 구동부'가 가리키는 대상 (조명도 포함: 과열·수면 일정이 함께 끈다)
+export const ALL_TARGET_KINDS = [...DRIVE_KINDS, 'light'];
 
 /** 컨셉 부품 중 뚜껑으로 보이는 것 (외장, 이름에 뚜껑·커버·상부·lid) */
 export function findLidPart(parts) {
