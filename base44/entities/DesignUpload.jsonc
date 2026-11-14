@@ -1,0 +1,84 @@
+{
+  "name": "DesignUpload",
+  "type": "object",
+  "description": "설계 자료실 보관 파일: 화면 안에서만 계산하던 도구(금형 사전 검토 등)에 고객·팀원이 올린 도면 원본. designArchive 함수가 만든다",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "올린 사람의 팀 ID (데이터 격리 키)"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["mold_review", "other"],
+      "default": "mold_review",
+      "description": "어느 도구에서 올렸는지"
+    },
+    "file_name": {
+      "type": "string"
+    },
+    "file_uri": {
+      "type": "string",
+      "description": "비공개 저장소 uri (열 때는 designArchive sign 으로 10분 주소)"
+    },
+    "size": {
+      "type": "number"
+    },
+    "part_name": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "도구가 계산한 요약 {material, size_mm[3], weight_g, nominal_wall_mm, high_count, caution_count}"
+    },
+    "uploaded_by_name": {
+      "type": "string"
+    },
+    "uploaded_by_email": {
+      "type": "string"
+    },
+    "account_tier": {
+      "type": "string",
+      "description": "올린 사람 등급 (client 면 고객)"
+    }
+  },
+  "required": ["tenant_id", "file_name", "file_uri"],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

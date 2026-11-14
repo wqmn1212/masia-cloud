@@ -71,6 +71,7 @@ const PrototypeDetail = lazy(() => import('@/pages/PrototypeDetail'));
 const PrototypeReview = lazy(() => import('@/pages/PrototypeReview'));
 const PrototypeConcept = lazy(() => import('@/pages/PrototypeConcept'));
 const PrototypeDevelop = lazy(() => import('@/pages/PrototypeDevelop'));
+const DesignArchive = lazy(() => import('@/pages/DesignArchive'));
 const CircuitLab = lazy(() => import('@/pages/CircuitLab'));
 
 const Spinner = () => (
@@ -184,6 +185,7 @@ const AuthenticatedApp = () => {
         <Route path="/clients/:clientId/dashboard" element={<ClientDashboard />} />
         <Route path="/master-admin" element={<MasterAdminDashboard />} />
         <Route path="/admin-inbox" element={<AdminInbox />} />
+        <Route path="/design-archive" element={<DesignArchive />} />
         <Route path="/master-admin/teams/:tenantId" element={<MasterTeamDashboard />} />
         <Route path="/team" element={<TeamManagement />} />
         <Route path="/user-permissions" element={<UserPermissions />} />

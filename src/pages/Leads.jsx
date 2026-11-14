@@ -14,7 +14,7 @@ export default function Leads() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [filter, setFilter] = useState('ALL');
-  const [selectedId, setSelectedId] = useState(null);
+  const [selectedId, setSelectedId] = useState(() => new URLSearchParams(window.location.search).get('lead')); // 설계 자료실 등에서 ?lead= 로 바로 연다
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ['manufacturing-leads'],

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
@@ -84,6 +84,30 @@ export default function MoldReview() {
     [result, settings, part, source],
   );
   const dirty = !!ranAnalysis && JSON.stringify(analysis) !== JSON.stringify(ranAnalysis);
+
+  // 올린 도면 원본은 비공개 저장소에 한 번 올리고 설계 자료실에 남긴다 (고객·팀원 모두). 실패해도 검토는 계속한다.
+  const archiveRef = useRef(new Map());
+  const uploadSource = (file) => {
+    const key = `${file.name}:${file.size}:${file.lastModified}`;
+    if (!archiveRef.current.has(key)) {
+      archiveRef.current.set(key, base44.integrations.Core.UploadPrivateFile({ file }).then((r) => r?.file_uri || '').catch(() => ''));
+    }
+    return archiveRef.current.get(key);
+  };
+  useEffect(() => {
+    const file = source?.file;
+    if (!file || !result || !report || !user?.tenant_id) return;
+    let off = false;
+    uploadSource(file).then((uri) => {
+      if (off || !uri) return;
+      const s = result.summary, c = report.calc;
+      base44.functions.invoke('designArchive', {
+        action: 'store_upload', source: 'mold_review', file_uri: uri, file_name: file.name, size: file.size, part_name: part?.part_name || '',
+        summary: { material: report.material.name, size_mm: s.size.map((v) => Math.round(v * 10) / 10), weight_g: Math.round(c.weight * 10) / 10, nominal_wall_mm: Math.round(s.nominal * 100) / 100, high_count: report.counts.hi, caution_count: report.counts.mid },
+      }).catch(() => {});
+    });
+    return () => { off = true; };
+  }, [result]);
 
   const analyze = (input, opts) => {
     if (jobRef.current || savingRef.current) return;
@@ -191,6 +215,7 @@ export default function MoldReview() {
           snapshotUrl = uploaded.file_uri;
         }
       }
+      const sourceUri = source?.file ? await uploadSource(source.file) : '';
       const s = result.summary, c = report.calc;
       await base44.entities.MoldReview.create({
         tenant_id: user?.tenant_id,
@@ -232,6 +257,8 @@ export default function MoldReview() {
         spec_ko: report.spec.ko,
         spec_zh: report.spec.zh,
         snapshot_url: snapshotUrl,
+        source_file_uri: sourceUri || undefined,
+        created_by_name: user?.full_name || user?.email || '',
         note,
       });
       queryClient.invalidateQueries({ queryKey: ['mold-reviews'] });
@@ -299,6 +326,7 @@ export default function MoldReview() {
             )}
           </div>
         </DropZone>
+        <p className="mt-2 text-micro text-muted-foreground">올린 도면 원본은 검토 결과와 함께 이지스 서버에 비공개로 보관되어, 담당자가 이어서 확인할 수 있습니다.</p>
         {parsing && (
           <div className="mt-3 flex items-center gap-3 text-caption text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin text-primary" />

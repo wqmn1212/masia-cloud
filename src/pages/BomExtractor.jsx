@@ -85,7 +85,8 @@ export default function BomExtractor() {
     setIsSaving(true);
     try {
       const bomSetId = `BOM-${Date.now()}`;
-      const uploaded = await base44.integrations.Core.UploadFile({ file: sourceFile });
+      // 고객 도면이라 공개 주소가 아닌 비공개 저장소에 둔다 (카드·설계 자료실에서 열 때 10분 주소를 만든다)
+      const uploaded = await base44.integrations.Core.UploadPrivateFile({ file: sourceFile });
 
       let targetCardId = cardId;
       if (!targetCardId) {
@@ -101,7 +102,7 @@ export default function BomExtractor() {
         tenant_id: user?.tenant_id,
         card_id: targetCardId,
         bom_set_id: bomSetId,
-        source_file_url: uploaded.file_url,
+        source_file_url: uploaded.file_uri,
         source_file_name: sourceFile?.name,
         part_name: p.part_name,
         display_name: p.display_name,

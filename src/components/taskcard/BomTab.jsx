@@ -5,6 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Boxes } from 'lucide-react';
 import BomEstimatePanel from '@/components/bom/BomEstimatePanel';
 
+// 예전 기록은 공개 주소, 새 기록은 비공개 uri — 비공개면 10분짜리 열기 주소를 만든다
+const openSource = async (ref) => {
+  if (/^https?:\/\//i.test(ref)) { window.open(ref, '_blank', 'noopener'); return; }
+  const win = window.open('', '_blank');
+  const { signed_url } = await base44.integrations.Core.CreateFileSignedUrl({ file_uri: ref, expires_in: 300 });
+  if (win) win.location.href = signed_url; else window.location.href = signed_url;
+};
+
 const FINISH_LABEL = { RAW: '무처리', PAINT: '도장', PLATING: '도금', NCVM: 'NCVM', PRINT: '인쇄', OTHER: '기타' };
 
 export default function BomTab({ card }) {
@@ -59,14 +67,9 @@ export default function BomTab({ card }) {
       </div>
 
       {current.parts[0]?.source_file_url && (
-        <a
-          href={current.parts[0].source_file_url}
-          target="_blank"
-          rel="noreferrer"
-          className="text-micro text-primary underline"
-        >
+        <button type="button" onClick={() => openSource(current.parts[0].source_file_url)} className="text-micro text-primary underline">
           원본 STEP 파일 열기 — {current.file}
-        </a>
+        </button>
       )}
 
       <div className="overflow-x-auto border rounded-xl">

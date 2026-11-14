@@ -4,7 +4,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import {
   LayoutDashboard, Factory, FileText, Shield, Users,
   Clock, Wrench, Package, ChevronLeft, ChevronRight, Cloud, Calculator, ListChecks, Kanban,
-  ShieldCheck, ClipboardCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, Inbox, Images, BookOpen, Megaphone, CalendarOff, ScanSearch, Palette, Handshake, Ship, ScanBarcode, Cpu, CircuitBoard
+  ShieldCheck, ClipboardCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, Inbox, Images, BookOpen, Megaphone, CalendarOff, ScanSearch, Palette, Handshake, Ship, ScanBarcode, Cpu, CircuitBoard, Archive
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { canAccessPath, CLIENT_MENU_OPTIONS } from '@/lib/menuPermissions';
@@ -71,13 +71,13 @@ export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobil
     navSections = [
       {
         labelKey: 'nav.management',
-        items: [{ path: '/master-admin', icon: ShieldCheck, labelKey: 'nav.masterAdmin' }, { path: '/admin-inbox', icon: ClipboardCheck, labelKey: 'nav.adminInbox' }],
+        items: [{ path: '/master-admin', icon: ShieldCheck, labelKey: 'nav.masterAdmin' }, { path: '/admin-inbox', icon: ClipboardCheck, labelKey: 'nav.adminInbox' }, { path: '/design-archive', icon: Archive, labelKey: 'nav.designArchive' }],
       },
       ...navSectionDefs,
     ];
   } else if (user?.account_tier === 'service') {
     navSections = navSectionDefs.map((section, index) => index === 0
-      ? { ...section, items: [...section.items, { path: '/admin-inbox', icon: ClipboardCheck, labelKey: 'nav.adminInbox' }, { path: '/team', icon: UserCog, labelKey: 'nav.team' }, { path: '/user-permissions', icon: KeyRound, labelKey: 'nav.permissions' }] }
+      ? { ...section, items: [...section.items, { path: '/admin-inbox', icon: ClipboardCheck, labelKey: 'nav.adminInbox' }, { path: '/design-archive', icon: Archive, labelKey: 'nav.designArchive' }, { path: '/team', icon: UserCog, labelKey: 'nav.team' }, { path: '/user-permissions', icon: KeyRound, labelKey: 'nav.permissions' }] }
       : section);
   } else if (user?.account_tier === 'sub') {
     navSections = navSectionDefs;
