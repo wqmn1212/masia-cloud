@@ -1,7 +1,7 @@
 // 가상 시제품: 전원(배터리·USB·어댑터) → 3.3 V 레귤레이터 → MCU(동작 규칙) → 구동부·센서를 시간에 따라 계산한다.
 // 버튼 누르기·뚜껑 열기·기울이기·주변 온도·앱 명령을 넣으면 전압·전류·배터리·온도·모터 속도와 MCU 리셋까지 따라 바뀐다.
 // 값은 데이터시트 수준의 근사 모델이며, 설계 초기에 "이 조합이면 무엇이 문제인가"를 찾는 용도다.
-import { FEATURE_KINDS, OUTPUT_LEVELS, DRIVE_KINDS, isOutput } from './features.js';
+import { FEATURE_KINDS, OUTPUT_LEVELS, DRIVE_KINDS, isOutput, heaterWatts } from './features.js';
 import { applyPress, effectiveLevels, validRules, ALL } from './rules.js';
 
 export const POWER_SOURCES = {
@@ -12,6 +12,8 @@ export const POWER_SOURCES = {
 export const defaultPower = (features) => ({
   source: features.some((f) => f.kind === 'battery') ? 'battery' : 'usb',
   usb_limit: 1.5, adapter_v: 12, adapter_a: 2, battery_mah: 2000, soc0: 80, usb_plugged: false, ambient: 25,
+  // 물을 끓이는 제품: 물탱크 용량·시작 물 양 (수위 감지가 있으면 물이 찬 상태로 시작)
+  tank_ml: 3000, water_ml: features.some((f) => f.kind === 'water') ? 3000 : 0,
 });
 
 // 상수 (근사)
@@ -20,7 +22,7 @@ const K = {
   brownout: 2.8, bootOk: 3.0, bootTime: 0.35,
   usbRint: 0.25, adapterRint: 0.08, battRint: 0.15, chargeA: 0.5, boostEff: 0.85,
   motorR: 10, motorTau: 0.3, motorBack: 0.85, motorFric: 0.04,
-  heaterW: 5, heaterRth: 15, heaterC: 20,
+  heaterRth: 15, heaterC: 20, chamberMl: 60, waterC: 4.186, latent: 2260, lowWaterMl: 80, fuseC: 128,
   buzzerA: 0.02, servoMoveA: 0.25, servoIdleA: 0.008, servoSpeed: 300, relayR: 70, ledA: 0.004,
   tiltSwitch: 45, fallen: 60,
 };
@@ -45,7 +47,7 @@ export function createSim(dev, power = {}) {
     input: { pressed: {}, lid: 0, tilt: { pitch: 0, roll: 0 }, dial: {}, app: false },
     levels: {}, prevPressed: {},
     mcu: { on: true, boot: 0, resets: 0, why: '' },
-    phys: { soc: Number(p.soc0) || 80, heaterT: Number(p.ambient) || 25, motor: {}, servo: {} },
+    phys: { soc: Number(p.soc0) || 80, heaterT: Number(p.ambient) || 25, motor: {}, servo: {}, water: Math.max(0, Number(p.water_ml) || 0), steamRate: 0, steamTotal: 0, fuseBlown: false },
     out: {}, blockedBy: {}, readings: {}, rails: { vin: 0, v33: 3.3, vdrive: 0, i: 0, iDrive: 0, i33: 0, limit: Infinity, overload: false },
     loads: [], history: [], events: [], warnings: {}, hasHeater: !!heater, lastSample: -1,
   };
@@ -74,6 +76,7 @@ function readInputs(s, vterm) {
   s.features.forEach((f) => {
     if (f.kind === 'button') r[f.id] = !!s.input.pressed[f.id];
     if (f.kind === 'lid') r[f.id] = s.input.lid > 0.15;
+    if (f.kind === 'water') r[f.id] = s.phys.water < K.lowWaterMl; // 플로트가 내려가면 1 = 물 부족
     if (f.kind === 'tilt') r[f.id] = tilted;
     if (f.kind === 'analog') r[f.id] = Math.round((s.input.dial[f.id] ?? 0.5) * 3300);
     if (f.kind === 'temp') r[f.id] = Math.round((s.hasHeater ? s.phys.heaterT : s.power.ambient) * 10) / 10;
@@ -95,7 +98,7 @@ function loadsAt(s, out, vdrive, dt) {
       const sp = s.phys.motor[f.id] || 0;
       i = (vdrive / K.motorR) * Math.max(0, v / 100 - K.motorBack * sp) + (v > 0 ? K.motorFric : 0);
     }
-    if (f.kind === 'heater') { const r = (s.supplyV ** 2) / K.heaterW; i = (vdrive / r) * (v / 100); }
+    if (f.kind === 'heater') { const r = (s.supplyV ** 2) / heaterWatts(f); i = s.phys.fuseBlown ? 0 : (vdrive / r) * (v / 100); }
     if (f.kind === 'buzzer') i = v > 0 ? K.buzzerA : 0;
     if (f.kind === 'relay') i = v > 0 ? vdrive / K.relayR : 0;
     if (f.kind === 'servo') { const a = s.phys.servo[f.id] ?? 0; i = Math.abs(a - v) > 1 ? K.servoMoveA : K.servoIdleA; }
@@ -145,7 +148,8 @@ function solveRails(s, out, dt) {
 
 /** 시간 dt(초)만큼 진행. 큰 dt 는 잘게 나눠 계산한다 */
 export function stepSim(s, dt) {
-  const n = Math.max(1, Math.ceil(dt / 0.005));
+  // 5 ms 간격으로 나누되 한 번에 최대 400 칸 (600× 같은 빠른 재생에서는 순간 변화가 거칠어진다)
+  const n = Math.max(1, Math.min(400, Math.ceil(dt / 0.005)));
   const h = dt / n;
   for (let k = 0; k < n; k++) tick(s, h);
   return s;
@@ -196,8 +200,27 @@ function tick(s, dt) {
     if (f.kind === 'servo') { const a = s.phys.servo[f.id] ?? 0; const d = v - a; s.phys.servo[f.id] = a + Math.sign(d) * Math.min(Math.abs(d), K.servoSpeed * dt); }
   });
   if (s.hasHeater) {
-    const pw = s.features.filter((f) => f.kind === 'heater').reduce((a, f) => a + ((s.rails.vdrive ** 2) / ((s.supplyV ** 2) / K.heaterW)) * ((s.out[f.id] || 0) / 100), 0);
-    s.phys.heaterT += (dt * (pw - (s.phys.heaterT - P.ambient) / K.heaterRth)) / K.heaterC;
+    const pw = s.phys.fuseBlown ? 0 : s.features.filter((f) => f.kind === 'heater').reduce((a, f) => a + ((s.rails.vdrive ** 2) / ((s.supplyV ** 2) / heaterWatts(f))) * ((s.out[f.id] || 0) / 100), 0);
+    s.phys.heaterW = pw;
+    // 가열 챔버의 물(최대 60 ml)이 열용량을 키우고, 100 °C 에서 남는 열은 물을 증발시킨다 (가습량)
+    const chamber = Math.min(s.phys.water, K.chamberMl);
+    const C = K.heaterC + K.waterC * chamber;
+    s.phys.heaterT += (dt * (pw - (s.phys.heaterT - P.ambient) / K.heaterRth)) / C;
+    let evap = 0;
+    if (chamber > 0 && s.phys.heaterT > 100) {
+      evap = Math.min(s.phys.water, ((s.phys.heaterT - 100) * C) / K.latent);
+      s.phys.heaterT = 100;
+      s.phys.water -= evap; s.phys.steamTotal += evap;
+      if (s.phys.water <= 0) log(s, '물탱크가 비었습니다', 'warn');
+    }
+    const rate = (evap / dt) * 3600; // ml/h
+    s.phys.steamRate += (rate - s.phys.steamRate) * Math.min(1, dt / 5);
+    // 온도 퓨즈: 넘으면 끊어지고 히터는 다시 켜지지 않는다 (교체 필요)
+    if (!s.phys.fuseBlown && s.phys.heaterT >= K.fuseC) {
+      s.phys.fuseBlown = true;
+      warn(s, 'fuse', `히터가 ${K.fuseC} °C 에 닿아 온도 퓨즈가 끊어졌습니다. 제품은 다시 켜지지 않고 퓨즈를 바꿔야 합니다. 그 전에 끊는 규칙(수위 감지, 120 °C 이상이면 히터 끄기)을 넣으세요.`, 'error');
+    }
+    if (pw > 1 && s.phys.water <= 0 && s.phys.heaterT > 105) warn(s, 'dry', `물이 없는데 히터가 켜져 있습니다 (공가열, ${Math.round(s.phys.heaterT)} °C). 수위 감지와 '물이 부족하면 히터 끄기' 규칙을 넣으세요.`, 'error');
   }
   if (P.source === 'battery') {
     if (P.usb_plugged) s.phys.soc = Math.min(100, s.phys.soc + (K.chargeA * dt * 100) / ((P.battery_mah / 1000) * 3600));
@@ -209,7 +232,8 @@ function tick(s, dt) {
   const driving = s.features.filter((f) => DRIVE_KINDS.includes(f.kind) && (s.out[f.id] || 0) > 0);
   if (angle > K.fallen && driving.length) warn(s, 'fallen', `넘어진 상태(${Math.round(angle)}°)에서도 ${driving.map((f) => f.name).join(', ')} 이(가) 계속 동작합니다. 기울기 감지와 '기울어지면 모든 구동부 끄기' 규칙을 넣으세요.`);
   if (s.input.lid > 0.5 && driving.length) warn(s, 'lid', `뚜껑이 열린 상태에서도 ${driving.map((f) => f.name).join(', ')} 이(가) 동작합니다. 뚜껑 열림 감지와 안전 규칙을 넣으세요.`);
-  if (s.hasHeater && s.phys.heaterT > 90) warn(s, 'hot', `히터 온도가 ${Math.round(s.phys.heaterT)} °C 까지 올라갑니다. 온도 센서로 히터를 끄는 규칙(예: 70 °C 이상)을 넣으세요.`);
+  const boiling = s.phys.water > 0 || s.features.some((f) => f.kind === 'water');
+  if (s.hasHeater && s.phys.heaterT > (boiling ? 115 : 90)) warn(s, 'hot', boiling ? `히터 온도가 ${Math.round(s.phys.heaterT)} °C 까지 올라갑니다 (물이 끓는 온도 100 °C 를 넘음). 120 °C 이상이면 히터를 끄는 규칙을 넣으세요.` : `히터 온도가 ${Math.round(s.phys.heaterT)} °C 까지 올라갑니다. 온도 센서로 히터를 끄는 규칙(예: 70 °C 이상)을 넣으세요.`);
   if (P.source !== 'battery' && s.features.some((f) => f.kind === 'battery') && Object.keys(s.blockedBy).length) warn(s, 'nobatt', '배터리 잔량 기능이 있는데 전원이 USB·어댑터라 잔량이 0 % 로 읽혀, 배터리 부족 안전 조건이 구동부를 막습니다. 전원을 배터리(+USB 충전)로 두세요.');
   if (s.rails.overload && s.mcu.on) warn(s, 'overload', `부하가 약 ${s.rails.want.toFixed(2)} A 를 끌려 해 전원 한도 ${s.rails.limit} A 에 걸리고, 전압이 ${s.rails.vin.toFixed(2)} V 로 처집니다.`);
   if (s.rails.battery && s.mcu.on && s.rails.vin < 3.4 && s.phys.soc > 0) warn(s, 'sag', `배터리 전압이 ${s.rails.vin.toFixed(2)} V 까지 처집니다. 잔량이 적을 때 구동부를 켜면 리셋될 수 있습니다.`);
@@ -217,7 +241,7 @@ function tick(s, dt) {
   const slot = Math.floor(s.t * 10);
   if (slot !== s.lastSample) {
     s.lastSample = slot;
-    s.history.push({ t: s.t, v: s.rails.vin, v33: s.rails.v33, i: s.rails.i, soc: s.phys.soc, temp: s.hasHeater ? s.phys.heaterT : P.ambient });
+    s.history.push({ t: s.t, v: s.rails.vin, v33: s.rails.v33, i: s.rails.i, soc: s.phys.soc, temp: s.hasHeater ? s.phys.heaterT : P.ambient, water: s.phys.water, steam: s.phys.steamRate });
     if (s.history.length > 1200) s.history.splice(0, s.history.length - 1200);
   }
   void vterm;
@@ -244,3 +268,9 @@ export function runtimeHours(s, windowSec = 10) {
 
 export const tiltOf = tiltAngle;
 export { OUTPUT_LEVELS, ALL };
+
+/** 물 채우기 (물탱크 가득) */
+export function refill(s, ml) {
+  s.phys.water = Math.max(0, Number(ml ?? s.power.tank_ml) || 0);
+  log(s, `물을 ${Math.round(s.phys.water)} ml 채움`);
+}

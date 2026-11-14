@@ -13,7 +13,7 @@ function setupCode(c) {
   if (!hasPin(c)) return `  // ${c.name}: 핀이 없습니다 (MCU 를 바꾸거나 핀을 정하세요)`;
   const P = PIN(c);
   switch (c.kind) {
-    case 'button': case 'lid': case 'tilt': return `  pinMode(${P}, INPUT_PULLUP);`;
+    case 'button': case 'lid': case 'tilt': case 'water': return `  pinMode(${P}, INPUT_PULLUP);`;
     case 'relay': return `  pinMode(${P}, OUTPUT);\n  digitalWrite(${P}, LOW);`;
     case 'led': case 'heater': case 'motor': return `  ledcAttach(${P}, ${FEATURE_KINDS[c.kind].freq}, 10);\n  ledcWrite(${P}, 0);`;
     case 'buzzer': return `  ledcAttach(${P}, 2000, 10);\n  ledcWriteTone(${P}, 0);`;
@@ -40,7 +40,7 @@ function readCode(c) {
   const P = PIN(c);
   switch (c.kind) {
     case 'button': return `(uint8_t)(digitalRead(${P}) == LOW)`;   // 누르면 0 V
-    case 'lid': case 'tilt': return `(uint8_t)(digitalRead(${P}) == HIGH)`; // 열림·기울어짐이면 접점이 열려 3.3 V
+    case 'lid': case 'tilt': case 'water': return `(uint8_t)(digitalRead(${P}) == HIGH)`; // 열림·기울어짐·물 부족이면 접점이 열려 3.3 V
     case 'temp': return `readNtcTenths(${P})`;
     case 'analog': return `(uint16_t)analogReadMilliVolts(${P})`;
     case 'battery': return `batteryPercent(${P})`;
@@ -101,8 +101,9 @@ export function firmwareSketch(dev, { version = '0.1.0' } = {}) {
     const src = byId.get(r.src);
     const ts = targets(r.dst);
     if (!src || !ts.length) return;
-    const cond = r.cond === 'above' ? `in${src.index} != INT16_MIN && in${src.index} >= ${condValue(src, r.value)}` : r.cond === 'below' ? `in${src.index} <= ${condValue(src, r.value)}` : `in${src.index}`;
-    const fixed = src.kind === 'temp' || r.cond !== 'above' ? cond : cond.replace(`in${src.index} != INT16_MIN && `, '');
+    // 온도 센서가 끊기거나 합선되면(INT16_MIN) 막는 쪽으로 — 히터가 보호 없이 켜지지 않게 (fail-safe)
+    const fault = src.kind === 'temp' ? `in${src.index} == INT16_MIN || ` : '';
+    const fixed = r.cond === 'above' ? `${fault}in${src.index} >= ${condValue(src, r.value)}` : r.cond === 'below' ? `${fault}in${src.index} <= ${condValue(src, r.value)}` : `in${src.index}`;
     L.push(`  if (${fixed}) { ${ts.map((t) => `block${t.index} = true;`).join(' ')} }  // ${src.name} → ${r.dst === ALL ? '모든 구동부' : ts[0].name} 끄기`);
   });
   outs.forEach((c) => L.push(`  uint16_t e${c.index} = block${c.index} ? 0 : lvl${c.index};`));

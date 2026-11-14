@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Box, FileDown, Bot, FileCode2, RotateCcw, Loader2, Info, Eye } from 'lucide-react';
+import { Box, FileDown, Bot, FileCode2, RotateCcw, Loader2, Info, Eye, Ruler } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -8,7 +8,8 @@ import { toast } from '@/components/ui/use-toast';
 import ProtoFiles from '@/components/prototype/ProtoFiles';
 import ConceptCanvas from '@/components/prototype/concept/ConceptCanvas';
 import { Card, CopyButton, DownloadButton, CommandLine, CodeView, Field } from '@/components/prototype/develop/DevBits';
-import { defaultCadParams, topCutouts, solidcraftScript, mcpBrief, scriptFileName, cliCommand, MCP_SETUP } from '@/lib/devkit/solidcraft';
+import { defaultCadParams, solidcraftScript, mcpBrief, scriptFileName, cliCommand, MCP_SETUP, shellParts, mainShellId, partParams, partCutouts } from '@/lib/devkit/solidcraft';
+import { drawingSvg, drawingFileName, sizeText, posText } from '@/lib/devkit/drawing';
 import { errorText } from '@/lib/prototypeApi';
 
 const OPTIONS = [
@@ -21,18 +22,37 @@ const NUMS = [['width', '폭 (X)'], ['depth', '깊이 (Y)'], ['height', '높이 
 
 // 2단계: 컨셉 → 파라메트릭 3D 도면. SolidCraft 를 세 가지 방식으로 쓴다
 export default function CadStep({ project, concept, dev, change, user, onSaved }) {
-  const base = useMemo(() => defaultCadParams(concept?.preview), [concept?.id]);  
-  const params = { ...base, ...(dev.cad || {}) };
-  const setParam = (k, v) => change((d) => ({ cad: { ...base, ...(d.cad || {}), [k]: v, concept_id: concept?.id || null } }));
+  const parts = concept?.preview?.parts || [];
+  // 외장 부품마다 따로 설계한다 (본체·물탱크처럼 따로 사출되는 부품). 기본은 조작부가 가장 많이 붙은 부품
+  const shells = useMemo(() => shellParts(parts), [parts]);
+  const partId = shells.some((p) => p.id === dev.cad?.part_id) ? dev.cad.part_id : mainShellId(parts);
+  const base = useMemo(() => (partId ? partParams(parts, partId) : defaultCadParams(concept?.preview)), [concept?.id, partId]);  
+  const own = dev.cad && (dev.cad.part_id || null) === (partId || null) ? dev.cad : {};
+  const params = { ...base, ...own };
+  const setParam = (k, v) => change((d) => ({ cad: { ...(d.cad && (d.cad.part_id || null) === (partId || null) ? d.cad : {}), part_id: partId || null, [k]: v, concept_id: concept?.id || null } }));
+  const choosePart = (id) => change({ cad: { part_id: id, concept_id: concept?.id || null } });
   const [option, setOption] = useState('files');
   const [busy, setBusy] = useState('');
-  const allCuts = useMemo(() => topCutouts(concept?.preview?.parts, params), [concept?.id, params.width, params.depth]);  
+  const allCuts = useMemo(() => (partId ? partCutouts(parts, partId) : []), [concept?.id, partId]);  
   const skip = new Set(params.skip_cutouts || []);
   const cuts = allCuts.filter((c) => !skip.has(c.id));
-  const outBase = scriptFileName(project.title);
+  const outBase = scriptFileName(`${project.title}${params.part_name ? `-${params.part_name}` : ''}`);
   const script = JSON.stringify(solidcraftScript(params, cuts), null, 2);
-  const brief = mcpBrief({ project, concept, params, cutouts: cuts, features: dev.features, outBase });
-  const parts = concept?.preview?.parts || [];
+  const brief = mcpBrief({ project, concept, params, cutouts: cuts, features: dev.features, outBase, otherParts: shells.filter((p) => p.id !== partId).map((p) => p.name) });
+  const today = new Date().toISOString().slice(0, 10);
+  const drawing = useMemo(() => drawingSvg({ title: project.title, partName: params.part_name, material: params.material, params, cutouts: cuts, date: today, docNo: `${(dev.device_name || 'AEGIS').slice(0, 12)}-${today.replace(/-/g, '')}-${String(Math.max(1, shells.findIndex((p) => p.id === partId) + 1)).padStart(2, '0')}` }), [project.title, JSON.stringify(params), JSON.stringify(cuts), dev.device_name, partId, shells.length]);  
+  const [drawingUrl, setDrawingUrl] = useState('');
+  useEffect(() => { const u = URL.createObjectURL(new Blob([drawing.svg], { type: 'image/svg+xml' })); setDrawingUrl(u); return () => URL.revokeObjectURL(u); }, [drawing.svg]);
+  const drawName = drawingFileName(project.title, params.part_name);
+  const exportDrawing = async (kind) => {
+    setBusy(kind);
+    try {
+      const { downloadBlob } = await import('@/lib/devkit/conceptExport');
+      if (kind === 'svg') downloadBlob(new Blob([drawing.svg], { type: 'image/svg+xml' }), `${drawName}.svg`);
+      else { const { drawingPdfBlob } = await import('@/lib/devkit/drawingPdf'); downloadBlob(await drawingPdfBlob(drawing.svg), `${drawName}.pdf`); }
+    } catch (e) { toast({ title: errorText(e), variant: 'destructive' }); }
+    setBusy('');
+  };
 
   const exportModel = async (kind) => {
     setBusy(kind);
@@ -56,6 +76,13 @@ export default function CadStep({ project, concept, dev, change, user, onSaved }
                 : <p className="absolute inset-0 flex items-center justify-center px-6 text-center text-caption text-muted-foreground">컨셉이 없으면 오른쪽에 치수를 직접 넣어 시작하세요.</p>}
             </div>
             <div className="space-y-3">
+              {shells.length > 1 && (
+                <Field label="설계할 외장 부품" hint={`외장 부품 ${shells.length}개 — 부품마다 스크립트·도면을 따로 만듭니다`}>
+                  <select value={partId || ''} onChange={(e) => choosePart(e.target.value)} className="h-9 w-full rounded-md border bg-background px-2 text-label" aria-label="설계할 외장 부품">
+                    {shells.map((p) => <option key={p.id} value={p.id}>{p.name} ({Math.round(p.size.x)}×{Math.round(p.size.z ?? p.size.x)}×{Math.round(p.size.y)})</option>)}
+                  </select>
+                </Field>
+              )}
               <Field label="몸통 모양">
                 <select value={params.shape} onChange={(e) => setParam('shape', e.target.value)} className="h-9 w-full rounded-md border bg-background px-2 text-label">
                   <option value="box">사각 (모서리 둥글게)</option>
@@ -73,12 +100,12 @@ export default function CadStep({ project, concept, dev, change, user, onSaved }
           </div>
           {allCuts.length > 0 && (
             <div className="space-y-1.5">
-              <p className="text-label font-semibold">윗면 조작·표시부 자리 <span className="font-normal text-caption text-muted-foreground">컨셉에서 윗면에 있는 부품</span></p>
+              <p className="text-label font-semibold">구멍·개구부 <span className="font-normal text-caption text-muted-foreground">이 부품 표면에 붙은 버튼·표시등·커넥터·뚜껑 자리</span></p>
               <div className="flex flex-wrap gap-2">
                 {allCuts.map((c) => (
                   <label key={c.id} className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-caption">
                     <Checkbox checked={!skip.has(c.id)} onCheckedChange={(v) => setParam('skip_cutouts', v ? [...skip].filter((x) => x !== c.id) : [...skip, c.id])} />
-                    {c.name} <span className="tabular-nums text-muted-foreground">{c.kind === 'circle' ? `Ø${c.d}` : `${c.w}×${c.h}`} @ {c.x}, {c.y}</span>
+                    {c.name} <span className="tabular-nums text-muted-foreground">{({ top: '윗면', front: '앞면', back: '뒷면' })[c.face]} · {sizeText(c)} · {posText(c)}</span>
                   </label>
                 ))}
               </div>
@@ -104,6 +131,15 @@ export default function CadStep({ project, concept, dev, change, user, onSaved }
           </div>
         </div>
       </div>
+
+      <Card title="설계 도면" icon={Ruler} tag={`A3 · ${drawing.scale} · 3각법`}
+        actions={<>
+          <Button size="sm" variant="outline" disabled={!!busy} onClick={() => exportDrawing('svg')}>{busy === 'svg' ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}SVG</Button>
+          <Button size="sm" disabled={!!busy} onClick={() => exportDrawing('pdf')}>{busy === 'pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}PDF 내려받기</Button>
+        </>}>
+        <p className="text-caption text-muted-foreground">위 치수와 구멍·개구부로 만든 {params.part_name || '외장'} 외형 도면입니다 (평면도·정면도·우측면도·등각도, 치수, 구멍 표, 주기, 표제란). 치수를 바꾸면 바로 다시 그려지고, 금형 업체 견적·협의용 초안으로 쓸 수 있습니다. 살두께·리브·보스 같은 내부 형상은 CAD(STEP)가 기준입니다.</p>
+        {drawingUrl && <img src={drawingUrl} alt={`${params.part_name || '외장'} 설계 도면`} className="w-full rounded-lg border bg-white" />}
+      </Card>
 
       {option === 'files' && (
         <div className="grid gap-4 lg:grid-cols-2">

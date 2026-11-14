@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { Card, Field } from '@/components/prototype/develop/DevBits';
-import { FEATURE_KINDS, FEATURE_GROUPS, MCUS, makeFeature, suggestFeatures } from '@/lib/devkit/features';
+import { FEATURE_KINDS, FEATURE_GROUPS, MCUS, makeFeature, suggestFeatures, heaterWatts } from '@/lib/devkit/features';
 
 const ACCESS = { read: '읽기', write: '쓰기', notify: '알림' };
 const PIN_KIND = { gpio: '디지털', pwm: 'PWM', adc: 'ADC', none: '-' };
@@ -57,6 +57,14 @@ export default function FeaturesStep({ concept, dev, change }) {
                     </select>
                   ) : <span className="flex h-9 items-center text-caption text-muted-foreground">핀 없음</span>}
                 </div>
+                {f.kind === 'heater' && (
+                  <label className="flex flex-wrap items-center gap-2 text-caption">
+                    <span className="font-medium">정격 전력</span>
+                    <Input type="number" min={1} max={3000} step="1" value={heaterWatts(f)} onChange={(e) => update(f.id, { power_w: Math.max(1, Number(e.target.value) || 1) })} className="h-8 w-24 tabular-nums" aria-label="히터 정격 전력 W" />
+                    <span>W</span>
+                    <span className="text-muted-foreground tabular-nums">구동 전원 {dev.supply_v} V 에서 약 {(heaterWatts(f) / (Number(dev.supply_v) || 5)).toFixed(2)} A · 히터 저항 {((Number(dev.supply_v) || 5) ** 2 / heaterWatts(f)).toFixed(1)} Ω</span>
+                  </label>
+                )}
                 <p className="text-caption text-muted-foreground">{k.block}</p>
                 <p className="flex flex-wrap gap-x-3 text-micro text-muted-foreground">
                   <span>핀 {PIN_KIND[k.pin]}{Number.isInteger(f.pin) ? ` · GPIO${f.pin}` : ''}</span>

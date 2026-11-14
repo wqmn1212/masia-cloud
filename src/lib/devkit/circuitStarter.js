@@ -1,7 +1,7 @@
 // 기능 목록 → 회로 시뮬레이터 시작 회로. 기능마다 MCU 핀을 전원(3.3 V 논리·PWM 펄스)으로 바꿔 놓은 작은 회로 블록을 격자에 나란히 둔다.
 // 그대로 돌려 보며 저항·소자 값을 고르는 출발점이고, 실제 회로도(MCU·전원부 포함)는 아니다.
 import { makePart } from '../circuit/parts.js';
-import { FEATURE_KINDS } from './features.js';
+import { FEATURE_KINDS, heaterWatts } from './features.js';
 
 const PITCH_X = 26, PITCH_Y = 24, COLS = 3;
 
@@ -14,6 +14,7 @@ const BLOCKS = {
   ],
   tilt: (P, W) => BLOCKS.button(P, W),
   lid: (P, W) => BLOCKS.button(P, W),
+  water: (P, W) => BLOCKS.button(P, W),
   led: (P, W, f) => [
     P('pulse', 0, 8, 0, 0, { high: 3.3, low: 0, freq: f.freq, duty: 0.5 }), P('ground', 0, 8, 0, 9), W(0, 0, 8, 0),
     P('resistor', 8, 0, 8, 4, { r: 330 }), P('led', 8, 4, 8, 8, { color: 'green' }), W(8, 8, 0, 8),
@@ -28,7 +29,7 @@ const BLOCKS = {
   ],
   heater: (P, W, f, s) => [
     P('dcv', 0, 17, 0, 0, { v: s.supply_v }), P('ground', 0, 17, 0, 18), W(0, 0, 12, 0),
-    P('resistor', 12, 0, 12, 13, { r: Math.max(1, Math.round((s.supply_v ** 2) / 5)) }),
+    P('resistor', 12, 0, 12, 13, { r: Math.max(0.5, Number(((s.supply_v ** 2) / heaterWatts(f)).toFixed(2))) }),
     P('nmos', 8, 15, 12, 15, {}), W(12, 17, 0, 17),
     P('pulse', 4, 17, 4, 13, { high: 3.3, low: 0, freq: f.freq, duty: 0.5 }), P('resistor', 4, 13, 8, 13, { r: 100 }), W(8, 13, 8, 15),
     P('resistor', 8, 15, 8, 17, { r: 100000 }),
@@ -76,7 +77,7 @@ export function featureBlock(feature, settings = {}, ox = 0, oy = 0) {
   const s = { supply_v: Number(settings.supply_v) || 5 };
   const P = (type, x1, y1, x2, y2, props) => makePart(type, x1 + ox, y1 + oy, x2 + ox, y2 + oy, props);
   const W = (x1, y1, x2, y2) => P('wire', x1, y1, x2, y2);
-  return make(P, W, { freq: kind.freq || 1000 }, s).map((p) => ({ ...p, feature_id: feature.id }));
+  return make(P, W, { freq: kind.freq || 1000, power_w: feature.power_w }, s).map((p) => ({ ...p, feature_id: feature.id }));
 }
 
 /** 기능 전체 → 회로 시뮬레이터 회로 { version, parts, dt, blocks:[{feature_id, name, x, y}] } */

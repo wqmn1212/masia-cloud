@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Play, Pause, RotateCcw, Hand, DoorOpen, Move3d, Battery, Plug, Zap, AlertTriangle, ShieldCheck, Cpu, Smartphone, ListTree, Link2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Hand, DoorOpen, Move3d, Battery, Plug, Zap, AlertTriangle, ShieldCheck, Cpu, Smartphone, ListTree, Link2, Droplets } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
@@ -10,9 +10,10 @@ import SimChart from '@/components/prototype/develop/SimChart';
 import RulesEditor from '@/components/prototype/develop/RulesEditor';
 import { FEATURE_KINDS, OUTPUT_LEVELS, isOutput, findLidPart } from '@/lib/devkit/features';
 import { defaultRules, validRules } from '@/lib/devkit/rules';
-import { POWER_SOURCES, defaultPower, createSim, stepSim, setInput, appWrite, appValues, runtimeHours, tiltOf } from '@/lib/devkit/deviceSim';
+import { POWER_SOURCES, defaultPower, createSim, stepSim, setInput, appWrite, appValues, runtimeHours, tiltOf, refill } from '@/lib/devkit/deviceSim';
 
-const SPEEDS = [1, 10, 60];
+const SPEEDS = [1, 10, 60, 600];
+const BOOL_TEXT = { button: ['—', '눌림'], lid: ['닫힘', '열림'], tilt: ['바로 섬', '기울어짐'], water: ['물 있음', '물 부족'] };
 const fmtA = (i) => (i >= 1 ? `${i.toFixed(2)} A` : `${Math.round(i * 1000)} mA`);
 const fmtT = (s) => (s < 60 ? `${s.toFixed(1)}초` : s < 3600 ? `${Math.floor(s / 60)}분 ${Math.floor(s % 60)}초` : `${(s / 3600).toFixed(1)}시간`);
 const unit = (f) => FEATURE_KINDS[f.kind]?.ble.unit || '';
@@ -124,6 +125,15 @@ export default function SimStep({ concept, dev, change }) {
                 <Slider min={0} max={100} step={1} value={[Math.round((s.input.dial[f.id] ?? 0.5) * 100)]} onValueChange={([v]) => { setInput(s, { dial: { ...s.input.dial, [f.id]: v / 100 } }); setFrame((n) => n + 1); }} />
               </Field>
             ))}
+            {s.hasHeater && (
+              <Field group label={`물탱크 ${Math.round(s.phys.water)} / ${power.tank_ml} ml${s.phys.steamRate > 1 ? ` · 가습 ${Math.round(s.phys.steamRate)} ml/h` : ''}`}>
+                <div className="flex items-center gap-3">
+                  <Droplets className="w-4 h-4 text-muted-foreground" />
+                  <Slider min={0} max={Number(power.tank_ml) || 3000} step={10} value={[Math.round(s.phys.water)]} onValueChange={([v]) => { refill(s, v); setFrame((n) => n + 1); }} className="flex-1" aria-label="물 양" />
+                  <Button size="sm" variant="outline" onClick={() => { refill(s); setFrame((n) => n + 1); }}>물 채우기</Button>
+                </div>
+              </Field>
+            )}
             <Field group label={`주변 온도 ${s.power.ambient} °C`}>
               <Slider min={-10} max={45} step={1} value={[Number(power.ambient)]} onValueChange={([v]) => setPower({ ambient: v })} aria-label="주변 온도" />
             </Field>
@@ -175,7 +185,8 @@ export default function SimStep({ concept, dev, change }) {
             { label: '3.3 V 레일', get: (h) => h.v33, fmt: (v) => `${v.toFixed(2)} V`, color: 'hsl(var(--chart-2))', min: 0, max: 3.6, ref: 2.8 },
             { label: '전류', get: (h) => h.i, fmt: fmtA, color: 'hsl(var(--chart-4))', min: 0, span: 0.1, ref: Number.isFinite(s.rails.limit) && s.rails.limit < 10 ? s.rails.limit : null },
             ...(s.power.source === 'battery' ? [{ label: '배터리', get: (h) => h.soc, fmt: (v) => `${v.toFixed(1)} %`, color: 'hsl(var(--chart-3))', min: 0, max: 100 }] : []),
-            ...(s.hasHeater || features.some((f) => f.kind === 'temp') ? [{ label: '온도', get: (h) => h.temp, fmt: (v) => `${v.toFixed(1)} °C`, color: 'hsl(var(--chart-5))', min: 0, span: 10 }] : []),
+            ...(s.hasHeater || features.some((f) => f.kind === 'temp') ? [{ label: '히터 온도', get: (h) => h.temp, fmt: (v) => `${v.toFixed(1)} °C`, color: 'hsl(var(--chart-5))', min: 0, span: 10, ref: s.hasHeater ? 128 : null }] : []),
+            ...(s.hasHeater && (power.tank_ml > 0) && (s.phys.water > 0 || s.phys.steamTotal > 0) ? [{ label: '가습량', get: (h) => h.steam || 0, fmt: (v) => `${Math.round(v)} ml/h`, color: 'hsl(var(--chart-1))', min: 0, span: 20 }] : []),
           ]} />
         </Card>
 
@@ -186,12 +197,12 @@ export default function SimStep({ concept, dev, change }) {
                 const out = isOutput(f.kind);
                 const v = out ? s.out[f.id] || 0 : s.readings[f.id];
                 const load = s.loads.find((l) => l.name === f.name);
-                const extra = f.kind === 'motor' ? ` · 속도 ${Math.round((s.phys.motor[f.id] || 0) * 100)} %` : f.kind === 'servo' ? ` · 현재 ${Math.round(s.phys.servo[f.id] || 0)}°` : f.kind === 'heater' ? ` · ${s.phys.heaterT.toFixed(1)} °C` : '';
+                const extra = f.kind === 'motor' ? ` · 속도 ${Math.round((s.phys.motor[f.id] || 0) * 100)} %` : f.kind === 'servo' ? ` · 현재 ${Math.round(s.phys.servo[f.id] || 0)}°` : f.kind === 'heater' ? ` · ${s.phys.heaterT.toFixed(1)} °C${s.phys.fuseBlown ? ' · 퓨즈 끊어짐' : ''}` : '';
                 return (
                   <div key={f.id} className="flex flex-wrap items-baseline gap-x-2 py-1.5 text-caption">
                     <span className="font-medium">{f.name}</span>
                     {out && s.blockedBy[f.id] && (s.levels[f.id] || 0) > 0 && <span className="rounded bg-warning/15 px-1.5 text-micro text-warning-text">{blockedName(f.id)}</span>}
-                    <span className="ml-auto tabular-nums">{typeof v === 'boolean' ? (v ? (f.kind === 'button' ? '눌림' : f.kind === 'lid' ? '열림' : '기울어짐') : (f.kind === 'button' ? '—' : f.kind === 'lid' ? '닫힘' : '바로 섬')) : `${v ?? '—'}${unit(f)}`}{extra}</span>
+                    <span className="ml-auto tabular-nums">{typeof v === 'boolean' ? (BOOL_TEXT[f.kind] || ['아니오', '예'])[v ? 1 : 0] : `${v ?? '—'}${unit(f)}`}{extra}</span>
                     {load && <span className="w-16 text-right text-micro tabular-nums text-muted-foreground">{fmtA(load.i)}</span>}
                   </div>
                 );

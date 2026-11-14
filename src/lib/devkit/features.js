@@ -29,8 +29,8 @@ export const FEATURE_KINDS = {
     housing: { kind: 'mount', note: '모터 고정 보스·리브' },
   },
   heater: {
-    label: '히터 (세기)', group: 'out', pin: 'pwm', freq: 1000,
-    block: 'N-MOSFET 로우사이드 스위치. 온도 센서와 함께 펌웨어에서 과열을 끊으세요.',
+    label: '히터 (세기)', group: 'out', pin: 'pwm', freq: 1000, power_w: 20,
+    block: 'N-MOSFET 로우사이드 스위치. 온도 센서와 함께 펌웨어에서 과열을 끊고, 온도 퓨즈를 직렬로 넣으세요.',
     ble: { access: ['read', 'write'], type: 'u8', unit: '%', min: 0, max: 100, desc: '세기 0~100 %' },
     bom: [['N-MOSFET IRLZ44N 또는 AO3400', 1], ['저항 100 Ω (게이트)', 1], ['저항 100 kΩ (풀다운)', 1], ['온도 퓨즈', 1]],
     housing: { kind: 'vent', note: '방열 통풍구' },
@@ -69,6 +69,13 @@ export const FEATURE_KINDS = {
     ble: { access: ['read', 'notify'], type: 'u8', unit: '', min: 0, max: 1, desc: '1 = 열림, 0 = 닫힘' },
     bom: [['리드 스위치 (또는 홀 센서)', 1], ['네오디뮴 자석 Ø5×2', 1]],
     housing: { kind: 'mount', note: '리드 스위치·자석 고정 리브' },
+  },
+  water: {
+    label: '수위 감지 (물 부족)', group: 'in', pin: 'gpio',
+    block: '자석 플로트 + 리드 스위치 + 내부 풀업. 물이 있으면 플로트가 떠서 닫힘(0 V), 물이 부족하면 열림(3.3 V).',
+    ble: { access: ['read', 'notify'], type: 'u8', unit: '', min: 0, max: 1, desc: '1 = 물 부족, 0 = 물 있음' },
+    bom: [['플로트 스위치 (리드 스위치 + 자석 플로트)', 1]],
+    housing: { kind: 'mount', note: '플로트 가이드·리드 스위치 고정 리브' },
   },
   temp: {
     label: '온도 센서 (NTC)', group: 'in', pin: 'adc',
@@ -118,7 +125,9 @@ export const BASE_BOM = (mcu) => [
 ];
 
 const ID = () => Math.random().toString(36).slice(2, 10);
-export const makeFeature = (kind, name) => ({ id: ID(), kind, name: name || FEATURE_KINDS[kind]?.label || kind, pin: null, note: '' });
+export const makeFeature = (kind, name) => ({ id: ID(), kind, name: name || FEATURE_KINDS[kind]?.label || kind, pin: null, note: '', ...(kind === 'heater' ? { power_w: FEATURE_KINDS.heater.power_w } : {}) });
+/** 히터 정격 전력 (W). 기능에 적은 값, 없으면 기본값 */
+export const heaterWatts = (f) => (Number(f?.power_w) > 0 ? Number(f.power_w) : FEATURE_KINDS.heater.power_w);
 
 /** 핀을 정한다. 사용자가 고른 핀(pin 숫자)은 그대로 두고 비어 있는 것만 채운다 */
 export function assignPins(features, mcu = 'esp32c3') {
@@ -166,32 +175,43 @@ export function featureBom(features, mcu = 'esp32c3') {
 }
 
 // 컨셉 부품 이름 → 기능 추정 (미팅에서 만든 컨셉으로 기능 목록을 빨리 시작하려고)
+// 구체적인 것부터 (센서 이름에 '히터'가 들어가도 온도 센서로), 수동 부품·구조물은 건너뛴다
 const HINTS = [
+  [/수위|물\s*부족|플로트|float|water\s*level/i, 'water'],
   [/기울|전도|tilt/i, 'tilt'],
-  [/뚜껑\s*(감지|센서)|리드|reed|lid\s*sensor/i, 'lid'],
+  [/뚜껑\s*(감지|센서)|분리\s*감지|리드|reed|lid\s*sensor/i, 'lid'],
+  [/온도\s*센서|서미스터|NTC|temp(erature)?\s*sensor/i, 'temp'],
   [/버튼|스위치|button|switch|key/i, 'button'],
   [/LED|표시등|라이트|조명|light|indicator/i, 'led'],
   [/모터|팬|펌프|motor|fan|pump/i, 'motor'],
-  [/히터|열선|가열|heater|heating/i, 'heater'],
+  [/히터|열선|heater|heating/i, 'heater'],
   [/부저|스피커|buzzer|speaker/i, 'buzzer'],
   [/서보|servo/i, 'servo'],
   [/릴레이|relay/i, 'relay'],
-  [/온도|서미스터|NTC|temp/i, 'temp'],
+  [/온도|temp/i, 'temp'],
   [/다이얼|노브|볼륨|가변|knob|dial/i, 'analog'],
   [/배터리|전지|battery|cell/i, 'battery'],
 ];
+// 회로 기능이 아닌 부품: 퓨즈·챔버·기판·커넥터·노즐 등 (이름에 감지·센서·스위치가 없을 때)
+const PASSIVE = /퓨즈|fuse|챔버|chamber|기판|pcb|잭|jack|커넥터|connector|노즐|nozzle|탱크|tank|발$|foot/i;
+const SENSORISH = /감지|센서|스위치|sensor|switch/i;
 export function suggestFeatures(parts, existing = []) {
   const have = new Set(existing.map((f) => `${f.kind}:${f.name}`));
   const out = [];
   (parts || []).forEach((p) => {
     // 이름으로 먼저 찾고, 이름에 단서가 없으면 조작·내부 부품만 설명(role)으로 찾는다 (기판·외장 설명의 '버튼' 언급 등은 무시)
+    if (PASSIVE.test(p.name || '') && !SENSORISH.test(p.name || '')) return;
     const hit = HINTS.find(([re]) => re.test(p.name || ''))
       || (['UI', 'INTERNAL'].includes(p.layer) ? HINTS.find(([re]) => re.test(p.role || '')) : null);
     if (!hit) return;
     const name = String(p.name || FEATURE_KINDS[hit[1]].label).slice(0, 40);
     if (have.has(`${hit[1]}:${name}`)) return;
     have.add(`${hit[1]}:${name}`);
-    out.push({ ...makeFeature(hit[1], name), part_id: p.id || null });
+    const f = { ...makeFeature(hit[1], name), part_id: p.id || null };
+    // 이름에 적힌 전력 (예: '후막 히터 48 W')
+    const w = hit[1] === 'heater' && String(p.name || '').match(/(\d+(?:\.\d+)?)\s*W\b/i);
+    if (w) f.power_w = Number(w[1]);
+    out.push(f);
   });
   return out;
 }

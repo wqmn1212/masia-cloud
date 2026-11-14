@@ -11,6 +11,7 @@ export const EVENT_ACTIONS = { toggle: '켜고 끄기', cycle: '단계 바꾸기
 export const GUARD_CONDS = {
   open: { label: '열려 있으면', kinds: ['lid'] },
   tilted: { label: '기울어지면', kinds: ['tilt'] },
+  empty: { label: '물이 부족하면', kinds: ['water'] },
   pressed: { label: '눌린 동안', kinds: ['button'] },
   above: { label: '값이 이상이면', kinds: ['temp', 'analog', 'battery'], value: true },
   below: { label: '값이 이하이면', kinds: ['temp', 'analog', 'battery'], value: true },
@@ -26,15 +27,18 @@ export function defaultRules(features) {
   const drives = outs.filter((f) => f.kind !== 'led');
   const leds = byKind(features, ['led']);
   const targets = drives.length ? drives : leds;
+  // 첫 버튼들은 구동부를 하나씩 켜고 끄고(모터는 단계), 구동부보다 많은 버튼은 '모드' 버튼으로 단계를 바꾼다
   buttons.forEach((b, i) => {
     const t = targets[i % Math.max(1, targets.length)];
     if (!t) return;
-    rules.push({ id: ID(), type: 'event', src: b.id, dst: t.id, action: t.kind === 'motor' ? 'cycle' : 'toggle' });
+    rules.push({ id: ID(), type: 'event', src: b.id, dst: t.id, action: t.kind === 'motor' || i >= targets.length ? 'cycle' : 'toggle' });
   });
   byKind(features, ['lid']).forEach((l) => drives.length && rules.push({ id: ID(), type: 'guard', src: l.id, cond: 'open', dst: ALL }));
   byKind(features, ['tilt']).forEach((t) => drives.length && rules.push({ id: ID(), type: 'guard', src: t.id, cond: 'tilted', dst: ALL }));
   const heaters = byKind(features, ['heater']);
-  byKind(features, ['temp']).forEach((t) => heaters.forEach((h) => rules.push({ id: ID(), type: 'guard', src: t.id, cond: 'above', value: 70, dst: h.id })));
+  const boils = byKind(features, ['water']).length > 0; // 물을 끓이는 제품: 정상 100 °C, 공가열만 끊는다
+  byKind(features, ['water']).forEach((w) => (heaters.length ? heaters : drives).forEach((h) => rules.push({ id: ID(), type: 'guard', src: w.id, cond: 'empty', dst: h.id })));
+  byKind(features, ['temp']).forEach((t) => heaters.forEach((h) => rules.push({ id: ID(), type: 'guard', src: t.id, cond: 'above', value: boils ? 120 : 70, dst: h.id })));
   byKind(features, ['battery']).forEach((b) => drives.length && rules.push({ id: ID(), type: 'guard', src: b.id, cond: 'below', value: 5, dst: ALL }));
   // 버튼이 직접 켜지 않는 표시등은 '동작 중' 표시로
   const buttonTargets = new Set(rules.filter((r) => r.type === 'event').map((r) => r.dst));
@@ -48,7 +52,7 @@ export const newRule = (type, features) => {
   if (type === 'show') return { id: ID(), type, src: ALL, dst: byKind(features, ['led'])[0]?.id || '' };
   const src = features.find((f) => Object.values(GUARD_CONDS).some((c) => c.kinds.includes(f.kind)));
   const cond = src ? Object.entries(GUARD_CONDS).find(([, c]) => c.kinds.includes(src.kind))[0] : 'open';
-  return { id: ID(), type: 'guard', src: src?.id || '', cond, value: src?.kind === 'temp' ? 70 : src?.kind === 'battery' ? 5 : 1650, dst: ALL };
+  return { id: ID(), type: 'guard', src: src?.id || '', cond, value: src?.kind === 'temp' ? (features.some((f) => f.kind === 'water') ? 120 : 70) : src?.kind === 'battery' ? 5 : 1650, dst: ALL };
 };
 
 /** 지워진 기능을 가리키는 규칙은 뺀다 */

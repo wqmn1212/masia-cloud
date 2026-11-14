@@ -7,7 +7,9 @@ import { starterCircuit, featureBlock, hasBlock } from '../src/lib/devkit/circui
 import { defaultCadParams, topCutouts, solidcraftScript, mcpBrief, conceptBounds, cadParts } from '../src/lib/devkit/solidcraft.js';
 import { Simulator } from '../src/lib/circuit/solver.js';
 import { defaultRules, applyPress, effectiveLevels, describeRule } from '../src/lib/devkit/rules.js';
-import { createSim, stepSim, setInput, appWrite, appValues, runtimeHours, ocv } from '../src/lib/devkit/deviceSim.js';
+import { createSim, stepSim, setInput, appWrite, appValues, runtimeHours, ocv, refill } from '../src/lib/devkit/deviceSim.js';
+import { shellParts, mainShellId, partParams, partCutouts } from '../src/lib/devkit/solidcraft.js';
+import { drawingSvg, pickScale } from '../src/lib/devkit/drawing.js';
 import { operatingPoint } from '../src/lib/circuit/analysis.js';
 import { buildTopology } from '../src/lib/circuit/topology.js';
 
@@ -229,6 +231,7 @@ ok('컨셉 부품 → 기능 추정: 이름 우선, 기판 설명은 무시', ()
 // ── 동작 규칙·동작 시뮬레이션 ──
 const kit = ['button', 'motor', 'heater', 'temp', 'tilt', 'lid', 'led', 'battery'].map((k) => makeFeature(k));
 const fid = (k) => kit.find((f) => f.kind === k).id;
+kit.find((f) => f.kind === 'heater').power_w = 5; // 아래 검산은 5 W 히터 기준
 const kitRules = defaultRules(kit);
 
 ok('기본 규칙: 버튼→모터 단계, 뚜껑·기울기·배터리→구동부 끄기, 온도→히터 끄기, 표시등', () => {
@@ -348,9 +351,115 @@ ok('앱 명령: 연결됐을 때만 쓰이고, 안전 조건이 걸리면 실제
 ok('펌웨어: 동작 규칙이 C++ 로 들어간다', () => {
   const d = pinUuids({ uuid_base: randomBase(), device_name: 'K', mcu: 'esp32s3', features: assignPins(kit, 'esp32s3'), rules: kitRules });
   const code = firmwareSketch(d);
-  ['void refreshOutputs()', 'onPress', 'nextStep', '>= 700', '<= 5', '동작 중 표시', 'digitalRead(PIN_F6_LID) == HIGH'].forEach((t) => assert.ok(code.includes(t), t));
+  ['void refreshOutputs()', 'onPress', 'nextStep', '>= 700', '<= 5', '동작 중 표시', 'digitalRead(PIN_F6_LID) == HIGH', '== INT16_MIN || in'].forEach((t) => assert.ok(code.includes(t), t));
   const count = (ch) => code.split(ch).length - 1;
   assert.equal(count('{'), count('}'));
+});
+
+// ── 가열식 가습기 (끓임·수위·공가열·외장 부품별 도면) ──
+const hhParts = [
+  { id: 'p1', name: '하부 본체', layer: 'SHELL', shape: 'rounded_box', size: { x: 180, y: 110, z: 180 }, position: { x: 0, y: 55, z: 0 }, material: 'PP' },
+  { id: 'p2', name: '물탱크', layer: 'SHELL', shape: 'rounded_box', size: { x: 172, y: 150, z: 172 }, position: { x: 0, y: 186, z: 0 } },
+  { id: 'p3', name: '물탱크 뚜껑', layer: 'SHELL', shape: 'cylinder', size: { x: 70, y: 12, z: 70 }, position: { x: -40, y: 267, z: -40 } },
+  { id: 'p5', name: '고무 발', layer: 'SHELL', shape: 'cylinder', size: { x: 16, y: 4, z: 16 }, position: { x: 70, y: 2, z: 70 } },
+  { id: 'p6', name: '가열 챔버', layer: 'INTERNAL', shape: 'cylinder', size: { x: 72, y: 55, z: 72 }, position: { x: 0, y: 72, z: -10 } },
+  { id: 'p7', name: '후막 히터 48 W', layer: 'INTERNAL', shape: 'cylinder', size: { x: 64, y: 5, z: 64 }, position: { x: 0, y: 41, z: -10 } },
+  { id: 'p8', name: '히터 온도 센서', layer: 'INTERNAL', shape: 'cylinder', size: { x: 5, y: 8, z: 5 }, position: { x: -26, y: 35, z: -10 } },
+  { id: 'p9', name: '온도 퓨즈', layer: 'INTERNAL', shape: 'box', size: { x: 10, y: 4, z: 4 }, position: { x: 26, y: 35, z: -10 } },
+  { id: 'p10', name: '수위 감지 플로트', layer: 'INTERNAL', role: '리드 스위치', shape: 'cylinder', size: { x: 16, y: 18, z: 16 }, position: { x: 52, y: 80, z: -10 } },
+  { id: 'p14', name: '전원 버튼', layer: 'UI', shape: 'cylinder', size: { x: 14, y: 3, z: 14 }, position: { x: 22, y: 62, z: 91.5 }, rotation_deg: { x: 90, y: 0, z: 0 } },
+  { id: 'p15', name: '모드 버튼', layer: 'UI', shape: 'cylinder', size: { x: 14, y: 3, z: 14 }, position: { x: 48, y: 62, z: 91.5 }, rotation_deg: { x: 90, y: 0, z: 0 } },
+  { id: 'p17', name: 'DC 잭', layer: 'UI', shape: 'box', size: { x: 12, y: 10, z: 4 }, position: { x: 0, y: 25, z: -91 } },
+];
+
+ok('가습기 부품 → 기능: 히터 48 W, 센서는 온도, 플로트는 수위, 퓨즈·챔버는 건너뜀', () => {
+  const f = suggestFeatures(hhParts);
+  assert.deepEqual(f.map((x) => `${x.kind}:${x.name}`), ['heater:후막 히터 48 W', 'temp:히터 온도 센서', 'water:수위 감지 플로트', 'button:전원 버튼', 'button:모드 버튼']);
+  assert.equal(f[0].power_w, 48);
+  assert.deepEqual(pinProblems(assignPins(f, 'esp32c3'), 'esp32c3'), []);
+});
+
+const hh = assignPins([...suggestFeatures(hhParts), makeFeature('tilt'), makeFeature('led')], 'esp32c3');
+const hid = (k) => hh.find((f) => f.kind === k).id;
+const hhRules = defaultRules(hh);
+
+ok('가습기 기본 규칙: 전원 켜고 끄기·모드 단계, 물 부족·120 °C·기울어짐이면 히터 끄기', () => {
+  const t = hhRules.map((r) => describeRule(r, hh));
+  assert.ok(t.includes('전원 버튼 을(를) 누르면 → 후막 히터 48 W 켜고 끄기'), t.join('\n'));
+  assert.ok(t.includes('모드 버튼 을(를) 누르면 → 후막 히터 48 W 단계 바꾸기'));
+  assert.ok(t.includes('수위 감지 플로트 이(가) 물이 부족하면 → 후막 히터 48 W 끄기'));
+  assert.ok(t.includes('히터 온도 센서 이(가) 120°C 이상이면 → 후막 히터 48 W 끄기'));
+  assert.ok(!t.some((x) => x.includes('70°C')), '끓는 제품에 70 °C 차단은 없어야 한다');
+});
+
+const boil = (rules, water, sec) => {
+  const s = createSim({ features: hh, rules, supply_v: 24 }, { source: 'adapter', adapter_v: 24, adapter_a: 2.5, water_ml: water, tank_ml: 3000 });
+  s.levels = { [hid('heater')]: 100 };
+  let maxT = 0;
+  for (let i = 0; i < sec; i++) { stepSim(s, 1); maxT = Math.max(maxT, s.phys.heaterT); }
+  return { s, maxT };
+};
+
+ok('끓임: 48 W 히터가 24 V 에서 약 2 A, 물은 100 °C 에서 끓고 가습량은 약 60~70 ml/h', () => {
+  const { s, maxT } = boil(hhRules, 3000, 900);
+  near(s.rails.i, 2.05, 0.1, '입력 전류');
+  near(maxT, 100, 0.01, '최고 온도');
+  assert.ok(s.phys.steamRate > 55 && s.phys.steamRate < 75, `가습량 ${s.phys.steamRate}`);
+  assert.ok(s.phys.water < 3000 && s.phys.water > 2950);
+  assert.ok(!s.warnings.hot && !s.warnings.fuse && !s.warnings.dry);
+});
+
+ok('공가열: 규칙이 없으면 물이 다 끓은 뒤 온도 퓨즈(128 °C)가 끊어지고 다시 켜지지 않는다', () => {
+  const { s } = boil([], 10, 900); // 10 ml 가 다 끓는 데 약 10분
+  assert.equal(s.phys.water, 0);
+  assert.ok(s.phys.fuseBlown);
+  assert.ok(s.warnings.fuse && s.warnings.dry);
+  assert.equal(s.loads.find((l) => l.kind === 'heater')?.i || 0, 0);
+});
+
+ok('공가열 보호: 수위 감지가 물 부족에서 히터를 끊어 퓨즈가 살아 있다. 물을 채우면 다시 가열', () => {
+  const { s, maxT } = boil(hhRules, 120, 3600); // 데우는 데 약 8분, 40 ml 를 끓이는 데 약 35분 → 80 ml 밑에서 플로트가 끊는다
+  assert.ok(!s.phys.fuseBlown, `최고 ${maxT}`);
+  assert.equal(s.out[hid('heater')], 0);
+  assert.ok(maxT < 128);
+  refill(s, 1000); stepSim(s, 120);
+  assert.equal(s.out[hid('heater')], 100);
+  near(s.phys.heaterT, 100, 0.01, '다시 끓음');
+});
+
+ok('어댑터가 작으면: 24 V 1.5 A 에서 48 W 히터는 한도에 걸린다', () => {
+  const s = createSim({ features: hh, rules: hhRules, supply_v: 24 }, { source: 'adapter', adapter_v: 24, adapter_a: 1.5, water_ml: 3000 });
+  s.levels = { [hid('heater')]: 100 };
+  stepSim(s, 2);
+  assert.ok(s.warnings.overload || s.warnings['brownout-limit']);
+});
+
+ok('외장 부품별: 본체는 앞면 버튼·뒷면 잭, 물탱크는 윗면 뚜껑 자리, 고무 발은 개구부가 아님', () => {
+  assert.deepEqual(shellParts(hhParts).map((p) => p.id), ['p2', 'p1']);
+  assert.equal(mainShellId(hhParts), 'p1');
+  const base = partCutouts(hhParts, 'p1');
+  assert.deepEqual(base.map((c) => `${c.face}:${c.name}`), ['front:전원 버튼', 'front:모드 버튼', 'back:DC 잭']);
+  assert.deepEqual(base[0], { id: 'p14', name: '전원 버튼', face: 'front', kind: 'circle', x: 22, z: -48, d: 14 });
+  assert.deepEqual(partCutouts(hhParts, 'p2').map((c) => `${c.face}:${c.name}:${c.d}`), ['top:물탱크 뚜껑:70']);
+  const p = partParams(hhParts, 'p1');
+  assert.deepEqual([p.width, p.depth, p.height, p.corner], [180, 180, 110, 8]);
+  const sc = solidcraftScript(p, base);
+  const fe = sc.commands.findIndex((c) => c.command === 'sketch.create' && c.params.plane === 'XZ');
+  assert.ok(fe > 0, '앞면 스케치');
+  assert.deepEqual(sc.commands[fe + 1].params, { center: [22, 48], diameter: 14 });
+  assert.ok(!sc.commands.some((c) => JSON.stringify(c.params).includes('DC')), '뒷면은 스크립트에 넣지 않는다');
+});
+
+ok('설계 도면: A3 3면도·치수·구멍 표·표제란, 척도 자동, 글자 이스케이프', () => {
+  const p = partParams(hhParts, 'p1');
+  const d = drawingSvg({ title: 'HH<1> & 시험', partName: '하부 본체', material: 'PP', params: p, cutouts: partCutouts(hhParts, 'p1'), date: '2026-11-14', docNo: 'HH1-01' });
+  assert.equal(d.scale, '1:2');
+  ['평면도', '정면도', '우측면도', '등각도', '구멍·개구부 표', '3각법', 'KS B ISO 2768-m', 'HH1-01', 'R8', '>180<', '>110<', 'Ø14', '위에서 48', 'HH&lt;1&gt; &amp; 시험'].forEach((t) => assert.ok(d.svg.includes(t), t));
+  assert.ok(!d.svg.includes('HH<1>'));
+  assert.ok(!/NaN|undefined/.test(d.svg));
+  assert.equal(d.svg.split('class="hidden"').length - 1, 1, '뒷면 잭은 숨은선 하나');
+  assert.deepEqual(pickScale(20, 15, 10), [5, '5:1']);
+  assert.deepEqual(pickScale(600, 400, 900)[1], '1:10');
 });
 
 console.log(`\n${n}개 검산 통과`);
