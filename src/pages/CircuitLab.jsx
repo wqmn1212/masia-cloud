@@ -58,6 +58,9 @@ export default function CircuitLab() {
   const [, setTick] = useState(0);
   const [scopeVersion, setScopeVersion] = useState(0);
   const [dirty, setDirty] = useState(false);
+  const [autoAt, setAutoAt] = useState(null);
+  const savingRef = useRef(false);
+  const savedIdRef = useRef('');
   // 정밀 해석
   const [mode, setMode] = useState('live'); // live | analysis
   const [aSettings, setASettings] = useState(() => defaultSettings(exampleCircuit('led')));
@@ -162,7 +165,7 @@ export default function CircuitLab() {
     setSelectedId(null);
     setTool('select');
     if (c.dt) setDt(c.dt);
-    setSavedId(opts.id || '');
+    setSavedId(opts.id || ''); savedIdRef.current = opts.id || ''; setAutoAt(null);
     setProjectId(opts.projectId ?? projectId);
     setDirty(false);
     setError('');
@@ -278,23 +281,35 @@ export default function CircuitLab() {
   };
   const marks = mode !== 'analysis' ? [] : aOut?.type === 'op' && !aOut.error ? opMarks() : traces.map((t) => ({ ...t }));
 
-  const save = async () => {
-    if (!title.trim()) { toast({ title: '회로 이름을 적어 주세요', variant: 'destructive' }); return; }
+  // 저장: 버튼으로 저장하거나, 고친 뒤 5초 동안 손대지 않으면 자동으로 서버에 남긴다 (관리자가 설계 자료실에서 본다)
+  const persist = async ({ auto = false } = {}) => {
+    if (savingRef.current) return;
+    if (!title.trim() && !auto) { toast({ title: '회로 이름을 적어 주세요', variant: 'destructive' }); return; }
+    savingRef.current = true;
     setSaving(true);
     try {
       const project = projects.find((p) => p.id === projectId);
-      const data = { title: title.trim(), project_id: projectId || '', project_title: project?.title || '', circuit: { version: 1, parts: circuit.parts, dt }, part_count: circuit.parts.filter((p) => p.type !== 'wire').length, updated_by_name: actorName(user) };
-      const rec = savedId
-        ? await base44.entities.CircuitDesign.update(savedId, data)
-        : await base44.entities.CircuitDesign.create({ ...data, tenant_id: user.tenant_id, created_by_name: actorName(user) });
+      const data = { title: title.trim() || `제목 없는 회로 ${new Date().toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`, project_id: projectId || '', project_title: project?.title || '', circuit: { version: 1, parts: circuit.parts, dt }, part_count: circuit.parts.filter((p) => p.type !== 'wire').length, updated_by_name: actorName(user) };
+      const rec = savedIdRef.current
+        ? await base44.entities.CircuitDesign.update(savedIdRef.current, data)
+        : await base44.entities.CircuitDesign.create({ ...data, tenant_id: user.tenant_id, created_by_name: actorName(user), autosaved: auto });
+      savedIdRef.current = rec.id;
       setSavedId(rec.id);
       setDirty(false);
+      setAutoAt(auto ? new Date() : null);
       setParams((p) => { const n = new URLSearchParams(p); n.set('id', rec.id); return n; }, { replace: true });
       qc.invalidateQueries({ queryKey: ['circuitDesigns'] });
-      toast({ title: '회로를 저장했습니다' });
-    } catch (e) { toast({ title: errorText(e), variant: 'destructive' }); }
+      if (!auto) toast({ title: '회로를 저장했습니다' });
+    } catch (e) { if (!auto) toast({ title: errorText(e), variant: 'destructive' }); }
+    savingRef.current = false;
     setSaving(false);
   };
+  const save = () => persist();
+  useEffect(() => {
+    if (!dirty || !user?.tenant_id || !circuit.parts.some((p) => p.type !== 'wire')) return undefined;
+    const t = setTimeout(() => persist({ auto: true }), 5000);
+    return () => clearTimeout(t);
+  }, [dirty, circuit, title, projectId, dt]);
 
   const importJson = async (file) => {
     try {
@@ -321,7 +336,8 @@ export default function CircuitLab() {
               {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
             </select>
             {project && <Link to={`/prototypes/${project.id}`} className="text-caption text-primary hover:underline">시제품 열기</Link>}
-            {dirty && <span className="text-caption text-muted-foreground">저장 안 된 변경</span>}
+            {dirty ? <span className="text-caption text-muted-foreground">저장 안 된 변경 (잠시 뒤 자동 저장)</span>
+              : autoAt && <span className="text-caption text-muted-foreground">자동 저장됨 {autoAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">

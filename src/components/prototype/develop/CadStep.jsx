@@ -10,7 +10,9 @@ import ConceptCanvas from '@/components/prototype/concept/ConceptCanvas';
 import { Card, CopyButton, DownloadButton, CommandLine, CodeView, Field } from '@/components/prototype/develop/DevBits';
 import { defaultCadParams, solidcraftScript, mcpBrief, scriptFileName, cliCommand, MCP_SETUP, shellParts, mainShellId, partParams, partCutouts } from '@/lib/devkit/solidcraft';
 import { drawingSvg, drawingFileName, sizeText, posText } from '@/lib/devkit/drawing';
-import { errorText } from '@/lib/prototypeApi';
+import { errorText, uploadProtoFile, addProtoFiles, protoAction } from '@/lib/prototypeApi';
+
+const AUTO_DRAWING_NOTE = '개발 워크벤치 설계 도면 (PDF 내려받을 때 자동 보관)';
 
 const OPTIONS = [
   { key: 'files', n: '방식 1', label: '파일 주고받기', icon: FileDown, hint: '설계자가 SolidCraft 에서 직접 모델링' },
@@ -49,7 +51,18 @@ export default function CadStep({ project, concept, dev, change, user, onSaved }
     try {
       const { downloadBlob } = await import('@/lib/devkit/conceptExport');
       if (kind === 'svg') downloadBlob(new Blob([drawing.svg], { type: 'image/svg+xml' }), `${drawName}.svg`);
-      else { const { drawingPdfBlob } = await import('@/lib/devkit/drawingPdf'); downloadBlob(await drawingPdfBlob(drawing.svg), `${drawName}.pdf`); }
+      else {
+        const { drawingPdfBlob } = await import('@/lib/devkit/drawingPdf');
+        const blob = await drawingPdfBlob(drawing.svg);
+        downloadBlob(blob, `${drawName}.pdf`);
+        // 내려받은 도면은 시제품 파일(도면)에도 보관 — 같은 이름의 이전 자동 보관본은 바꾼다
+        const f = await uploadProtoFile(new File([blob], `${drawName}.pdf`, { type: 'application/pdf' }), user, { category: 'DRAWING', note: AUTO_DRAWING_NOTE });
+        await addProtoFiles(project.id, [f]);
+        const old = (project.files || []).filter((x) => x.name === f.name && x.note === AUTO_DRAWING_NOTE && x.id !== f.id);
+        for (const o of old) await protoAction('remove_file', { project_id: project.id, file_id: o.id }).catch(() => {});
+        onSaved?.();
+        toast({ title: '도면 PDF 를 내려받고 시제품 파일에도 보관했습니다' });
+      }
     } catch (e) { toast({ title: errorText(e), variant: 'destructive' }); }
     setBusy('');
   };

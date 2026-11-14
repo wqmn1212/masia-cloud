@@ -163,6 +163,13 @@
     "note": {
       "type": "string",
       "description": "\ube44\uace0"
+    },
+    "source_file_uri": {
+      "type": "string",
+      "description": "검토한 원본 도면(STEP·STL) 비공개 uri — 설계 자료실에서 연다"
+    },
+    "created_by_name": {
+      "type": "string"
     }
   },
   "required": [

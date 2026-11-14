@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Loader2, Save, Workflow, Sparkles, Box, ListChecks, CircuitBoard, Bluetooth, FlaskConical, Check, Activity } from 'lucide-react';
@@ -56,17 +56,36 @@ export default function PrototypeDevelop() {
   const features = useMemo(() => (dev ? assignPins(dev.features || [], dev.mcu) : []), [dev]);
   const view = dev ? { ...dev, features } : null;
 
-  const save = async () => {
+  // 저장: 버튼, 또는 고친 뒤 4초 동안 손대지 않으면 자동 저장 (관리자가 설계 자료실에서 본다)
+  const devRef = useRef(dev);
+  devRef.current = dev;
+  const baseRef = useRef('');
+  const savingRef = useRef(false);
+  const [autoAt, setAutoAt] = useState(null);
+  const persist = async ({ auto = false } = {}) => {
+    if (savingRef.current || !view) return;
+    savingRef.current = true;
     setSaving(true);
+    const snap = devRef.current;
     try {
-      const next = pinUuids({ ...view, uuid_base: view.uuid_base || randomBase(), updated_at: new Date().toISOString(), updated_by_name: actorName(user) });
+      const base = view.uuid_base || baseRef.current || (baseRef.current = randomBase());
+      const next = pinUuids({ ...view, uuid_base: base, updated_at: new Date().toISOString(), updated_by_name: actorName(user) });
       await base44.entities.ProtoProject.update(project.id, { dev: next });
-      setDev(next); setDirty(false);
+      // 저장하는 사이에 또 고쳤으면 화면 값은 그대로 두고 다음 자동 저장에 맡긴다
+      if (devRef.current === snap) { setDev(next); setDirty(false); }
+      setAutoAt(auto ? new Date() : null);
       qc.invalidateQueries({ queryKey: protoKeys.project(projectId) });
-      toast({ title: '개발 설정을 저장했습니다' });
-    } catch (e) { toast({ title: errorText(e), variant: 'destructive' }); }
+      if (!auto) toast({ title: '개발 설정을 저장했습니다' });
+    } catch (e) { if (!auto) toast({ title: errorText(e), variant: 'destructive' }); }
+    savingRef.current = false;
     setSaving(false);
   };
+  const save = () => persist();
+  useEffect(() => {
+    if (!dirty || !project) return undefined;
+    const t = setTimeout(() => persist({ auto: true }), 4000);
+    return () => clearTimeout(t);
+  }, [dirty, dev]);
 
   if (isLoading || (project && !dev)) return <div className="py-24 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
   if (error || !project) return <div className="py-24 text-center text-body text-muted-foreground">시제품을 찾을 수 없습니다. <Link to="/prototypes" className="text-primary">목록으로</Link></div>;
@@ -93,7 +112,8 @@ export default function PrototypeDevelop() {
           <p className="mt-1 text-caption text-muted-foreground">현장 스케치 → 컨셉 → 3D 도면 → 기능 → 회로 → 블루투스·앱 → 시험을 단계마다 이어서 진행합니다.</p>
         </div>
         <div className="flex items-center gap-2">
-          {dirty && <span className="text-caption text-warning-text">저장하지 않은 변경</span>}
+          {dirty ? <span className="text-caption text-warning-text">저장하지 않은 변경 (잠시 뒤 자동 저장)</span>
+            : autoAt && <span className="text-caption text-muted-foreground">자동 저장됨 {autoAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>}
           <Button onClick={save} disabled={!dirty || saving}>{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}설정 저장</Button>
         </div>
       </div>

@@ -33,6 +33,10 @@
     },
     "updated_by_name": {
       "type": "string"
+    },
+    "autosaved": {
+      "type": "boolean",
+      "description": "저장 버튼 없이 자동 저장으로 처음 만들어진 회로"
     }
   },
   "required": [
