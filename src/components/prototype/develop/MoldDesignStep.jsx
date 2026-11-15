@@ -13,6 +13,7 @@ import { runMoldReview } from '@/lib/moldReview/runMoldReview';
 import { DEFAULT_ANALYSIS_OPTIONS } from '@/lib/moldReview/options';
 import { buildMoldReport } from '@/lib/moldReview/report';
 import { errorText, uploadProtoFile, addProtoFiles } from '@/lib/prototypeApi';
+import MoldQuotePanel from '@/components/prototype/develop/MoldQuotePanel';
 
 const MoldViewer = React.lazy(() => import('@/components/moldreview/MoldViewer'));
 
@@ -65,7 +66,7 @@ export default function MoldDesignStep({ project, concept, dev, change, user, on
   const moldCache = useRef(new Map()); // 형상이 같은 부품은 금형 점검을 다시 하지 않는다 (위치만 바뀐 경우 포함)
   const T = TEMPLATES[tpl];
 
-  const persist = (template, next) => change({ mold_design: { template, params: next, concept_id: concept?.id || null, updated_at: new Date().toISOString() } });
+  const persist = (template, next) => change((d) => ({ mold_design: { ...(d.mold_design || {}), template, params: next, concept_id: concept?.id || null, updated_at: new Date().toISOString() } }));
   const setParam = (k, v) => { const next = { ...params, [k]: v }; setParams(next); persist(tpl, next); };
   const chooseTemplate = (key) => {
     const guess = guessFromConcept(concept?.preview);
@@ -120,6 +121,14 @@ export default function MoldDesignStep({ project, concept, dev, change, user, on
   }
 
   const parts = model?.parts || [];
+  // 원가 추정·설계 확정이 쓰는 요약 (사출 부품 무게·재질·크기·슬라이드·금형 점검) — 바뀔 때만 저장
+  useEffect(() => {
+    if (!model?.parts?.length) return;
+    const molded = model.parts.filter((p) => p.mold);
+    if (molded.some((p) => !mold[p.id]?.report)) return;
+    const summary = { parts: model.parts.map((p) => ({ id: p.id, name: p.name, material: p.material, mold: !!p.mold, weight: Math.round((p.weight || 0) * 10) / 10, size: p.bbox ? [p.bbox[3] - p.bbox[0], p.bbox[4] - p.bbox[1], p.bbox[5] - p.bbox[2]].map((v) => Math.round(v)) : null, slides: p.mold ? (mold[p.id].result?.undercuts || []).filter((u) => u.type === 'slide').length : 0, hi: p.mold ? mold[p.id].report.counts.hi : 0 })), template: model.template };
+    if (JSON.stringify(summary) !== JSON.stringify(dev.mold_design?.summary)) change((d) => ({ mold_design: { ...(d.mold_design || {}), summary: { ...summary, at: new Date().toISOString() } } }));
+  }, [model, mold]); // eslint-disable-line react-hooks/exhaustive-deps
   const moldParts = parts.filter((p) => p.mold);
   const selPart = parts.find((p) => p.id === sel) || null;
   const selMold = sel ? mold[sel] : null;
@@ -134,6 +143,15 @@ export default function MoldDesignStep({ project, concept, dev, change, user, on
   const base = `${safe(project.title)}-${tpl}`;
 
   const stepBuffer = async (ids) => cadCall('step', ids ? { ids } : {}, () => {});
+  // 금형 업체용 묶음: 조립 STEP + 사출 부품별 STEP + 설계 조건 문서
+  const moldZip = async () => {
+    const { makeZip } = await import('@/lib/zipStore');
+    const files = [];
+    files.push({ name: `${base}-assembly.step`, data: new Uint8Array(await stepBuffer()) });
+    for (const p of moldParts) files.push({ name: `molded/${safe(p.name)}.step`, data: new Uint8Array(await stepBuffer([p.id])) });
+    files.push({ name: 'README-설계조건.txt', data: new TextEncoder().encode(specText()) });
+    return makeZip(files);
+  };
   const download = async (kind) => {
     setBusy(kind);
     try {
@@ -142,12 +160,7 @@ export default function MoldDesignStep({ project, concept, dev, change, user, on
         const buf = await stepBuffer();
         downloadBlob(new Blob([buf], { type: 'application/step' }), `${base}-assembly-${stamp()}.step`);
       } else {
-        const { makeZip } = await import('@/lib/zipStore');
-        const files = [];
-        files.push({ name: `${base}-assembly.step`, data: new Uint8Array(await stepBuffer()) });
-        for (const p of moldParts) files.push({ name: `molded/${safe(p.name)}.step`, data: new Uint8Array(await stepBuffer([p.id])) });
-        files.push({ name: 'README-설계조건.txt', data: new TextEncoder().encode(specText()) });
-        downloadBlob(new Blob([makeZip(files)], { type: 'application/zip' }), `${base}-mold-package-${stamp()}.zip`);
+        downloadBlob(new Blob([await moldZip()], { type: 'application/zip' }), `${base}-mold-package-${stamp()}.zip`);
       }
     } catch (e) { toast({ title: errorText(e), variant: 'destructive' }); }
     setBusy('');
@@ -335,6 +348,11 @@ export default function MoldDesignStep({ project, concept, dev, change, user, on
           )}
         </Card>
       )}
+
+      <div className="flex flex-wrap gap-2">
+        <MoldQuotePanel project={project} base={base} buildZip={moldZip} disabled={!parts.length || !!busy || status.busy}
+          summary={{ count: moldParts.length, materials: [...new Set(moldParts.map((p) => p.material))].join('/'), weight: Math.round(moldParts.reduce((n, p) => n + (p.weight || 0), 0)) }} />
+      </div>
 
       <p className="text-micro text-muted-foreground">치수 템플릿으로 만든 설계 초안입니다. 살두께·구배·분할·보스·리브·구멍은 사출 기준으로 들어가지만, 금형 발주 전에는 설계자가 공차·조립·강도를 검토하고 금형 업체가 금형 설계를 확정합니다. 계산은 모두 이 브라우저 안에서 합니다.</p>
     </div>

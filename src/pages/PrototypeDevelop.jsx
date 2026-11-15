@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, Save, Workflow, Sparkles, Box, ListChecks, CircuitBoard, Bluetooth, FlaskConical, Check, Activity } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Workflow, Sparkles, Box, ListChecks, CircuitBoard, Bluetooth, FlaskConical, Check, Activity, Presentation } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
@@ -18,6 +18,7 @@ import CircuitStep from '@/components/prototype/develop/CircuitStep';
 import BleStep from '@/components/prototype/develop/BleStep';
 import TestStep from '@/components/prototype/develop/TestStep';
 import SimStep from '@/components/prototype/develop/SimStep';
+import MeetingBar from '@/components/prototype/develop/MeetingBar';
 
 const STEPS = [
   { key: 'concept', label: '스케치·컨셉', icon: Sparkles },
@@ -49,6 +50,8 @@ export default function PrototypeDevelop() {
   const [saving, setSaving] = useState(false);
   const step = STEPS.some((s) => s.key === params.get('step')) ? params.get('step') : 'concept';
   const cadTab = params.get('cad') === 'solidcraft' ? 'solidcraft' : 'mold';
+  const meeting = params.get('meeting') === '1';
+  const setMeeting = (on) => setParams((p) => { const n = new URLSearchParams(p); if (on) n.set('meeting', '1'); else n.delete('meeting'); return n; }, { replace: true });
   const go = (key) => setParams((p) => { const n = new URLSearchParams(p); n.set('step', key); return n; }, { replace: true });
 
   useEffect(() => { if (project && !dev) setDev(initialDev(project)); }, [project]);  
@@ -117,9 +120,12 @@ export default function PrototypeDevelop() {
         <div className="flex items-center gap-2">
           {dirty ? <span className="text-caption text-warning-text">저장하지 않은 변경 (잠시 뒤 자동 저장)</span>
             : autoAt && <span className="text-caption text-muted-foreground">자동 저장됨 {autoAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>}
+          {!meeting && <Button variant="outline" onClick={() => setMeeting(true)}><Presentation className="w-4 h-4" />미팅 모드</Button>}
           <Button onClick={save} disabled={!dirty || saving}>{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}설정 저장</Button>
         </div>
       </div>
+
+      {meeting && <MeetingBar {...props} step={step} go={go} steps={STEPS} onClose={() => setMeeting(false)} />}
 
       <nav className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7" aria-label="개발 단계">
         {STEPS.map((s, i) => {

@@ -16,6 +16,7 @@
     "check:cad": "node scripts/check-cad.mjs",
     "check:hw": "node scripts/check-hw.mjs",
     "check:firmware": "node scripts/check-firmware.mjs",
+    "check:production": "node scripts/check-production.mjs",
     "gen:kicad-lib": "node scripts/gen-kicad-lib.mjs",
     "check:design-archive": "node --import ./scripts/fnmock/register.mjs scripts/check-design-archive.mjs",
     "check:qc-precheck": "node scripts/check-qc-precheck.mjs",
