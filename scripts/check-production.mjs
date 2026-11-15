@@ -92,7 +92,7 @@ check('인증 자료: 무선(모듈)·전자파·전기 안전(어댑터·조명
 {
   const { factoryPlan, parseSelftest, judgeAuto, verdictOf, nextSerial, unitRecord } = await import('../src/lib/devkit/factoryTest.js');
   const plan = factoryPlan(devM);
-  check(`출하 검사 계획: 자동 ${plan.auto.length} · 누르기 ${plan.press.length} · 출력 ${plan.outputs.length} (시계·온도 2개·버튼·다이얼·조명 2개 포함, 글은 한·중)`, plan.auto.some((a) => a.id === 'rtc') && plan.auto.filter((a) => /°C/.test(a.label[0])).length === 2 && plan.press.length === 2 && plan.outputs.filter((o) => o.kind === 'light').length === 2 && [...plan.auto, ...plan.press, ...plan.outputs].every((x) => x.label[0] && x.label[1] && x.label[1] !== x.label[0])));
+  check(`출하 검사 계획: 자동 ${plan.auto.length} · 누르기 ${plan.press.length} · 출력 ${plan.outputs.length} (시계·온도 2개·버튼·다이얼·조명 2개 포함, 글은 한·중)`, plan.auto.some((a) => a.id === 'rtc') && plan.auto.filter((a) => /°C/.test(a.label[0])).length === 2 && plan.press.length === 2 && plan.outputs.filter((o) => o.kind === 'light').length === 2 && [...plan.auto, ...plan.press, ...plan.outputs].every((x) => x.label[0] && x.label[1] && x.label[1] !== x.label[0]));
   const good = { selftest: 1, name: plan.device_name, fw: '0.2.0', mac: 'aa:bb:cc:dd:ee:ff', chip: 'ESP32-S3', rtc: 1 };
   plan.auto.forEach((a) => { if (/^in\d+$/.test(a.id)) good[a.id] = /°C/.test(a.label[0]) ? 248 : 0; });
   const line = JSON.stringify(good);
