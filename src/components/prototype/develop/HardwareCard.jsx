@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Cpu, Download, Loader2, Save, FileDown, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Cpu, Download, Loader2, Save, FileDown, AlertTriangle, ExternalLink, Factory } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { Card } from '@/components/prototype/develop/DevBits';
@@ -37,6 +37,9 @@ export default function HardwareCard({ project, dev, user, onSaved, change }) {
   const [busy, setBusy] = useState('');
   const [open, setOpen] = useState('');
   const [boardKey, setBoardKey] = useState('main');
+  const [fabSrv, setFabSrv] = useState(null);
+  const [fab, setFab] = useState(null); // { state, secs, run_url, summaries, error, zip }
+  useEffect(() => { import('@/lib/hw/fabClient').then((m) => m.fabStatus()).then(setFabSrv).catch(() => setFabSrv({ ready: false })); }, []);
   useEffect(() => {
     let alive = true;
     Promise.all([import('@/lib/hw/kicadLib.data.js'), import('@/lib/hw/exportHw.js')]).then(([lib, ex]) => { if (alive) setMods({ lib, ex }); }).catch((e) => toast({ title: errorText(e), variant: 'destructive' }));
@@ -77,6 +80,21 @@ export default function HardwareCard({ project, dev, user, onSaved, change }) {
         downloadText(mods.ex.jlcBomCsv(board.bom), `${board.slug}-bom-jlcpcb-${stamp()}.csv`, 'text/csv');
       }
     } catch (e) { toast({ title: errorText(e), variant: 'destructive' }); }
+    setBusy('');
+  };
+  const runFab = async () => {
+    setBusy('fab');
+    setFab({ state: 'queued', secs: 0 });
+    try {
+      const { fabricate } = await import('@/lib/hw/fabClient');
+      const r = await fabricate(dev, { title: project.title, seed: project.id, onState: (state, secs, run_url) => setFab({ state, secs, run_url }) });
+      setFab({ state: 'done', ...r });
+      const { downloadBlob } = await import('@/lib/devkit/conceptExport');
+      downloadBlob(new Blob([r.zip], { type: 'application/zip' }), `${pkg.slug}-pcb-fab-${stamp()}.zip`);
+      const f = await uploadProtoFile(new File([r.zip], `${pkg.slug}-pcb-fab-${stamp()}.zip`, { type: 'application/zip' }), user, { category: 'PCB', note: `자동 배선·제조 파일 (거버·드릴·JLCPCB 부품표·좌표) — ${r.summaries.map((x) => `${x.board}: ${x.routed ? `미연결 ${x.unconnected}` : '배선 안 함'}`).join(', ')}` });
+      await addProtoFiles(project.id, [f]);
+      onSaved?.();
+    } catch (e) { setFab({ state: 'failed', error: errorText(e), run_url: e.run_url, summaries: e.summaries }); }
     setBusy('');
   };
   const save = async () => {
@@ -179,6 +197,23 @@ export default function HardwareCard({ project, dev, user, onSaved, change }) {
           {hw.offboard.map((o) => <p key={o.name}><span className="font-semibold">{o.name} (별도 기판)</span> — {o.note} {o.parts.map(([n, q]) => `${n} ×${q}`).join(', ')}</p>)}
         </div>
       )}
+      <div className="rounded-lg border p-3 space-y-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <Factory className="w-4 h-4 text-primary" /><p className="text-label font-semibold">자동 배선 · 제조 파일 (JLCPCB)</p>
+          <Button size="sm" className="ml-auto" onClick={runFab} disabled={!fabSrv?.ready || !!busy || pkg.boards.some((b) => b.pcb.place.outside.length)}>{busy === 'fab' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Factory className="w-4 h-4" />}자동 배선하고 제조 파일 만들기</Button>
+        </div>
+        <p className="text-micro text-muted-foreground">서버에서 기판마다 자동 배선(Freerouting) → 양면 GND 동박 → DRC → 거버·드릴 → JLCPCB 부품표·좌표(CPL)를 만들어 zip 으로 받고 시제품 파일에도 저장합니다 (5~15분).
+          {!fabSrv?.ready && ' 빌드 서버가 아직 연결되지 않았습니다 (관리자: GitHub 토큰 설정 필요).'}{pkg.boards.some((b) => b.pcb.place.outside.length) && ' 기판에 못 넣은 부품이 있으면 배선하지 않습니다.'}</p>
+        {fab && (
+          <div className={`text-micro ${fab.state === 'failed' ? 'text-destructive' : 'text-muted-foreground'}`}>
+            {fab.state === 'queued' && `대기 중… ${fab.secs || 0}초`}{fab.state === 'building' && `배선·제조 파일 만드는 중… ${fab.secs || 0}초`}
+            {fab.state === 'failed' && fab.error}
+            {fab.state === 'done' && 'zip 을 받았고 시제품 파일에 저장했습니다.'}
+            {fab.run_url && <a href={fab.run_url} target="_blank" rel="noreferrer" className="ml-1 inline-flex items-center gap-0.5 text-primary">기록<ExternalLink className="w-3 h-3" /></a>}
+            {(fab.summaries || []).map((x) => <p key={x.board} className="text-foreground">{x.board}: {x.routed ? `선 ${x.tracks}개 · 비아 ${x.vias}개 · 남은 미연결 ${x.unconnected}개` : '배선 안 함'} · DRC {Object.entries(x.drc || {}).filter(([k]) => !/silk|lib_footprint|unconnected/.test(k)).map(([k, v]) => `${k} ${v}`).join(', ') || '오류 없음'}</p>)}
+          </div>
+        )}
+      </div>
       <p className="text-micro text-muted-foreground">KiCad 7 이상에서 프로젝트를 열면 회로도와 기판이 이어져 있어 배선만 하면 됩니다. 값은 데이터시트 권장 회로 기준 초안이며, 발주 전에 회로 설계자가 검토해야 합니다. LCSC 번호는 확실한 것만 넣었고, 나머지는 PCB 부품 탭에서 확정합니다.</p>
     </Card>
   );

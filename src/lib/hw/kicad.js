@@ -266,9 +266,11 @@ export function placeParts(hw, lib, layout) {
     out.push({ c, x, y, rot, anchor: an, moved: Math.round(moved * 10) / 10, side: 'F', rect: r });
   }
   // 2. 나머지: MCU 먼저(맨 위 가장자리 → 안테나가 바깥쪽), 그다음 큰 것부터
-  pending.sort((a, b) => (/RF_Module/.test(b.part.fp) - /RF_Module/.test(a.part.fp)) || area(b) - area(a));
+  // MCU 먼저(맨 위 가장자리 → 안테나가 바깥쪽), 그다음 스루홀(양면을 막는다), 그다음 큰 표면 실장 부품부터
+  const tht = (c) => (lib.FOOTPRINTS[c.part.fp].smd ? 0 : 1);
+  pending.sort((a, b) => (/RF_Module/.test(b.part.fp) - /RF_Module/.test(a.part.fp)) || tht(b) - tht(a) || area(b) - area(a));
   const scan = (c, side) => {
-    for (const rot of [0, 90]) {
+    for (const rot of [0, 90, 180, 270]) {
       const r0 = rectOf(c.part.fp, 0, 0, rot);
       for (let y = bb[3]; y - (r0[3] - r0[1]) >= bb[1]; y -= G) {
         for (let x = bb[0]; x + (r0[2] - r0[0]) <= bb[2]; x += G) {
@@ -292,7 +294,7 @@ export function placeParts(hw, lib, layout) {
     }
     return false;
   };
-  const smallSmd = (c) => lib.FOOTPRINTS[c.part.fp].smd && area(c) <= 40 && !/RF_Module|Connector/.test(c.part.fp);
+  const smallSmd = (c) => lib.FOOTPRINTS[c.part.fp].smd && area(c) <= 80 && !/RF_Module|Connector/.test(c.part.fp);
   const outside = [];
   const later = [];
   for (const c of pending) if (!scan(c, 'F')) later.push(c);

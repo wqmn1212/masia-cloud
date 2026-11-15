@@ -1,0 +1,77 @@
+# 기판 제조 묶음 서버 (KiCad 7 + Freerouting)
+# 1) 푸시: 예시 제품(scripts/pcb-sample.json, 무니스 조명 두 기판)을 끝까지 돌려 회로도·기판 생성기와 배선이 깨지지 않았는지 확인한다.
+# 2) 수동 실행(workflow_dispatch): 워크벤치의 "자동 배선·제조 파일" 버튼이 서버 함수(pcbBuild)를 거쳐 개발 설정을 보내면
+#    KiCad 프로젝트 → 자동 배선 + GND 동박 → DRC → 거버·드릴 → JLCPCB 부품표·좌표를 묶어 아티팩트로 올린다.
+name: pcb
+run-name: pcb ${{ inputs.request_id || github.sha }}
+
+on:
+  push:
+    paths:
+      - 'src/lib/hw/**'
+      - 'src/lib/cad/pcbLayout.js'
+      - 'scripts/pcb-package.mjs'
+      - 'scripts/pcb_route.py'
+      - 'scripts/pcb-sample.json'
+      - '.github/workflows/pcb.yml'
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: '요청 번호 (서버 함수가 정한다)'
+        required: false
+        default: ''
+      request_gz_b64:
+        description: '{ dev, title, seed } JSON (gzip → base64)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  FREEROUTING: '1.9.0'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Install KiCad 7
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends kicad > /dev/null
+          kicad-cli version
+          python3 -c "import pcbnew; print(pcbnew.Version())"
+      - name: Download Freerouting
+        run: |
+          curl -sSL -o freerouting.jar "https://github.com/freerouting/freerouting/releases/download/v${FREEROUTING}/freerouting-${FREEROUTING}.jar"
+          ls -la freerouting.jar
+      - name: Prepare request
+        env:
+          REQ: ${{ inputs.request_gz_b64 }}
+        run: |
+          mkdir -p build
+          if [ -n "$REQ" ]; then printf '%s' "$REQ" | base64 -d | gunzip > build/req.json; else cp scripts/pcb-sample.json build/req.json; fi
+      - name: Build boards
+        run: node scripts/pcb-package.mjs build/req.json build/out "$PWD/freerouting.jar"
+      - name: Summary
+        if: always()
+        run: cat build/out/*/*-summary.json 2>/dev/null | head -c 20000 || true
+      - name: Upload package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pcb-${{ inputs.request_id || github.sha }}
+          path: |
+            build/out/pcb-package.zip
+            build/out/*/*-summary.json
+          retention-days: 7
+          if-no-files-found: warn
