@@ -38,7 +38,7 @@ function roundLamp(p) {
   const rearX = 0.4 * rxi, rearY = wallY(rearX + 3, Hb) - 3 - 1.2;
   const bosses = [[-sideX, -4], [sideX, -4], [rearX, rearY]];
   const plateT = p.plate_t;
-  const pcbZ = plateT + 1, pcbTop = pcbZ + 1.6;
+  const pcbZ = plateT + 2.4, pcbTop = pcbZ + 1.6; // 기판 아래 2.4 mm: 뒷면에 높이 2 mm 이하 부품(인덕터·SOIC)을 둘 자리
   const swZ = pcbTop + 3, jackZ = pcbTop + 4.5;
   const dialZ = Math.max(p.dial_z, pcbTop + 7);
   // 기판: 받침대 안쪽 타원(기판 윗면 높이)에서 0.8 mm 띄움, 바닥판 고정 보스 자리는 구멍으로 피한다
@@ -48,14 +48,22 @@ function roundLamp(p) {
   const encFront = -wallY(6.2, dialZ + 6.2) + 0.3;
   const yT = wallY(-12, swZ + 3) - 0.3, yB = wallY(-20, swZ + 3) - 0.3, xJ = -wallX(18.5, jackZ + 4.5) + 0.3;
   return {
-    kind: 'ellipse', outline: ellipsePts(0, 0, ex, ey), size: [r2(2 * ex), r2(2 * ey)], z: r2(pcbZ), holes,
+    kind: 'ellipse', outline: ellipsePts(0, 0, ex, ey), size: [r2(2 * ex), r2(2 * ey)], z: r2(pcbZ), backClear: r2(pcbZ - plateT), holes,
     anchors: [
       { id: 'dial', kind: 'encoder', x: 0, y: r2(encFront + 3.5), dir: -90, label: '다이얼 (앞 벽, 축이 앞으로)', sideways: true },
       { id: 'toggle', kind: 'switch', x: -6, y: r2(yT - 3), dir: 90, label: '수면 모드 토글 (뒤 벽)', sideways: true },
       { id: 'bt', kind: 'button', x: -17, y: r2(yB - 2.5), dir: 90, label: '블루투스 버튼 (뒤 벽)', sideways: true },
       { id: 'jack', kind: 'jack', x: r2(xJ + 6), y: 14, dir: 180, label: 'DC 잭 (왼쪽 벽)' },
     ],
-    notes: ['벽 밖으로 나가는 다이얼·토글·버튼은 옆으로 눕힌(직각) 부품을 쓰세요. 실장 모양은 세로형 기본값이라 바꿔야 합니다.', '바닥판 보스 3개가 기판 구멍에 끼워져 자리를 잡습니다. 기판 고정은 바닥판 쪽 받침(스페이서) 또는 양면 테이프로 합니다.'],
+    // 기판 위 높이 제한 구역 (외장 안쪽 구조물·부품 몸체 아래): 이 안에는 maxH 보다 높은 부품을 두지 않는다
+    zones: [
+      { rect: [-14.5, -6.5, 14.5, 6.5], maxH: r2(Math.max(0, p.pivot_h - 6 - pcbTop - 0.5)), label: '힌지 연결부·브래킷 아래' },
+      { rect: [-6.9, r2(encFront - 0.6), 6.9, r2(encFront + 7.6)], maxH: 0, label: '로터리 엔코더 몸체' },
+      { rect: [-12.6, r2(yT - 6.6), 0.6, r2(yT + 0.6)], maxH: 0, label: '토글 스위치 몸체' },
+      { rect: [-20.6, r2(yB - 5.6), -13.4, r2(yB + 0.6)], maxH: 0, label: '블루투스 버튼 몸체' },
+      { rect: [r2(xJ - 0.6), 8.9, r2(xJ + 12.6), 19.1], maxH: 0, label: 'DC 잭 몸체' },
+    ],
+    notes: ['블루투스 안테나가 금속 힌지·바닥 무게판 가까이 있습니다. 실물 시제품에서 블루투스 거리(목표 5 m 이상)를 꼭 재세요. 모자라면 모듈을 힌지에서 먼 쪽으로 옮기거나 안테나 외장형(-1U) 모듈을 씁니다.', '벽 밖으로 나가는 다이얼·토글·버튼은 옆으로 눕힌(직각) 부품을 쓰세요. 실장 모양은 세로형 기본값이라 바꿔야 합니다.', '바닥판 보스 3개가 기판 구멍에 끼워져 자리를 잡습니다. 기판 고정은 바닥판 쪽 받침(스페이서) 또는 양면 테이프로 합니다.'],
   };
 }
 
@@ -69,7 +77,7 @@ function boxCase(p) {
   if (p.usb !== 'none') anchors.push({ id: 'usb', kind: 'usb', x: 0, y: r2(Math.min(p.pcb_d / 2 - 3.7, D / 2 - dw - 3.7)), dir: 90, label: 'USB-C (뒤 벽)' });
   const hx = p.pcb_w / 2 - 3.5, hy = p.pcb_d / 2 - 3.5;
   return {
-    kind: 'rect', outline: rrectPts(p.pcb_w, p.pcb_d, 1), size: [p.pcb_w, p.pcb_d], z: r2(pcbTop - 1.6),
+    kind: 'rect', outline: rrectPts(p.pcb_w, p.pcb_d, 1), size: [p.pcb_w, p.pcb_d], z: r2(pcbTop - 1.6), backClear: r2(Math.max(0, pcbTop - 1.6 - w - (p.battery ? p.battery + 1 : 0))),
     holes: [[1, 1], [-1, 1], [-1, -1], [1, -1]].map(([sx, sy]) => ({ x: r2(sx * hx), y: r2(sy * hy), d: 2.7, kind: 'mount', keep: 3, label: 'M2.5 고정 구멍 (아래 케이스 받침)' })),
     anchors, notes: ['기판 고정 구멍 4개에 맞는 받침(보스)을 아래 케이스 바닥에 추가하세요 (금형 설계에는 아직 없음).'],
   };
@@ -86,7 +94,7 @@ function cylinderCase(p) {
   const rh = p.pcb_d / 2 - 4;
   const holes = [90, 210, 330].map((g) => ({ x: r2(rh * Math.cos(g * DEG)), y: r2(rh * Math.sin(g * DEG)), d: 2.7, kind: 'mount', keep: 3, label: 'M2.5 고정 구멍' }));
   if (p.outlet_d > 0) holes.push({ x: 0, y: 0, d: r2(p.outlet_d + 4), kind: 'cutout', keep: 1, label: '배출구 통로' });
-  return { kind: 'circle', outline: ellipsePts(0, 0, p.pcb_d / 2, p.pcb_d / 2), size: [p.pcb_d, p.pcb_d], z: r2(pcbTop - 1.6), holes, anchors, notes: ['기판 고정 구멍 3개에 맞는 받침을 몸통 안쪽에 추가하세요 (금형 설계에는 아직 없음).'] };
+  return { kind: 'circle', outline: ellipsePts(0, 0, p.pcb_d / 2, p.pcb_d / 2), size: [p.pcb_d, p.pcb_d], z: r2(pcbTop - 1.6), backClear: r2(Math.max(0, pcbTop - 1.6 - w)), holes, anchors, notes: ['기판 고정 구멍 3개에 맞는 받침을 몸통 안쪽에 추가하세요 (금형 설계에는 아직 없음).'] };
 }
 
 const LAYOUTS = { round_lamp: roundLamp, box: boxCase, cylinder: cylinderCase };

@@ -131,7 +131,7 @@ function roundLamp(R, p, notes) {
   const rearX = 0.4 * rxi, rearY = wallY(rearX + 3, Hb) - 3 - 1.2;
   const bossXY = [[-sideX, -4], [sideX, -4], [rearX, rearY]];
   // 버튼·잭 높이 (기판 위)
-  const pcbZ = plateT + 1, pcbTop = pcbZ + 1.6;
+  const pcbZ = plateT + 2.4, pcbTop = pcbZ + 1.6; // 기판 아래 2.4 mm: 뒷면에 높이 2 mm 이하 부품(인덕터·SOIC)을 둘 자리
   const swZ = pcbTop + 3, jackZ = pcbTop + 4.5;
   const dialZ = Math.max(p.dial_z, pcbTop + 7);
   if (dialZ !== p.dial_z) notes.push(`다이얼 높이를 기판 위로 올려 ${dialZ} mm 로 잡았습니다.`);

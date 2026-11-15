@@ -1,6 +1,7 @@
 // buildHardware 결과 → KiCad 7 프로젝트 (.kicad_sch 회로도 · .kicad_pcb 기판 · .kicad_pro) 와 DXF 외곽.
 // 회로도는 부품마다 핀 끝에 넷 이름표를 단다 (선 없이 이름표로 연결 → KiCad 넷리스트가 그대로 나온다).
 // 기판은 외곽(Edge.Cuts)·고정 구멍·모든 실장 모양을 외곽 안에 늘어놓고 패드마다 넷을 넣는다 → KiCad 에서 배선만 하면 된다.
+import { partHeight } from '../cad/pcbParts.js';
 import { q, print, parse, kids, kid, str } from './sexpr.js';
 import { CUSTOM } from './customSymbols.js';
 import { inPoly, polyArea } from '../cad/pcbLayout.js';
@@ -276,6 +277,8 @@ function placeOnce(hw, lib, layout, rfFull) {
   // MCU 먼저(맨 위 가장자리 → 안테나가 바깥쪽), 그다음 스루홀(양면을 막는다), 그다음 큰 표면 실장 부품부터
   const tht = (c) => (lib.FOOTPRINTS[c.part.fp].smd ? 0 : 1);
   pending.sort((a, b) => (/RF_Module/.test(b.part.fp) - /RF_Module/.test(a.part.fp)) || tht(b) - tht(a) || area(b) - area(a));
+  const zones = layout.zones || [];
+  const hOf = (c) => partHeight(c.part.fp);
   const scan = (c, side) => {
     for (const rot of [0, 90, 180, 270]) {
       const r0 = rectOf(c.part.fp, 0, 0, rot);
@@ -284,6 +287,8 @@ function placeOnce(hw, lib, layout, rfFull) {
           const px = x - r0[0], py = y - r0[3];
           const rr = [r0[0] + px, r0[1] + py, r0[2] + px, r0[3] + py];
           if (!freeRect(rr, side)) continue;
+          // 외장 안쪽 구조물 아래(높이 제한 구역)에는 그보다 낮은 부품만 (앞면)
+          if (side === 'F' && zones.some((zn) => zn.maxH < hOf(c) + 0.2 && !(rr[2] <= zn.rect[0] || rr[0] >= zn.rect[2] || rr[3] <= zn.rect[1] || rr[1] >= zn.rect[3]))) continue;
           // RF 모듈: 안테나 금지 구역(court)에는 다른 부품이 없어야 한다 (기판 밖은 괜찮다)
           const court = lib.FOOTPRINTS[c.part.fp].court;
           const isRf = /^RF_Module:/.test(c.part.fp) && court;
@@ -301,7 +306,9 @@ function placeOnce(hw, lib, layout, rfFull) {
     }
     return false;
   };
-  const smallSmd = (c) => lib.FOOTPRINTS[c.part.fp].smd && area(c) <= 80 && !/RF_Module|Connector/.test(c.part.fp);
+  // 뒷면: 작은 표면 실장 부품만, 그리고 기판 아래 빈 높이(layout.backClear)에 들어가는 높이만
+  const backClear = Number.isFinite(layout.backClear) ? layout.backClear : Infinity;
+  const smallSmd = (c) => lib.FOOTPRINTS[c.part.fp].smd && area(c) <= 80 && !/RF_Module|Connector/.test(c.part.fp) && partHeight(c.part.fp) <= backClear;
   const outside = [];
   const later = [];
   for (const c of pending) if (!scan(c, 'F')) later.push(c);

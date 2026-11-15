@@ -5,6 +5,7 @@ import wasmUrl from 'replicad-opencascadejs/wasm?url';
 import * as R from 'replicad';
 import { buildAssembly } from './builders.js';
 import { checkInterference } from './interference.js';
+import { skipPcbPair } from './pcbParts.js';
 import { MATERIALS, stepName } from './catalog.js';
 
 let ready = null;
@@ -61,7 +62,10 @@ self.onmessage = async (event) => {
     if (!current) throw new Error('먼저 형상을 만들어 주세요');
     if (cmd === 'interference') {
       post({ id, progress: '간섭 검사 중' });
-      const r = checkInterference(current.view, { motion: current.motion });
+      // extra: 기판 부품 상자 (회로 단계 배치 결과). 기판이 속한 묶음을 따라 움직이게 group 을 맞춘다
+      const pcbGroup = current.view.find((v) => v.id === 'pcb')?.group;
+      const extra = (data.extra || []).map((e) => ({ ...e, group: pcbGroup }));
+      const r = checkInterference([...current.view, ...extra], { motion: current.motion, skip: skipPcbPair });
       post({ id, done: true, result: r });
       return;
     }

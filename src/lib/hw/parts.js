@@ -57,7 +57,12 @@ export const PARTS = {
 };
 
 // 기판 밖 부품으로 가는 커넥터 (JST PH 2.0 mm 세로형). 큰 전류(히터)는 XH 2.5 mm
-export const conn = (n, label, big = false) => ({
+// low: 키 낮은 옆꽂이 (JST SH 1.0 mm, 높이 약 3 mm) — 외장 구조물 아래처럼 높이가 모자란 기판의 신호 커넥터용 (핀당 1 A 까지)
+export const conn = (n, label, big = false, low = false) => (low ? {
+  sym: `Connector_Generic:Conn_01x${String(n).padStart(2, '0')}`,
+  fp: `Connector_JST:JST_SH_SM${String(n).padStart(2, '0')}B-SRSS-TB_1x${String(n).padStart(2, '0')}-1MP_P1.00mm_Horizontal`,
+  value: label, lcsc: '', search: `SM${String(n).padStart(2, '0')}B-SRSS-TB`, cat: 'J',
+} : {
   sym: `Connector_Generic:Conn_01x${String(n).padStart(2, '0')}`,
   fp: big ? `Connector_JST:JST_XH_B${n}B-XH-A_1x${String(n).padStart(2, '0')}_P2.50mm_Vertical` : `Connector_JST:JST_PH_B${n}B-PH-K_1x${String(n).padStart(2, '0')}_P2.00mm_Vertical`,
   value: label, lcsc: '', search: big ? `B${n}B-XH-A` : `B${n}B-PH-K-S`, cat: 'J',
@@ -73,5 +78,6 @@ export function allLibIds() {
   Object.values(PARTS).forEach((p) => take(typeof p === 'function' ? p('0.1') : p));
   [2, 3, 4, 5, 6, 7, 8, 10].forEach((n) => take(conn(n, '')));
   take(conn(2, '', true));
+  [2, 3, 4, 5, 6, 7, 8].forEach((n) => take(conn(n, '', false, true)));
   return { syms: [...syms].sort(), fps: [...fps].sort() };
 }

@@ -61,6 +61,8 @@ export default function MoldDesignStep({ project, concept, dev, change, user, on
   const [moldMode, setMoldMode] = useState('all');
   const [moldFocus, setMoldFocus] = useState(null);
   const [busy, setBusy] = useState('');
+  const [pcbBoxes, setPcbBoxes] = useState([]);
+  const [showPcbParts, setShowPcbParts] = useState(true);
   const seqRef = useRef(0);
   const moldJob = useRef(null);
   const moldCache = useRef(new Map()); // 형상이 같은 부품은 금형 점검을 다시 하지 않는다 (위치만 바뀐 경우 포함)
@@ -94,9 +96,20 @@ export default function MoldDesignStep({ project, concept, dev, change, user, on
       setModel(res); setInter(null); setMold({});
       setStatus({ busy: false, ms: res.ms });
       setSel((s) => (s && res.parts.some((p) => p.id === s) ? s : null));
-      const it = await cadCall('interference');
+      // 회로 단계에서 자동 배치한 기판 부품(높이 있는 것)을 상자로 넣어 외장과 닿는지 같이 본다
+      let boxes = [];
+      if ((dev.features || []).length) {
+        try {
+          const [lib, ex, pp] = await Promise.all([import('@/lib/hw/kicadLib.data.js'), import('@/lib/hw/exportHw.js'), import('@/lib/cad/pcbParts.js')]);
+          const pkg = ex.buildHwPackage({ ...dev, mold_design: { ...(dev.mold_design || {}), template: tpl, params } }, lib, { title: project.title, seed: project.id });
+          boxes = pp.pcbPartBoxes(pkg.boards[0]);
+        } catch { boxes = []; }
+      }
       if (!live()) return;
-      setInter(it);
+      setPcbBoxes(boxes);
+      const it = await cadCall('interference', { extra: boxes.map((b) => ({ id: b.id, name: b.name, V: b.mesh.V, F: b.mesh.F })) });
+      if (!live()) return;
+      setInter({ ...it, pcbParts: boxes.length });
       for (const p of res.parts.filter((x) => x.mold)) {
         if (!live()) return;
         const ck = `${p.id}|${p.material}|${p.volume.toFixed(2)}|${[p.bbox[3] - p.bbox[0], p.bbox[4] - p.bbox[1], p.bbox[5] - p.bbox[2]].map((v) => v.toFixed(2)).join(',')}`;
@@ -121,6 +134,12 @@ export default function MoldDesignStep({ project, concept, dev, change, user, on
   }
 
   const parts = model?.parts || [];
+  // 화면에만 보태는 기판 부품 상자 (부품 표·무게·STEP 에는 넣지 않는다)
+  const viewParts = useMemo(() => {
+    if (!showPcbParts || !pcbBoxes.length) return parts;
+    const group = parts.find((p) => p.id === 'pcb')?.group;
+    return [...parts, ...pcbBoxes.map((b) => ({ id: b.id, name: b.name, material: '부품', color: '#2E3238', group, mesh: b.mesh }))];
+  }, [parts, pcbBoxes, showPcbParts]);
   // 원가 추정·설계 확정이 쓰는 요약 (사출 부품 무게·재질·크기·슬라이드·금형 점검) — 바뀔 때만 저장
   useEffect(() => {
     if (!model?.parts?.length) return;
@@ -229,7 +248,7 @@ export default function MoldDesignStep({ project, concept, dev, change, user, on
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-2 min-w-0">
           <div className="relative">
-            <CadViewer parts={parts} motion={motion} tilt={tilt} explode={explode} section={section} selected={sel} onSelect={setSel} markers={markers} focus={focus} className="h-[440px] sm:h-[520px]" />
+            <CadViewer parts={viewParts} motion={motion} tilt={tilt} explode={explode} section={section} selected={sel} onSelect={setSel} markers={markers} focus={focus} className="h-[440px] sm:h-[520px]" />
             {status.busy && !parts.length && <div className="absolute inset-0 grid place-items-center text-caption text-muted-foreground"><span className="inline-flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />{status.label}</span></div>}
             {selPart && <div className="absolute left-3 top-3 max-w-[70%] rounded-lg bg-card/90 px-3 py-1.5 text-caption shadow-sm"><b>{selPart.name}</b> · {selPart.material}{selPart.mold ? ' · 사출' : ''}</div>}
           </div>
@@ -238,6 +257,7 @@ export default function MoldDesignStep({ project, concept, dev, change, user, on
               <select value={section} onChange={(e) => setSection(e.target.value)} className="h-8 w-full rounded-md border bg-background px-2 text-caption" aria-label="단면">
                 <option value="none">없음</option><option value="y">앞뒤로 자르기</option><option value="x">좌우로 자르기</option>
               </select>
+              {pcbBoxes.length > 0 && <span className="flex items-center gap-1.5 pt-1 text-micro text-muted-foreground"><input type="checkbox" checked={showPcbParts} onChange={(e) => setShowPcbParts(e.target.checked)} aria-label="기판 부품 보기" />기판 부품 {pcbBoxes.length}개 보기 (높이 어림)</span>}
             </label>
             <label className="space-y-1 text-caption"><span className="font-medium">분해 보기 {Math.round(explode * 100)}%</span>
               <input type="range" min={0} max={1} step={0.05} value={explode} onChange={(e) => setExplode(Number(e.target.value))} className="w-full accent-primary" aria-label="분해 보기" />
@@ -295,7 +315,7 @@ export default function MoldDesignStep({ project, concept, dev, change, user, on
           </div>
         </Card>
 
-        <Card title="조립 간섭" icon={ShieldCheck} tag={inter ? `${inter.pairs}쌍 검사` : '검사 중'}>
+        <Card title="조립 간섭" icon={ShieldCheck} tag={inter ? `${inter.pairs}쌍 검사${inter.pcbParts ? ` · 기판 부품 ${inter.pcbParts}개 포함` : ''}` : '검사 중'}>
           {!inter ? <p className="flex items-center gap-2 text-caption text-muted-foreground"><Loader2 className="w-3.5 h-3.5 animate-spin" />부품끼리 파고드는 곳{motion ? `과 ${motion.label} 동안 좁아지는 틈` : ''}을 찾는 중…</p> : (
             <div className="space-y-2 text-caption">
               {!overlaps.length && !motionIssues.length && <p className="text-success-text">파고드는 부품이 없습니다{motion ? `. ${motion.label} 동안 틈이 ${motion.clearance} mm 이상 남습니다` : ''}.</p>}

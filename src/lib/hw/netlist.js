@@ -237,7 +237,7 @@ export function buildHardware(dev, opts = {}) {
       if (amps > 1.5) notes.push(`${f.name}: LED 전류 ${amps.toFixed(2)} A 가 AL8860 한계(1.5 A)를 넘습니다. 입력 전압을 높여 LED 를 더 직렬로 하거나 드라이버를 바꾸세요.`);
       if (supplyV <= 6) notes.push(`${f.name}: 입력 ${supplyV} V 로는 LED 를 1개만 직렬로 둘 수 있어 전류가 큽니다. 조명 제품은 12 V 어댑터를 권합니다.`);
     } else if (k === 'display') {
-      add(conn(6, `${f.name.slice(0, 16)} 표시 기판`), { 1: '+3V3', 2: `${N}_SDI`, 3: `${N}_CLK`, 4: `${N}_LE`, 5: `${N}_OE`, 6: 'GND' }, { note: '3V3 · SDI · CLK · LE · OE · GND' });
+      add(conn(6, `${f.name.slice(0, 16)} 표시 기판`, false, !!opts.compact), { 1: '+3V3', 2: `${N}_SDI`, 3: `${N}_CLK`, 4: `${N}_LE`, 5: `${N}_OE`, 6: 'GND' }, { note: '3V3 · SDI · CLK · LE · OE · GND' });
       mcuPin(f.pin, `${N}_OE`, `${f.name} 밝기·끄기 (OE)`);
       mcuPin(f.pins?.sdi, `${N}_SDI`, `${f.name} 데이터`);
       mcuPin(f.pins?.clk, `${N}_CLK`, `${f.name} 클럭`);

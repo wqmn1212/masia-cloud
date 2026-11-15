@@ -80,7 +80,7 @@ function probe(A, B, M, o, tol, gapLimit) {
 
 /**
  * @param {Array<{id,name,group,V,F}>} parts 부품 메시 (V: 정점, F: 삼각형)
- * @param {{ motion?: {group, origin, axis, min, max, clearance}, tol?: number, maxEdge?: number, step?: number }} opts
+ * @param {{ skip?: (aId, bId) => boolean, motion?: {group, origin, axis, min, max, clearance}, tol?: number, maxEdge?: number, step?: number }} opts
  */
 export function checkInterference(parts, opts = {}) {
   const t0 = Date.now();
@@ -92,7 +92,7 @@ export function checkInterference(parts, opts = {}) {
   for (let i = 0; i < P.length; i++) {
     for (let j = i + 1; j < P.length; j++) {
       const A = P[i], B = P[j];
-      if (!boxesTouch(A.bbox, B.bbox, tol)) continue;
+      if (opts.skip?.(A.id, B.id) || !boxesTouch(A.bbox, B.bbox, tol)) continue;
       pairs++;
       const ab = probe(A, B, null, null, tol, 0), ba = probe(B, A, null, null, tol, 0);
       const best = ab.depth >= ba.depth ? ab : ba;
@@ -119,7 +119,7 @@ export function checkInterference(parts, opts = {}) {
       for (const A of moving) {
         const box = movedBox(A.bbox, M, mo.origin);
         for (const B of fixed) {
-          if (!boxesTouch(box, B.bbox, clearance + 0.5)) continue;
+          if (opts.skip?.(A.id, B.id) || !boxesTouch(box, B.bbox, clearance + 0.5)) continue;
           const ab = probe(A, B, M, mo.origin, tol, clearance + 0.5);
           const ba = probe(B, A, Mi, mo.origin, tol, clearance + 0.5);
           const depth = Math.max(ab.depth, ba.depth);

@@ -96,5 +96,28 @@ check('컨셉이 없으면 사각 하우징으로 시작', guessFromConcept(null
 const narrow = build('round_lamp', { bezel: 7 });
 check('테두리가 좁아 보스가 발광창에 걸리면 보스를 빼고 필요한 폭을 알려 준다', narrow.notes.some((n) => /보스를 뺐습니다/.test(n) && /mm 이상/.test(n)));
 
+// 기판 부품(높이 상자)을 넣은 간섭: 무니스 견본 회로의 자동 배치 결과를 원형 조명 외장에 넣는다
+{
+  const lib = await import('../src/lib/hw/kicadLib.data.js');
+  const { buildHwPackage } = await import('../src/lib/hw/exportHw.js');
+  const { pcbPartBoxes, skipPcbPair, partHeight } = await import('../src/lib/cad/pcbParts.js');
+  const { dev, title } = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'pcb-sample.json'), 'utf8'));
+  const pkg = buildHwPackage(dev, lib, { title, seed: 'p1' });
+  const boxes = pcbPartBoxes(pkg.boards[0]);
+  const asm = build('round_lamp', dev.mold_design?.params || {});
+  const view = asm.parts.map((p) => ({ id: p.id, name: p.name, group: p.group, ...viewMesh(p.shape) }));
+  const pcbGroup = view.find((v) => v.id === 'pcb')?.group;
+  const r = checkInterference([...view, ...boxes.map((b) => ({ id: b.id, name: b.name, group: pcbGroup, V: b.mesh.V, F: b.mesh.F }))], { motion: asm.motion, skip: skipPcbPair });
+  const hits = r.overlaps.filter((o) => o.a.startsWith('pcbc_') || o.b.startsWith('pcbc_'));
+  check(`기판 부품 ${boxes.length}개(높이 ${Math.max(...boxes.map((b) => b.h))} mm 까지)를 넣어도 외장과 파고들지 않는다`, boxes.length > 20 && hits.length === 0, hits.map((o) => `${o.aName}↔${o.bName} ${o.depth.toFixed(2)}`).join(' | '));
+  check('뒷면 부품은 기판 아래 빈 높이보다 낮다', pkg.boards[0].pcb.place.list.filter((o) => o.side === 'B').every((o) => partHeight(o.c.part.fp) <= pkg.boards[0].layout.backClear));
+  // 일부러 키 큰 부품을 뒷면에 넣으면 잡아낸다
+  const tall = boxes.find((b) => b.side === 'F');
+  const { boxMesh } = await import('../src/lib/cad/pcbParts.js');
+  const bad = boxMesh(tall.rect, pkg.boards[0].layout.z - 6, pkg.boards[0].layout.z);
+  const r2 = checkInterference([...view, { id: 'pcbc_TEST', name: '시험 부품', group: pcbGroup, V: bad.V, F: bad.F }], { skip: skipPcbPair });
+  check('기판 아래로 6 mm 내려간 부품은 간섭으로 잡힌다', r2.overlaps.some((o) => o.a === 'pcbc_TEST' || o.b === 'pcbc_TEST'));
+}
+
 console.log(`\n${pass}개 검산 통과${fails.length ? `, ${fails.length}개 실패` : ''}`);
 if (fails.length) process.exit(1);
