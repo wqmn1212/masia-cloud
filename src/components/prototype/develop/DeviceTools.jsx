@@ -140,12 +140,16 @@ export default function DeviceTools({ gatt, api, calibration = {}, onRecord }) {
           <div className="rounded-lg bg-secondary px-3 py-2 space-y-1">
             <p className="flex items-center gap-1.5 text-caption font-semibold"><Moon className="w-4 h-4 text-primary" />수면 일정 (장치)</p>
             {!sched ? <Button size="sm" variant="outline" className="h-7" onClick={readSched} disabled={!!busy}>장치에서 읽기</Button> : (
-              <div className="space-y-1 text-micro">
+              <div className="space-y-1.5 text-micro">
                 <label className="flex items-center gap-1.5"><input type="checkbox" checked={!!sched[0]} onChange={(e) => setS(0, e.target.checked ? 1 : 0)} />일정 켜기</label>
-                <div className="flex items-center gap-1">취침 <Input aria-label="취침 시각" type="time" value={hm(sched[1], sched[2])} onChange={(e) => setHm(1, e.target.value)} className="h-7 w-24" /> 감광 <Input aria-label="감광 분" value={sched[3]} onChange={(e) => setS(3, e.target.value)} className="h-7 w-12" />분</div>
-                <div className="flex items-center gap-1">기상 <Input aria-label="기상 시각" type="time" value={hm(sched[4], sched[5])} onChange={(e) => setHm(4, e.target.value)} className="h-7 w-24" /> 증광 <Input aria-label="증광 분" value={sched[6]} onChange={(e) => setS(6, e.target.value)} className="h-7 w-12" />분</div>
-                <div className="flex items-center gap-1">기상 밝기 <Input aria-label="기상 밝기" value={sched[7]} onChange={(e) => setS(7, e.target.value)} className="h-7 w-12" />%
-                  <Button size="sm" className="ml-auto h-7" onClick={writeSched} disabled={!!busy}>저장</Button></div>
+                <div className="grid grid-cols-[3.5rem_1fr] items-center gap-x-2 gap-y-1">
+                  <span>취침</span><Input aria-label="취침 시각" type="time" value={hm(sched[1], sched[2])} onChange={(e) => setHm(1, e.target.value)} className="h-7" />
+                  <span>감광 (분)</span><Input aria-label="감광 분" value={sched[3]} onChange={(e) => setS(3, e.target.value)} className="h-7" inputMode="numeric" />
+                  <span>기상</span><Input aria-label="기상 시각" type="time" value={hm(sched[4], sched[5])} onChange={(e) => setHm(4, e.target.value)} className="h-7" />
+                  <span>증광 (분)</span><Input aria-label="증광 분" value={sched[6]} onChange={(e) => setS(6, e.target.value)} className="h-7" inputMode="numeric" />
+                  <span>밝기 (%)</span><Input aria-label="기상 밝기" value={sched[7]} onChange={(e) => setS(7, e.target.value)} className="h-7" inputMode="numeric" />
+                </div>
+                <Button size="sm" className="h-7 w-full" onClick={writeSched} disabled={!!busy}>장치에 저장</Button>
               </div>
             )}
           </div>
