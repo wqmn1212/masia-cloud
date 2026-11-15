@@ -36,6 +36,8 @@ function virtualDevice(gatt, onNotify, onSys) {
     });
   }, 700);
   const reply = (key, bytes, ms) => setTimeout(() => onSys(key, bytes), ms);
+  const ota = { size: 0, got: 0, on: false };
+  const ota5 = (code, v) => { const r = new Uint8Array(5); r[0] = code; new DataView(r.buffer).setUint32(1, v >>> 0, true); return r; };
   return {
     read: async (c) => vals.get(c.uuid) || new Uint8Array(0),
     write: async (c, b) => { vals.set(c.uuid, b); if (c.type === 'bytes') setTimeout(() => onNotify(c, b), 120); },
@@ -46,6 +48,12 @@ function virtualDevice(gatt, onNotify, onSys) {
     },
     sysWrite: async (key, b) => {
       if (key === 'ping') reply('ping', b.slice(), 25 + Math.random() * 35);
+      if (key === 'ota') { // 가상 장치: 받은 크기만 센다
+        if (b[0] === 0x01) { ota.size = new DataView(b.buffer, b.byteOffset).getUint32(1, true); ota.got = 0; ota.on = true; reply('ota', ota5(0x01, ota.size), 30); }
+        else if (b[0] === 0x02 && ota.on) ota.got += b.length - 1;
+        else if (b[0] === 0x03 && ota.on) { ota.on = false; reply('ota', ota5(ota.got === ota.size ? 0x03 : 0xe3, ota.got), 60); }
+        else if (b[0] === 0x04) { ota.on = false; reply('ota', ota5(0x04, 0), 20); }
+      }
       if (key === 'time') clock = { base: new DataView(b.buffer, b.byteOffset).getUint32(0, true), at: Date.now() };
       if (key === 'schedule') sched = b.slice(0, 8);
       if (key === 'calib') {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Gauge, Timer, Clock, Moon, Loader2, Save, Eraser } from 'lucide-react';
+import { Gauge, Timer, Clock, Moon, Loader2, Save, Eraser, UploadCloud } from 'lucide-react';
+import { appImage, otaSend } from '@/lib/devkit/ota';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
@@ -28,6 +29,20 @@ export default function DeviceTools({ gatt, api, calibration = {}, onRecord }) {
   const [ping, setPing] = useState(null);
   const [sched, setSched] = useState(null);
   const [devTime, setDevTime] = useState(null);
+  const [ota, setOta] = useState(null); // { name, image, from, progress, done, error }
+  const pickOta = async (file) => {
+    if (!file) return;
+    try { const { image, from } = appImage(new Uint8Array(await file.arrayBuffer())); setOta({ name: file.name, image, from }); }
+    catch (e) { setOta(null); toast({ title: e.message, variant: 'destructive' }); }
+  };
+  const runOta = () => run('ota', async () => {
+    setOta((o) => ({ ...o, progress: 0, done: null, error: null }));
+    try {
+      const r = await otaSend(api, ota.image, { onProgress: (p) => setOta((o) => ({ ...o, progress: p })) });
+      setOta((o) => ({ ...o, progress: 1, done: r }));
+      toast({ title: '무선 업데이트를 마쳤습니다', description: `${(r.bytes / 1024).toFixed(0)} KB · ${r.seconds}초 · 장치가 새 펌웨어로 다시 시작합니다` });
+    } catch (e) { setOta((o) => ({ ...o, error: e.message })); throw e; }
+  });
   const S = (c) => state[c.uuid] || { points: [] };
   const patch = (c, p) => setState((s) => ({ ...s, [c.uuid]: { ...S(c), ...p } }));
   const run = async (key, fn) => { setBusy(key); try { await fn(); } catch (e) { toast({ title: e?.message || '장치와 주고받지 못했습니다', variant: 'destructive' }); } setBusy(''); };
@@ -118,6 +133,20 @@ export default function DeviceTools({ gatt, api, calibration = {}, onRecord }) {
             );
           })}
           <Button size="sm" variant="ghost" onClick={clearCal} disabled={!!busy}><Eraser className="w-4 h-4" />장치 보정 모두 지우기</Button>
+        </div>
+      )}
+      {has('ota') && (
+        <div className="rounded-lg bg-secondary px-3 py-2 space-y-1.5">
+          <p className="flex items-center gap-1.5 text-caption font-semibold"><UploadCloud className="w-4 h-4 text-primary" />무선 펌웨어 업데이트</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="inline-flex h-7 cursor-pointer items-center rounded-md border bg-background px-2 text-micro">펌웨어 파일 고르기 (.bin)<input type="file" accept=".bin" className="sr-only" onChange={(e) => { pickOta(e.target.files?.[0]); e.target.value = ''; }} /></label>
+            {ota?.image && <span className="text-micro text-muted-foreground tabular-nums">{ota.name} · 보낼 크기 {(ota.image.length / 1024).toFixed(0)} KB{ota.from === 'merged' ? ' (합친 파일에서 앱 부분만)' : ''}</span>}
+            <Button size="sm" className="ml-auto h-7" onClick={runOta} disabled={!ota?.image || !!busy}>{busy === 'ota' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}장치에 보내기</Button>
+          </div>
+          {ota?.progress != null && <div className="h-1.5 rounded-full bg-background"><div className="h-1.5 rounded-full bg-primary transition-all" style={{ width: `${Math.round(ota.progress * 100)}%` }} /></div>}
+          {ota?.done && <p className="text-micro text-success-text">완료 · {ota.done.seconds}초. 장치가 다시 시작하면 다시 연결해 버전을 확인하세요.</p>}
+          {ota?.error && <p className="text-micro text-destructive">{ota.error}</p>}
+          <p className="text-micro text-muted-foreground">검증이 맞지 않거나 중간에 끊기면 장치는 지금 펌웨어 그대로 남습니다. 보내는 동안 출력은 모두 꺼집니다. 약 1 MB 에 2~4분 걸립니다.</p>
         </div>
       )}
       <div className="grid gap-2 sm:grid-cols-3">

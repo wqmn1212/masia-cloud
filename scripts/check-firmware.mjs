@@ -68,6 +68,24 @@ check('가습기: 온도 센서가 끊기면(INT16_MIN) 히터를 막는다 (fai
   const many = { ...lampDev, features: Array.from({ length: 20 }, (_, i) => ({ id: `x${i}`, kind: 'led', name: `LED ${i}` })), rules: [] };
   check('공용 설정: 기능 20개는 한계를 넘는다고 알려 준다', universalConfig(many).problems.length > 0);
 }
+// 무선 업데이트 (브라우저 쪽)
+{
+  const { espImageSize, appImage, otaSend } = await import('../src/lib/devkit/ota.js');
+  // 가짜 앱 이미지: 머리 24 + 조각 2개(8+100, 8+52) → 192, 체크섬 칸 16 → 208 + 해시 32 = 240
+  const img = new Uint8Array(240); img[0] = 0xe9; img[1] = 2; img[23] = 1;
+  const dv = new DataView(img.buffer); dv.setUint32(24 + 4, 100, true); dv.setUint32(24 + 108 + 4, 52, true);
+  const merged = new Uint8Array(0x10000 + 240 + 4096).fill(0xff); merged[0] = 0xe9; merged.set(img, 0x10000);
+  check('무선 업데이트: 앱 이미지 길이 계산(240), 합친 파일에서는 0x10000 부터 앱만 꺼낸다', espImageSize(img) === 240 && appImage(img).from === 'app' && appImage(merged).from === 'merged' && appImage(merged).image.length === 240);
+  let threw = false; try { appImage(new Uint8Array(100)); } catch { threw = true; }
+  const sent = []; let got = 0, size = 0;
+  const r5 = (c, v) => { const r = new Uint8Array(5); r[0] = c; new DataView(r.buffer).setUint32(1, v, true); return r; };
+  const api = { write: async (_k, b) => { sent.push(b[0]); if (b[0] === 2) got += b.length - 1; }, request: async (_k, b) => { sent.push(b[0]); if (b[0] === 1) { size = new DataView(b.buffer).getUint32(1, true); return r5(1, size); } return r5(got === size ? 3 : 0xe3, got); } };
+  const prog = [];
+  const res = await otaSend(api, img, { chunk: 50, onProgress: (p) => prog.push(p) });
+  check('무선 업데이트: 시작 → 조각 5개(50바이트씩) → 끝, 진행률이 1 까지, 잘못된 파일은 거절', threw && sent.join('') === '1222223' && got === 240 && res.bytes === 240 && prog.at(-1) === 1);
+  let failed = ''; try { await otaSend({ write: async () => {}, request: async (_k, b) => r5(b[0] === 1 ? 1 : 0xe3, 0) }, img); } catch (e) { failed = e.message; }
+  check('무선 업데이트: 장치가 검증 실패(E3)를 알리면 오류로 알려 준다', /검증값이 맞지 않습니다/.test(failed));
+}
 if (!gpp) console.log('  (g++ 가 없어 C++ 문법 검사는 건너뜀)');
 console.log(`\n${pass}개 검산 통과${fails.length ? `, ${fails.length}개 실패` : ''}`);
 if (fails.length) process.exit(1);
