@@ -3,7 +3,7 @@
 #   python3 scripts/pcb_route.py board.kicad_pcb [freerouting.jar]
 # 1) Specctra DSN 으로 내보내 Freerouting 으로 배선 → SES 를 읽어 트랙·비아를 넣는다 (KiCad 7 은 단독 실행에서 SES 가져오기를 못 해서 직접 읽는다)
 # 2) 양면 GND 동박(존)을 깔고 채운다  3) DRC 보고서와 요약(summary.json)을 쓴다
-import json, os, re, subprocess, sys
+import json, os, re, shutil, subprocess, sys
 import pcbnew
 
 MM = pcbnew.FromMM
@@ -113,7 +113,11 @@ def main():
     if jar and not outside:
         dsn, ses = base + '.dsn', base + '.ses'
         pcbnew.ExportSpecctraDSN(board, dsn)
-        r = subprocess.run(['java', '-Djava.awt.headless=true', '-jar', jar, '-de', dsn, '-do', ses, '-mp', '40', '-mt', '1'], capture_output=True, text=True, timeout=1500)
+        # Freerouting 1.9 는 일괄 실행에도 화면 크기를 묻는다 → 가상 화면(xvfb)에서 돌린다
+        cmd = ['java', '-jar', jar, '-de', dsn, '-do', ses, '-mp', '40', '-mt', '1']
+        if shutil.which('xvfb-run'):
+            cmd = ['xvfb-run', '-a'] + cmd
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=1500)
         summary['router_log'] = (r.stdout + r.stderr)[-3000:]
         if os.path.exists(ses):
             summary['tracks'], summary['vias'] = import_ses(board, ses)

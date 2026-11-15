@@ -47,7 +47,7 @@ jobs:
       - name: Install KiCad 7
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends kicad > /dev/null
+          sudo apt-get install -y -qq --no-install-recommends kicad xvfb > /dev/null
           kicad-cli version
           python3 -c "import pcbnew; print(pcbnew.Version())"
       - name: Download Freerouting
@@ -64,7 +64,24 @@ jobs:
         run: node scripts/pcb-package.mjs build/req.json build/out "$PWD/freerouting.jar"
       - name: Summary
         if: always()
-        run: cat build/out/*/*-summary.json 2>/dev/null | head -c 20000 || true
+        run: |
+          for f in build/out/*/*-summary.json; do python3 -c "import json,sys; d=json.load(open(sys.argv[1])); d.pop('router_log',None); print(json.dumps(d,ensure_ascii=False))" "$f"; done
+          python3 - <<'PY'
+          import glob, json
+          for f in glob.glob('build/out/*/*-summary.json'):
+              d = json.load(open(f))
+              if not d.get('routed'):
+                  print((d.get('router_log') or '')[-2500:])
+          PY
+      - name: Check routing (push only)
+        if: github.event_name == 'push'
+        run: |
+          python3 - <<'PY'
+          import glob, json, sys
+          bad = [json.load(open(f)) for f in glob.glob('build/out/*/*-summary.json')]
+          bad = [d['board'] for d in bad if not d.get('routed')]
+          if bad: sys.exit('자동 배선 실패: ' + ', '.join(bad))
+          PY
       - name: Upload package
         if: always()
         uses: actions/upload-artifact@v4

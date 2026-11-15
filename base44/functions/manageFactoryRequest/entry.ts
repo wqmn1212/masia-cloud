@@ -29,7 +29,7 @@ export default async function (req: Request) {
     if (body.action === 'create') {
       const card = typeof body.card_id === 'string' ? await svc.entities.TaskCard.get(body.card_id).catch(() => null) : null;
       if (!staffCan(card)) return Response.json({ error: '카드에 접근할 수 없습니다' }, { status: 403 });
-      const out = await createFactoryRequest(svc, { card, items: body.items, days: body.days, message_cn: body.message_cn, factory_name: body.factory_name, by, actorId: user.id });
+      const out = await createFactoryRequest(svc, { card, items: body.items, days: body.days, message_cn: body.message_cn, factory_name: body.factory_name, by, actorId: user.id, ref_files: body.ref_files });
       if (out.error) return Response.json({ error: out.error }, { status: 400 });
       return Response.json({ ok: true, request_id: out.request.id, token: out.token, pin: out.pin, expires_at: out.request.expires_at, items: out.items });
     }

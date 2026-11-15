@@ -38,6 +38,19 @@
       ],
       "default": "OPEN"
     },
+    "ref_files": {
+      "type": "array",
+      "description": "공장에 보내는 참고 파일 (금형 견적 묶음 STEP·도면 등). 공장 링크에서 PIN 확인 뒤 내려받는다",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "uri": { "type": "string" },
+          "size": { "type": "number" },
+          "note_cn": { "type": "string" }
+        }
+      }
+    },
     "message_cn": {
       "type": "string",
       "description": "\uacf5\uc7a5\uc5d0 \ubcf4\uc77c \uc548\ub0b4 (\uc911\uad6d\uc5b4)"

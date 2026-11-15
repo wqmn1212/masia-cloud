@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, FileUp, Loader2, CheckCircle2, AlertTriangle, Send, Lock } from 'lucide-react';
+import { Camera, FileUp, Loader2, CheckCircle2, AlertTriangle, Send, Lock, Download } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -100,8 +100,20 @@ export default function FactoryUpload() {
               {view.expires_at && <p className="text-caption text-muted-foreground">{t.due} {cnDate(view.expires_at)}</p>}
               {view.message_cn && <p className="whitespace-pre-line rounded-md bg-primary/5 p-2 text-label">{view.message_cn}</p>}
             </div>
+            {view.ref_files?.length > 0 && (
+              <div className="space-y-1.5 rounded-xl border bg-background p-4">
+                <p className="text-label font-semibold">参考文件 · 참고 파일</p>
+                {view.ref_files.map((f) => (
+                  <a key={f.url} href={f.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-label text-primary">
+                    <Download className="h-4 w-4 shrink-0" /><span className="truncate">{f.name}</span>
+                    {f.size > 0 && <span className="ml-auto shrink-0 text-caption text-muted-foreground">{(f.size / 1024 / 1024).toFixed(1)} MB</span>}
+                  </a>
+                ))}
+                {view.ref_files.some((f) => f.note_cn) && <p className="text-caption text-muted-foreground">{view.ref_files.map((f) => f.note_cn).filter(Boolean).join(' · ')}</p>}
+              </div>
+            )}
             {allDone && <div className="flex items-center gap-2 rounded-xl bg-primary/10 p-3 text-label text-primary"><CheckCircle2 className="h-5 w-5" />{t.allDone}</div>}
-            {view.items.map((item) => <ItemCard key={item.key} item={item} t={t} lang={lang} token={token} pin={pinValue} onView={setView} />)}
+            {view.items.map((item) => <ItemCard key={item.key} item={item} t={t} lang={lang} token={token} pin={pinValue} onView={(v) => setView((old) => ({ ...v, ref_files: v.ref_files || old?.ref_files }))} />)}
             <p className="px-1 text-caption text-muted-foreground">{t.retry}</p>
           </>
         )}

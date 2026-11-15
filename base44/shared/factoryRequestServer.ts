@@ -9,7 +9,7 @@ const clampDays = (v: unknown) => Math.min(MAX_DAYS, Math.max(1, Math.round(Numb
  * card: 링크를 만들 카드 · items: [{ kind, label_ko, label_cn, ... }] · factory_name: 링크마다 정하는 공장 이름 (비우면 카드의 공장)
  * 돌려줌: { error } 또는 { request, token, pin, items }
  */
-export async function createFactoryRequest(svc: any, { card, items: rawItems, days, message_cn, factory_name, by, actorId = '' }: any) {
+export async function createFactoryRequest(svc: any, { card, items: rawItems, days, message_cn, factory_name, by, actorId = '', ref_files = [] }: any) {
   const db = svc.entities;
   const milestones = (await db.CardMilestone.filter({ card_id: card.id }, 'seq', 100)).filter((m: any) => m.card_id === card.id);
   const [precheck] = await db.QCPrecheck.filter({ card_id: card.id }, '-version', 1);
@@ -25,9 +25,17 @@ export async function createFactoryRequest(svc: any, { card, items: rawItems, da
     expires_at: new Date(Date.now() + clampDays(days) * DAY).toISOString(), status: 'OPEN',
     message_cn: typeof message_cn === 'string' ? message_cn.trim().slice(0, 1000) : '',
     items, submissions: [], failed_pin_count: 0, created_by_name: by || '',
+    ref_files: cleanRefFiles(ref_files),
   });
   try { await db.ProjectAuditLog.create({ tenant_id: card.tenant_id, card_id: card.id, event_type: 'FACTORY_REQUEST_CREATED', actor_id: actorId, actor_name: by || '', details: `공장 업로드 링크 생성 · ${items.length}개 항목` }); } catch (_e) { /* 기록 실패가 요청을 막지 않는다 */ }
   return { request, token, pin, items };
+}
+
+// 참고 파일: 비공개 저장소 uri 만 받는다 (최대 10개)
+export function cleanRefFiles(list: unknown) {
+  return (Array.isArray(list) ? list : []).slice(0, 10)
+    .filter((f: any) => f && typeof f.uri === 'string' && f.uri && typeof f.name === 'string')
+    .map((f: any) => ({ name: f.name.slice(0, 200), uri: f.uri.slice(0, 1000), size: Number(f.size) || 0, note_cn: typeof f.note_cn === 'string' ? f.note_cn.slice(0, 300) : '' }));
 }
 
 export const factoryLinkUrl = (token: string) => `${(Deno.env.get('APP_BASE_URL') || 'https://aegistrade.biz').replace(/\/$/, '')}/f/${token}`;
