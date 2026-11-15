@@ -100,6 +100,34 @@ def add_gnd_pours(board):
     return n
 
 
+def add_edge_keepout(board, margin=0.6):
+    """기판 테두리 안쪽 margin mm 띠에 배선·비아 금지 구역을 둔다 (자동 배선이 테두리에 붙지 않게).
+    구역은 기판 파일에 남겨 둔다 (KiCad 에서 손으로 고칠 때도 같은 규칙이 걸린다. 동박 면은 막지 않는다)."""
+    outline = pcbnew.SHAPE_POLY_SET()
+    if not board.GetBoardPolygonOutlines(outline):
+        return None
+    inner = pcbnew.SHAPE_POLY_SET(outline)
+    inner.Inflate(MM(-margin), 16)
+    bb = board.GetBoardEdgesBoundingBox()
+    bb.Inflate(MM(2))
+    z = pcbnew.ZONE(board)
+    # 외곽선은 구역이 직접 가진 것(Outline())에 그린다. 새 SHAPE_POLY_SET 을 넘기면 파이썬이 먼저 지워 프로그램이 죽는다.
+    ring = z.Outline()
+    ring.NewOutline()
+    for x, y in ((bb.GetLeft(), bb.GetTop()), (bb.GetRight(), bb.GetTop()), (bb.GetRight(), bb.GetBottom()), (bb.GetLeft(), bb.GetBottom())):
+        ring.Append(x, y)
+    ring.BooleanSubtract(inner, pcbnew.SHAPE_POLY_SET.PM_FAST)
+    z.SetIsRuleArea(True)
+    z.SetDoNotAllowTracks(True)
+    z.SetDoNotAllowVias(True)
+    z.SetDoNotAllowCopperPour(False)
+    z.SetDoNotAllowPads(False)
+    z.SetDoNotAllowFootprints(False)
+    z.SetLayerSet(pcbnew.LSET.AllCuMask())
+    board.Add(z)
+    return z
+
+
 def main():
     path = sys.argv[1]
     jar = sys.argv[2] if len(sys.argv) > 2 else ''
@@ -112,6 +140,7 @@ def main():
     summary['outside'] = outside
     if jar and not outside:
         dsn, ses = base + '.dsn', base + '.ses'
+        add_edge_keepout(board)
         pcbnew.ExportSpecctraDSN(board, dsn)
         # Freerouting 1.9 는 일괄 실행에도 화면 크기를 묻는다 → 가상 화면(xvfb)에서 돌린다
         cmd = ['java', '-jar', jar, '-de', dsn, '-do', ses, '-mp', '40', '-mt', '1']
