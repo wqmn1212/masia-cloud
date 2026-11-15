@@ -210,7 +210,13 @@ export default function HardwareCard({ project, dev, user, onSaved, change }) {
             {fab.state === 'failed' && fab.error}
             {fab.state === 'done' && 'zip 을 받았고 시제품 파일에 저장했습니다.'}
             {fab.run_url && <a href={fab.run_url} target="_blank" rel="noreferrer" className="ml-1 inline-flex items-center gap-0.5 text-primary">기록<ExternalLink className="w-3 h-3" /></a>}
-            {(fab.summaries || []).map((x) => <p key={x.board} className="text-foreground">{x.board}: {x.routed ? `선 ${x.tracks}개 · 비아 ${x.vias}개 · 남은 미연결 ${x.unconnected}개` : '배선 안 함'} · DRC {Object.entries(x.drc || {}).filter(([k]) => !/silk|lib_footprint|unconnected/.test(k)).map(([k, v]) => `${k} ${v}`).join(', ') || '오류 없음'}</p>)}
+            {(fab.summaries || []).map((x) => (
+              <div key={x.board} className="text-foreground">
+                <p>{x.name || x.board}: {x.routed ? `선 ${x.tracks}개 · 비아 ${x.vias}개 · 남은 미연결 ${x.unconnected}개${x.passes === 2 ? ' (2차 배선 반영)' : ''}` : '배선 안 함'} · 고칠 DRC 오류 {Object.entries(x.blocking || {}).map(([k, v]) => `${k} ${v}`).join(', ') || '없음'}</p>
+                {(x.open || []).length > 0 && <ul className="ml-3 list-disc text-muted-foreground">{x.open.slice(0, 8).map((o, i) => <li key={i}>손으로 이을 곳: {o.net} — {o.a.replace(/\[[^\]]*\] /, '')} ↔ {o.b.replace(/\[[^\]]*\] /, '')}</li>)}</ul>}
+                {(x.known || []).filter((k) => /courtyards|hole_clearance|starved/.test(k.kind)).map((k) => <p key={k.kind} className="ml-3 text-muted-foreground">확인만: {k.why} {k.count}건</p>)}
+              </div>
+            ))}
           </div>
         )}
       </div>

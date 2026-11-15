@@ -61,7 +61,7 @@ export function FreezeCard({ dev, change, user }) {
     change((d) => ({
       // 화면에 보이는 설계(자동 배정 핀까지 채운 dev)를 확정한다. 원본 d 로 찍으면 자동 핀이 '바뀐 점'으로 잡힌다.
       freeze: { version, at: new Date().toISOString(), by, snapshot: snapshotOf({ ...d, features: dev.features }), eco_no: eco?.no || null },
-      history: [...(d.history || []), ...(fz ? [{ ...fz, snapshot: fz.snapshot }] : [])].slice(-20), // 예전 확정본도 남긴다 (지우지 않음)
+      history: [...(d.history || []), ...(fz ? [{ ...fz }] : [])], // 예전 확정본은 모두 남긴다 (지우지 않음, 개수 제한 없음)
       ecos: eco ? (d.ecos || []).map((e) => (e.no === eco.no ? { ...e, status: 'APPROVED', decided_by: by, decided_at: new Date().toISOString(), to_version: version } : e)) : d.ecos,
     }));
     toast({ title: `설계 확정본 v${version} 을 만들었습니다`, description: '잠시 뒤 자동 저장됩니다' });

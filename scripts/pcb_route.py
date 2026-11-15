@@ -156,6 +156,54 @@ def add_edge_keepout(board, margin=0.6):
     return n
 
 
+def run_router(jar, dsn, ses, passes):
+    if os.path.exists(ses):
+        os.remove(ses)
+    # Freerouting 1.9 는 일괄 실행에도 화면 크기를 묻는다 → 가상 화면(xvfb)에서 돌린다
+    cmd = ['java', '-jar', jar, '-de', dsn, '-do', ses, '-mp', str(passes), '-mt', '1']
+    if shutil.which('xvfb-run'):
+        cmd = ['xvfb-run', '-a'] + cmd
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=1500)
+    return (r.stdout + r.stderr)[-3000:]
+
+
+# 주문 전에 사람이 보면 되는 알려진 항목 (배선·제조를 막지 않는다)
+KNOWN = {
+    'silk_overlap': '실크 글자 겹침', 'silk_over_copper': '실크가 패드 위', 'lib_footprint_issues': '라이브러리 원본과 다름(부품 자리 내장)',
+    'starved_thermal': '방열 연결 살 부족', 'item_on_disabled_layer': '안 쓰는 층의 표시', 'hole_clearance': '부품 자체 구멍 간격(옆면 스위치 고정 핀)',
+    'courtyards_overlap': '안테나 권장 금지 구역 안의 부품(작은 기판이라 줄여 잡음)',
+}
+
+
+def finish(board_path, base):
+    """GND 면을 깔고 DRC 를 돌려 { unconnected, open, drc } 를 돌려준다. board_path 를 덮어쓴다."""
+    board = pcbnew.LoadBoard(board_path)
+    zones = add_gnd_pours(board)
+    board.Save(board_path)
+    board = pcbnew.LoadBoard(board_path)
+    rpt = base + '-drc.txt'
+    pcbnew.WriteDRCReport(board, rpt, pcbnew.EDA_UNITS_MILLIMETRES, False)
+    text = open(rpt, encoding='utf-8', errors='replace').read()
+    kinds = {}
+    for m in re.finditer(r'^\[(\w+)\]', text, re.M):
+        kinds[m.group(1)] = kinds.get(m.group(1), 0) + 1
+    # 남은 미연결: 어느 넷의 어느 부품 핀 사이인지 (화면에 "손으로 이을 곳" 으로 보여 준다)
+    opened = []
+    for m in re.finditer(r'^\[unconnected_items\][^\n]*\n[^\n]*\n\s*@\(([-\d.]+) mm, ([-\d.]+) mm\): ([^\n]*)\n\s*@\(([-\d.]+) mm, ([-\d.]+) mm\): ([^\n]*)', text, re.M):
+        net = re.search(r'\[([^\]]+)\]', m.group(3) + ' ' + m.group(6))
+        if m.group(3) == m.group(6) or any(o['a'] == m.group(3).strip()[:80] and o['b'] == m.group(6).strip()[:80] for o in opened):
+            continue
+        opened.append({'net': net.group(1) if net else '', 'a': m.group(3).strip()[:80], 'b': m.group(6).strip()[:80], 'at': [float(m.group(1)), float(m.group(2))], 'to': [float(m.group(4)), float(m.group(5))]})
+    m = re.search(r'Found (\d+) unconnected pads', text)
+    un = int(m.group(1)) if m else len(opened)
+    track_mm = round(sum(pcbnew.ToMM(t.GetLength()) for t in board.GetTracks() if t.GetClass() == 'PCB_TRACK'), 1)
+    n_tracks = sum(1 for t in board.GetTracks() if t.GetClass() == 'PCB_TRACK')
+    n_vias = sum(1 for t in board.GetTracks() if t.GetClass() == 'PCB_VIA')
+    blocking = {k: v for k, v in kinds.items() if k not in KNOWN and k != 'unconnected_items'}
+    known = [{'kind': k, 'count': v, 'why': KNOWN[k]} for k, v in kinds.items() if k in KNOWN]
+    return {'zones': zones, 'unconnected': un, 'open': opened[:30], 'drc': kinds, 'blocking': blocking, 'known': known, 'track_mm': track_mm, 'tracks': n_tracks, 'vias': n_vias}
+
+
 def main():
     path = sys.argv[1]
     jar = sys.argv[2] if len(sys.argv) > 2 else ''
@@ -166,34 +214,50 @@ def main():
     edge = board.GetBoardEdgesBoundingBox()
     outside = [f.GetReference() for f in board.GetFootprints() if not edge.Contains(f.GetPosition())]
     summary['outside'] = outside
+    dsn, ses = base + '.dsn', base + '.ses'
+    raw1 = base + '.pass1.kicad_pcb'  # 배선만 넣은 기판 (GND 면 전)
     if jar and not outside:
-        dsn, ses = base + '.dsn', base + '.ses'
         add_edge_keepout(board)
         pcbnew.ExportSpecctraDSN(board, dsn)
-        # Freerouting 1.9 는 일괄 실행에도 화면 크기를 묻는다 → 가상 화면(xvfb)에서 돌린다
-        cmd = ['java', '-jar', jar, '-de', dsn, '-do', ses, '-mp', '40', '-mt', '1']
-        if shutil.which('xvfb-run'):
-            cmd = ['xvfb-run', '-a'] + cmd
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=1500)
-        summary['router_log'] = (r.stdout + r.stderr)[-3000:]
+        summary['router_log'] = run_router(jar, dsn, ses, 40)
         if os.path.exists(ses):
-            summary['tracks'], summary['vias'] = import_ses(board, ses)
+            import_ses(board, ses)
             summary['routed'] = True
-    summary['zones'] = add_gnd_pours(board)
-    board.Save(path)
-    board = pcbnew.LoadBoard(path)
-    rpt = base + '-drc.txt'
-    pcbnew.WriteDRCReport(board, rpt, pcbnew.EDA_UNITS_MILLIMETRES, False)
-    text = open(rpt, encoding='utf-8', errors='replace').read()
-    kinds = {}
-    for m in re.finditer(r'^\[(\w+)\]', text, re.M):
-        kinds[m.group(1)] = kinds.get(m.group(1), 0) + 1
-    m = re.search(r'Found (\d+) unconnected pads', text)
-    summary['unconnected'] = int(m.group(1)) if m else None
-    summary['drc'] = kinds
-    summary['track_mm'] = round(sum(pcbnew.ToMM(t.GetLength()) for t in board.GetTracks() if t.GetClass() == 'PCB_TRACK'), 1)
+    board.Save(raw1)
+    shutil.copyfile(raw1, path)
+    res = finish(path, base)
+    summary['passes'] = 1
+    # 미연결이 남으면 지금 배선을 그대로 두고 남은 넷만 한 번 더 배선해 본다. 더 나아졌을 때만 바꾼다.
+    if summary['routed'] and res['unconnected']:
+        try:
+            b2 = pcbnew.LoadBoard(raw1)
+            pcbnew.ExportSpecctraDSN(b2, dsn)
+            log2 = run_router(jar, dsn, ses, 100)
+            if os.path.exists(ses):
+                for t in list(b2.GetTracks()):
+                    b2.Remove(t)
+                import_ses(b2, ses)
+                raw2, out2 = base + '.pass2.kicad_pcb', base + '.pass2out.kicad_pcb'
+                b2.Save(raw2)
+                shutil.copyfile(raw2, out2)
+                res2 = finish(out2, base + '.pass2')
+                summary['pass2'] = {'unconnected': res2['unconnected'], 'blocking': res2['blocking']}
+                if res2['unconnected'] < res['unconnected'] and sum(res2['blocking'].values()) <= sum(res['blocking'].values()):
+                    shutil.copyfile(out2, path)
+                    shutil.copyfile(base + '.pass2-drc.txt', base + '-drc.txt')
+                    res = res2
+                    summary['passes'] = 2
+                    summary['router_log'] = log2
+        except Exception as e:  # 2차 배선은 덤이다. 실패해도 1차 결과를 쓴다
+            summary['pass2'] = {'error': str(e)[:200]}
+    for f in (raw1, base + '.pass1.kicad_pro', base + '.pass2.kicad_pro', base + '.pass2out.kicad_pro', base + '.pass2.kicad_pcb', base + '.pass2out.kicad_pcb', base + '.pass2-drc.txt', base + '.pass2.kicad_prl', base + '.pass1.kicad_prl', base + '.pass2out.kicad_prl'):
+        if os.path.exists(f):
+            os.remove(f)
+    summary.update(res)
     json.dump(summary, open(base + '-summary.json', 'w'), ensure_ascii=False, indent=1)
-    print(json.dumps({k: v for k, v in summary.items() if k != 'router_log'}, ensure_ascii=False))
+    print(json.dumps({k: v for k, v in summary.items() if k not in ('router_log', 'open')}, ensure_ascii=False))
+    for o in res['open']:
+        print('  미연결', o['net'], '|', o['a'], '↔', o['b'])
 
 
 if __name__ == '__main__':

@@ -181,6 +181,13 @@ const HOLE_FP = (d) => (d <= 2.3 ? 'MountingHole:MountingHole_2.2mm_M2' : d <= 2
 
 /** 부품 자리 정하기: 고정 자리(앵커) 먼저, 나머지는 외곽 안에 위에서부터 채운다 (0.5 mm 격자, 앞면 → 작은 SMD 는 뒷면) */
 export function placeParts(hw, lib, layout) {
+  // 먼저 안테나 금지 구역을 KiCad 권장 크기 전체로 비워 놓고 넣어 본다. 부품이 다 안 들어가면 줄인 띠(모듈 폭 + 3 mm)로 다시 놓는다.
+  const full = placeOnce(hw, lib, layout, true);
+  if (!full.outside.length && !full.clash.length) return { ...full, rfKeepout: 'full' };
+  return { ...placeOnce(hw, lib, layout, false), rfKeepout: 'reduced' };
+}
+
+function placeOnce(hw, lib, layout, rfFull) {
   const out = [];
   const pts = layout.outline;
   const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
@@ -284,7 +291,7 @@ export function placeParts(hw, lib, layout) {
           // 안테나 띠: 모듈 위쪽 8 mm 와 그 양옆 (KiCad 부품 자리 폭까지), 위로는 기판 밖까지
           const rc = isRf ? rectOf(c.part.fp, px, py, rot, 'court') : null;
           // (KiCad 부품 자리는 Espressif 권장 금지 구역 전체라 작은 기판에는 안 들어간다 → 모듈 폭 + 양옆 3 mm, 위로 5 mm 로 줄여 잡고 메모로 알린다)
-          const band = rc ? [rr[0] - 3, rr[3] - 8, rr[2] + 3, Math.min(rc[3], rr[3] + 5)] : null;
+          const band = rc ? (rfFull ? [Math.min(rc[0], rr[0] - 3), rr[3] - 8, Math.max(rc[2], rr[2] + 3), rc[3]] : [rr[0] - 3, rr[3] - 8, rr[2] + 3, Math.min(rc[3], rr[3] + 5)]) : null;
           if (band && rects.some((o) => !(band[2] < o[0] || band[0] > o[2] || band[3] < o[1] || band[1] > o[3]))) continue;
           mark(rr, sidesOf(c, side)); rects.push(rr);
           if (band) { mark(band, ['F', 'B']); rects.push(band); }
