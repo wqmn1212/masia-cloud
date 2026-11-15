@@ -88,5 +88,26 @@ check('인증 자료: 무선(모듈)·전자파·전기 안전(어댑터·조명
   check('고객 통지서: 제품·기준 확정본·변경 이유·바뀌는 내용·동의 칸', /설계 변경 통지서 ECO-001/.test(notice) && /설계 확정본 v1/.test(notice) && /4 → 6/.test(notice) && /- \[ \] 위 변경에 동의합니다/.test(notice));
 }
 
+// 7. 출하 검사
+{
+  const { factoryPlan, parseSelftest, judgeAuto, verdictOf, nextSerial, unitRecord } = await import('../src/lib/devkit/factoryTest.js');
+  const plan = factoryPlan(devM);
+  check(`출하 검사 계획: 자동 ${plan.auto.length} · 누르기 ${plan.press.length} · 출력 ${plan.outputs.length} (시계·온도 2개·버튼·다이얼·조명 2개 포함, 글은 한·중)`, plan.auto.some((a) => a.id === 'rtc') && plan.auto.filter((a) => /°C/.test(a.label[0])).length === 2 && plan.press.length === 2 && plan.outputs.filter((o) => o.kind === 'light').length === 2 && [...plan.auto, ...plan.press, ...plan.outputs].every((x) => x.label[0] && /[一-鿿]/.test(x.label[1])));
+  const good = { selftest: 1, name: plan.device_name, fw: '0.2.0', mac: 'aa:bb:cc:dd:ee:ff', chip: 'ESP32-S3', rtc: 1 };
+  plan.auto.forEach((a) => { if (/^in\d+$/.test(a.id)) good[a.id] = /°C/.test(a.label[0]) ? 248 : 0; });
+  const line = JSON.stringify(good);
+  const rows = judgeAuto(plan, parseSelftest(line));
+  check('출하 검사: 정상 기기의 selftest 줄은 자동 항목이 모두 통과, 다른 줄은 무시', rows.every((r) => r.ok) && parseSelftest('AEGIS RENIGHT 0.2.0') === null, rows.filter((r) => !r.ok).map((r) => r.id).join(','));
+  const tempId = plan.auto.find((a) => /°C/.test(a.label[0])).id;
+  const bad = judgeAuto(plan, { ...good, [tempId]: -32768, rtc: 0 });
+  check('출하 검사: 온도 센서가 빠지거나 시계가 응답 없으면 불합격', bad.find((r) => r.id === tempId).ok === false && bad.find((r) => r.id === 'rtc').ok === false);
+  const all = Object.fromEntries([...plan.auto, ...plan.press, ...plan.outputs].map((x) => [x.id, true]));
+  check('출하 검사 판정: 전부 통과 PASS, 하나 불량 FAIL, 덜 하면 INCOMPLETE', verdictOf(plan, all) === 'PASS' && verdictOf(plan, { ...all, [plan.outputs[0].id]: false }) === 'FAIL' && verdictOf(plan, { [plan.auto[0].id]: true }) === 'INCOMPLETE');
+  const d = new Date(2026, 10, 15);
+  check('일련번호: SN-261115-001 → 002, 날이 바뀌면 001 부터', nextSerial('SN', '', d) === 'SN-261115-001' && nextSerial('SN', 'SN-261115-001', d) === 'SN-261115-002' && nextSerial('SN', 'SN-261114-037', d) === 'SN-261115-001');
+  const rec = unitRecord({ project: { tenant_id: 't', card_id: 'c' }, plan, serial: 'SN-261115-001', lot: 'L1', json: good, results: { ...all, [plan.outputs[0].id]: false }, values: {}, inspector: '검사자' });
+  check('출하 검사 기록: 양산 시리얼 형식(카드·일련번호·판정·불합격 항목·MAC)', rec.card_id === 'c' && rec.serial === 'SN-261115-001' && rec.verdict === 'FAIL' && rec.failed_items.length === 1 && rec.checks.mac === 'aa:bb:cc:dd:ee:ff' && /불합격/.test(rec.fail_note));
+}
+
 console.log(`\n${pass}개 검산 통과${fails.length ? `, ${fails.length}개 실패` : ''}`);
 if (fails.length) process.exit(1);

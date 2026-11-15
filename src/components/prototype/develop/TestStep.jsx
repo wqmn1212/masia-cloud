@@ -22,6 +22,7 @@ export default function TestStep({ project, concept, circuits, dev, change, user
     [Eye, '3D 검토', 'STEP 을 돌려 보며 부품 확인·시뮬레이션', `/prototypes/${project.id}?tab=viewer`],
     [FlaskConical, '시험·개선', '시험 기록과 불합격 항목 개선', `/prototypes/${project.id}?tab=tests`],
     [ClipboardCheck, '설계 검토', '요구사항 대비 설계 위험 검토', `/prototypes/${project.id}/review`],
+    [ClipboardCheck, '출하 검사대', '기기마다 굽기·자동 검사·판정·일련번호 기록 (공장용, 중국어)', `/prototypes/${project.id}/factory-test`],
     [Factory, '금형 검토', '사출 외장의 두께·구배·언더컷 점검', '/mold-review'],
   ];
   return (
