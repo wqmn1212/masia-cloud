@@ -274,7 +274,7 @@ export function firmwareSketch(dev, { version = '0.2.0' } = {}) {
     '  BLEDevice::getAdvertising()->stop();', '  if (server && connected) server->disconnect(server->getConnId());', '  delay(200);',
     '  esp_power_level_t lv = dbm >= 9 ? ESP_PWR_LVL_P9 : dbm >= 6 ? ESP_PWR_LVL_P6 : dbm >= 3 ? ESP_PWR_LVL_P3 : dbm >= 0 ? ESP_PWR_LVL_N0 : dbm >= -6 ? ESP_PWR_LVL_N6 : ESP_PWR_LVL_N12;',
     '  esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, lv);', '  if (rfTestOn) esp_ble_dtm_stop();',
-    '  esp_ble_dtm_tx_t p = {};', '  p.tx_channel = (uint8_t)constrain(ch, 0, 39);', '  p.len_of_data = 37;', '  p.pkt_payload = BLE_DTM_PKT_PAYLOAD_PRBS9;',
+    '  esp_ble_dtm_tx_t p = {};', '  p.tx_channel = (uint8_t)constrain(ch, 0, 39);', '  p.len_of_data = 37;', '  p.pkt_payload = BLE_DTM_PKT_PAYLOAD_0x00;  // PRBS9',
     '  esp_err_t e = esp_ble_dtm_tx_start(&p);', '  rfTestOn = e == ESP_OK;', '  Serial.printf("rftest ch %d (%d MHz) %d dBm %s\\n", p.tx_channel, 2402 + 2 * p.tx_channel, dbm, rfTestOn ? "on" : "fail");',
     '#else', '  Serial.println("rftest: 이 칩에서는 지원하지 않습니다 (ESP32-C3·S3 만)");', '#endif', '}', '');
   L.push('class ServerCallbacks : public BLEServerCallbacks {', '  void onConnect(BLEServer*) override { connected = true; }', '  void onDisconnect(BLEServer*) override { connected = false; BLEDevice::startAdvertising(); }', '};', '');
