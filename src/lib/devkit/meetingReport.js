@@ -40,7 +40,7 @@ export function meetingReport(project, dev, { concept, circuits = [], cost = nul
   if (plan.i2c) L.push(`- 시계(RTC) I2C: SDA ${plan.i2c.sda}, SCL ${plan.i2c.scl}`, '');
   if (rules.length) L.push('## 동작 규칙', '', ...rules.map((r) => `- ${describeRule(r, dev.features || [])}`), '');
   if (hw) L.push('## 회로·기판', '', `- 부품 ${hw.hw.comps.length}개 · 넷 ${hw.hw.nets.size}개 · 기판 ${hw.boards.map((b) => `${b.name} ${b.layout.size.join('×')} mm`).join(', ')}`, ...hw.hw.notes.map((n) => `- 확인: ${n}`), '');
-  if (cost && !cost.missing.length) L.push('## 원가 추정 (초기)', '', '| 수량 | 개당 합계 | 총액 |', '|---|---|---|', ...cost.byQty.map((r) => `| ${r.qty.toLocaleString()} | ${won(r.total_per_unit)} | ${won(r.total)} |`), `- 금형비 합 ${won(cost.tooling)} (추정, 공장 견적으로 바꿀 것)`, '');
+  if (cost && !cost.missing.length) L.push('## 원가 추정 (초기)', '', '| 수량 | 개당 합계 | 총액 |', '|---|---|---|', ...cost.byQty.map((r) => `| ${r.qty.toLocaleString()} | ${won(r.total_per_unit)} | ${won(r.total)} |`), `- 금형비 합 ${won(cost.tooling)} (${cost.quote ? `${cost.quote.factory || '공장'} 견적 ${cost.quote.quoted}/${cost.quote.of}개 부품 반영${cost.quote.date ? `, ${cost.quote.date}` : ''}` : '추정, 공장 견적으로 바꿀 것'})`, '');
   if (dev.freeze) {
     const ch = diffDesign(dev.freeze.snapshot, dev);
     L.push('## 설계 확정', '', `- 확정본 v${dev.freeze.version} (${d10(dev.freeze.at)}, ${dev.freeze.by})${ch.length ? ` · 이후 바뀐 점 ${ch.length}건` : ''}`, ...ch.slice(0, 15).map((c) => `  - [${c.area}] ${c.text}`), '');

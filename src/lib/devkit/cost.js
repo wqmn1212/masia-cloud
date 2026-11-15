@@ -24,7 +24,13 @@ export const partPrice = (c) => { const t = `${c.value} ${c.part?.value || ''} $
  * moldSummary: dev.mold_design.summary ({ parts: [{name, material, mold, weight, size, slides, hi}] })
  * hw: buildHwPackage 결과 (hw.comps, boards[].layout.area) — 없으면 기판 비용 빼고
  */
-export function estimateCost({ moldSummary, hwPkg, settings = {} }) {
+/**
+ * quotes (dev.cost_quotes): 공장 견적으로 추정치를 바꾼다.
+ *   { factory, date, currency: 'KRW' | 'CNY' | 'USD', fx (통화 1 단위 = 원), parts: { [부품 이름]: { mold, unit, cavities } } }
+ */
+export function estimateCost({ moldSummary, hwPkg, settings = {}, quotes = null }) {
+  const fx = quotes && quotes.currency && quotes.currency !== 'KRW' ? Number(quotes.fx) || 0 : 1;
+  const qOf = (name) => { const q = quotes?.parts?.[name]; return q && fx > 0 ? q : null; };
   const S = { ...COST_DEFAULTS, ...settings };
   const molded = (moldSummary?.parts || []).filter((p) => p.mold);
   const moldRows = molded.map((p) => {
@@ -37,7 +43,10 @@ export function estimateCost({ moldSummary, hwPkg, settings = {} }) {
     const material = (p.weight / 1000) * resin * (1 + S.scrap);
     const press = (cycle / cav / 3600) * S.machine_krw_per_hour[cls];
     const mold = Math.round((S.mold_base_krw + edge * S.mold_per_mm_krw + (p.slides || 0) * S.slide_krw) * (1 + (cav - 1) * S.cavity_extra) / 10000) * 10000;
-    return { name: p.name, material: p.material, weight: p.weight, cavities: cav, cycle: Math.round(cycle), machine: cls, slides: p.slides || 0, mold, unit: Math.round(material + press) };
+    const est = { mold, unit: Math.round(material + press) };
+    const q = qOf(p.name);
+    const qMold = Number(q?.mold) > 0 ? Math.round(Number(q.mold) * fx) : null, qUnit = Number(q?.unit) > 0 ? Math.round(Number(q.unit) * fx) : null;
+    return { name: p.name, material: p.material, weight: p.weight, cavities: Number(q?.cavities) > 0 ? Number(q.cavities) : cav, cycle: Math.round(cycle), machine: cls, slides: p.slides || 0, mold: qMold ?? est.mold, unit: qUnit ?? est.unit, est, source: { mold: qMold != null ? 'quote' : 'estimate', unit: qUnit != null ? 'quote' : 'estimate' } };
   });
   const boards = (hwPkg?.boards || []).map((b) => {
     const comps = b.hw.comps.filter((c) => c.part.fp && c.part.cat !== 'H');
@@ -51,5 +60,7 @@ export function estimateCost({ moldSummary, hwPkg, settings = {} }) {
   const setup = boards.reduce((n, b) => n + b.setup, 0);
   const unit = moldRows.reduce((n, r) => n + r.unit, 0) + boards.reduce((n, b) => n + b.pcb + b.smt + b.parts, 0) + S.assembly_krw + S.packaging_krw;
   const byQty = S.qtys.map((q) => ({ qty: q, unit, tooling_per_unit: Math.round((tooling + setup) / q), total_per_unit: Math.round(unit + (tooling + setup) / q), total: Math.round(unit * q + tooling + setup) }));
-  return { moldRows, boards, tooling, setup, unit, byQty, settings: S, missing: [...(!molded.length ? ['사출 부품 (3D 도면 → 금형용 설계를 한 번 열어 계산)'] : []), ...(!boards.length ? ['기판 (회로 설계 단계)'] : [])] };
+  const quoted = moldRows.filter((r) => r.source.mold === 'quote').length;
+  const estTooling = moldRows.reduce((n, r) => n + r.est.mold, 0);
+  return { quote: quotes && quoted ? { factory: quotes.factory || '', date: quotes.date || '', quoted, of: moldRows.length, tooling_diff: tooling - estTooling } : null, moldRows, boards, tooling, setup, unit, byQty, settings: S, missing: [...(!molded.length ? ['사출 부품 (3D 도면 → 금형용 설계를 한 번 열어 계산)'] : []), ...(!boards.length ? ['기판 (회로 설계 단계)'] : [])] };
 }

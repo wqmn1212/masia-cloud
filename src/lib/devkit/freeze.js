@@ -58,3 +58,21 @@ export function impactOf(changes) {
   if (areas.has('블루투스')) todo.push('앱 개발팀에 통신 문서 다시 보내기');
   return todo;
 }
+
+/** 변경 요청서를 승인할 수 있는 사람: 대표(마스터)·팀 관리자 계정 */
+export const canApproveEco = (user) => ['master', 'service'].includes(user?.account_tier);
+
+/** 승인 뒤 업무 카드에 만들 할 일 (한국어·중국어) */
+const IMPACT_CN = [[/금형/, '重新模具报价·模具检查（外壳尺寸变更）'], [/회로도/, '重新生成原理图·PCB（Gerber），更新BOM'], [/펌웨어/, '重新编译·烧录固件，功能测试'], [/앱 개발팀/, '重新向App开发团队发送通信文档']];
+export function ecoTasks(eco) {
+  return (eco.impact || []).map((t) => ({
+    title: `[${eco.no}] ${t}`, title_cn: `[${eco.no}] ${(IMPACT_CN.find(([re]) => re.test(t)) || [null, t])[1]}`,
+    description: `변경 이유: ${eco.reason}\n바뀐 점:\n${(eco.changes || []).slice(0, 12).map((c) => `- [${c.area}] ${c.text}`).join('\n')}`,
+  }));
+}
+
+/** 고객에게 보내는 설계 변경 통지서 (마크다운). 시제품 파일로 저장해 기존 "고객 확인 요청"·전자서명으로 보낸다 */
+export function ecoNotice(project, eco) {
+  return [`# 설계 변경 통지서 ${eco.no}`, '', `- 제품: ${project.title}`, `- 작성: ${eco.by} · ${String(eco.at || '').slice(0, 10)}`, `- 기준: 설계 확정본 v${eco.from_version}`, '', '## 변경 이유', '', eco.reason, '', '## 바뀌는 내용', '',
+    ...(eco.changes || []).map((c) => `- [${c.area}] ${c.text}`), '', '## 이 변경으로 다시 하는 일', '', ...((eco.impact || []).map((t) => `- ${t}`)), '', '## 고객 확인', '', '- [ ] 위 변경에 동의합니다.', '', '확인자:            날짜:', ''].join('\n');
+}

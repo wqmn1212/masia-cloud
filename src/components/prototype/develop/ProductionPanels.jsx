@@ -6,13 +6,15 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { Card } from '@/components/prototype/develop/DevBits';
 import { estimateCost } from '@/lib/devkit/cost';
-import { snapshotOf, diffDesign, impactOf } from '@/lib/devkit/freeze';
+import { snapshotOf, diffDesign, impactOf, canApproveEco, ecoTasks, ecoNotice } from '@/lib/devkit/freeze';
+import { base44 } from '@/api/base44Client';
+import { uploadProtoFile, addProtoFiles } from '@/lib/prototypeApi';
 import { actorName } from '@/lib/prototypeApi';
 
 const won = (v) => `${Math.round(v).toLocaleString('ko-KR')}원`;
 
 // 수량별 원가 추정: 금형용 설계 요약(사출 부품) + 회로(기판·부품) → 금형비·개당 원가
-export function CostCard({ project, dev }) {
+export function CostCard({ project, dev, change }) {
   const [hwPkg, setHwPkg] = useState(null);
   const [assembly, setAssembly] = useState(1500);
   useEffect(() => {
@@ -21,7 +23,27 @@ export function CostCard({ project, dev }) {
     Promise.all([import('@/lib/hw/kicadLib.data.js'), import('@/lib/hw/exportHw.js')]).then(([lib, ex]) => { if (alive) setHwPkg(ex.buildHwPackage(dev, lib, { title: project.title, seed: project.id })); }).catch(() => {});
     return () => { alive = false; };
   }, [JSON.stringify([dev.features, dev.mcu, dev.supply_v, dev.mold_design?.template, dev.mold_design?.params, dev.hw])]); // eslint-disable-line react-hooks/exhaustive-deps
-  const est = useMemo(() => estimateCost({ moldSummary: dev.mold_design?.summary, hwPkg, settings: { assembly_krw: assembly } }), [dev.mold_design?.summary, hwPkg, assembly]);
+  const quotes = dev.cost_quotes || null;
+  const est = useMemo(() => estimateCost({ moldSummary: dev.mold_design?.summary, hwPkg, settings: { assembly_krw: assembly }, quotes }), [dev.mold_design?.summary, hwPkg, assembly, quotes]);
+  const [qOpen, setQOpen] = useState(false);
+  const [reading, setReading] = useState(false);
+  const setQ = (patch) => change?.((d) => ({ cost_quotes: { currency: 'CNY', fx: 195, parts: {}, ...(d.cost_quotes || {}), ...patch } }));
+  const setQPart = (name, patch) => change?.((d) => { const q = { currency: 'CNY', fx: 195, parts: {}, ...(d.cost_quotes || {}) }; return { cost_quotes: { ...q, parts: { ...q.parts, [name]: { ...(q.parts?.[name] || {}), ...patch } } } }; });
+  const readFile = async (file) => {
+    if (!file) return;
+    setReading(true);
+    try {
+      const { readMoldQuote } = await import('@/lib/devkit/moldQuote');
+      const r = await readMoldQuote(file, est.moldRows.map((x) => x.name));
+      const parts = { ...(quotes?.parts || {}) };
+      r.rows.filter((x) => x.match).forEach((x) => { parts[x.match] = { mold: x.mold || '', unit: x.unit || '', cavities: x.cavities || '' }; });
+      setQ({ factory: r.factory || quotes?.factory || '', date: r.date || quotes?.date || '', currency: r.currency, parts, notes: r.notes, file_name: file.name });
+      const miss = r.rows.filter((x) => !x.match).map((x) => x.part);
+      toast({ title: `견적서에서 ${r.rows.filter((x) => x.match).length}개 부품을 읽었습니다`, description: miss.length ? `맞는 부품을 못 찾음: ${miss.join(', ')} — 아래 표에 직접 넣으세요` : '값을 확인하고 틀린 곳은 고치세요' });
+      setQOpen(true);
+    } catch (e) { toast({ title: `견적서를 읽지 못했습니다: ${e.message || e}`, variant: 'destructive' }); }
+    setReading(false);
+  };
   return (
     <Card title="수량별 원가 추정" icon={Calculator} tag="초기 감 잡기">
       {est.missing.length > 0 && <p className="text-caption text-warning-text">아직 빠진 것: {est.missing.join(', ')}</p>}
@@ -34,7 +56,7 @@ export function CostCard({ project, dev }) {
       <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1">
           <p className="text-caption font-semibold">사출 부품 (금형비 합 {won(est.tooling)})</p>
-          {est.moldRows.map((r) => <p key={r.name} className="text-micro text-muted-foreground tabular-nums">{r.name} · {r.material} {r.weight} g · {r.cavities}캐비티 · 사이클 {r.cycle}초{r.slides ? ` · 슬라이드 ${r.slides}` : ''} → 금형 {won(r.mold)}, 개당 {won(r.unit)}</p>)}
+          {est.moldRows.map((r) => <p key={r.name} className="text-micro text-muted-foreground tabular-nums">{r.name} · {r.material} {r.weight} g · {r.cavities}캐비티 · 사이클 {r.cycle}초{r.slides ? ` · 슬라이드 ${r.slides}` : ''} → 금형 {won(r.mold)} <span className={r.source.mold === 'quote' ? 'font-semibold text-success-text' : ''}>({r.source.mold === 'quote' ? `견적, 추정 ${won(r.est.mold)}` : '추정'})</span>, 개당 {won(r.unit)} ({r.source.unit === 'quote' ? '견적' : '추정'})</p>)}
         </div>
         <div className="space-y-1">
           <p className="text-caption font-semibold">기판 (준비비 합 {won(est.setup)})</p>
@@ -42,19 +64,54 @@ export function CostCard({ project, dev }) {
           <label className="flex items-center gap-2 text-micro">조립 인건비 (개당) <Input aria-label="조립 인건비" type="number" value={assembly} onChange={(e) => setAssembly(Number(e.target.value) || 0)} className="h-7 w-24 text-micro" /> 원 · 포장 {won(est.settings.packaging_krw)}</label>
         </div>
       </div>
+      {change && est.moldRows.length > 0 && (
+        <div className="rounded-lg border p-3 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-caption font-semibold">공장 견적 반영</p>
+            {est.quote ? <span className="text-micro text-success-text">{est.quote.factory || '공장'} {est.quote.date} · {est.quote.quoted}/{est.quote.of}개 부품 견적 · 금형비 추정 대비 {est.quote.tooling_diff >= 0 ? '+' : ''}{won(est.quote.tooling_diff)}</span> : <span className="text-micro text-muted-foreground">아직 추정치입니다</span>}
+            <div className="ml-auto flex gap-1.5">
+              <label className={`inline-flex h-7 cursor-pointer items-center gap-1 rounded-md border px-2 text-micro ${reading ? 'opacity-60' : ''}`}>{reading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}견적서 파일 읽기<input type="file" className="sr-only" accept=".xlsx,.xls,.pdf,.doc,.docx,.png,.jpg,.jpeg" disabled={reading} onChange={(e) => { readFile(e.target.files?.[0]); e.target.value = ''; }} /></label>
+              <Button size="sm" variant="outline" className="h-7" onClick={() => setQOpen((v) => !v)}>{qOpen ? '접기' : '직접 넣기'}</Button>
+            </div>
+          </div>
+          {qOpen && (
+            <div className="space-y-2">
+              <div className="grid gap-2 sm:grid-cols-4">
+                <Input aria-label="공장 이름" placeholder="공장 이름" value={quotes?.factory || ''} onChange={(e) => setQ({ factory: e.target.value })} className="h-8 text-caption" />
+                <Input aria-label="견적 날짜" type="date" value={quotes?.date || ''} onChange={(e) => setQ({ date: e.target.value })} className="h-8 text-caption" />
+                <select aria-label="통화" value={quotes?.currency || 'CNY'} onChange={(e) => setQ({ currency: e.target.value, fx: e.target.value === 'KRW' ? 1 : e.target.value === 'USD' ? 1380 : 195 })} className="h-8 rounded-md border bg-background px-2 text-caption"><option value="CNY">위안 (CNY)</option><option value="USD">달러 (USD)</option><option value="KRW">원 (KRW)</option></select>
+                <label className="flex items-center gap-1.5 text-micro text-muted-foreground">환율<Input aria-label="환율 (1 단위 = 원)" type="number" value={quotes?.fx ?? 195} disabled={(quotes?.currency || 'CNY') === 'KRW'} onChange={(e) => setQ({ fx: Number(e.target.value) || 0 })} className="h-8 w-20 text-caption" />원</label>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[440px] text-caption">
+                  <thead className="text-left text-muted-foreground"><tr><th className="py-1 pr-2 font-medium">부품</th><th className="py-1 pr-2 font-medium">금형비 ({quotes?.currency || 'CNY'})</th><th className="py-1 pr-2 font-medium">사출 단가</th><th className="py-1 font-medium">캐비티</th></tr></thead>
+                  <tbody>{est.moldRows.map((r) => { const q = quotes?.parts?.[r.name] || {}; return (
+                    <tr key={r.name} className="border-t"><td className="py-1 pr-2">{r.name}</td>
+                      {['mold', 'unit', 'cavities'].map((k) => <td key={k} className="py-1 pr-2"><Input aria-label={`${r.name} ${k === 'mold' ? '금형비' : k === 'unit' ? '사출 단가' : '캐비티'}`} type="number" value={q[k] ?? ''} onChange={(e) => setQPart(r.name, { [k]: e.target.value === '' ? '' : Number(e.target.value) })} className="h-7 w-28 text-micro" /></td>)}
+                    </tr>); })}</tbody>
+                </table>
+              </div>
+              {quotes?.notes && <p className="text-micro text-muted-foreground">견적 조건: {quotes.notes}</p>}
+              <p className="text-micro text-muted-foreground">비워 둔 칸은 추정치를 그대로 씁니다. 값은 자동 저장됩니다.</p>
+            </div>
+          )}
+        </div>
+      )}
       <p className="text-micro text-muted-foreground">수지 단가, 사출기 시간당 비용, 금형 크기 계수, 기판·실장 단가, 부품 대략 단가로 계산한 추정치입니다. 공장 견적이 오면 그 값으로 바꾸세요.</p>
     </Card>
   );
 }
 
 // 설계 확정(동결)과 변경 요청서(ECO): 확정본 뒤에 바뀐 점을 모아 검토·승인하면 새 확정본이 된다
-export function FreezeCard({ dev, change, user }) {
+export function FreezeCard({ dev, change, user, project, onSaved }) {
   const [reason, setReason] = useState('');
+  const [needClient, setNeedClient] = useState(false);
+  const approver = canApproveEco(user);
   const [busy, setBusy] = useState(false);
   const fz = dev.freeze;
   const changes = useMemo(() => (fz ? diffDesign(fz.snapshot, dev) : []), [fz, dev]);
   const ecos = dev.ecos || [];
-  const open = ecos.filter((e) => e.status === 'OPEN');
+  const open = ecos.filter((e) => e.status === 'OPEN' || e.status === 'WAIT_CLIENT');
   const by = actorName(user);
   const freeze = (eco) => {
     setBusy(true);
@@ -66,13 +123,36 @@ export function FreezeCard({ dev, change, user }) {
       ecos: eco ? (d.ecos || []).map((e) => (e.no === eco.no ? { ...e, status: 'APPROVED', decided_by: by, decided_at: new Date().toISOString(), to_version: version } : e)) : d.ecos,
     }));
     toast({ title: `설계 확정본 v${version} 을 만들었습니다`, description: '잠시 뒤 자동 저장됩니다' });
+    if (eco) makeTasks(eco);
+    setBusy(false);
+  };
+  // 승인된 변경의 "다시 할 일"을 업무 카드 할 일로 만든다 (시제품이 업무 카드에 묶여 있을 때)
+  const makeTasks = async (eco) => {
+    const tasks = ecoTasks(eco);
+    if (!project?.card_id || !tasks.length) { if (tasks.length) toast({ title: '업무 카드가 연결되지 않아 할 일은 만들지 않았습니다', description: '금형 견적 요청에서 업무 카드를 고르면 연결됩니다' }); return; }
+    try {
+      for (const t of tasks) await base44.entities.TaskItem.create({ tenant_id: project.tenant_id, card_id: project.card_id, status: 'TODO', priority: 'HIGH', cn_manual: true, ...t });
+      toast({ title: `${eco.no}: 업무 카드에 할 일 ${tasks.length}개를 만들었습니다` });
+    } catch (e) { toast({ title: `할 일을 만들지 못했습니다: ${e.message || e}`, variant: 'destructive' }); }
+  };
+  // 고객 확인이 필요한 변경: 통지서를 시제품 파일로 저장하고 고객 확인을 기다린다
+  const askClient = async (eco) => {
+    setBusy(true);
+    try {
+      const name = `${eco.no}-design-change-notice.md`;
+      const f = await uploadProtoFile(new File([ecoNotice(project, eco)], name, { type: 'text/markdown' }), user, { category: 'REFERENCE', note: `설계 변경 통지서 ${eco.no} (고객 확인용)` });
+      await addProtoFiles(project.id, [f]);
+      onSaved?.();
+      change((d) => ({ ecos: (d.ecos || []).map((e) => (e.no === eco.no ? { ...e, status: 'WAIT_CLIENT', sent_by: by, sent_at: new Date().toISOString(), notice_file: name } : e)) }));
+      toast({ title: '설계 변경 통지서를 시제품 파일에 저장했습니다', description: '업무 카드 파일의 “고객 확인 요청”이나 전자서명으로 고객에게 보내고, 확인을 받으면 여기서 승인하세요' });
+    } catch (e) { toast({ title: `통지서를 만들지 못했습니다: ${e.message || e}`, variant: 'destructive' }); }
     setBusy(false);
   };
   const makeEco = () => {
     if (!reason.trim()) { toast({ title: '변경 이유를 적으세요' }); return; }
     const no = `ECO-${String(ecos.length + 1).padStart(3, '0')}`;
-    change((d) => ({ ecos: [...(d.ecos || []), { no, at: new Date().toISOString(), by, reason: reason.trim(), from_version: fz.version, changes, impact: impactOf(changes), status: 'OPEN' }] }));
-    setReason('');
+    change((d) => ({ ecos: [...(d.ecos || []), { no, at: new Date().toISOString(), by, reason: reason.trim(), from_version: fz.version, changes, impact: impactOf(changes), need_client: needClient, status: 'OPEN' }] }));
+    setReason(''); setNeedClient(false);
     toast({ title: `${no} 변경 요청서를 만들었습니다` });
   };
   const reject = (eco) => change((d) => ({ ecos: (d.ecos || []).map((e) => (e.no === eco.no ? { ...e, status: 'REJECTED', decided_by: by, decided_at: new Date().toISOString() } : e)) }));
@@ -94,6 +174,7 @@ export function FreezeCard({ dev, change, user }) {
               <p className="text-micro text-muted-foreground">다시 할 일: {impactOf(changes).join(' · ')}</p>
               <div className="flex flex-wrap gap-2">
                 <Input aria-label="변경 이유" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="변경 이유 (예: 금형 업체 제안으로 구배 2° → 3°)" className="h-8 min-w-[240px] flex-1 text-caption" />
+                <label className="flex items-center gap-1.5 text-micro"><input type="checkbox" checked={needClient} onChange={(e) => setNeedClient(e.target.checked)} />고객 확인 필요</label>
                 <Button size="sm" variant="outline" onClick={makeEco}><GitPullRequest className="w-4 h-4" />변경 요청서(ECO) 만들기</Button>
               </div>
             </div>
@@ -106,12 +187,15 @@ export function FreezeCard({ dev, change, user }) {
           {[...ecos].reverse().map((e) => (
             <div key={e.no} className="rounded-lg bg-secondary px-3 py-2 text-micro space-y-0.5">
               <p className="flex flex-wrap items-center gap-2"><span className="font-semibold">{e.no}</span><span>{e.reason}</span><span className="text-muted-foreground">v{e.from_version} · {e.at?.slice(0, 10)} · {e.by}</span>
-                <span className={`ml-auto rounded-full px-2 py-0.5 font-semibold ${e.status === 'APPROVED' ? 'bg-success/15 text-success-text' : e.status === 'REJECTED' ? 'bg-destructive/10 text-destructive' : 'bg-warning/15 text-warning-text'}`}>{e.status === 'APPROVED' ? `승인 → v${e.to_version}` : e.status === 'REJECTED' ? '반려' : '검토 중'}</span></p>
+                <span className={`ml-auto rounded-full px-2 py-0.5 font-semibold ${e.status === 'APPROVED' ? 'bg-success/15 text-success-text' : e.status === 'REJECTED' ? 'bg-destructive/10 text-destructive' : 'bg-warning/15 text-warning-text'}`}>{e.status === 'APPROVED' ? `승인 → v${e.to_version}` : e.status === 'REJECTED' ? '반려' : e.status === 'WAIT_CLIENT' ? '고객 확인 대기' : '검토 중'}</span></p>
               <p className="text-muted-foreground">{(e.changes || []).length}건 · 다시 할 일: {(e.impact || []).join(' · ') || '없음'}</p>
-              {e.status === 'OPEN' && (
-                <div className="flex gap-1.5 pt-1">
-                  <Button size="sm" className="h-7" onClick={() => freeze(e)} disabled={busy || e !== open[open.length - 1]}><Check className="w-3.5 h-3.5" />승인하고 새 확정본</Button>
-                  <Button size="sm" variant="ghost" className="h-7" onClick={() => reject(e)}><X className="w-3.5 h-3.5" />반려</Button>
+              {(e.status === 'OPEN' || e.status === 'WAIT_CLIENT') && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  {e.need_client && e.status === 'OPEN' && <Button size="sm" variant="outline" className="h-7" onClick={() => askClient(e)} disabled={busy || !project}>고객 통지서 만들기</Button>}
+                  <Button size="sm" className="h-7" onClick={() => freeze(e)} disabled={busy || !approver || e !== open[open.length - 1] || (e.need_client && e.status === 'OPEN')}><Check className="w-3.5 h-3.5" />{e.status === 'WAIT_CLIENT' ? '고객 확인 받음 · 승인하고 새 확정본' : '승인하고 새 확정본'}</Button>
+                  <Button size="sm" variant="ghost" className="h-7" onClick={() => reject(e)} disabled={!approver}><X className="w-3.5 h-3.5" />반려</Button>
+                  {!approver && <span className="text-muted-foreground">승인·반려는 대표·팀 관리자만 할 수 있습니다</span>}
+                  {e.need_client && e.status === 'OPEN' && approver && <span className="text-muted-foreground">고객 확인이 필요한 변경입니다 — 통지서를 먼저 보내세요</span>}
                 </div>
               )}
             </div>

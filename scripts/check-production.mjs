@@ -67,5 +67,26 @@ check('인증 자료: 무선(모듈)·전자파·전기 안전(어댑터·조명
   check(`LCSC 번호 직접 넣기: 같은 부품 ${same.length}개에 적용되고 JLCPCB 부품표에 나온다`, same.length > 0 && same.every((c) => c.part.lcsc === 'C123456' && c.part.lcsc_user) && hw2.bom.some((r) => r.lcsc === 'C123456'));
 }
 
+// 5. 공장 견적 → 원가
+{
+  const q = { factory: '东莞精模', date: '2026-11-20', currency: 'CNY', fx: 195, parts: { '앞 하우징': { mold: 42000, unit: 3.2, cavities: 2 }, '뒤 하우징': { mold: '', unit: '' } } };
+  const e2 = estimateCost({ moldSummary: summary, hwPkg: hw, quotes: q });
+  const front = e2.moldRows.find((r) => r.name === '앞 하우징'), rear = e2.moldRows.find((r) => r.name === '뒤 하우징');
+  check('견적 반영: 넣은 부품만 견적(42,000元 × 195 = 8,190,000원, 캐비티 2), 비운 부품은 추정 그대로', front.mold === 8190000 && front.unit === 624 && front.cavities === 2 && front.source.mold === 'quote' && rear.source.mold === 'estimate' && rear.mold === est.moldRows.find((r) => r.name === '뒤 하우징').mold);
+  check('견적 반영: 금형비 합·수량별 합계가 바뀌고, 추정 대비 차이를 알려 준다', e2.tooling === est.tooling - front.est.mold + 8190000 && e2.quote.quoted === 1 && e2.quote.tooling_diff === 8190000 - front.est.mold && e2.byQty[0].total !== est.byQty[0].total);
+  check('견적 반영: 환율이 0 이면 견적을 쓰지 않는다', estimateCost({ moldSummary: summary, quotes: { ...q, fx: 0 } }).quote === null);
+}
+
+// 6. 변경 요청서: 승인 권한·후속 할 일·고객 통지서
+{
+  const { canApproveEco, ecoTasks, ecoNotice } = await import('../src/lib/devkit/freeze.js');
+  check('ECO 승인: 대표·팀 관리자만 (팀원·계정 없음은 불가)', canApproveEco({ account_tier: 'master' }) && canApproveEco({ account_tier: 'service' }) && !canApproveEco({ account_tier: 'sub' }) && !canApproveEco(null));
+  const eco = { no: 'ECO-001', by: '검산', at: '2026-11-15T00:00:00Z', reason: '금형 업체 제안으로 구배 2° → 3°', from_version: 1, changes: diff, impact };
+  const tasks = ecoTasks(eco);
+  check(`ECO 후속 할 일 ${tasks.length}개: 제목에 번호, 중국어 제목, 설명에 변경 이유·바뀐 점`, tasks.length === impact.length && tasks.every((t) => t.title.startsWith('[ECO-001]') && /[一-鿿]/.test(t.title_cn) && t.description.includes('구배 2° → 3°')));
+  const notice = ecoNotice(project, eco);
+  check('고객 통지서: 제품·기준 확정본·변경 이유·바뀌는 내용·동의 칸', /설계 변경 통지서 ECO-001/.test(notice) && /설계 확정본 v1/.test(notice) && /4 → 6/.test(notice) && /- \[ \] 위 변경에 동의합니다/.test(notice));
+}
+
 console.log(`\n${pass}개 검산 통과${fails.length ? `, ${fails.length}개 실패` : ''}`);
 if (fails.length) process.exit(1);

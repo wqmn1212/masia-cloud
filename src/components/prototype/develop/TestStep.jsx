@@ -6,7 +6,7 @@ import { Card } from '@/components/prototype/develop/DevBits';
 import { CostCard, FreezeCard, BringupCard } from '@/components/prototype/develop/ProductionPanels';
 
 // 6단계: 시제품 조립·시험·개선과 양산 준비로 이어지는 바로 가기, 그리고 지금까지의 점검표
-export default function TestStep({ project, concept, circuits, dev, change, user }) {
+export default function TestStep({ project, concept, circuits, dev, change, user, onSaved }) {
   const files = project.files || [];
   const checks = [
     ['컨셉 3D 확정', !!concept],
@@ -49,8 +49,8 @@ export default function TestStep({ project, concept, circuits, dev, change, user
       </Card>
     </div>
       <div className="grid gap-4 xl:grid-cols-2">
-        <FreezeCard dev={dev} change={change} user={user} />
-        <CostCard project={project} dev={dev} />
+        <FreezeCard dev={dev} change={change} user={user} project={project} onSaved={onSaved} />
+        <CostCard project={project} dev={dev} change={change} />
       </div>
       <BringupCard dev={dev} change={change} user={user} />
     </div>

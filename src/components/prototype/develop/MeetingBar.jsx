@@ -28,7 +28,7 @@ export default function MeetingBar({ project, dev, change, concept, circuits, st
     try {
       const hw = await hwPkg().catch(() => null);
       const text = kind === 'report'
-        ? meetingReport(project, dev, { concept, circuits, hw, cost: estimateCost({ moldSummary: dev.mold_design?.summary, hwPkg: hw }), ...m })
+        ? meetingReport(project, dev, { concept, circuits, hw, cost: estimateCost({ moldSummary: dev.mold_design?.summary, hwPkg: hw, quotes: dev.cost_quotes }), ...m })
         : certChecklist(project, dev, { hw });
       const name = `${dev.device_name || 'project'}-${kind === 'report' ? 'meeting' : 'kc-cert-prep'}-${stamp()}.md`;
       const { downloadText } = await import('@/lib/devkit/conceptExport');
