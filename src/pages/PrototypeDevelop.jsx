@@ -12,6 +12,7 @@ import { randomBase, pinUuids } from '@/lib/devkit/ble';
 import { assignPins, pinProblems } from '@/lib/devkit/features';
 import ConceptStep from '@/components/prototype/develop/ConceptStep';
 import CadStep from '@/components/prototype/develop/CadStep';
+import MoldDesignStep from '@/components/prototype/develop/MoldDesignStep';
 import FeaturesStep from '@/components/prototype/develop/FeaturesStep';
 import CircuitStep from '@/components/prototype/develop/CircuitStep';
 import BleStep from '@/components/prototype/develop/BleStep';
@@ -47,6 +48,7 @@ export default function PrototypeDevelop() {
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const step = STEPS.some((s) => s.key === params.get('step')) ? params.get('step') : 'concept';
+  const cadTab = params.get('cad') === 'solidcraft' ? 'solidcraft' : 'mold';
   const go = (key) => setParams((p) => { const n = new URLSearchParams(p); n.set('step', key); return n; }, { replace: true });
 
   useEffect(() => { if (project && !dev) setDev(initialDev(project)); }, [project]);  
@@ -137,7 +139,17 @@ export default function PrototypeDevelop() {
       )}
 
       {step === 'concept' && <ConceptStep {...props} onNext={() => go('cad')} />}
-      {step === 'cad' && <CadStep {...props} />}
+      {step === 'cad' && (
+        <div className="space-y-4">
+          <div className="inline-flex rounded-lg border bg-card p-0.5" role="tablist" aria-label="3D 도면 방식">
+            {[['mold', '금형용 설계 (바로 STEP)'], ['solidcraft', 'SolidCraft 연동']].map(([k, l]) => (
+              <button key={k} type="button" role="tab" aria-selected={cadTab === k} onClick={() => setParams((p) => { const n = new URLSearchParams(p); n.set('cad', k); return n; }, { replace: true })}
+                className={`rounded-md px-3 py-1.5 text-label font-semibold ${cadTab === k ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{l}</button>
+            ))}
+          </div>
+          {cadTab === 'mold' ? <MoldDesignStep {...props} /> : <CadStep {...props} />}
+        </div>
+      )}
       {step === 'features' && <FeaturesStep {...props} />}
       {step === 'circuit' && <CircuitStep {...props} />}
       {step === 'ble' && <BleStep {...props} />}
