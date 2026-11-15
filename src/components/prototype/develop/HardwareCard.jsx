@@ -5,6 +5,7 @@ import { toast } from '@/components/ui/use-toast';
 import { Card } from '@/components/prototype/develop/DevBits';
 import { errorText, uploadProtoFile, addProtoFiles } from '@/lib/prototypeApi';
 import { lcscSearchUrl } from '@/lib/pcb';
+import { lcscKey } from '@/lib/hw/netlist';
 
 const stamp = () => new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
 const pct = (v) => `${Math.round(v * 100)} %`;
@@ -61,6 +62,8 @@ export default function HardwareCard({ project, dev, user, onSaved, change }) {
   const hasLight = (dev.features || []).some((f) => f.kind === 'light');
   const mainPlace = pkg.boards[0].pcb.place;
   const suggestSplit = hasLight && !split && (mainPlace.outside.length > 0 || mainPlace.density > 0.75);
+  // 기본 표에 없는 부품의 LCSC 번호를 직접 넣는다 (같은 부품 전부에 적용, 설정에 저장)
+  const setLcsc = (part, v) => change?.((d) => { const m = { ...(d.hw?.lcsc || {}) }; if (v) m[lcscKey(part)] = v; else delete m[lcscKey(part)]; return { hw: { ...(d.hw || {}), lcsc: m } }; });
   const setSplit = (on) => change?.((d) => ({ hw: { ...(d.hw || {}), split: on ? ['light'] : [] } }));
   const smt = (pkg.boards.find((b) => b.key === boardKey) || pkg.boards[0]).bom.filter((r) => r.smt);
   const withLcsc = smt.filter((r) => r.lcsc).length;
@@ -181,8 +184,13 @@ export default function HardwareCard({ project, dev, user, onSaved, change }) {
                         <td className="px-3 py-1.5"><p>{c.value}</p>{c.note && <p className="text-micro text-muted-foreground">{c.note}</p>}</td>
                         <td className="px-3 py-1.5 font-mono text-micro text-muted-foreground">{Object.entries(c.conns).filter(([, n], i, arr) => arr.findIndex(([, m]) => m === n) === i).map(([, n]) => n).join(' · ')}</td>
                         <td className="px-3 py-1.5 whitespace-nowrap">{c.part.lcsc
-                          ? <a href={lcscSearchUrl(c.part.lcsc)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary">{c.part.lcsc}<ExternalLink className="w-3 h-3" /></a>
-                          : c.part.search ? <a href={lcscSearchUrl(c.part.search)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-muted-foreground">찾기<ExternalLink className="w-3 h-3" /></a> : '—'}</td>
+                          ? <span className="inline-flex items-center gap-1"><a href={lcscSearchUrl(c.part.lcsc)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary">{c.part.lcsc}<ExternalLink className="w-3 h-3" /></a>{c.part.lcsc_user && <button type="button" className="text-micro text-muted-foreground underline" onClick={() => setLcsc(c.part, '')} disabled={!change}>직접 넣음 · 지우기</button>}</span>
+                          : (
+                            <span className="inline-flex items-center gap-1.5">
+                              {c.part.search && <a href={lcscSearchUrl(c.part.search)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-muted-foreground">찾기<ExternalLink className="w-3 h-3" /></a>}
+                              {change && c.part.fp && <input aria-label={`${c.ref} LCSC 번호`} placeholder="C번호" className="h-6 w-20 rounded border bg-background px-1.5 font-mono text-micro" onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} onBlur={(e) => { const v = e.target.value.trim().toUpperCase(); if (/^C\d{3,9}$/.test(v)) setLcsc(c.part, v); else if (v) e.target.value = ''; }} />}
+                            </span>
+                          )}</td>
                       </tr>
                     ))}
                   </tbody>

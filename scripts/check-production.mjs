@@ -52,5 +52,20 @@ check('미팅 요약: 외장·핀·규칙·기판·원가·확정본·결정·�
 const cert = certChecklist(project, devM, { hw });
 check('인증 자료: 무선(모듈)·전자파·전기 안전(어댑터·조명 차단)·제출 목록', /ESP32-S3-WROOM-1/.test(cert) && /전자파 적합등록/.test(cert) && /12 V 직류 어댑터/.test(cert) && /85 °C 하드웨어 차단/.test(cert) && /- \[ \] 회로도/.test(cert));
 
+// 4. 실물 검증 체크리스트 · LCSC 번호 직접 넣기
+{
+  const { bringupItems, bringupSummary } = await import('../src/lib/devkit/bringup.js');
+  const items = bringupItems(devM);
+  check(`실물 검증: 전원·펌웨어·블루투스·기능 ${dev.features.length}개·조립·발열 항목 (${items.length}개), 12 V 제품은 5 V 레일·기판 연결 항목 포함`, items.filter((i) => i.group === '기능').length === dev.features.length && items.some((i) => i.id === 'pwr_5v') && items.some((i) => i.id === 'link') && new Set(items.map((i) => i.id)).size === items.length);
+  const withRes = { ...devM, bringup: { items: { pwr_3v3: { result: 'pass', value: '3.31' }, ble_range: { result: 'fail', note: '2 m 에서 끊김 (금속 힌지)' } } } };
+  const bs = bringupSummary(withRes);
+  check('실물 검증: 통과 1 · 불합격 1 을 세고, 불합격이 미팅 요약에 들어간다', bs.pass === 1 && bs.fail === 1 && /불합격: .*2 m 에서 끊김/.test(meetingReport(project, withRes, { hw })));
+  const { lcscKey } = await import('../src/lib/hw/netlist.js');
+  const noNum = hw.hw.comps.find((c) => c.part.fp && !c.part.lcsc && c.part.cat !== 'H');
+  const hw2 = buildHwPackage({ ...devM, hw: { ...devM.hw, lcsc: { [lcscKey(noNum.part)]: 'C123456', bad: 'xyz' } } }, lib, { title, seed: 'p1' });
+  const same = hw2.hw.comps.filter((c) => lcscKey(c.part) === lcscKey(noNum.part));
+  check(`LCSC 번호 직접 넣기: 같은 부품 ${same.length}개에 적용되고 JLCPCB 부품표에 나온다`, same.length > 0 && same.every((c) => c.part.lcsc === 'C123456' && c.part.lcsc_user) && hw2.bom.some((r) => r.lcsc === 'C123456'));
+}
+
 console.log(`\n${pass}개 검산 통과${fails.length ? `, ${fails.length}개 실패` : ''}`);
 if (fails.length) process.exit(1);

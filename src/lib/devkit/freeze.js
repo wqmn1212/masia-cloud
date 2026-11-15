@@ -9,7 +9,7 @@ export function snapshotOf(dev) {
   const s = {};
   for (const k of KEYS) if (dev?.[k] !== undefined) s[k] = JSON.parse(JSON.stringify(dev[k]));
   if (s.mold_design) s.mold_design = { template: s.mold_design.template, params: s.mold_design.params };
-  if (s.hw) s.hw = { split: s.hw.split || [] };
+  if (s.hw) s.hw = { split: s.hw.split || [], lcsc: s.hw.lcsc || {} };
   if (s.features) s.features = s.features.map(({ id, kind, name, pin, pins, power_w, cct, face, watch }) => ({ id, kind, name, pin: pin ?? null, pins: pins || null, power_w, cct, face, watch }));
   return s;
 }
@@ -43,6 +43,7 @@ export function diffDesign(base, now) {
     for (const k of keys) if (fmt(ma.params?.[k]) !== fmt(mb.params?.[k])) { const p = T?.params?.find((x) => x.key === k); push('외장', `${p?.label || k} ${fmt(ma.params?.[k])} → ${fmt(mb.params?.[k])}${p?.unit ? ` ${p.unit}` : ''}`); }
   }
   if (JSON.stringify(a.hw?.split || []) !== JSON.stringify(b.hw?.split || [])) push('회로', `기판 나누기 ${(a.hw?.split || []).length ? '있음' : '없음'} → ${(b.hw?.split || []).length ? '있음' : '없음'}`);
+  if (JSON.stringify(a.hw?.lcsc || {}) !== JSON.stringify(b.hw?.lcsc || {})) push('회로', `직접 넣은 LCSC 번호 ${Object.keys(a.hw?.lcsc || {}).length}개 → ${Object.keys(b.hw?.lcsc || {}).length}개`);
   if (a.uuid_base !== b.uuid_base) push('블루투스', '블루투스 UUID 가 바뀌었습니다 (앱과 다시 맞춰야 함)');
   return out;
 }

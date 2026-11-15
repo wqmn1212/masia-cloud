@@ -3,6 +3,7 @@ import { FEATURE_KINDS, MCUS, pinPlan, pinProblems } from './features.js';
 import { describeRule, validRules } from './rules.js';
 import { TEMPLATES } from '../cad/catalog.js';
 import { diffDesign } from './freeze.js';
+import { bringupSummary } from './bringup.js';
 
 const d10 = (s) => (s ? String(s).slice(0, 10) : '');
 const won = (v) => `${Math.round(v).toLocaleString('ko-KR')}원`;
@@ -43,6 +44,10 @@ export function meetingReport(project, dev, { concept, circuits = [], cost = nul
   if (dev.freeze) {
     const ch = diffDesign(dev.freeze.snapshot, dev);
     L.push('## 설계 확정', '', `- 확정본 v${dev.freeze.version} (${d10(dev.freeze.at)}, ${dev.freeze.by})${ch.length ? ` · 이후 바뀐 점 ${ch.length}건` : ''}`, ...ch.slice(0, 15).map((c) => `  - [${c.area}] ${c.text}`), '');
+  }
+  if (dev.bringup?.items && Object.keys(dev.bringup.items).length) {
+    const b = bringupSummary(dev);
+    L.push('## 실물 시제품 검증', '', `- ${b.total}개 항목 중 통과 ${b.pass} · 불합격 ${b.fail} · 남음 ${b.open}`, ...b.failed.map((x) => `- 불합격: ${x.text}${x.note ? ` — ${x.note}` : ''}`), '');
   }
   const issues = [...problems];
   if (issues.length) L.push('## 걸리는 점', '', ...issues.map((x) => `- ${x}`), '');

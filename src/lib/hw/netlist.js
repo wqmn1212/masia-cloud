@@ -12,6 +12,9 @@ const fmtOhm = (v) => (v >= 1 ? `${Number(v.toFixed(2))}Ω` : `${Number(v.toFixe
 /** 기능 이름 → 넷 이름에 쓸 짧은 영문 (KiCad 넷 이름은 영문이 안전하다) */
 const NET_KIND = { button: 'BTN', led: 'LED', motor: 'MOT', heater: 'HEAT', buzzer: 'BUZ', servo: 'SERVO', relay: 'RLY', tilt: 'TILT', lid: 'LID', water: 'WATER', temp: 'TEMP', analog: 'ADC', battery: 'VBAT_SNS', light: 'LIGHT', display: 'DISP', switch: 'SW', encoder: 'ENC', custom: 'CMD' };
 
+/** 부품 한 종류를 가리키는 열쇠 (LCSC 번호를 직접 넣을 때 쓴다) */
+export const lcscKey = (part) => `${(part.fp || '').split(':')[1] || ''}|${part.search || part.value || ''}`;
+
 export function buildHardware(dev, opts = {}) {
   const mcuKey = MCUS[dev?.mcu] ? dev.mcu : 'esp32c3';
   const M = MCUS[mcuKey];
@@ -314,6 +317,12 @@ export function buildHardware(dev, opts = {}) {
   const lone = [...nets].filter(([, list]) => list.length < 2).map(([n]) => n);
   if (lone.length) notes.push(`한 곳에만 연결된 넷: ${lone.join(', ')}`);
   const powerFlags = ['GND', 'VBUS', '+5V', ...(highV ? ['+VIN'] : []), ...(lights.length ? ['+VIN_LED'] : []), ...(hasBattery ? ['+VBAT'] : []), ...(plan.i2c ? ['RTC_VDD'] : [])];
+  // 팀이 직접 확인해 넣은 LCSC 번호 (기본 표에 없는 부품): 같은 실장 모양·같은 부품이면 모두 적용
+  const userLcsc = opts.lcsc || {};
+  for (const c of comps) {
+    const ov = !c.part.lcsc && userLcsc[lcscKey(c.part)];
+    if (ov && /^C\d{3,9}$/.test(ov)) c.part = { ...c.part, lcsc: ov, lcsc_user: true };
+  }
   return { mcu: mcuKey, module: M.module, supplyV, comps, nets, blocks: blocks.filter((b) => b.refs.length), notes, pinMap, offboard, powerFlags, i2c: plan.i2c, features, boards };
 }
 

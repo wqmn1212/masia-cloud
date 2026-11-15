@@ -22,7 +22,7 @@ export function buildHwPackage(dev, lib, { title = '', seed = 'x', date = '' } =
   const tplLayout = md?.template ? pcbLayout(md.template, md.params) : null;
   const sideways = (tplLayout?.anchors || []).filter((a) => a.sideways).map((a) => a.kind);
   const split = dev?.hw?.split || [];
-  const hw = buildHardware(dev, { symbols: lib.SYMBOLS, sideways, split, compact: !!tplLayout && tplLayout.area < 4500 });
+  const hw = buildHardware(dev, { symbols: lib.SYMBOLS, sideways, split, compact: !!tplLayout && tplLayout.area < 4500, lcsc: dev?.hw?.lcsc || {} });
   const slug = projectSlug(dev?.device_name || title);
   // KiCad 기본 글꼴에는 한글이 없어 제목은 장치 이름(영문)으로
   const kTitle = /^[\x20-\x7e]+$/.test(title) ? title : `${dev?.device_name || slug}`;

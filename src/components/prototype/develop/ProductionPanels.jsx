@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Calculator, Lock, GitPullRequest, Check, X, Loader2 } from 'lucide-react';
+import { Calculator, Lock, GitPullRequest, Check, X, Loader2, ClipboardCheck } from 'lucide-react';
+import { bringupItems, bringupSummary } from '@/lib/devkit/bringup';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
@@ -117,6 +118,41 @@ export function FreezeCard({ dev, change, user }) {
           ))}
         </div>
       )}
+    </Card>
+  );
+}
+
+// 실물 시제품 검증: 설계에서 만든 확인 항목마다 통과·불합격·측정값·메모를 남긴다 (자동 저장). 불합격은 미팅 요약과 변경 관리로 이어진다
+export function BringupCard({ dev, change, user }) {
+  const items = useMemo(() => bringupItems(dev), [dev]);
+  const res = dev.bringup?.items || {};
+  const sum = bringupSummary(dev);
+  const set = (id, patch) => change((d) => ({ bringup: { ...(d.bringup || {}), items: { ...(d.bringup?.items || {}), [id]: { ...(d.bringup?.items?.[id] || {}), ...patch, at: new Date().toISOString(), by: actorName(user) } } } }));
+  const groups = [...new Set(items.map((i) => i.group))];
+  return (
+    <Card title="실물 시제품 검증" icon={ClipboardCheck} tag={`${sum.pass}/${sum.total} 통과${sum.fail ? ` · 불합격 ${sum.fail}` : ''}`}>
+      <p className="text-caption text-muted-foreground">기판과 외장 시제품이 오면 위에서부터 확인하세요. 화면 안 검산으로는 볼 수 없는 전원·부품 방향·블루투스 거리·발열·외장 맞춤을 실물로 닫는 목록입니다.</p>
+      {groups.map((g) => (
+        <div key={g} className="space-y-1">
+          <p className="text-caption font-semibold">{g}</p>
+          {items.filter((i) => i.group === g).map((i) => {
+            const r = res[i.id] || {};
+            return (
+              <div key={i.id} className={`rounded-lg border px-3 py-2 text-caption ${r.result === 'fail' ? 'border-destructive/40 bg-destructive/5' : r.result === 'pass' ? 'border-success/30 bg-success/5' : ''}`}>
+                <div className="flex flex-wrap items-start gap-2">
+                  <p className="min-w-[200px] flex-1">{i.text}</p>
+                  <div className="flex items-center gap-1" role="group" aria-label={`${i.text} 결과`}>
+                    {i.measure && <span className="flex items-center gap-1"><Input aria-label={`${i.text} 측정값`} defaultValue={r.value ?? ''} onBlur={(e) => { if (e.target.value !== (r.value ?? '')) set(i.id, { value: e.target.value }); }} className="h-7 w-16 text-micro" /><span className="text-micro text-muted-foreground">{i.measure}</span></span>}
+                    <Button size="sm" variant={r.result === 'pass' ? 'default' : 'outline'} className="h-7 px-2" aria-pressed={r.result === 'pass'} onClick={() => set(i.id, { result: r.result === 'pass' ? '' : 'pass' })}><Check className="w-3.5 h-3.5" />통과</Button>
+                    <Button size="sm" variant={r.result === 'fail' ? 'destructive' : 'outline'} className="h-7 px-2" aria-pressed={r.result === 'fail'} onClick={() => set(i.id, { result: r.result === 'fail' ? '' : 'fail' })}><X className="w-3.5 h-3.5" />불합격</Button>
+                  </div>
+                </div>
+                {(r.result === 'fail' || r.note) && <Input aria-label={`${i.text} 메모`} defaultValue={r.note || ''} onBlur={(e) => { if (e.target.value !== (r.note || '')) set(i.id, { note: e.target.value }); }} placeholder="무엇이 어떻게 달랐는지, 고칠 방법" className="mt-1.5 h-7 text-micro" />}
+              </div>
+            );
+          })}
+        </div>
+      ))}
     </Card>
   );
 }
