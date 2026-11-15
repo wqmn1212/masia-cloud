@@ -318,7 +318,7 @@ export default function MoldDesignStep({ project, concept, dev, change, user, on
                       const g = s.gap;
                       const v = g === Infinity ? 1 : Math.max(0, Math.min(1, g / (motion.clearance * 3)));
                       const tone = g === Infinity || g >= motion.clearance ? 'bg-success/60' : g > 0 ? 'bg-warning' : 'bg-destructive';
-                      return <div key={s.angle} className="flex flex-1 flex-col items-center gap-0.5" title={`${s.angle}° · ${g === Infinity ? '1 mm 이상' : g < 0 ? `${fmt(-g, 2)} mm 파고듦` : `${fmt(g, 2)} mm`}`}><div className={`w-full rounded-sm ${tone}`} style={{ height: `${8 + v * 28}px` }} /><span className="text-[10px] tabular-nums text-muted-foreground">{s.angle}</span></div>;
+                      return <div key={s.angle} className="flex flex-1 flex-col items-center gap-0.5" title={`${s.angle}° · ${g === Infinity ? '1 mm 이상' : g < 0 ? `${fmt(-g, 2)} mm 파고듦` : `${fmt(g, 2)} mm`}`}><div className={`w-full rounded-sm ${tone}`} style={{ height: `${8 + v * 28}px` }} /><span className="text-micro tabular-nums text-muted-foreground">{s.angle}</span></div>;
                     })}
                   </div>
                 </div>
