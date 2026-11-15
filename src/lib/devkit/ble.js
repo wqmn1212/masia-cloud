@@ -34,6 +34,7 @@ export function buildGatt(dev) {
     ...(clock ? [{ key: 'time', uuid: uuidAt(base, 0x00f0), name: '장치 시각', access: ['read', 'write'], type: 'u32', unit: '초', min: 0, max: 4294967295, scale: 1, desc: '현지 시각, 1970-01-01 00:00 부터 초 (앱이 연결할 때 써서 시계를 맞춘다)' }] : []),
     ...(schedule ? [{ key: 'schedule', uuid: uuidAt(base, 0x00f1), name: '수면 일정', access: ['read', 'write'], type: 'bytes', scale: 1, desc: '8바이트: 켜짐(0/1), 취침 시, 분, 감광 분, 기상 시, 분, 증광 분, 기상 밝기 % (장치에 저장)' }] : []),
     { key: 'calib', uuid: uuidAt(base, 0x00f2), name: '센서 보정', access: ['write', 'notify'], type: 'bytes', scale: 1, desc: '01 n = 항목 n 원시값 요청 → 알림 01 n 원시값(i32) 보정값(i32) · 02 n 오프셋(i16) 배율(u16, ×1000) = 저장 · 03 = 전부 지우기' },
+    { key: 'ota', uuid: uuidAt(base, 0x00f4), name: '무선 펌웨어 업데이트', access: ['write', 'notify'], type: 'bytes', scale: 1, desc: '01 크기(u32) = 시작 → 알림 01 · 02 데이터… = 조각(쓰기 응답으로 흐름 제어, 4 KB 마다 알림 02 받은 바이트(u32)) · 03 = 끝(검증 후 다시 시작, 알림 03) · 04 = 취소. 오류 알림 E1 시작 실패 · E2 쓰기 실패 · E3 크기·검증 실패' },
     { key: 'ping', uuid: uuidAt(base, 0x00f3), name: '응답 시간 확인', access: ['write', 'notify'], type: 'bytes', scale: 1, desc: '받은 바이트를 그대로 알림으로 돌려보냄 (왕복 시간 측정)' },
   ];
   return {

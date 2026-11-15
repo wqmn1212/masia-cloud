@@ -18,6 +18,7 @@ class BLECharacteristic {
 class BLEService { public: BLECharacteristic* createCharacteristic(const char*, uint32_t); BLECharacteristic* createCharacteristic(BLEUUID, uint32_t); void start(); };
 class BLEServer;
 class BLEServerCallbacks { public: virtual ~BLEServerCallbacks() {} virtual void onConnect(BLEServer*) {} virtual void onDisconnect(BLEServer*) {} };
-class BLEServer { public: BLEService* createService(BLEUUID, uint32_t numHandles = 15, uint8_t inst_id = 0); void setCallbacks(BLEServerCallbacks*); };
-class BLEAdvertising { public: void addServiceUUID(const char*); void setScanResponse(bool); };
-class BLEDevice { public: static void init(String); static BLEServer* createServer(); static BLEAdvertising* getAdvertising(); static void startAdvertising(); };
+class BLEServer { public: BLEService* createService(BLEUUID, uint32_t numHandles = 15, uint8_t inst_id = 0); void setCallbacks(BLEServerCallbacks*); void disconnect(uint16_t); uint16_t getConnId(); };
+class BLEAdvertising { public: void addServiceUUID(const char*); void setScanResponse(bool); void stop(); };
+class BLEAddress { public: String toString(); };
+class BLEDevice { public: static void init(String); static BLEServer* createServer(); static BLEAdvertising* getAdvertising(); static void startAdvertising(); static BLEAddress getAddress(); };

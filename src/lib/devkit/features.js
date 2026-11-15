@@ -139,9 +139,9 @@ export const FEATURE_GROUPS = { in: '입력·센서', out: '출력·구동', cmd
 
 // MCU 모듈별로 쓸 수 있는 핀 (부팅 설정 핀·플래시 핀은 뒤로 미루거나 뺐다)
 export const MCUS = {
-  esp32c3: { label: 'ESP32-C3 (RISC-V, BLE 5)', module: 'ESP32-C3-WROOM-02', board: 'ESP32C3 Dev Module', fqbn: 'esp32:esp32:esp32c3:CDCOnBoot=cdc,PartitionScheme=huge_app', adc: [0, 1, 3, 4], io: [5, 6, 7, 10, 20, 21, 3, 4, 2], i2c: [8, 2], boot: 9, usb: [18, 19] },
-  esp32s3: { label: 'ESP32-S3 (BLE 5, 여유 핀 많음)', module: 'ESP32-S3-WROOM-1', board: 'ESP32S3 Dev Module', fqbn: 'esp32:esp32:esp32s3:CDCOnBoot=cdc,PartitionScheme=huge_app', adc: [1, 2, 4, 5, 6, 7, 8, 9, 10], io: [11, 12, 13, 14, 15, 16, 17, 18, 38, 39, 40, 41, 42], i2c: [47, 48], boot: 0, usb: [19, 20] },
-  esp32: { label: 'ESP32 (클래식)', module: 'ESP32-WROOM-32E', board: 'ESP32 Dev Module', fqbn: 'esp32:esp32:esp32:PartitionScheme=huge_app', adc: [32, 33, 34, 35, 36, 39], io: [16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 13, 14], i2c: [21, 22], boot: 0, usb: null },
+  esp32c3: { label: 'ESP32-C3 (RISC-V, BLE 5)', module: 'ESP32-C3-WROOM-02', board: 'ESP32C3 Dev Module', fqbn: 'esp32:esp32:esp32c3:CDCOnBoot=cdc,PartitionScheme=min_spiffs', adc: [0, 1, 3, 4], io: [5, 6, 7, 10, 20, 21, 3, 4, 2], i2c: [8, 2], boot: 9, usb: [18, 19] },
+  esp32s3: { label: 'ESP32-S3 (BLE 5, 여유 핀 많음)', module: 'ESP32-S3-WROOM-1', board: 'ESP32S3 Dev Module', fqbn: 'esp32:esp32:esp32s3:CDCOnBoot=cdc,PartitionScheme=min_spiffs', adc: [1, 2, 4, 5, 6, 7, 8, 9, 10], io: [11, 12, 13, 14, 15, 16, 17, 18, 38, 39, 40, 41, 42], i2c: [47, 48], boot: 0, usb: [19, 20] },
+  esp32: { label: 'ESP32 (클래식)', module: 'ESP32-WROOM-32E', board: 'ESP32 Dev Module', fqbn: 'esp32:esp32:esp32:PartitionScheme=min_spiffs', adc: [32, 33, 34, 35, 36, 39], io: [16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 13, 14], i2c: [21, 22], boot: 0, usb: null },
 };
 // ADC 전용(입력만) 핀: 출력·풀업이 필요한 기능에 쓰면 안 된다
 export const INPUT_ONLY = { esp32: [34, 35, 36, 39] };

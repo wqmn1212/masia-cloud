@@ -7,6 +7,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { SAMPLES, writeSamples } from './firmware-samples.mjs';
+import { MCUS } from '../src/lib/devkit/features.js';
 import { buildGatt } from '../src/lib/devkit/ble.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -38,6 +39,10 @@ check('조명: 수면 일정 23:00 감광 30분 · 08:00 증광 30분, 앱에서
 check('조명: RTC(PCF8563) 읽기·쓰기와 앱·시리얼 시각 맞추기', /rtcRead\(\)/.test(lamp) && /rtcWrite\(/.test(lamp) && /line.startsWith\("time "\)/.test(lamp) && /c == sys_time/.test(lamp));
 check('조명: 시간 표시는 STP16CP05 32비트 직렬 전송, 조명이 꺼지면 OE 로 끈다', /dispShift\d+\(uint32_t bits\)/.test(lamp) && /ledcWrite\(PIN_F\d+_DISPLAY, 1023\)/.test(lamp));
 check('센서 보정: 원시값 요청·저장·지우기 명령과 비휘발 저장', /b\[0\] == 0x01/.test(lamp) && /calSave\(i\)/.test(lamp) && /prefs.clear\(\)/.test(lamp));
+check('출하 검사: selftest 가 이름·버전·MAC·입력값·원시값을 한 줄 JSON 으로, out 명령이 출력을 직접 켠다', /line == "selftest"/.test(lamp) && /\\"mac\\"/.test(lamp) && /\\"in\d+\\":%d/.test(lamp) && /\\"raw\d+\\":%d/.test(lamp) && /line.startsWith\("out "\)/.test(lamp));
+check('무선 업데이트: 시작·조각·끝·취소와 오류 알림, 끝나면 다시 시작, 업데이트 중 출력 끔', /Update\.begin\(otaSize\)/.test(lamp) && /Update\.write/.test(lamp) && /Update\.end\(true\)/.test(lamp) && /0xE2/.test(lamp) && /otaRestartAt/.test(lamp) && /c == sys_ota/.test(lamp));
+check('인증 시험 송신: rftest <채널> 로 DTM 송신, rftest off 로 복귀 (C3·S3)', /esp_ble_dtm_tx_start/.test(lamp) && /rftest off/.test(lamp) && /CONFIG_IDF_TARGET_ESP32C3/.test(lamp));
+check('무선 업데이트를 쓰려면 앱 영역이 둘인 파티션(min_spiffs)이어야 한다', SAMPLES.every((x) => /PartitionScheme=min_spiffs/.test(MCUS[x.dev.mcu].fqbn)));
 const humid = fs.readFileSync(path.join(dir, 'humidifier_c3', 'humidifier_c3.ino'), 'utf8');
 check('가습기: 온도 센서가 끊기면(INT16_MIN) 히터를 막는다 (fail-safe)', /in\d+ == INT16_MIN \|\| in\d+ >= 1200/.test(humid));
 // 공용 펌웨어

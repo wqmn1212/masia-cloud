@@ -89,7 +89,7 @@ export function firmwareSketch(dev, { version = '0.2.0' } = {}) {
   L.push(`// ${g.device_name} 펌웨어 — AEGIS 시제품 개발 워크벤치에서 만듦 (v${version})`);
   L.push(`// 보드: ${MCUS[mcu].board} (${MCUS[mcu].fqbn}) · Arduino-ESP32 코어 3.x (내장 BLE·Preferences·Wire 라이브러리만 씀)`);
   L.push('// 동작 규칙은 워크벤치의 동작 시뮬레이션과 같습니다. BLE 값은 모두 리틀 엔디언.');
-  L.push('#include <Arduino.h>', '#include <BLEDevice.h>', '#include <BLEServer.h>', '#include <BLE2902.h>', '#include <Preferences.h>');
+  L.push('#include <Arduino.h>', '#include <BLEDevice.h>', '#include <BLEServer.h>', '#include <BLE2902.h>', '#include <Preferences.h>', '#include <Update.h>', '#include <esp_gap_ble_api.h>', '#include <esp_bt.h>');
   if (clock) L.push('#include <Wire.h>', '#include <time.h>');
   L.push('');
   L.push(`#define DEVICE_NAME   "${g.device_name}"`, `#define FW_VERSION    "${version}"`, `#define SERVICE_UUID  "${g.service}"`, `#define INFO_UUID     "${g.info.uuid}"`);
@@ -257,10 +257,30 @@ export function firmwareSketch(dev, { version = '0.2.0' } = {}) {
     L.push('}', '');
   });
 
+  // ── 무선 펌웨어 업데이트 (BLE): 앱이 새 펌웨어(.bin, 앱 영역)를 조각으로 보내면 빈 쪽 영역에 쓰고, 검증이 맞으면 그쪽으로 다시 시작한다. 실패하면 지금 펌웨어 그대로 ──
+  L.push('uint32_t otaSize = 0, otaGot = 0, otaRestartAt = 0;', 'bool otaOn = false;',
+    'void otaReply(uint8_t code, uint32_t v) { uint8_t r[5] = {code}; memcpy(r + 1, &v, 4); sys_ota->setValue(r, 5); sys_ota->notify(); }',
+    'void otaWrite(const uint8_t* b, size_t n) {', '  if (n >= 5 && b[0] == 0x01) {',
+    '    otaSize = (uint32_t)b[1] | (b[2] << 8) | (b[3] << 16) | ((uint32_t)b[4] << 24); otaGot = 0;',
+    ...(outs.length ? [`    ${outs.map((c) => `lvl${c.index} = 0;`).join(' ')} refreshOutputs();  // 업데이트 중에는 출력을 모두 끈다`] : []),
+    '    otaOn = Update.begin(otaSize);', '    otaReply(otaOn ? 0x01 : 0xE1, otaSize);',
+    '  } else if (n >= 2 && b[0] == 0x02 && otaOn) {', '    size_t w = Update.write((uint8_t*)b + 1, n - 1);', '    otaGot += w;',
+    '    if (w != n - 1) { otaOn = false; Update.abort(); otaReply(0xE2, otaGot); }', '    else if (otaGot / 4096 != (otaGot - w) / 4096 || otaGot >= otaSize) otaReply(0x02, otaGot);',
+    '  } else if (n >= 1 && b[0] == 0x03 && otaOn) {', '    otaOn = false;', '    bool ok = otaGot == otaSize && Update.end(true);', '    if (!ok) Update.abort();', '    otaReply(ok ? 0x03 : 0xE3, otaGot);', '    if (ok) otaRestartAt = millis() + 800;',
+    '  } else if (n >= 1 && b[0] == 0x04) { if (otaOn) Update.abort(); otaOn = false; otaReply(0x04, 0); }', '}', '');
+  // ── 인증 시험용 무선 송신 (시리얼 rftest): BLE 직접 시험 모드(DTM)로 한 채널에서 계속 송신 ──
+  L.push('// 인증 시험(전파·전자파)용: 시리얼 "rftest <채널 0~39> [출력 dBm]" = 그 채널로 계속 송신(PRBS9 변조), "rftest off" = 멈추고 다시 시작', 'bool rfTestOn = false;',
+    'void rfTest(int ch, int dbm) {', '#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32S3)',
+    '  BLEDevice::getAdvertising()->stop();', '  if (server && connected) server->disconnect(server->getConnId());', '  delay(200);',
+    '  esp_power_level_t lv = dbm >= 9 ? ESP_PWR_LVL_P9 : dbm >= 6 ? ESP_PWR_LVL_P6 : dbm >= 3 ? ESP_PWR_LVL_P3 : dbm >= 0 ? ESP_PWR_LVL_N0 : dbm >= -6 ? ESP_PWR_LVL_N6 : ESP_PWR_LVL_N12;',
+    '  esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, lv);', '  if (rfTestOn) esp_ble_dtm_stop();',
+    '  esp_ble_dtm_tx_t p = {};', '  p.tx_channel = (uint8_t)constrain(ch, 0, 39);', '  p.len_of_data = 37;', '  p.pkt_payload = BLE_DTM_PKT_PAYLOAD_PRBS9;',
+    '  esp_err_t e = esp_ble_dtm_tx_start(&p);', '  rfTestOn = e == ESP_OK;', '  Serial.printf("rftest ch %d (%d MHz) %d dBm %s\\n", p.tx_channel, 2402 + 2 * p.tx_channel, dbm, rfTestOn ? "on" : "fail");',
+    '#else', '  Serial.println("rftest: 이 칩에서는 지원하지 않습니다 (ESP32-C3·S3 만)");', '#endif', '}', '');
   L.push('class ServerCallbacks : public BLEServerCallbacks {', '  void onConnect(BLEServer*) override { connected = true; }', '  void onDisconnect(BLEServer*) override { connected = false; BLEDevice::startAdvertising(); }', '};', '');
   const writable = chars.filter((c) => c.access.includes('write'));
   L.push('// 앱이 쓴 값: 출력은 요청값(lvl)으로 받고 안전 조건을 거쳐 내보낸다. 시스템 항목(시각·일정·보정·응답 확인)도 여기서', 'class WriteCallbacks : public BLECharacteristicCallbacks {', '  void onWrite(BLECharacteristic* c) override {', '    String d = c->getValue();', '    const uint8_t* b = (const uint8_t*)d.c_str();', '    size_t n = d.length();');
-  L.push('    if (c == sys_ping) { sys_ping->setValue((uint8_t*)b, n); sys_ping->notify(); return; }');
+  L.push('    if (c == sys_ping) { sys_ping->setValue((uint8_t*)b, n); sys_ping->notify(); return; }', '    if (c == sys_ota) { otaWrite(b, n); return; }');
   if (sys.time) L.push('    if (c == sys_time) { if (n >= 4) { clockSet((uint32_t)b[0] | (b[1] << 8) | (b[2] << 16) | ((uint32_t)b[3] << 24)); Serial.printf("시각 맞춤 %lu\\n", (unsigned long)nowLocal()); } return; }');
   if (sys.schedule) L.push(sched && clock && lights.length ? '    if (c == sys_schedule) { if (n >= 8) { memcpy(schedCfg, b, 8); schedSave(); schedPhase = 255; } return; }' : '    if (c == sys_schedule) return;');
   L.push('    if (c == sys_calib) {',
@@ -286,9 +306,21 @@ export function firmwareSketch(dev, { version = '0.2.0' } = {}) {
   L.push('  }', '};', '');
 
   // ── 시리얼 명령 (워크벤치의 굽기·시리얼 화면에서) ──
-  L.push('// 시리얼 명령 (115200): "info" = 이름·버전, "time <초>" = 시각 맞추기, "read" = 입력값 한 줄', 'void serialCommands() {', '  if (!Serial.available()) return;', '  String line = Serial.readStringUntil(\'\\n\');', '  line.trim();',
+  L.push('// 시리얼 명령 (115200): "info" = 이름·버전, "time <초>" = 시각 맞추기, "read" = 입력값 한 줄, "selftest" = 출하 검사, "out <번호> <값>" = 출력 직접 켜기, "rftest <채널> [dBm]" = 인증 시험 송신', 'void serialCommands() {', '  if (!Serial.available()) return;', '  String line = Serial.readStringUntil(\'\\n\');', '  line.trim();',
     '  if (line == "info") Serial.printf("AEGIS %s %s\\n", DEVICE_NAME, FW_VERSION);');
   if (clock) L.push('  else if (line.startsWith("time ")) { clockSet((uint32_t)strtoul(line.c_str() + 5, nullptr, 10)); Serial.printf("시각 %lu\\n", (unsigned long)nowLocal()); }');
+  // 출하 검사: 한 줄 JSON 으로 이름·버전·MAC·입력값·원시값을 낸다. "out <번호> <값>" 은 출력을 직접 켠다 (검사자가 눈으로 확인)
+  L.push('  else if (line == "selftest") {',
+    '    Serial.printf("{\\"selftest\\":1,\\"name\\":\\"%s\\",\\"fw\\":\\"%s\\",\\"mac\\":\\"%s\\",\\"chip\\":\\"%s\\",\\"heap\\":%u", DEVICE_NAME, FW_VERSION, BLEDevice::getAddress().toString().c_str(), ESP.getChipModel(), (unsigned)ESP.getFreeHeap());',
+    ...(clock ? ['    Serial.printf(",\\"rtc\\":%d", rtcRead() ? 1 : 0);'] : []),
+    ...chars.filter((c) => !isOutput(c.kind) && c.type !== 'bytes').map((c) => `    Serial.printf(",\\"in${c.index}\\":%d", (int)${readCode(c)});`),
+    ...cals.map((c) => `    Serial.printf(",\\"raw${c.index}\\":%d", (int)${rawCode(c)});`),
+    '    Serial.println("}");', '  }',
+    '  else if (line.startsWith("out ")) {', '    int i = 0, v = 0;', '    if (sscanf(line.c_str() + 4, "%d %d", &i, &v) == 2) {',
+    ...outs.map((c) => `      if (i == ${c.index}) lvl${c.index} = (uint16_t)v;`),
+    ...(outs.length ? ['      refreshOutputs();'] : []), '      Serial.printf("out %d %d\\n", i, v);', '    }', '  }',
+    '  else if (line == "rftest off") { Serial.println("rftest off"); delay(100); ESP.restart(); }',
+    '  else if (line.startsWith("rftest ")) { int ch = 19, dbm = 0; sscanf(line.c_str() + 7, "%d %d", &ch, &dbm); rfTest(ch, dbm); }');
   L.push(`  else if (line == "read") { Serial.printf("${ins.map((c) => `${nm(c)}=%d`).join(' ') || 'no-input'}\\n"${ins.map((c) => `, (int)in${c.index}`).join('')}); }`, '}', '');
 
   L.push('void setup() {', '  Serial.begin(115200);', '  calLoad();');
@@ -314,7 +346,7 @@ export function firmwareSketch(dev, { version = '0.2.0' } = {}) {
   if (outs.length) L.push('  refreshOutputs();  // 부팅 직후 출력은 모두 꺼진 상태');
   L.push('  Serial.printf("AEGIS %s %s 광고 시작\\n", DEVICE_NAME, FW_VERSION);', '}', '');
 
-  L.push('void loop() {', '  static uint32_t lastScan = 0;', '  serialCommands();');
+  L.push('void loop() {', '  static uint32_t lastScan = 0;', '  serialCommands();', '  if (otaRestartAt && millis() > otaRestartAt) ESP.restart();', '  if (rfTestOn || otaOn) { delay(1); return; }  // 시험 송신·업데이트 중에는 평소 동작을 멈춘다');
   if (lights.length) L.push('  updateLights();');
   if (encoders.length && lights.length) L.push('  lampControls();');
   L.push('  if (millis() - lastScan >= 30) {  // 30 ms 마다 입력 읽기 (버튼 채터링 제거 겸용)', '    lastScan = millis();');
