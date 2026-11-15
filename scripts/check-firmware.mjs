@@ -94,7 +94,7 @@ check('가습기: 온도 센서가 끊기면(INT16_MIN) 히터를 막는다 (fai
   const sw = swiftSdk(d), kt = kotlinSdk(d);
   const balanced = (t) => ['{}', '()', '[]'].every(([a, b]) => t.split(a).length === t.split(b).length);
   check('앱 코드: Swift·Kotlin 모두 서비스·모든 기능·시스템 UUID 가 들어 있고 괄호 짝이 맞다', [sw, kt].every((t) => t.includes(g.service) && [...g.chars, ...g.sys].every((c) => t.includes(c.uuid)) && balanced(t)));
-  check('앱 코드: 쓰기 가능한 항목마다 set 함수, 알림 항목마다 콜백, 온도는 ×0.1, 연결하면 시각 맞추기', g.chars.filter((c) => c.access.includes('write') && c.type !== 'bytes').every((c) => new RegExp(`func setF${c.index}`).test(sw) && new RegExp(`fun setF${c.index}`).test(kt)) && /f7Temp: Double\(RenightL1Device\.int\(d, signed: true\)\) \/ 10/.test(sw) && /onF7Temp\(int\(d, true\)\.toDouble\(\) \/ 10\)/.test(kt) && /syncTime\(\)/.test(sw) && /syncTime\(\)/.test(kt));
+  check('앱 코드: 쓰기 가능한 항목마다 set 함수, 알림 항목마다 콜백, 온도는 ×0.1, 연결하면 시각 맞추기', g.chars.filter((c) => c.access.includes('write') && c.type !== 'bytes').every((c) => new RegExp(`func setF${c.index}`).test(sw) && new RegExp(`fun setF${c.index}`).test(kt)) && /f7Temp: Double\(RenightL1Device\.int\(d, signed: true\)\) \* 0\.1/.test(sw) && /onF7Temp\(int\(d, true\)\.toDouble\(\) \* 0\.1\)/.test(kt) && /syncTime\(\)/.test(sw) && /syncTime\(\)/.test(kt));
   const files = sdkFiles(d, '# 통신 문서');
   check('앱 코드 묶음: README · ios/…Device.swift · android/…Device.kt · protocol.md', files.map((f) => f.name).join(',') === 'README.md,ios/RenightL1Device.swift,android/RenightL1Device.kt,protocol.md');
 }
