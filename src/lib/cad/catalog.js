@@ -57,6 +57,21 @@ export const TEMPLATES = {
       ...common,
     ],
   },
+  handheld: {
+    label: '손잡이형 (리모컨·휴대 기기)',
+    hint: '길쭉한 둥근 몸체를 위·아래 케이스로 나누고, 윗면에 버튼을 길이 방향으로 늘어놓고 끝에 USB-C 를 둔다',
+    params: [
+      { key: 'length', label: '길이 (Y)', unit: 'mm', min: 60, max: 300, step: 1, def: 150, group: '크기' },
+      { key: 'width', label: '폭 (X)', unit: 'mm', min: 25, max: 120, step: 1, def: 46, group: '크기' },
+      { key: 'height', label: '두께 (Z)', unit: 'mm', min: 12, max: 60, step: 0.5, def: 24, group: '크기' },
+      { key: 'split', label: '아래 케이스 높이 비율', unit: '%', min: 20, max: 80, step: 5, def: 55, group: '크기' },
+      { key: 'buttons', label: '윗면 버튼 수', unit: '개', min: 0, max: 8, step: 1, def: 4, group: '조작부' },
+      { key: 'button_d', label: '버튼 지름', unit: 'mm', min: 4, max: 20, step: 0.5, def: 9, group: '조작부' },
+      { key: 'usb', label: '끝면 USB-C', type: 'select', options: [['parting', '분할선에 반반 (슬라이드 없음)'], ['hole', '벽 구멍 (슬라이드 필요)'], ['none', '없음']], def: 'parting', group: '조작부' },
+      { key: 'battery', label: '배터리 (두께 mm, 0 = 없음)', unit: 'mm', min: 0, max: 20, step: 0.5, def: 4, group: '내부' },
+      ...common,
+    ],
+  },
   cylinder: {
     label: '원통형 (몸통·윗뚜껑)',
     hint: '원통 몸통(바닥 막힘)과 윗뚜껑으로 나누고, 뚜껑 윗면 배출구·버튼, 몸통 바닥 보스·리브를 넣는다',
@@ -140,3 +155,9 @@ export function guessFromConcept(preview) {
 
 /** STEP 부품 이름: 영문 id 를 앞에 둔다 (UTF-8 한글을 못 읽는 CAD 에서도 부품을 구분할 수 있게) */
 export const stepName = (p) => `${String(p.id).toUpperCase()} ${p.name}`;
+
+/** 손잡이형은 사각 하우징 계산을 그대로 쓴다: 길이 방향(Y)으로 버튼, 평면 모서리는 폭의 절반 가까이(알약 모양) */
+export function handheldAsBox(p) {
+  const corner = Math.max(2, Math.min(p.width / 2 - 1, 40));
+  return { ...p, width: p.width, depth: p.length, corner, button_axis: 'y', pcb_w: Math.max(10, Math.round(p.width - 2 * p.wall - 8)), pcb_d: Math.max(10, Math.round(p.length - 2 * p.wall - 2 * corner * 0.6 - 4)) };
+}

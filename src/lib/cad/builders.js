@@ -3,7 +3,7 @@
 //  - mold: 사출 부품이면 true (금형 점검 대상)
 //  - group: 'body' 는 회전하는 묶음 (motion 으로 돌려 보며 간섭을 본다)
 import { taper, pin, boss, rib, bar, box, notch, slotZ, screwThrough, attempt, tanD } from './geom.js';
-import { cleanParams, MATERIALS } from './catalog.js';
+import { cleanParams, MATERIALS, handheldAsBox } from './catalog.js';
 import { pcbLayout } from './pcbLayout.js';
 
 const COLORS = { shell: '#E2DFD9', shell2: '#D9D6D0', pc: '#F1F1EE', fabric: '#C8C6C1', steel: '#8C8F93', zinc: '#A9ACB0', pcb: '#27684B', mcpcb: '#E6E5DB', alu: '#B7BBC0', part: '#3A3A3A', knob: '#D3CFC8' };
@@ -212,6 +212,8 @@ function roundLamp(R, p, notes) {
 
 // ---------------------------------------------------------------- 사각 하우징
 
+const alongYBatt = (p) => (p.button_axis === 'y' ? [Math.min(34, p.pcb_w - 4), Math.min(50, p.pcb_d - 10), p.battery] : [Math.min(50, p.pcb_w - 10), Math.min(34, p.pcb_d - 6), p.battery]);
+
 function boxCase(R, p, notes) {
   const a = p.draft, w = p.wall, W = p.width, D = p.depth, H = p.height, rc = p.corner;
   const Hl = Math.round(H * p.split) / 100;
@@ -249,7 +251,8 @@ function boxCase(R, p, notes) {
   }
   // 위 케이스 리브 2줄 (y = ±D/4), 버튼 자리와 겹치지 않게
   const ribH = Math.min(5, H - Hl - w - 3);
-  if (ribH >= 1.5 && D / 4 > p.button_d / 2 + 2) {
+  const alongY = p.button_axis === 'y';
+  if (!alongY && ribH >= 1.5 && D / 4 > p.button_d / 2 + 2) {
     for (const sy of [-1, 1]) upper = upper.fuse(rib(R, -(W / 2 - dw - 0.5), sy * D / 4, W / 2 - dw - 0.5, sy * D / 4, H - w + 0.3, H - w - ribH, ribT, 1));
   }
   // 끼움 턱 자리: 위 케이스 벽 안쪽 절반을 파낸다 (보스도 같이 다듬는다)
@@ -262,19 +265,20 @@ function boxCase(R, p, notes) {
   if (p.battery > 0) {
     const bz0 = w + 0.3;
     if (bz0 + p.battery > pcbZ - 0.3) notes.push(`배터리(${p.battery} mm)가 기판 밑에 들어가지 않습니다. 아래 케이스 높이 비율을 늘리거나 배터리를 얇게 하세요.`);
-    add({ id: 'battery', name: '배터리 (리튬 폴리머)', material: '부품', color: '#6E7B8B', shape: box(R, [0, 0, bz0 + p.battery / 2], [Math.min(50, p.pcb_w - 10), Math.min(34, p.pcb_d - 6), p.battery]) });
+    add({ id: 'battery', name: '배터리 (리튬 폴리머)', material: '부품', color: '#6E7B8B', shape: box(R, [0, 0, bz0 + p.battery / 2], alongYBatt(p)) });
   }
   add({ id: 'pcb', name: '메인 기판', material: 'FR-4 1.6T', color: COLORS.pcb, shape: box(R, [0, 0, pcbZ + 0.8], [p.pcb_w, p.pcb_d, 1.6]) });
   const n = p.buttons;
   const pitch = p.button_d + 8;
   for (let i = 0; i < n; i++) {
-    const x = (i - (n - 1) / 2) * pitch;
-    if (Math.abs(x) + p.button_d / 2 > W / 2 - dw - 4) { notes.push(`버튼 ${n}개가 윗면에 다 들어가지 않습니다.`); break; }
-    upper = upper.cut(slotZ(R, x, 0, p.button_d, p.button_d, H - w - 0.5, H + 0.5, a, p.button_d / 2 - 0.01));
+    const t = (i - (n - 1) / 2) * pitch;
+    const x = alongY ? 0 : t, y = alongY ? -t : 0; // 손잡이형은 길이 방향(Y)으로, 첫 버튼이 USB 반대쪽 끝이 아니라 위쪽(+Y)부터
+    if (Math.abs(t) + p.button_d / 2 > (alongY ? D : W) / 2 - dw - 4 - (alongY ? rc * 0.3 : 0)) { notes.push(`버튼 ${n}개가 윗면에 다 들어가지 않습니다.`); break; }
+    upper = upper.cut(slotZ(R, x, y, p.button_d, p.button_d, H - w - 0.5, H + 0.5, a, p.button_d / 2 - 0.01));
     const capR = p.button_d / 2 - 0.3;
-    const cap = R.makeCylinder(capR, w + 1.2, [x, 0, H - w - 0.2]).fuse(R.makeCylinder(capR + 1.2, 1, [x, 0, H - w - 1.05])).fuse(R.makeCylinder(2, H - w - 1.05 - (pcbTop + 5) + 0.2, [x, 0, pcbTop + 5]));
+    const cap = R.makeCylinder(capR, w + 1.2, [x, y, H - w - 0.2]).fuse(R.makeCylinder(capR + 1.2, 1, [x, y, H - w - 1.05])).fuse(R.makeCylinder(2, H - w - 1.05 - (pcbTop + 5) + 0.2, [x, y, pcbTop + 5]));
     add({ id: `button_${i + 1}`, name: `버튼 ${i + 1}`, material: matLabel(p.material), color: COLORS.knob, shape: cap });
-    add({ id: `tact_${i + 1}`, name: `택트 스위치 ${i + 1}`, material: '부품', color: COLORS.part, shape: box(R, [x, 0, pcbTop + 2.5], [6, 6, 5]) });
+    add({ id: `tact_${i + 1}`, name: `택트 스위치 ${i + 1}`, material: '부품', color: COLORS.part, shape: box(R, [x, y, pcbTop + 2.5], [6, 6, 5]) });
   }
   // USB-C
   if (usbMode !== 'none') {
@@ -360,7 +364,7 @@ function cylinderCase(R, p, notes) {
   return { parts, motion: null, overall: { x: p.dia, y: p.dia, z: H } };
 }
 
-const BUILDERS = { round_lamp: roundLamp, box: boxCase, cylinder: cylinderCase };
+const BUILDERS = { round_lamp: roundLamp, box: boxCase, cylinder: cylinderCase, handheld: (R, p, notes) => boxCase(R, handheldAsBox(p), notes) };
 
 /** 템플릿 + 치수 → 부품 솔리드. 치수는 범위 안으로 잘라서 쓴다 */
 export function buildAssembly(R, template, rawParams) {

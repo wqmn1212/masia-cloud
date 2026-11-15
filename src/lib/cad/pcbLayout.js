@@ -1,6 +1,6 @@
 // 금형용 설계 템플릿 치수 → 제어 기판 외곽·구멍·부품 자리 (2D, CAD 좌표: X 오른쪽, Y 뒤(앞 = −Y), 단위 mm).
 // CAD 엔진 없이 계산하므로 화면·KiCad 내보내기·DXF 에서 바로 쓴다. builders.js 의 기판 솔리드도 이 값을 따른다.
-import { cleanParams } from './catalog.js';
+import { cleanParams, handheldAsBox } from './catalog.js';
 
 const DEG = Math.PI / 180;
 const tanD = (d) => Math.tan(d * DEG);
@@ -73,7 +73,8 @@ function boxCase(p) {
   const dw = w / Math.cos(a * DEG);
   const pcbTop = p.usb === 'parting' ? Hl - 1.65 : Math.max(w + (p.battery ? p.battery + 1.5 : 3) + 1.6, Hl - 3);
   const n = p.buttons, pitch = p.button_d + 8;
-  const anchors = Array.from({ length: n }, (_, i) => ({ id: `button_${i + 1}`, kind: 'button', x: r2((i - (n - 1) / 2) * pitch), y: 0, dir: 0, label: `버튼 ${i + 1} (윗면)` }));
+  const alongY = p.button_axis === 'y';
+  const anchors = Array.from({ length: n }, (_, i) => { const t = r2((i - (n - 1) / 2) * pitch); return { id: `button_${i + 1}`, kind: 'button', x: alongY ? 0 : t, y: alongY ? -t : 0, dir: 0, label: `버튼 ${i + 1} (윗면)` }; });
   if (p.usb !== 'none') anchors.push({ id: 'usb', kind: 'usb', x: 0, y: r2(Math.min(p.pcb_d / 2 - 3.7, D / 2 - dw - 3.7)), dir: 90, label: 'USB-C (뒤 벽)' });
   const hx = p.pcb_w / 2 - 3.5, hy = p.pcb_d / 2 - 3.5;
   return {
@@ -97,7 +98,7 @@ function cylinderCase(p) {
   return { kind: 'circle', outline: ellipsePts(0, 0, p.pcb_d / 2, p.pcb_d / 2), size: [p.pcb_d, p.pcb_d], z: r2(pcbTop - 1.6), backClear: r2(Math.max(0, pcbTop - 1.6 - w)), holes, anchors, notes: ['기판 고정 구멍 3개에 맞는 받침을 몸통 안쪽에 추가하세요 (금형 설계에는 아직 없음).'] };
 }
 
-const LAYOUTS = { round_lamp: roundLamp, box: boxCase, cylinder: cylinderCase };
+const LAYOUTS = { round_lamp: roundLamp, box: boxCase, cylinder: cylinderCase, handheld: (p) => boxCase(handheldAsBox(p)) };
 
 /** 금형용 설계(dev.mold_design)의 기판. 템플릿이 없으면 null */
 export function pcbLayout(template, rawParams) {
