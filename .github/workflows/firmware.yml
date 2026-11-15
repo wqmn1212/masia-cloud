@@ -13,6 +13,8 @@ on:
       - 'scripts/check-firmware.mjs'
       - 'scripts/fw-stubs/**'
       - '.github/workflows/firmware.yml'
+  schedule:
+    - cron: '17 3 1 * *'   # 매달 1일: 공용 펌웨어 묶음(보관 90일)이 사라지지 않게 다시 만든다
   workflow_dispatch:
     inputs:
       request_id:
@@ -103,3 +105,12 @@ jobs:
             build/out/*.log
           retention-days: 7
           if-no-files-found: warn
+      # 공용 펌웨어(칩 3종): 워크벤치 "공용 펌웨어로 바로 굽기"가 서버 함수로 받아 간다
+      - name: Upload universal firmware
+        if: ${{ !inputs.sketch_gz_b64 }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: universal-${{ github.sha }}
+          path: build/out/universal_*/*.merged.bin
+          retention-days: 90
+          if-no-files-found: error

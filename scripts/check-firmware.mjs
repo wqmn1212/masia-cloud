@@ -40,6 +40,29 @@ check('조명: 시간 표시는 STP16CP05 32비트 직렬 전송, 조명이 꺼�
 check('센서 보정: 원시값 요청·저장·지우기 명령과 비휘발 저장', /b\[0\] == 0x01/.test(lamp) && /calSave\(i\)/.test(lamp) && /prefs.clear\(\)/.test(lamp));
 const humid = fs.readFileSync(path.join(dir, 'humidifier_c3', 'humidifier_c3.ino'), 'utf8');
 check('가습기: 온도 센서가 끊기면(INT16_MIN) 히터를 막는다 (fail-safe)', /in\d+ == INT16_MIN \|\| in\d+ >= 1200/.test(humid));
+// 공용 펌웨어
+{
+  const { universalSketch, universalConfig, universalSerialLines, UNIVERSAL_MAX } = await import('../src/lib/devkit/universal.js');
+  const src = universalSketch();
+  if (gpp) {
+    const cpp = path.join(dir, 'universal.cpp');
+    fs.writeFileSync(cpp, `${src}\nHardwareSerial Serial;\n`);
+    let err = '';
+    try { execFileSync('g++', ['-std=gnu++17', '-fsyntax-only', '-Wall', '-Werror=return-type', '-Wno-unused-variable', '-Wno-unused-function', '-Wno-unused-but-set-variable', `-I${path.join(here, 'fw-stubs')}`, cpp], { stdio: 'pipe' }); }
+    catch (e) { err = String(e.stderr || e.message).split('\n').slice(0, 12).join('\n'); }
+    check('공용 펌웨어: C++ 문법·타입 검사 통과', !err, err);
+  }
+  const lampDev = SAMPLES.find((x) => x.name === 'lamp_s3').dev;
+  const cfg = universalConfig(lampDev);
+  const g = buildGatt(lampDev);
+  const fLines = cfg.lines.filter((l) => l.startsWith('F ')), rLines = cfg.lines.filter((l) => l.startsWith('R '));
+  check(`공용 설정(조명): 기능 ${fLines.length}줄·규칙 ${rLines.length}줄·시스템 4줄, 모든 UUID 포함, 한계 안`, fLines.length === g.chars.length && rLines.length >= 3 && cfg.lines.filter((l) => l.startsWith('Y ')).length === 4 && g.chars.every((c) => cfg.text.includes(c.uuid)) && !cfg.problems.length && fLines.length <= UNIVERSAL_MAX.features);
+  check('공용 설정: 펌웨어가 읽는 칸 수와 같다 (F 11칸, R 14칸)', fLines.every((l) => l.split(' ').length === 12) && rLines.every((l) => l.split(' ').length === 15));
+  check('공용 설정: 수면 일정 규칙에 23:00·30분·08:00·30분·100 이 들어간다, 시계 I2C 핀 줄이 있다', rLines.some((l) => /^R C \d+ \d+ 0 0 \d+ 1 23 0 30 8 0 30 100$/.test(l)) && cfg.lines.some((l) => /^C \d+ \d+$/.test(l)));
+  check('공용 설정: 시리얼로 보낼 줄은 cfg begin 으로 시작해 cfg end 로 끝난다', universalSerialLines(cfg)[0] === 'cfg begin' && universalSerialLines(cfg).at(-1) === 'cfg end');
+  const many = { ...lampDev, features: Array.from({ length: 20 }, (_, i) => ({ id: `x${i}`, kind: 'led', name: `LED ${i}` })), rules: [] };
+  check('공용 설정: 기능 20개는 한계를 넘는다고 알려 준다', universalConfig(many).problems.length > 0);
+}
 if (!gpp) console.log('  (g++ 가 없어 C++ 문법 검사는 건너뜀)');
 console.log(`\n${pass}개 검산 통과${fails.length ? `, ${fails.length}개 실패` : ''}`);
 if (fails.length) process.exit(1);

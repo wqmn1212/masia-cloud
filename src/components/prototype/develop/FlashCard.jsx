@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Usb, Hammer, Loader2, Upload, Cpu, Clock, Info, ExternalLink, Save, Square } from 'lucide-react';
+import { Usb, Hammer, Loader2, Upload, Cpu, Clock, Info, ExternalLink, Save, Square, Zap, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { Card, CommandLine } from '@/components/prototype/develop/DevBits';
 import { MCUS } from '@/lib/devkit/features';
-import { serialSupported, buildStatus, buildAndWait, flashBinary, SerialMonitor, localEpoch, CHIP_NAME } from '@/lib/devkit/flasher';
+import { serialSupported, buildStatus, buildAndWait, flashBinary, SerialMonitor, localEpoch, CHIP_NAME, fetchUniversal, sendUniversalConfig } from '@/lib/devkit/flasher';
+import { universalConfig, universalSerialLines, UNIVERSAL_VERSION } from '@/lib/devkit/universal';
 import { errorText, uploadProtoFile, addProtoFiles } from '@/lib/prototypeApi';
 
 const stamp = () => new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
@@ -24,7 +25,17 @@ export default function FlashCard({ project, dev, sketch, user, onSaved }) {
   const logRef = useRef(null);
   const portRef = useRef(null);
   const canSerial = serialSupported();
-  const push = (l) => setLines((x) => [...x.slice(-300), l]);
+  const waiters = useRef([]);
+  const push = (l) => {
+    setLines((x) => [...x.slice(-300), l]);
+    waiters.current = waiters.current.filter((w) => { if (w.re.test(l)) { w.resolve(l); return false; } return true; });
+  };
+  const waitLine = (re, ms) => new Promise((resolve, reject) => {
+    const w = { re, resolve };
+    waiters.current.push(w);
+    setTimeout(() => { if (waiters.current.includes(w)) { waiters.current = waiters.current.filter((x) => x !== w); reject(new Error('장치 응답이 없습니다 (USB 연결과 공용 펌웨어인지 확인하세요)')); } }, ms);
+  });
+  const uni = universalConfig(dev);
 
   useEffect(() => { buildStatus().then(setServer).catch(() => setServer({ ready: false })); }, []);
   useEffect(() => { if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight; }, [lines]);
@@ -73,6 +84,36 @@ export default function FlashCard({ project, dev, sketch, user, onSaved }) {
       await m.send('info');
     } catch (e) { toast({ title: errorText(e), variant: 'destructive' }); }
   };
+  // 공용 펌웨어: 미리 빌드한 바이너리를 받아 굽고(기다림 없음), 제품 설정을 시리얼로 써 넣는다
+  const writeConfig = async (mon) => {
+    const m = mon || monitor;
+    if (!m) throw new Error('먼저 시리얼 모니터를 여세요');
+    const ok = await sendUniversalConfig(m, universalSerialLines(uni), waitLine);
+    toast({ title: '제품 설정을 써 넣었습니다', description: `${ok.replace('cfg ok ', '')} · 장치가 다시 시작합니다` });
+  };
+  const runUniversal = async () => {
+    setBusy('uni');
+    try {
+      const r = await fetchUniversal(mcu);
+      setBin({ bytes: r.bin, name: r.name, from: `공용 펌웨어 ${r.commit || ''}`.trim() });
+      await monitor?.close(); setMonitor(null);
+      setFlash({ progress: 0 });
+      const f = await flashBinary(r.bin, { mcu, onLog: push, onProgress: (p) => setFlash((x) => ({ ...x, progress: p })) });
+      portRef.current = f.port;
+      setFlash({ progress: 1, chip: f.chip, done: true });
+      await new Promise((res) => setTimeout(res, 2500)); // 다시 시작해 시리얼이 열릴 때까지
+      const m = new SerialMonitor((l) => push(l));
+      try { await m.open(portRef.current || undefined); } catch { throw new Error('구웠습니다. 보드가 다시 시작하면서 USB 포트가 바뀌었습니다 — "시리얼 모니터"를 열고 "설정만 써 넣기"를 누르세요.'); }
+      portRef.current = m.port; setMonitor(m);
+      await writeConfig(m);
+    } catch (e) { push(`공용 펌웨어: ${errorText(e)}`); toast({ title: errorText(e), variant: 'destructive' }); }
+    setBusy('');
+  };
+  const runConfigOnly = async () => {
+    setBusy('cfg');
+    try { await writeConfig(); } catch (e) { push(`설정: ${errorText(e)}`); toast({ title: errorText(e), variant: 'destructive' }); }
+    setBusy('');
+  };
   const closeMonitor = async () => { await monitor?.close(); setMonitor(null); };
   const saveSketch = async () => {
     setBusy('save');
@@ -92,6 +133,16 @@ export default function FlashCard({ project, dev, sketch, user, onSaved }) {
   return (
     <Card title="펌웨어 빌드 · 굽기" icon={Usb} tag={CHIP_NAME[mcu]}
       actions={<Button size="sm" variant="outline" onClick={saveSketch} disabled={!!busy}>{busy === 'save' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}프로젝트에 저장</Button>}>
+      <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+        <p className="text-label font-semibold">바로 굽기 (공용 펌웨어 {UNIVERSAL_VERSION})</p>
+        <p className="text-micro text-muted-foreground">미리 빌드해 둔 펌웨어를 굽고 이 제품의 설정(기능 {uni.lines.filter((l) => l.startsWith('F ')).length}개 · 핀 · UUID · 동작 규칙 {uni.lines.filter((l) => l.startsWith('R ')).length}개)만 써 넣습니다. 컴파일을 기다리지 않고, 설정을 바꾸면 다시 굽지 않고 설정만 다시 써 넣으면 됩니다.</p>
+        {uni.problems.map((x) => <p key={x} className="text-micro text-warning-text">{x}</p>)}
+        <div className="flex flex-wrap gap-1.5">
+          <Button size="sm" onClick={runUniversal} disabled={!server?.ready || !canSerial || !!busy || uni.problems.length > 0}>{busy === 'uni' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}공용 펌웨어 굽고 설정 넣기</Button>
+          <Button size="sm" variant="outline" onClick={runConfigOnly} disabled={!monitor || !!busy || uni.problems.length > 0}>{busy === 'cfg' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Settings2 className="w-4 h-4" />}설정만 써 넣기</Button>
+        </div>
+        {!server?.ready && server && <p className="text-micro text-muted-foreground">공용 펌웨어를 받으려면 빌드 서버 연결이 필요합니다. 연결 전에는 아래에서 직접 만든 .bin 을 굽고 시리얼 모니터를 연 뒤 “설정만 써 넣기”를 쓰세요.</p>}
+      </div>
       <ol className="grid gap-3 md:grid-cols-3">
         <li className="rounded-lg border p-3 space-y-2">
           <p className="text-label font-semibold">1. 컴파일</p>

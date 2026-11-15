@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { firmwareSketch } from '../src/lib/devkit/firmware.js';
 import { makeFeature, FEATURE_KINDS, MCUS } from '../src/lib/devkit/features.js';
 import { defaultRules } from '../src/lib/devkit/rules.js';
+import { universalSketch } from '../src/lib/devkit/universal.js';
 
 const F = (kind, name, extra = {}) => ({ ...makeFeature(kind, name), ...extra });
 const base = '82360000-c6bf-46fc-877f-a3727229996e';
@@ -34,6 +35,13 @@ export function writeSamples(dir) {
     fs.mkdirSync(d, { recursive: true });
     fs.writeFileSync(path.join(d, `${s.name}.ino`), firmwareSketch(s.dev));
     targets.push(`${s.name} ${MCUS[s.dev.mcu].fqbn}`);
+  }
+  // 공용 펌웨어: 같은 소스를 칩 3종으로 컴파일 (이름 universal_<칩>)
+  for (const mcu of Object.keys(MCUS)) {
+    const name = `universal_${mcu}`;
+    fs.mkdirSync(path.join(dir, name), { recursive: true });
+    fs.writeFileSync(path.join(dir, name, `${name}.ino`), universalSketch());
+    targets.push(`${name} ${MCUS[mcu].fqbn}`);
   }
   fs.writeFileSync(path.join(dir, 'targets.txt'), `${targets.join('\n')}\n`);
   return targets;

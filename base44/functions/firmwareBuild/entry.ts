@@ -4,7 +4,7 @@ import { unzipSync } from 'npm:fflate@0.8.2';
 // 펌웨어 빌드 서버 연결: 워크벤치가 만든 스케치를 GitHub Actions(.github/workflows/firmware.yml)로 보내 컴파일하고,
 // 끝나면 합친 바이너리(merged.bin)를 돌려준다. 브라우저는 받은 바이너리를 USB(WebSerial)로 ESP32 에 굽는다.
 // 비밀값: FIRMWARE_GITHUB_TOKEN (저장소 Actions 읽기·쓰기 권한의 fine-grained 토큰), FIRMWARE_REPO (owner/repo), FIRMWARE_REF (브랜치, 기본 main)
-// action: status | build {sketch, fqbn} | poll {request_id}
+// action: status | build {sketch, fqbn} | poll {request_id} | universal {mcu} (미리 빌드해 둔 공용 펌웨어 받기, 기다림 없음)
 const GH = 'https://api.github.com';
 const FQBN = /^esp32:esp32:(esp32|esp32c3|esp32s3)(:[A-Za-z0-9_=,]+)?$/;
 
@@ -51,6 +51,21 @@ export default async function(req) {
       const r = await gh(cfg, '/actions/workflows/firmware.yml/dispatches', { method: 'POST', body: JSON.stringify({ ref: cfg.ref, inputs: { request_id, fqbn, sketch_gz_b64: packed } }) });
       if (r.status !== 204) return Response.json({ error: `빌드 요청이 거절되었습니다 (GitHub ${r.status}): ${(await r.text()).slice(0, 300)}` }, { status: 502 });
       return Response.json({ request_id, started_at: new Date().toISOString() });
+    }
+
+    if (body.action === 'universal') {
+      const mcu = String(body.mcu || '');
+      if (!['esp32', 'esp32c3', 'esp32s3'].includes(mcu)) return Response.json({ error: '칩 종류가 올바르지 않습니다.' }, { status: 400 });
+      // 푸시 빌드가 올려 둔 공용 펌웨어 묶음(universal-<커밋>) 중 가장 새것
+      const list = await gh(cfg, '/actions/artifacts?per_page=100').then((r) => r.json());
+      const arts = (list.artifacts || []).filter((a) => /^universal-[0-9a-f]{40}$/.test(a.name) && !a.expired);
+      const a = arts.find((x) => x.workflow_run?.head_branch === cfg.ref) || arts[0];
+      if (!a) return Response.json({ error: '미리 빌드한 공용 펌웨어가 없습니다. 저장소의 firmware 작업을 한 번 실행하세요.' }, { status: 404 });
+      const zip = new Uint8Array(await gh(cfg, `/actions/artifacts/${a.id}/zip`).then((r) => r.arrayBuffer()));
+      const files = unzipSync(zip);
+      const name = Object.keys(files).find((n) => n.includes(`universal_${mcu}/`) && n.endsWith('.merged.bin')) || Object.keys(files).find((n) => n.includes(`universal_${mcu}.`) && n.endsWith('.merged.bin'));
+      if (!name) return Response.json({ error: `공용 펌웨어 묶음에 ${mcu} 용 바이너리가 없습니다.` }, { status: 404 });
+      return Response.json({ name: name.split('/').pop(), size: files[name].length, bin_b64: toB64(files[name]), built_at: a.created_at, commit: a.name.slice(10, 17) });
     }
 
     if (body.action === 'poll') {

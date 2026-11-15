@@ -13,6 +13,27 @@ export const buildStatus = async () => (await base44.functions.invoke('firmwareB
 export const requestBuild = async (sketch, fqbn) => (await base44.functions.invoke('firmwareBuild', { action: 'build', sketch, fqbn })).data;
 export const pollBuild = async (requestId) => (await base44.functions.invoke('firmwareBuild', { action: 'poll', request_id: requestId })).data;
 
+/** 미리 빌드해 둔 공용 펌웨어 받기 → { bin, name, built_at, commit } */
+export async function fetchUniversal(mcu) {
+  const r = (await base44.functions.invoke('firmwareBuild', { action: 'universal', mcu })).data;
+  if (r?.error) throw new Error(r.error);
+  return { bin: b64ToBytes(r.bin_b64), name: r.name, built_at: r.built_at, commit: r.commit };
+}
+
+/**
+ * 공용 펌웨어에 제품 설정을 시리얼로 써 넣는다. monitor: 열려 있는 SerialMonitor, lines: universalSerialLines(cfg)
+ * waitLine(정규식, ms) 로 장치 응답을 기다린다 (호출하는 쪽이 모니터의 줄을 넘겨 준다).
+ */
+export async function sendUniversalConfig(monitor, lines, waitLine) {
+  await monitor.send('cfg begin');
+  await waitLine(/cfg ready/, 4000);
+  for (const l of lines.slice(1, -1)) { await monitor.send(l); await new Promise((r) => setTimeout(r, 15)); }
+  await monitor.send('cfg end');
+  const ok = await waitLine(/cfg (ok|fail|error)/, 6000);
+  if (!/cfg ok/.test(ok)) throw new Error(`장치가 설정을 받지 못했습니다: ${ok}`);
+  return ok;
+}
+
 /** 빌드 요청 → 끝날 때까지 기다림 (onState: queued | building). 돌려줌: { bin: Uint8Array, name, run_url } */
 export async function buildAndWait(sketch, fqbn, { onState, signal, timeoutMs = 15 * 60 * 1000, everyMs = 8000 } = {}) {
   const { request_id: id } = await requestBuild(sketch, fqbn);

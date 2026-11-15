@@ -31,7 +31,14 @@ class String {
   void trim() {}
   bool startsWith(const char* p) const { return s.rfind(p, 0) == 0; }
   bool operator==(const char* o) const { return s == o; }
+  int indexOf(char c, unsigned int from = 0) const { auto p = s.find(c, from); return p == std::string::npos ? -1 : (int)p; }
+  String substring(unsigned int a, unsigned int b) const { return String(s.substr(a, b - a)); }
+  String& operator+=(const String& o) { s += o.s; return *this; }
+  String& operator+=(char c) { s += c; return *this; }
+  String& operator=(const char* c) { s = c ? c : ""; return *this; }
 };
+struct EspClass { void restart() {} const char* getChipModel() { return "ESP32"; } uint32_t getFreeHeap() { return 0; } };
+extern EspClass ESP;
 struct HardwareSerial {
   void begin(unsigned long) {}
   int available() { return 0; }
