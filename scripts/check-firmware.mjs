@@ -86,6 +86,18 @@ check('가습기: 온도 센서가 끊기면(INT16_MIN) 히터를 막는다 (fai
   let failed = ''; try { await otaSend({ write: async () => {}, request: async (_k, b) => r5(b[0] === 1 ? 1 : 0xe3, 0) }, img); } catch (e) { failed = e.message; }
   check('무선 업데이트: 장치가 검증 실패(E3)를 알리면 오류로 알려 준다', /검증값이 맞지 않습니다/.test(failed));
 }
+// 앱 개발용 코드 (Swift·Kotlin)
+{
+  const { swiftSdk, kotlinSdk, sdkFiles } = await import('../src/lib/devkit/sdkgen.js');
+  const d = SAMPLES.find((x) => x.name === 'lamp_s3').dev;
+  const g = buildGatt(d);
+  const sw = swiftSdk(d), kt = kotlinSdk(d);
+  const balanced = (t) => ['{}', '()', '[]'].every(([a, b]) => t.split(a).length === t.split(b).length);
+  check('앱 코드: Swift·Kotlin 모두 서비스·모든 기능·시스템 UUID 가 들어 있고 괄호 짝이 맞다', [sw, kt].every((t) => t.includes(g.service) && [...g.chars, ...g.sys].every((c) => t.includes(c.uuid)) && balanced(t)));
+  check('앱 코드: 쓰기 가능한 항목마다 set 함수, 알림 항목마다 콜백, 온도는 ×0.1, 연결하면 시각 맞추기', g.chars.filter((c) => c.access.includes('write') && c.type !== 'bytes').every((c) => new RegExp(`func setF${c.index}`).test(sw) && new RegExp(`fun setF${c.index}`).test(kt)) && /f7Temp: Double\(RenightL1Device\.int\(d, signed: true\)\) \/ 10/.test(sw) && /onF7Temp\(int\(d, true\)\.toDouble\(\) \/ 10\)/.test(kt) && /syncTime\(\)/.test(sw) && /syncTime\(\)/.test(kt));
+  const files = sdkFiles(d, '# 통신 문서');
+  check('앱 코드 묶음: README · ios/…Device.swift · android/…Device.kt · protocol.md', files.map((f) => f.name).join(',') === 'README.md,ios/RenightL1Device.swift,android/RenightL1Device.kt,protocol.md');
+}
 if (!gpp) console.log('  (g++ 가 없어 C++ 문법 검사는 건너뜀)');
 console.log(`\n${pass}개 검산 통과${fails.length ? `, ${fails.length}개 실패` : ''}`);
 if (fails.length) process.exit(1);

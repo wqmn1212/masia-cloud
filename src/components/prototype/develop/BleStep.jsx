@@ -15,6 +15,12 @@ export default function BleStep({ project, dev, change, dirty, user, onSaved }) 
   const fixed = useMemo(() => (ready ? pinUuids(dev) : null), [dev, ready]);
   const gatt = useMemo(() => (fixed ? buildGatt(fixed) : null), [fixed]);
   const fw = useMemo(() => (fixed ? firmwareSketch(fixed) : ''), [fixed]);
+  // 앱 개발용 코드 묶음: Swift(CoreBluetooth)·Kotlin(BluetoothGatt) 장치 클래스 + 통신 문서
+  const downloadSdk = async () => {
+    const [{ sdkFiles }, { makeZip }, { downloadBlob }] = await Promise.all([import('@/lib/devkit/sdkgen'), import('@/lib/zipStore'), import('@/lib/devkit/conceptExport')]);
+    const enc = new TextEncoder();
+    downloadBlob(new Blob([makeZip(sdkFiles(fixed, doc).map((f) => ({ name: `${base}-app-sdk/${f.name}`, data: enc.encode(f.text) })))], { type: 'application/zip' }), `${base}-app-sdk.zip`);
+  };
   const doc = useMemo(() => (fixed ? protocolDoc(fixed, { title: project.title }) : ''), [fixed, project.title]);
   const base = dev.device_name || 'device';
 
@@ -66,8 +72,8 @@ export default function BleStep({ project, dev, change, dirty, user, onSaved }) 
           <CodeView text={fw} maxH="max-h-[440px]" />
         </Card>
         <Card title="앱 개발팀용 통신 문서" icon={FileText}
-          actions={<><CopyButton text={doc} /><DownloadButton text={doc} name={`${base}-ble-protocol.md`} type="text/markdown" variant="default" /></>}>
-          <p className="text-caption text-muted-foreground">고객사·외주 앱 개발팀에 넘기는 문서입니다. UUID 표, 값 형식, 연결 순서, Web Bluetooth·Flutter 예시 코드가 들어 있습니다.</p>
+          actions={<><CopyButton text={doc} /><DownloadButton text={doc} name={`${base}-ble-protocol.md`} type="text/markdown" variant="default" /><Button size="sm" variant="outline" onClick={downloadSdk}>iOS·Android 코드 받기</Button></>}>
+          <p className="text-caption text-muted-foreground">고객사·외주 앱 개발팀에 넘기는 문서입니다. UUID 표, 값 형식, 연결 순서, Web Bluetooth·Flutter 예시 코드가 들어 있습니다. “iOS·Android 코드 받기”는 같은 UUID·바이트 형식으로 만든 Swift·Kotlin 장치 클래스 묶음(zip)입니다.</p>
           <CodeView text={doc} maxH="max-h-[440px]" />
         </Card>
       </div>
