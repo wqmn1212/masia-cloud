@@ -16,6 +16,10 @@ const ITEMS = [
   { kind: 'ANSWER', label_ko: '설계 변경 제안 (구배·살두께·슬라이드·게이트 위치)', label_cn: '设计修改建议（拔模角、壁厚、滑块、浇口位置）' },
 ];
 
+// 공장 화면·메시지는 중국어: 재질 이름도 중국어로 바꿔 보낸다
+const CN = { 'PC 확산': 'PC 扩散料', 'PC 유백': 'PC 乳白料', 'PC 투명': 'PC 透明料', 스테인리스: '不锈钢', 강판: '钢板', '아연 다이캐스트': '锌合金压铸' };
+const cnMaterials = (s) => String(s || '').split('/').map((m) => CN[m] || m).join('/');
+
 export default function MoldQuotePanel({ project, buildZip, summary, base, disabled }) {
   const [open, setOpen] = useState(false);
   const [cardId, setCardId] = useState(project.card_id || '');
@@ -32,7 +36,7 @@ export default function MoldQuotePanel({ project, buildZip, summary, base, disab
       const zip = await buildZip();
       const name = `${base}-mold-quote-package.zip`;
       const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file: new File([zip], name, { type: 'application/zip' }) });
-      const message = `您好，请根据附件（STEP 三维模型 + 设计条件说明）提供模具及注塑报价。\n注塑件 ${summary.count} 个，材料 ${summary.materials}，总重约 ${summary.weight} g。\n请注明：模具费（每个零件）、模穴数、模具钢材与寿命、注塑单价（按 1000/3000/10000 数量）、交期（工作日）、付款条件、报价有效期、是否含税。\n如对拔模角、壁厚、滑块有修改建议，请在问题中回答。谢谢！`;
+      const message = `您好，请根据附件（STEP 三维模型 + 设计条件说明）提供模具及注塑报价。\n注塑件 ${summary.count} 个，材料 ${cnMaterials(summary.materials)}，总重约 ${summary.weight} g。\n请注明：模具费（每个零件）、模穴数、模具钢材与寿命、注塑单价（按 1000/3000/10000 数量）、交期（工作日）、付款条件、报价有效期、是否含税。\n如对拔模角、壁厚、滑块有修改建议，请在问题中回答。谢谢！`;
       const { data } = await base44.functions.invoke('manageFactoryRequest', { action: 'create', card_id: cardId, items: ITEMS, days, message_cn: message, factory_name: factory, ref_files: [{ name, uri: file_uri, size: zip.length, note_cn: 'STEP 三维模型 + 设计条件说明' }] });
       if (data?.error) throw new Error(data.error);
       if (!project.card_id) await base44.entities.ProtoProject.update(project.id, { card_id: cardId }).catch(() => {});

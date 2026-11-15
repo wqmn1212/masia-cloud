@@ -100,32 +100,60 @@ def add_gnd_pours(board):
     return n
 
 
+def _rect(x0, y0, x1, y1):
+    r = pcbnew.SHAPE_POLY_SET()
+    r.NewOutline()
+    for x, y in ((x0, y0), (x1, y0), (x1, y1), (x0, y1)):
+        r.Append(int(x), int(y))
+    return r
+
+
 def add_edge_keepout(board, margin=0.6):
-    """기판 테두리 안쪽 margin mm 띠에 배선·비아 금지 구역을 둔다 (자동 배선이 테두리에 붙지 않게).
+    """기판 테두리(와 고정 구멍) 안쪽 margin mm 띠에 배선·비아 금지 구역을 둔다 (자동 배선이 테두리에 붙지 않게).
+    DSN(Specctra) 은 구멍 있는 다각형을 금지 구역으로 내보내지 못하므로, 띠를 네 사분면으로 잘라 구멍 없는 조각마다 구역을 만든다.
     구역은 기판 파일에 남겨 둔다 (KiCad 에서 손으로 고칠 때도 같은 규칙이 걸린다. 동박 면은 막지 않는다)."""
     outline = pcbnew.SHAPE_POLY_SET()
     if not board.GetBoardPolygonOutlines(outline):
-        return None
+        return 0
     inner = pcbnew.SHAPE_POLY_SET(outline)
     inner.Inflate(MM(-margin), 16)
     bb = board.GetBoardEdgesBoundingBox()
     bb.Inflate(MM(2))
-    z = pcbnew.ZONE(board)
-    # 외곽선은 구역이 직접 가진 것(Outline())에 그린다. 새 SHAPE_POLY_SET 을 넘기면 파이썬이 먼저 지워 프로그램이 죽는다.
-    ring = z.Outline()
-    ring.NewOutline()
-    for x, y in ((bb.GetLeft(), bb.GetTop()), (bb.GetRight(), bb.GetTop()), (bb.GetRight(), bb.GetBottom()), (bb.GetLeft(), bb.GetBottom())):
-        ring.Append(x, y)
-    ring.BooleanSubtract(inner, pcbnew.SHAPE_POLY_SET.PM_FAST)
-    z.SetIsRuleArea(True)
-    z.SetDoNotAllowTracks(True)
-    z.SetDoNotAllowVias(True)
-    z.SetDoNotAllowCopperPour(False)
-    z.SetDoNotAllowPads(False)
-    z.SetDoNotAllowFootprints(False)
-    z.SetLayerSet(pcbnew.LSET.AllCuMask())
-    board.Add(z)
-    return z
+    l, t, r, btm = bb.GetLeft(), bb.GetTop(), bb.GetRight(), bb.GetBottom()
+    cx, cy = (l + r) // 2, (t + btm) // 2
+    cu = pcbnew.LSET()
+    cu.AddLayer(pcbnew.F_Cu)
+    cu.AddLayer(pcbnew.B_Cu)
+    n = 0
+    for q in (_rect(l, t, cx, cy), _rect(cx, t, r, cy), _rect(l, cy, cx, btm), _rect(cx, cy, r, btm)):
+        # 기판 밖으로 나간 금지 구역은 DSN 에 실리지 않는다 → 기판 외곽 안쪽 띠만 남긴다
+        # 바깥 외곽선만 쓴다 (고정 구멍 둘레는 구멍 없는 원판 조각으로 남는다)
+        piece = pcbnew.SHAPE_POLY_SET()
+        for oi in range(outline.OutlineCount()):
+            piece.AddOutline(outline.Outline(oi))
+        piece.BooleanIntersection(q, pcbnew.SHAPE_POLY_SET.PM_STRICTLY_SIMPLE)
+        piece.BooleanSubtract(inner, pcbnew.SHAPE_POLY_SET.PM_STRICTLY_SIMPLE)
+        for i in range(piece.OutlineCount()):
+            if piece.HoleCount(i):
+                continue
+            z = pcbnew.ZONE(board)
+            # 외곽선은 구역이 직접 가진 것(Outline())에 그린다. 새 SHAPE_POLY_SET 을 넘기면 파이썬이 먼저 지워 프로그램이 죽는다.
+            o = z.Outline()
+            o.NewOutline()
+            src = piece.Outline(i)
+            for k in range(src.PointCount()):
+                p = src.CPoint(k)
+                o.Append(p.x, p.y)
+            z.SetIsRuleArea(True)
+            z.SetDoNotAllowTracks(True)
+            z.SetDoNotAllowVias(True)
+            z.SetDoNotAllowCopperPour(False)
+            z.SetDoNotAllowPads(False)
+            z.SetDoNotAllowFootprints(False)
+            z.SetLayerSet(cu)
+            board.Add(z)
+            n += 1
+    return n
 
 
 def main():
