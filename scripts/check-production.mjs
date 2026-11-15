@@ -51,6 +51,7 @@ const rep = meetingReport(project, { ...devM, freeze: { version: 1, at: '2026-11
 check('미팅 요약: 외장·핀·규칙·기판·원가·확정본·결정·할 일 표가 들어간다', ['## 외장', '## 기능과 핀', '## 동작 규칙', '## 회로·기판', '## 원가 추정', '## 설계 확정', '## 결정 사항', '- [ ] 기판 시제품 5장 주문'].every((k) => rep.includes(k)), rep.slice(0, 300));
 const cert = certChecklist(project, devM, { hw });
 check('인증 자료: 무선(모듈)·전자파·전기 안전(어댑터·조명 차단)·제출 목록', /ESP32-S3-WROOM-1/.test(cert) && /전자파 적합등록/.test(cert) && /12 V 직류 어댑터/.test(cert) && /85 °C 하드웨어 차단/.test(cert) && /- \[ \] 회로도/.test(cert));
+check('인증 자료: 무선 시험 모드 명령(rftest 0·19·39·off), 사용 설명서 초안(정격·주의·전파혼신 문구), 명판 시안', /`rftest 39`/.test(cert) && /`rftest off`/.test(cert) && /입력: DC 12 V/.test(cert) && /전파혼신 가능성/.test(cert) && /덮개\(확산판\)/.test(cert) && /KC 인증번호: □/.test(cert));
 
 // 4. 실물 검증 체크리스트 · LCSC 번호 직접 넣기
 {
