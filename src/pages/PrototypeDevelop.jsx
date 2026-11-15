@@ -9,7 +9,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { protoKeys, useProtoProject, actorName, errorText } from '@/lib/prototypeApi';
 import { useProtoConcepts } from '@/lib/conceptApi';
 import { randomBase, pinUuids } from '@/lib/devkit/ble';
-import { assignPins, pinProblems } from '@/lib/devkit/features';
+import { pinPlan, pinProblems } from '@/lib/devkit/features';
 import ConceptStep from '@/components/prototype/develop/ConceptStep';
 import CadStep from '@/components/prototype/develop/CadStep';
 import MoldDesignStep from '@/components/prototype/develop/MoldDesignStep';
@@ -55,7 +55,8 @@ export default function PrototypeDevelop() {
   const change = (patch) => { setDev((d) => ({ ...d, ...(typeof patch === 'function' ? patch(d) : patch) })); setDirty(true); };
 
   const concept = useMemo(() => concepts.find((c) => c.preview?.parts?.length) || null, [concepts]);
-  const features = useMemo(() => (dev ? assignPins(dev.features || [], dev.mcu) : []), [dev]);
+  const plan = useMemo(() => (dev ? pinPlan(dev.features || [], dev.mcu, dev.rules) : { features: [], i2c: null }), [dev]);
+  const features = plan.features;
   const view = dev ? { ...dev, features } : null;
 
   // 저장: 버튼, 또는 고친 뒤 4초 동안 손대지 않으면 자동 저장 (관리자가 설계 자료실에서 본다)
@@ -101,7 +102,7 @@ export default function PrototypeDevelop() {
     sim: Array.isArray(project.dev?.rules),
     test: ['TEST', 'IMPROVE'].includes(project.stage),
   };
-  const problems = pinProblems(features, view.mcu);
+  const problems = pinProblems(features, view.mcu, plan.i2c);
   const props = { project, concept, concepts, circuits, dev: view, change, user, dirty, onSaved: () => qc.invalidateQueries({ queryKey: protoKeys.project(projectId) }) };
 
   return (

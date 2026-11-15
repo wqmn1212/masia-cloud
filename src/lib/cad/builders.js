@@ -4,6 +4,7 @@
 //  - group: 'body' 는 회전하는 묶음 (motion 으로 돌려 보며 간섭을 본다)
 import { taper, pin, boss, rib, bar, box, notch, slotZ, screwThrough, attempt, tanD } from './geom.js';
 import { cleanParams, MATERIALS } from './catalog.js';
+import { pcbLayout } from './pcbLayout.js';
 
 const COLORS = { shell: '#E2DFD9', shell2: '#D9D6D0', pc: '#F1F1EE', fabric: '#C8C6C1', steel: '#8C8F93', zinc: '#A9ACB0', pcb: '#27684B', mcpcb: '#E6E5DB', alu: '#B7BBC0', part: '#3A3A3A', knob: '#D3CFC8' };
 const matLabel = (k) => MATERIALS[k]?.label || k;
@@ -169,10 +170,11 @@ function roundLamp(R, p, notes) {
   let plate = taper(R, 'ellipse', rxi - 0.3, ryi - 0.3, 0, 0, plateT, 0);
   for (const [x, y] of bossXY) plate = plate.cut(bar(R, 'z', [x, y, plateT / 2], 1.5, plateT + 2));
   add({ id: 'weight_plate', name: '바닥 무게판 (도장 강판)', role: '무게 중심 낮추기 + 바닥 덮개', material: '강판', color: COLORS.steel, shape: plate });
-  // 기판: 안쪽 타원에 들어가는 정사각 (보스와 2 mm 띄움)
-  const fit = Math.sqrt(0.85 / (1 / (rxi - 1) ** 2 + 1 / (ryi - 1) ** 2));
-  const pcbHalf = Math.min(fit, sideX - 3 - 2, rearY - 3 - 2);
-  add({ id: 'pcb', name: '제어 기판 (ESP32-C3)', material: 'FR-4 1.6T', color: COLORS.pcb, shape: box(R, [0, 0, pcbZ + 0.8], [2 * pcbHalf, 2 * pcbHalf, 1.6]) });
+  // 기판: 안쪽 타원에서 0.8 mm 띄운 타원, 바닥판 보스 자리는 구멍 (회로 설계의 KiCad 외곽과 같은 값)
+  const lay = pcbLayout('round_lamp', p);
+  let pcbSolid = taper(R, 'ellipse', lay.size[0] / 2, lay.size[1] / 2, 0, pcbZ, pcbZ + 1.6, 0);
+  for (const h of lay.holes) pcbSolid = pcbSolid.cut(bar(R, 'z', [h.x, h.y, pcbZ + 0.8], h.d / 2, 4));
+  add({ id: 'pcb', name: '제어 기판', material: 'FR-4 1.6T', color: COLORS.pcb, shape: pcbSolid });
   // 다이얼 엔코더 + 축, 바깥 노브
   const encFront = -wallY(6.2, dialZ + 6.2) + 0.3;
   const outerFrontY = -(ry - dialZ * tanD(a)); // 바깥 앞 벽

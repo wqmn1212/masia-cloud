@@ -1,5 +1,5 @@
 // 블루투스(BLE GATT) 설계: 기능 목록 → 서비스·특성 UUID, 값 형식, ESP32 펌웨어 뼈대, 앱 개발팀용 프로토콜 문서.
-import { FEATURE_KINDS } from './features.js';
+import { FEATURE_KINDS, needsClock } from './features.js';
 
 const hex = (n, len) => n.toString(16).padStart(len, '0');
 
@@ -13,8 +13,8 @@ export function randomBase(rand = Math.random) {
 export const uuidAt = (base, n) => `${base.slice(0, 4)}${hex(n, 4)}${base.slice(8)}`.toLowerCase();
 export const isUuid = (s) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s || ''));
 
-export const TYPE_BYTES = { u8: 1, u16: 2, i16: 2 };
-export const TYPE_LABEL = { u8: '부호 없는 1바이트', u16: '부호 없는 2바이트 (리틀 엔디언)', i16: '부호 있는 2바이트 (리틀 엔디언)', bytes: '바이트 열' };
+export const TYPE_BYTES = { u8: 1, u16: 2, i16: 2, u32: 4 };
+export const TYPE_LABEL = { u8: '부호 없는 1바이트', u16: '부호 없는 2바이트 (리틀 엔디언)', i16: '부호 있는 2바이트 (리틀 엔디언)', u32: '부호 없는 4바이트 (리틀 엔디언)', bytes: '바이트 열' };
 
 /** 기능 목록 → GATT 표. 기능에 저장된 uuid 를 우선 써서 이름·순서를 바꿔도 UUID 가 그대로다 */
 export function buildGatt(dev) {
@@ -26,11 +26,22 @@ export function buildGatt(dev) {
     const k = FEATURE_KINDS[f.kind];
     return { feature_id: f.id, index: i + 1, name: f.name, kind: f.kind, pin: f.pin, uuid: isUuid(f.uuid) ? f.uuid.toLowerCase() : fresh(), ...k.ble, scale: k.ble.scale || 1 };
   });
+  // 시스템 항목: 시각 맞추기·수면 일정(시계가 있을 때), 센서 보정·응답 시간 확인(항상)
+  const feats = (dev?.features || []).filter((f) => FEATURE_KINDS[f.kind]);
+  const clock = needsClock(feats, dev?.rules);
+  const schedule = (dev?.rules || []).some((r) => r.type === 'schedule') || (!Array.isArray(dev?.rules) && clock && feats.some((f) => f.kind === 'switch'));
+  const sys = [
+    ...(clock ? [{ key: 'time', uuid: uuidAt(base, 0x00f0), name: '장치 시각', access: ['read', 'write'], type: 'u32', unit: '초', min: 0, max: 4294967295, scale: 1, desc: '현지 시각, 1970-01-01 00:00 부터 초 (앱이 연결할 때 써서 시계를 맞춘다)' }] : []),
+    ...(schedule ? [{ key: 'schedule', uuid: uuidAt(base, 0x00f1), name: '수면 일정', access: ['read', 'write'], type: 'bytes', scale: 1, desc: '8바이트: 켜짐(0/1), 취침 시, 분, 감광 분, 기상 시, 분, 증광 분, 기상 밝기 % (장치에 저장)' }] : []),
+    { key: 'calib', uuid: uuidAt(base, 0x00f2), name: '센서 보정', access: ['write', 'notify'], type: 'bytes', scale: 1, desc: '01 n = 항목 n 원시값 요청 → 알림 01 n 원시값(i32) 보정값(i32) · 02 n 오프셋(i16) 배율(u16, ×1000) = 저장 · 03 = 전부 지우기' },
+    { key: 'ping', uuid: uuidAt(base, 0x00f3), name: '응답 시간 확인', access: ['write', 'notify'], type: 'bytes', scale: 1, desc: '받은 바이트를 그대로 알림으로 돌려보냄 (왕복 시간 측정)' },
+  ];
   return {
     device_name: String(dev?.device_name || 'AEGIS-PROTO').slice(0, 20),
     service: uuidAt(base, 0x0001),
     info: { uuid: uuidAt(base, 0x00ff), name: '펌웨어 버전', access: ['read'], type: 'string' },
     chars,
+    sys,
   };
 }
 
@@ -56,6 +67,7 @@ export function encodeValue(c, value) {
   const buf = new DataView(new ArrayBuffer(n));
   if (c.type === 'u8') buf.setUint8(0, v);
   else if (c.type === 'u16') buf.setUint16(0, v, true);
+  else if (c.type === 'u32') buf.setUint32(0, v >>> 0, true);
   else buf.setInt16(0, v, true);
   return new Uint8Array(buf.buffer);
 }
@@ -66,7 +78,7 @@ export function decodeValue(c, bytes) {
   if (c.type === 'bytes') return Array.from(u).map((b) => hex(b, 2)).join(' ');
   const dv = new DataView(u.buffer, u.byteOffset, u.byteLength);
   if (u.byteLength < (TYPE_BYTES[c.type] || 1)) return null;
-  const raw = c.type === 'u8' ? dv.getUint8(0) : c.type === 'u16' ? dv.getUint16(0, true) : dv.getInt16(0, true);
+  const raw = c.type === 'u8' ? dv.getUint8(0) : c.type === 'u16' ? dv.getUint16(0, true) : c.type === 'u32' ? dv.getUint32(0, true) : dv.getInt16(0, true);
   return Number((raw * (c.scale || 1)).toFixed(3));
 }
 
@@ -93,6 +105,10 @@ export function protocolDoc(dev, { title = '' } = {}) {
     const exBytes = c.type === 'bytes' ? '01 05' : bytesHex(encodeValue(c, exVal));
     L.push(`| ${c.index} | ${c.name} | \`${c.uuid}\` | ${c.access.map((a) => accessKo[a]).join('·')} | ${c.type} | ${range} | ${c.scale} | ${exVal} → \`${exBytes}\` |`);
   });
+  if (g.sys?.length) {
+    L.push('', '## 시스템 항목', '', '| 항목 | UUID | 동작 | 형식 | 설명 |', '|---|---|---|---|---|');
+    g.sys.forEach((c) => L.push(`| ${c.name} | \`${c.uuid}\` | ${c.access.map((a) => accessKo[a]).join('·')} | ${c.type} | ${c.desc} |`));
+  }
   L.push('', '## 항목 설명', '');
   g.chars.forEach((c) => L.push(`- **${c.name}** (${FEATURE_KINDS[c.kind].label}): ${c.desc}${Number.isInteger(c.pin) ? ` · 장치 핀 GPIO${c.pin}` : ''}`));
   L.push('', '## 웹·앱 예시 코드', '', '### Web Bluetooth (크롬·안드로이드)', '', '```js');

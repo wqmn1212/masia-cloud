@@ -3,13 +3,14 @@ import { Bluetooth, FileCode2, FileText, Smartphone, KeyRound } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import { Card, CopyButton, DownloadButton, CodeView, CommandLine } from '@/components/prototype/develop/DevBits';
 import BleTester from '@/components/prototype/develop/BleTester';
+import FlashCard from '@/components/prototype/develop/FlashCard';
 import { buildGatt, pinUuids, firmwareSketch, protocolDoc, randomBase, bytesHex, encodeValue, TYPE_LABEL } from '@/lib/devkit/ble';
 import { MCUS } from '@/lib/devkit/features';
 
 const ACCESS = { read: '읽기', write: '쓰기', notify: '알림' };
 
 // 5단계: 블루투스 통신 규격 → ESP32 펌웨어 뼈대 → 앱 개발팀 문서 → 웹 블루투스로 실제 장치 시험
-export default function BleStep({ project, dev, change, dirty }) {
+export default function BleStep({ project, dev, change, dirty, user, onSaved }) {
   const ready = !!dev.uuid_base;
   const fixed = useMemo(() => (ready ? pinUuids(dev) : null), [dev, ready]);
   const gatt = useMemo(() => (fixed ? buildGatt(fixed) : null), [fixed]);
@@ -59,9 +60,9 @@ export default function BleStep({ project, dev, change, dirty }) {
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card title="ESP32 펌웨어 뼈대" icon={FileCode2} tag={(MCUS[dev.mcu] || MCUS.esp32c3).board}
+        <Card title="ESP32 펌웨어" icon={FileCode2} tag={(MCUS[dev.mcu] || MCUS.esp32c3).board}
           actions={<><CopyButton text={fw} /><DownloadButton text={fw} name={`${base}.ino`} variant="default" /></>}>
-          <p className="text-caption text-muted-foreground">Arduino IDE (ESP32 보드 패키지 3.x) 에서 바로 올릴 수 있는 스케치입니다. 핀 설정·블루투스 광고·센서 알림과 함께, 동작 시뮬레이션에서 정한 동작 규칙(버튼 동작·안전 조건·표시등)이 그대로 들어 있습니다. 그 밖의 로직은 TODO 자리에 덧붙입니다.</p>
+          <p className="text-caption text-muted-foreground">Arduino-ESP32 코어 3.x 스케치입니다. 핀 설정·블루투스·센서 알림과 동작 시뮬레이션의 규칙(버튼·안전 조건·표시등)에, 조명 제품이면 다이얼(돌리기·짧게·길게), 감마 감광·디더링, 수면 일정, 시계(RTC)·시간 표시까지 들어 있습니다. 앱에서 시각 맞추기·센서 보정·응답 시간 확인도 됩니다.</p>
           <CodeView text={fw} maxH="max-h-[440px]" />
         </Card>
         <Card title="앱 개발팀용 통신 문서" icon={FileText}
@@ -71,9 +72,11 @@ export default function BleStep({ project, dev, change, dirty }) {
         </Card>
       </div>
 
+      <FlashCard project={project} dev={fixed} sketch={fw} user={user} onSaved={onSaved} />
+
       <Card title="장치 시험 (웹 블루투스)" icon={Smartphone}>
         <p className="text-caption text-muted-foreground">펌웨어를 올린 시제품에 이 화면에서 바로 연결해 값을 보내고 알림을 받습니다. 장치가 없으면 가상 장치로 앱 화면과 통신 흐름을 먼저 확인할 수 있습니다.</p>
-        <BleTester gatt={gatt} />
+        <BleTester gatt={gatt} calibration={dev.calibration || {}} onCalibration={(calibration) => change({ calibration })} />
       </Card>
     </div>
   );

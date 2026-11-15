@@ -6,13 +6,14 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import ProjectCircuits from '@/components/circuit/ProjectCircuits';
+import HardwareCard from '@/components/prototype/develop/HardwareCard';
 import { Card, CopyButton } from '@/components/prototype/develop/DevBits';
 import { FEATURE_KINDS, MCUS, featureBom } from '@/lib/devkit/features';
 import { starterCircuit, hasBlock } from '@/lib/devkit/circuitStarter';
 import { actorName, errorText } from '@/lib/prototypeApi';
 
 // 4단계: 기능 → 회로 블록 → 회로 시뮬레이터 시작 회로, 그리고 부품 목록
-export default function CircuitStep({ project, dev, user }) {
+export default function CircuitStep({ project, dev, user, onSaved }) {
   const nav = useNavigate();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -55,7 +56,7 @@ export default function CircuitStep({ project, dev, user }) {
               );
             })}
           </div>
-          <p className="text-micro text-muted-foreground">시작안은 기능마다 MCU 핀을 3.3 V 전원·PWM 펄스로 바꿔 놓은 작은 회로들입니다. 시뮬레이터에서 저항·소자 값을 바꿔 전류·발열을 확인한 뒤, 실제 회로도(MCU·전원부 포함)는 PCB 설계에서 그립니다.</p>
+          <p className="text-micro text-muted-foreground">시작안은 기능마다 MCU 핀을 3.3 V 전원·PWM 펄스로 바꿔 놓은 작은 회로들입니다. 시뮬레이터에서 저항·소자 값을 바꿔 전류·발열을 확인합니다. MCU·전원부까지 들어간 실제 회로도와 기판은 아래에서 KiCad 로 받습니다.</p>
         </Card>
 
         <Card title="부품 목록 (초안)" icon={Package} tag={(MCUS[dev.mcu] || MCUS.esp32c3).module} actions={<CopyButton text={bomText} label="표 복사" />}>
@@ -69,9 +70,10 @@ export default function CircuitStep({ project, dev, user }) {
               </tbody>
             </table>
           </div>
-          <p className="text-micro text-muted-foreground">부품 번호(LCSC)는 PCB 부품 탭에서 확정합니다.</p>
+          <p className="text-micro text-muted-foreground">기능 단위 요약입니다. 저항·콘덴서까지 들어간 실제 부품표와 LCSC 번호는 아래 실제 회로도에서 받습니다.</p>
         </Card>
       </div>
+      <HardwareCard project={project} dev={dev} user={user} onSaved={onSaved} />
       <ProjectCircuits project={project} />
     </div>
   );
