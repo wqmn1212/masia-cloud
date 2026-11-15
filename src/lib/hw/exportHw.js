@@ -23,8 +23,10 @@ export function buildHwPackage(dev, lib, { title = '', seed = 'x', date = '' } =
   const area = hw.comps.reduce((s, c) => { const b = c.part.fp && lib.FOOTPRINTS[c.part.fp]?.bbox; return s + (b ? (b[2] - b[0]) * (b[3] - b[1]) : 0); }, 0);
   const layout = (md?.template && pcbLayout(md.template, md.params)) || defaultLayout(area);
   const slug = projectSlug(dev?.device_name || title);
-  const sch = toKicadSch(hw, lib, { title, project: slug, seed, date });
-  const pcb = toKicadPcb(hw, lib, layout, { schPlaced: sch.placed, project: slug, seed, title });
+  // KiCad 기본 글꼴에는 한글이 없어 제목은 장치 이름(영문)으로
+  const kTitle = /^[\x20-\x7e]+$/.test(title) ? title : `${dev?.device_name || slug} control board`;
+  const sch = toKicadSch(hw, lib, { title: kTitle, project: slug, seed, date });
+  const pcb = toKicadPcb(hw, lib, layout, { schPlaced: sch.placed, project: slug, seed, title: kTitle });
   const bom = hwBom(hw);
   return { hw, layout, sch, pcb, bom, slug };
 }

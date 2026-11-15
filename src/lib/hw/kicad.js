@@ -22,6 +22,9 @@ function uuidGen(seed) {
 }
 const font = (size = 1.27, ...more) => ['effects', ['font', ['size', size, size]], ...more];
 const snap = (v, g = 2.54) => Math.round(v / g) * g;
+const ascii = (t) => /^[\x20-\x7e]*$/.test(String(t || ''));
+/** KiCad 에 쓰는 값: 한글이 들어 있으면 부품 검색 이름(영문)으로 (한글은 Note 속성에 남긴다) */
+export const kicadValue = (c) => (ascii(c.value) ? c.value : ascii(c.part.search) && c.part.search ? c.part.search : String(c.value).replace(/[^\x20-\x7e]/g, '').trim() || c.part.cat);
 
 // ───────────────────────── 기호 (기본 라이브러리 + 사각 기호)
 function customSymbol(id) {
@@ -106,7 +109,7 @@ export function toKicadSch(hw, lib, { title = 'AEGIS prototype', project = 'aegi
   }
   cards.forEach((card, i) => {
     const { x: cx, y: cy } = layout[i];
-    items.push(['text', q(card.b.name), ['at', cx, cy, 0], font(2, ['justify', 'left', 'bottom']), ['uuid', q(uuid())]]);
+    items.push(['text', q(card.b.en || card.b.name), ['at', cx, cy, 0], font(2, ['justify', 'left', 'bottom']), ['uuid', q(uuid())]]);
     card.cells.forEach((cell) => {
       const { c, unit, bx } = cell;
       const sym = syms[c.part.sym];
@@ -119,12 +122,13 @@ export function toKicadSch(hw, lib, { title = 'AEGIS prototype', project = 'aegi
       const pins = sym.pins.filter((p) => !multi || p.unit === unit || p.unit === 0);
       const props = [
         ['property', q('Reference'), q(c.ref), ['at', sx + bx.x1 + 1.27, sy - bx.y1, 0], font(1.27, ['justify', 'left'])],
-        ['property', q('Value'), q(c.value), ['at', sx + bx.x1 + 1.27, sy - bx.y1 + 2.54, 0], font(1.27, ['justify', 'left'])],
+        ['property', q('Value'), q(kicadValue(c)), ['at', sx + bx.x1 + 1.27, sy - bx.y1 + 2.54, 0], font(1.27, ['justify', 'left'])],
         ['property', q('Footprint'), q(c.part.fp || ''), ['at', sx, sy, 0], font(1.27, 'hide')],
         ['property', q('Datasheet'), q('~'), ['at', sx, sy, 0], font(1.27, 'hide')],
         ['property', q('LCSC'), q(c.part.lcsc || ''), ['at', sx, sy, 0], font(1.27, 'hide')],
       ];
-      if (c.note) props.push(['property', q('Note'), q(c.note), ['at', sx, sy, 0], font(1.27, 'hide')]);
+      const note = [ascii(c.value) ? '' : c.value, c.note].filter(Boolean).join(' · ');
+      if (note) props.push(['property', q('Note'), q(note), ['at', sx, sy, 0], font(1.27, 'hide')]);
       items.push(['symbol', ['lib_id', q(c.part.sym)], ['at', sx, sy, 0], ['unit', unit], ['in_bom', 'yes'], ['on_board', 'yes'], ['dnp', 'no'], ['uuid', q(u)],
         ...props, ...pins.map((p) => ['pin', q(p.num), ['uuid', q(uuid())]]),
         ['instances', ['project', q(project), ['path', q(`/${rootUuid}`), ['reference', q(c.ref)], ['unit', unit]]]]]);
@@ -165,7 +169,7 @@ export function toKicadSch(hw, lib, { title = 'AEGIS prototype', project = 'aegi
 
   const libNodes = [...libIds].map((id) => parse(syms[id].text)[0]);
   const doc = ['kicad_sch', ['version', 20230121], ['generator', 'eeschema'], ['uuid', q(rootUuid)], ['paper', q(paper)],
-    ['title_block', ['title', q(title)], ['date', q(date)], ['rev', q('0.1')], ['company', q('AEGIS prototype workbench')], ['comment', 1, q('Auto-generated draft — review before PCB release')]],
+    ['title_block', ['title', q(title)], ['date', q(date)], ['rev', q('0.1')], ['company', q('AEGIS prototype workbench')], ['comment', 1, q('Auto-generated draft - review before PCB release')]],
     ['lib_symbols', ...libNodes], ...items,
     ['sheet_instances', ['path', q('/'), ['page', q('1')]]]];
   return { text: `${print(doc)}\n`, placed, rootUuid, paper };
@@ -369,12 +373,12 @@ export function toKicadPcb(hw, lib, layout, { schPlaced = [], project = 'aegis',
   const nodes = [];
   for (const p of place.list) {
     const { c } = p;
-    nodes.push(footprintNode(lib, c.part.fp, { ref: c.ref, value: c.value, x: X(p.x), y: Y(p.y), rot: p.rot, side: p.side, padNets: c.conns, netIndex, pathUuid: symUuid.get(c.ref), tstamp: uuid(), project }));
+    nodes.push(footprintNode(lib, c.part.fp, { ref: c.ref, value: kicadValue(c), x: X(p.x), y: Y(p.y), rot: p.rot, side: p.side, padNets: c.conns, netIndex, pathUuid: symUuid.get(c.ref), tstamp: uuid(), project }));
   }
   // 고정 구멍 · 보스 자리 · 외곽
   let h = 0;
   for (const ho of layout.holes) {
-    if (ho.kind === 'mount') { h++; nodes.push(footprintNode(lib, HOLE_FP(ho.d), { ref: `H${h}`, value: ho.label || 'MountingHole', x: X(ho.x), y: Y(ho.y), rot: 0, padNets: {}, netIndex, tstamp: uuid(), project })); }
+    if (ho.kind === 'mount') { h++; nodes.push(footprintNode(lib, HOLE_FP(ho.d), { ref: `H${h}`, value: HOLE_FP(ho.d).split('_').slice(1).join(' '), x: X(ho.x), y: Y(ho.y), rot: 0, padNets: {}, netIndex, tstamp: uuid(), project })); }
     else nodes.push(['gr_circle', ['center', X(ho.x), Y(ho.y)], ['end', X(ho.x + ho.d / 2), Y(ho.y)], ['stroke', ['width', 0.1], ['type', 'default']], ['fill', 'none'], ['layer', q('Edge.Cuts')], ['tstamp', q(uuid())]]);
   }
   const pts = layout.outline;
@@ -383,7 +387,7 @@ export function toKicadPcb(hw, lib, layout, { schPlaced = [], project = 'aegis',
     nodes.push(['gr_line', ['start', X(pt[0]), Y(pt[1])], ['end', X(nx[0]), Y(nx[1])], ['stroke', ['width', 0.1], ['type', 'default']], ['layer', q('Edge.Cuts')], ['tstamp', q(uuid())]]);
   });
   // 앵커 자리 설명 (User.Comments)
-  for (const a of layout.anchors || []) nodes.push(['gr_text', q(a.label), ['at', X(a.x), Y(a.y) + 4, 0], ['layer', q('Cmts.User')], ['tstamp', q(uuid())], font(0.8)]);
+  for (const a of layout.anchors || []) nodes.push(['gr_text', q(`${a.id.toUpperCase()} (${a.kind}, housing opening)`), ['at', X(a.x), Y(a.y) + 4, 0], ['layer', q('Cmts.User')], ['tstamp', q(uuid())], font(0.8)]);
   const doc = ['kicad_pcb', ['version', 20221018], ['generator', 'pcbnew'], ['general', ['thickness', 1.6]], ['paper', q('A3')],
     ['title_block', ['title', q(title)], ['rev', q('0.1')], ['company', q('AEGIS prototype workbench')]],
     ['layers', ...LAYERS.map(([n, name, type, user]) => (user ? [n, q(name), type, q(user)] : [n, q(name), type]))],

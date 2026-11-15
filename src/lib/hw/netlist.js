@@ -6,6 +6,7 @@ import { PARTS, RES, CAP, conn } from './parts.js';
 import { CUSTOM, gpioPinMap } from './customSymbols.js';
 
 const PREFIX = { R: 'R', C: 'C', L: 'L', D: 'D', Q: 'Q', U: 'U', J: 'J', SW: 'SW', TH: 'TH', BZ: 'BZ', Y: 'Y', BT: 'BT', H: 'H' };
+const KIND_EN = { button: 'BUTTON', led: 'LED', motor: 'DC MOTOR', heater: 'HEATER', buzzer: 'BUZZER', servo: 'SERVO', relay: 'RELAY', tilt: 'TILT SWITCH', lid: 'LID SENSOR', water: 'WATER LEVEL', temp: 'TEMPERATURE (NTC)', analog: 'ANALOG INPUT', battery: 'BATTERY SENSE', light: 'LED LIGHT DRIVER', display: 'CLOCK DISPLAY LINK', switch: 'TOGGLE SWITCH', encoder: 'ROTARY ENCODER', custom: 'COMMAND' };
 const fmtOhm = (v) => (v >= 1 ? `${Number(v.toFixed(2))}Ω` : `${Number(v.toFixed(3))}Ω`);
 
 /** 기능 이름 → 넷 이름에 쓸 짧은 영문 (KiCad 넷 이름은 영문이 안전하다) */
@@ -23,7 +24,7 @@ export function buildHardware(dev, opts = {}) {
   const offboard = [];
   const gpioNet = new Map(); // GPIO 번호 → 넷
   let block = null;
-  const startBlock = (id, name, kind) => { block = { id, name, kind, refs: [] }; blocks.push(block); };
+  const startBlock = (id, name, kind, en) => { block = { id, name, kind, en: en || name, refs: [] }; blocks.push(block); }; // en: KiCad 파일용 영문 제목 (KiCad 기본 글꼴은 한글이 없다)
   const add = (part, conns, extra = {}) => {
     const c = { ref: null, part, value: extra.value || part.value, block: block.id, conns, note: extra.note || '', anchor: extra.anchor || null };
     comps.push(c);
@@ -41,14 +42,14 @@ export function buildHardware(dev, opts = {}) {
   const VDRIVE = highV ? '+VIN' : '+5V';
 
   // ── 전원 ──
-  startBlock('power', '전원 (USB-C · 3.3 V)', 'power');
+  startBlock('power', '전원 (USB-C · 3.3 V)', 'power', 'POWER IN (USB-C)');
   add(PARTS.usbc, { A4: 'VBUS', A9: 'VBUS', B4: 'VBUS', B9: 'VBUS', A1: 'GND', A12: 'GND', B1: 'GND', B12: 'GND', S1: 'GND', A5: 'CC1', B5: 'CC2', A6: 'USB_DP', B6: 'USB_DP', A7: 'USB_DM', B7: 'USB_DM' }, { anchor: 'usb' });
   add(RES['5.1k'], { 1: 'CC1', 2: 'GND' }, { note: 'USB-C 5 V 요청 (CC1)' });
   add(RES['5.1k'], { 1: 'CC2', 2: 'GND' }, { note: 'USB-C 5 V 요청 (CC2)' });
   add(PARTS.esd, { 1: 'USB_DP', 6: 'USB_DP', 3: 'USB_DM', 4: 'USB_DM', 5: 'VBUS', 2: 'GND' });
   add(PARTS.schottky, { 1: '+5V', 2: 'VBUS' }, { note: 'USB 5 V → 내부 5 V (역류 방지)' });
   if (highV) {
-    startBlock('dcin', `DC 입력 ${supplyV} V → 5 V`, 'power');
+    startBlock('dcin', `DC 입력 ${supplyV} V → 5 V`, 'power', `DC IN ${supplyV} V -> 5 V BUCK`);
     add(PARTS.jack, { 1: '+VIN', 2: 'GND' }, { anchor: 'jack', value: `DC 잭 ${supplyV} V` });
     add(CAP['10u'], { 1: '+VIN', 2: 'GND' });
     add(CAP['10u'], { 1: '+VIN', 2: 'GND' });
@@ -64,7 +65,7 @@ export function buildHardware(dev, opts = {}) {
     if (supplyV > 28) notes.push(`입력 ${supplyV} V 는 벅 컨버터 TPS54202 최대 입력(28 V)을 넘습니다. 더 높은 전압용 벅으로 바꾸세요.`);
   }
   if (hasBattery) {
-    startBlock('charger', '리튬 배터리 충전·전원 전환', 'power');
+    startBlock('charger', '리튬 배터리 충전·전원 전환', 'power', 'LI-ION CHARGER + POWER PATH');
     add(PARTS.charger, { 4: 'VBUS', 8: 'VBUS', 3: 'GND', 9: 'GND', 1: 'GND', 2: 'CHG_PROG', 5: '+VBAT', 7: 'CHG_LED', 6: 'STBY_LED' });
     add(RES['2k'], { 1: 'CHG_PROG', 2: 'GND' }, { note: '충전 전류 약 580 mA' });
     add(CAP['10u'], { 1: 'VBUS', 2: 'GND' });
@@ -77,14 +78,14 @@ export function buildHardware(dev, opts = {}) {
     add(PARTS.pmos, { 1: 'VBUS', 3: '+VBAT', 2: '+5V' }, { note: 'USB 가 없으면 배터리로 전환' });
     add(RES['100k'], { 1: 'VBUS', 2: 'GND' }, { note: 'USB 빠지면 P-MOSFET 켜짐' });
   }
-  startBlock('ldo', '3.3 V 레귤레이터', 'power');
+  startBlock('ldo', '3.3 V 레귤레이터', 'power', '3.3 V LDO');
   add(CAP['10u'], { 1: '+5V', 2: 'GND' });
   add(PARTS.ldo, { 1: '+5V', 3: '+5V', 2: 'GND', 5: '+3V3' });
   add(CAP['10u'], { 1: '+3V3', 2: 'GND' });
   add(CAP['100n'], { 1: '+3V3', 2: 'GND' });
 
   // ── MCU ──
-  startBlock('mcu', `MCU ${M.module}`, 'mcu');
+  startBlock('mcu', `MCU ${M.module}`, 'mcu', `MCU ${M.module}`);
   const mcuPart = PARTS[mcuKey];
   const mcu = add(mcuPart, {});
   add(CAP['10u'], { 1: '+3V3', 2: 'GND' }, { note: 'MCU 전원' });
@@ -98,7 +99,7 @@ export function buildHardware(dev, opts = {}) {
   if (M.usb) { mcuPin(M.usb[0], 'USB_DM', 'USB D−'); mcuPin(M.usb[1], 'USB_DP', 'USB D+'); }
   else {
     // ESP32 클래식: USB-시리얼 + 자동 리셋
-    startBlock('usbuart', 'USB-시리얼 (프로그래밍)', 'mcu');
+    startBlock('usbuart', 'USB-시리얼 (프로그래밍)', 'mcu', 'USB-UART + AUTO RESET');
     add(PARTS.usbuart, { 16: '+3V3', 4: '+3V3', 1: 'GND', 5: 'USB_DP', 6: 'USB_DM', 2: 'U0RXD', 3: 'U0TXD', 13: 'DTR', 14: 'RTS' });
     add(CAP['100n'], { 1: '+3V3', 2: 'GND' });
     add(PARTS.npn, { 1: 'DTR_B', 2: 'RTS', 3: 'EN' });
@@ -107,11 +108,11 @@ export function buildHardware(dev, opts = {}) {
     add(RES['10k'], { 1: 'RTS', 2: 'RTS_B' });
     mcuPin(3, 'U0RXD', 'UART RX'); mcuPin(1, 'U0TXD', 'UART TX');
   }
-  if (mcuKey === 'esp32c3' && plan.i2c?.sda !== 8) { startBlock('strap', '부팅 설정 핀', 'mcu'); add(RES['10k'], { 1: '+3V3', 2: 'IO8_STRAP' }, { note: 'GPIO8 은 부팅 때 HIGH 여야 한다' }); mcuPin(8, 'IO8_STRAP', '부팅 설정'); }
+  if (mcuKey === 'esp32c3' && plan.i2c?.sda !== 8) { startBlock('strap', '부팅 설정 핀', 'mcu', 'BOOT STRAP'); add(RES['10k'], { 1: '+3V3', 2: 'IO8_STRAP' }, { note: 'GPIO8 은 부팅 때 HIGH 여야 한다' }); mcuPin(8, 'IO8_STRAP', '부팅 설정'); }
 
   // ── 시계 ──
   if (plan.i2c) {
-    startBlock('rtc', '실시간 시계 (정전 유지)', 'rtc');
+    startBlock('rtc', '실시간 시계 (정전 유지)', 'rtc', 'RTC PCF8563 + BACKUP CELL');
     add(PARTS.rtc, { 8: 'RTC_VDD', 4: 'GND', 1: 'RTC_OSCI', 2: 'RTC_OSCO', 5: 'I2C_SDA', 6: 'I2C_SCL' });
     add(PARTS.xtal, { 1: 'RTC_OSCI', 2: 'RTC_OSCO' });
     add(PARTS.diode, { 2: '+3V3', 1: 'RTC_VDD' });
@@ -134,7 +135,7 @@ export function buildHardware(dev, opts = {}) {
     if (k !== 'light') { count[k] = (count[k] || 0) + 1; f._n = `${NET_KIND[k]}${count[k]}`; }
     const N = f._n;
     const anchor = (want) => want;
-    startBlock(`f_${f.id}`, f.name, k);
+    startBlock(`f_${f.id}`, f.name, k, `${N} ${KIND_EN[k] || k}${/^[\x20-\x7e]+$/.test(f.name) ? ` (${f.name})` : ''}`);
     block.feature = f.id;
     if (['button', 'tilt', 'lid', 'water'].includes(k)) {
       if (k === 'button') add(PARTS.tact, { 1: N, 2: 'GND' }, { value: f.name.slice(0, 20), anchor: anchor('button') });
@@ -243,7 +244,7 @@ export function buildHardware(dev, opts = {}) {
   }
   // 조명: LED 전원은 입력 전원에서, 비교기는 두 개씩
   if (lights.length) {
-    startBlock('light_otp', `LED 판 과열 차단 비교기`, 'light');
+    startBlock('light_otp', `LED 판 과열 차단 비교기`, 'light', 'LED BOARD OVER-TEMP CUT (85 C)');
     for (let i = 0; i < lights.length; i += 2) {
       const a = lights[i], b = lights[i + 1];
       const conns = { 8: '+3V3', 4: 'GND', 3: `${a.N}_REF`, 2: `${a.N}_NTC`, 1: `${a.N}_OTP` };
@@ -252,7 +253,7 @@ export function buildHardware(dev, opts = {}) {
       add(PARTS.comparator, conns);
       add(CAP['100n'], { 1: '+3V3', 2: 'GND' });
     }
-    startBlock('led_power', 'LED 구동 전원', 'power');
+    startBlock('led_power', 'LED 구동 전원', 'power', 'LED DRIVER SUPPLY');
     add(PARTS.schottky, { 1: '+VIN_LED', 2: highV ? '+VIN' : '+5V' }, { note: '드라이버 입력' });
     add(CAP['22u'], { 1: '+VIN_LED', 2: 'GND' });
   }
