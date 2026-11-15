@@ -39,6 +39,9 @@ export const PARTS = {
   led: { sym: 'Device:LED', fp: 'LED_SMD:LED_0603_1608Metric', value: 'LED 녹색', lcsc: 'C72043', type: 'BASIC', search: '0603 green LED', cat: 'D' },
   ntc: { sym: 'Device:Thermistor_NTC', fp: 'Resistor_SMD:R_0603_1608Metric', value: 'NTC 10k B3950', lcsc: '', search: '0603 NTC 10K 3950', cat: 'TH' },
   buzzer: { sym: 'Device:Buzzer', fp: 'Buzzer_Beeper:Buzzer_12x9.5RM7.6', value: '패시브 부저 12 mm', lcsc: '', search: 'passive buzzer 12x9.5', cat: 'BZ' },
+  encoderSide: { sym: 'Device:RotaryEncoder_Switch', fp: 'Rotary_Encoder:RotaryEncoder_Bourns_Horizontal_PEC09-2xxxF-Sxxxx', value: 'PEC09 엔코더 (옆으로 누운 축, 누름 포함)', lcsc: '', search: 'PEC09 horizontal encoder switch', cat: 'SW' },
+  slideSide: { sym: 'Switch:SW_SPDT', fp: 'Button_Switch_THT:SW_Slide_SPDT_Angled_CK_OS102011MA1Q', value: 'OS102011MA1Q (직각)', lcsc: '', search: 'OS102011MA1QN1', cat: 'SW' },
+  tactSide: { sym: 'Switch:SW_Push', fp: 'Button_Switch_SMD:SW_Push_1P1T-MP_NO_Horizontal_Alps_SKRTLAE010', value: 'SKRTLAE010 (옆 누름)', lcsc: '', search: 'SKRTLAE010', cat: 'SW' },
   encoder: { sym: 'Device:RotaryEncoder_Switch', fp: 'Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm', value: 'EC11 엔코더 (누름 포함)', lcsc: '', search: 'EC11 rotary encoder switch', cat: 'SW' },
   ledDriver: { sym: 'Driver_LED:AL8860WT', fp: 'Package_TO_SOT_SMD:TSOT-23-5', value: 'AL8860WT', lcsc: '', search: 'AL8860WT-7', cat: 'U', desc: '정전류 벅 LED 드라이버 (PWM·아날로그 조광)' },
   ledL: { sym: 'Device:L', fp: 'Inductor_SMD:L_Bourns_SRU5016_5.2x5.2mm', value: '33uH 1.5A', lcsc: '', search: 'SMD 5x5 33uH', cat: 'L' },
@@ -68,7 +71,7 @@ export function allLibIds() {
   Object.values(RES).forEach(take);
   Object.values(CAP).forEach(take);
   Object.values(PARTS).forEach((p) => take(typeof p === 'function' ? p('0.1') : p));
-  [2, 3, 4, 6].forEach((n) => take(conn(n, '')));
+  [2, 3, 4, 5, 6, 7, 8, 10].forEach((n) => take(conn(n, '')));
   take(conn(2, '', true));
   return { syms: [...syms].sort(), fps: [...fps].sort() };
 }

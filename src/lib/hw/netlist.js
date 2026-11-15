@@ -31,6 +31,9 @@ export function buildHardware(dev, opts = {}) {
     block.refs.push(c);
     return c;
   };
+  // 외장 벽으로 나가는 자리(앵커)에 놓이는 첫 부품은 옆으로 눕힌(직각) 부품으로
+  const sidewaysLeft = new Map([...(opts.sideways || [])].map((k) => [k, 1]));
+  const side = (kind) => { const n = sidewaysLeft.get(kind) || 0; if (n > 0) { sidewaysLeft.set(kind, n - 1); return true; } return false; };
   const mcuPin = (gpio, net, role) => {
     if (!Number.isInteger(gpio)) return;
     const prev = gpioNet.get(gpio);
@@ -117,7 +120,8 @@ export function buildHardware(dev, opts = {}) {
     add(PARTS.xtal, { 1: 'RTC_OSCI', 2: 'RTC_OSCO' });
     add(PARTS.diode, { 2: '+3V3', 1: 'RTC_VDD' });
     add(PARTS.diode, { 2: '+VCOIN', 1: 'RTC_VDD' });
-    add(PARTS.coin, { 1: '+VCOIN', 2: 'GND' });
+    if (opts.compact) add(conn(2, 'RTC 백업 전지 (CR2032 리드선 홀더)'), { 1: '+VCOIN', 2: 'GND' }, { note: '기판이 작아 전지 홀더는 선으로 빼서 하우징 안에 붙인다' });
+    else add(PARTS.coin, { 1: '+VCOIN', 2: 'GND' });
     add(CAP['100n'], { 1: 'RTC_VDD', 2: 'GND' });
     add(RES['4.7k'], { 1: '+3V3', 2: 'I2C_SDA' });
     add(RES['4.7k'], { 1: '+3V3', 2: 'I2C_SCL' });
@@ -138,17 +142,18 @@ export function buildHardware(dev, opts = {}) {
     startBlock(`f_${f.id}`, f.name, k, `${N} ${KIND_EN[k] || k}${/^[\x20-\x7e]+$/.test(f.name) ? ` (${f.name})` : ''}`);
     block.feature = f.id;
     if (['button', 'tilt', 'lid', 'water'].includes(k)) {
-      if (k === 'button') add(PARTS.tact, { 1: N, 2: 'GND' }, { value: f.name.slice(0, 20), anchor: anchor('button') });
+      if (k === 'button') add(side('button') ? PARTS.tactSide : PARTS.tact, { 1: N, 2: 'GND' }, { value: f.name.slice(0, 20), anchor: anchor('button') });
       else add(conn(2, `${f.name.slice(0, 16)} 센서`), { 1: N, 2: 'GND' }, { note: FEATURE_KINDS[k].bom.map((b) => b[0]).join(', ') });
       add(RES['10k'], { 1: '+3V3', 2: N });
       add(CAP['100n'], { 1: N, 2: 'GND' }, { note: '채터링·잡음' });
       mcuPin(f.pin, N, f.name);
     } else if (k === 'switch') {
-      add(PARTS.slide, { 2: N, 1: 'GND' }, { value: `${f.name.slice(0, 16)} (SS12D)`, anchor: 'switch' });
+      const sw = side('switch');
+      add(sw ? PARTS.slideSide : PARTS.slide, { 2: N, 1: 'GND' }, { value: `${f.name.slice(0, 16)} (${sw ? 'OS102011MA1Q 직각' : 'SS12D'})`, anchor: 'switch' });
       add(RES['10k'], { 1: '+3V3', 2: N });
       mcuPin(f.pin, N, f.name);
     } else if (k === 'encoder') {
-      add(PARTS.encoder, { A: `${N}_A`, B: `${N}_B`, C: 'GND', S1: `${N}_SW`, S2: 'GND' }, { anchor: 'encoder' });
+      add(side('encoder') ? PARTS.encoderSide : PARTS.encoder, { A: `${N}_A`, B: `${N}_B`, C: 'GND', S1: `${N}_SW`, S2: 'GND' }, { anchor: 'encoder' });
       add(RES['10k'], { 1: '+3V3', 2: `${N}_A` });
       add(RES['10k'], { 1: '+3V3', 2: `${N}_B` });
       add(CAP['10n'], { 1: `${N}_A`, 2: 'GND' });
@@ -277,6 +282,29 @@ export function buildHardware(dev, opts = {}) {
   mcu.conns = mc;
   pinMap.sort((a, b) => a.gpio - b.gpio);
 
+  // 기판 나누기: 조명 구동부(LED 드라이버·과열 차단·LED 전원)를 보조 기판으로 → 두 기판을 잇는 넷에 커넥터를 단다
+  const split = new Set(opts.split || []);
+  const auxBlock = (b) => split.has('light') && (b.kind === 'light' || b.id === 'led_power') && !(b.kind === 'temp');
+  comps.forEach((c) => { const b = blocks.find((x) => x.id === c.block); c.board = b && auxBlock(b) ? 'aux' : 'main'; });
+  const boards = comps.some((c) => c.board === 'aux') ? ['main', 'aux'] : ['main'];
+  if (boards.length > 1) {
+    const where = new Map();
+    comps.forEach((c) => Object.values(c.conns).forEach((n) => { if (!where.has(n)) where.set(n, new Set()); where.get(n).add(c.board); }));
+    const cross = [...where].filter(([, set]) => set.size > 1).map(([n]) => n).sort((a, b) => (a === 'GND' ? 1 : b === 'GND' ? -1 : a.localeCompare(b)));
+    const n = Math.min(10, Math.max(2, cross.length + (cross.includes('GND') ? 1 : 0)));
+    const pins = [...cross];
+    if (cross.includes('GND') && pins.length < n) pins.push('GND'); // 굵은 전류용 GND 하나 더
+    const sizes = [2, 3, 4, 5, 6, 7, 8, 10];
+    const N = sizes.find((x) => x >= pins.length) || 10;
+    if (pins.length > 10) notes.push(`두 기판을 잇는 선이 ${pins.length}개라 10핀 커넥터에 다 들어가지 않습니다.`);
+    const conns = Object.fromEntries(pins.slice(0, 10).map((net, i) => [String(i + 1), net]));
+    for (const board of ['main', 'aux']) {
+      startBlock(`link_${board}`, board === 'main' ? '보조 기판 연결 (제어 기판 쪽)' : '제어 기판 연결 (보조 기판 쪽)', 'link', board === 'main' ? 'LINK TO LED DRIVER BOARD' : 'LINK TO CONTROL BOARD');
+      const c = add(conn(N, board === 'main' ? '보조 기판 연결' : '제어 기판 연결'), conns, { note: pins.slice(0, 10).map((x, i) => `${i + 1} ${x}`).join(' · ') });
+      c.board = board;
+    }
+  }
+
   // 참조 번호
   const seq = {};
   comps.forEach((c) => { const p = PREFIX[c.part.cat] || 'U'; seq[p] = (seq[p] || 0) + 1; c.ref = `${p}${seq[p]}`; });
@@ -286,7 +314,20 @@ export function buildHardware(dev, opts = {}) {
   const lone = [...nets].filter(([, list]) => list.length < 2).map(([n]) => n);
   if (lone.length) notes.push(`한 곳에만 연결된 넷: ${lone.join(', ')}`);
   const powerFlags = ['GND', 'VBUS', '+5V', ...(highV ? ['+VIN'] : []), ...(lights.length ? ['+VIN_LED'] : []), ...(hasBattery ? ['+VBAT'] : []), ...(plan.i2c ? ['RTC_VDD'] : [])];
-  return { mcu: mcuKey, module: M.module, supplyV, comps, nets, blocks: blocks.filter((b) => b.refs.length), notes, pinMap, offboard, powerFlags, i2c: plan.i2c, features };
+  return { mcu: mcuKey, module: M.module, supplyV, comps, nets, blocks: blocks.filter((b) => b.refs.length), notes, pinMap, offboard, powerFlags, i2c: plan.i2c, features, boards };
+}
+
+export const BOARD_NAME = { main: '제어 기판', aux: 'LED 구동 기판' };
+
+/** 기판 하나만 떼어 본 회로 (KiCad 프로젝트를 기판마다 따로 만든다) */
+export function boardView(hw, board) {
+  if (hw.boards.length < 2) return hw;
+  const comps = hw.comps.filter((c) => c.board === board);
+  const refs = new Set(comps.map((c) => c.ref));
+  const nets = new Map();
+  comps.forEach((c) => Object.entries(c.conns).forEach(([pin, net]) => { if (!nets.has(net)) nets.set(net, []); nets.get(net).push({ ref: c.ref, pin }); }));
+  const blocks = hw.blocks.map((b) => ({ ...b, refs: b.refs.filter((c) => refs.has(c.ref)) })).filter((b) => b.refs.length);
+  return { ...hw, comps, nets, blocks, powerFlags: board === 'aux' ? ['GND', '+VIN', '+5V', '+3V3', '+VIN_LED'].filter((n) => nets.has(n)) : hw.powerFlags.filter((n) => nets.has(n)), pinMap: board === 'main' ? hw.pinMap : [], board };
 }
 
 /** JLCPCB 부품표 (같은 부품·값·실장 모양은 한 줄) */

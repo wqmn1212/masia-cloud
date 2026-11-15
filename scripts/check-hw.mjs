@@ -6,9 +6,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { buildHardware, hwBom } from '../src/lib/hw/netlist.js';
-import { toKicadSch, toKicadPcb, toKicadPro, toDxf } from '../src/lib/hw/kicad.js';
+import { toKicadPro, toDxf } from '../src/lib/hw/kicad.js';
+import { buildHwPackage } from '../src/lib/hw/exportHw.js';
 import { parse, kids, kid, str } from '../src/lib/hw/sexpr.js';
-import { pcbLayout, defaultLayout } from '../src/lib/cad/pcbLayout.js';
 import { pinPlan, pinProblems, makeFeature } from '../src/lib/devkit/features.js';
 import * as lib from '../src/lib/hw/kicadLib.data.js';
 
@@ -39,18 +39,20 @@ const toyFeatures = [F('battery', '배터리'), F('motor', '구동 모터'), F('
   check('ESP32-S3 면 시계 I2C·다이얼 A/B·표시 4핀까지 충돌 없이 배정', pinProblems(s3.features, 'esp32s3', s3.i2c).length === 0 && s3.i2c && s3.features.find((f) => f.kind === 'encoder').pins.a != null, JSON.stringify(s3.i2c));
 }
 
+const lampMd = { template: 'round_lamp', params: {} };
 const cases = [
-  { name: '무니스 조명 (S3 · 12 V · 원형 받침대)', key: 'lamp', dev: { mcu: 'esp32s3', supply_v: 12, features: lampFeatures, rules: lampRules }, layout: pcbLayout('round_lamp', {}) },
-  { name: '가열식 가습기 (C3 · 12 V · 사각 하우징)', key: 'humid', dev: { mcu: 'esp32c3', supply_v: 12, features: humidFeatures }, layout: pcbLayout('box', { width: 140, depth: 110, pcb_w: 110, pcb_d: 80, usb: 'hole' }) },
-  { name: '배터리 장난감 (ESP32 클래식 · 5 V · 원통)', key: 'toy', dev: { mcu: 'esp32', supply_v: 5, features: toyFeatures }, layout: pcbLayout('cylinder', { dia: 140, pcb_d: 110, outlet_d: 0 }) },
-  { name: '외장 없음 (기본 사각 기판)', key: 'plain', dev: { mcu: 'esp32c3', supply_v: 5, features: [F('button', '버튼'), F('led', 'LED')] }, layout: null },
+  { name: '무니스 조명 (S3 · 12 V · 원형 받침대, 한 기판)', key: 'lamp', dev: { mcu: 'esp32s3', supply_v: 12, features: lampFeatures, rules: lampRules, mold_design: lampMd }, tight: true },
+  { name: '무니스 조명 (S3 · 12 V · LED 구동 기판 분리)', key: 'lamp2', dev: { mcu: 'esp32s3', supply_v: 12, features: lampFeatures, rules: lampRules, mold_design: lampMd, hw: { split: ['light'] } } },
+  { name: '가열식 가습기 (C3 · 12 V · 사각 하우징)', key: 'humid', dev: { mcu: 'esp32c3', supply_v: 12, features: humidFeatures, mold_design: { template: 'box', params: { width: 140, depth: 110, pcb_w: 110, pcb_d: 80, usb: 'hole' } } } },
+  { name: '배터리 장난감 (ESP32 클래식 · 5 V · 원통)', key: 'toy', dev: { mcu: 'esp32', supply_v: 5, features: toyFeatures, mold_design: { template: 'cylinder', params: { dia: 140, pcb_d: 110, outlet_d: 0 } } } },
+  { name: '외장 없음 (기본 사각 기판)', key: 'plain', dev: { mcu: 'esp32c3', supply_v: 5, features: [F('button', '버튼'), F('led', 'LED')] } },
 ];
 
 for (const cs of cases) {
-  const hw = buildHardware(cs.dev, { symbols: lib.SYMBOLS });
+  const pkg = buildHwPackage({ device_name: cs.key.toUpperCase(), ...cs.dev }, lib, { title: cs.key, seed: cs.key });
+  const hw = pkg.hw;
   const refs = new Set(hw.comps.map((c) => c.ref));
-  check(`${cs.name}: 부품 ${hw.comps.length}개·넷 ${hw.nets.size}개, 참조 번호 중복 없음, 한 곳만 연결된 넷 없음`, refs.size === hw.comps.length && !hw.notes.some((n) => /한 곳에만/.test(n)), hw.notes.join(' / '));
-  // 모든 연결 핀은 기호에 있는 핀, 모든 실장 모양 패드 번호와 맞는다
+  check(`${cs.name}: 부품 ${hw.comps.length}개·넷 ${hw.nets.size}개·기판 ${pkg.boards.length}장, 참조 번호 중복 없음, 한 곳만 연결된 넷 없음`, refs.size === hw.comps.length && !hw.notes.some((n) => /한 곳에만/.test(n)), hw.notes.join(' / '));
   const badPin = [];
   for (const c of hw.comps) {
     if (!c.part.sym) continue;
@@ -59,59 +61,58 @@ for (const cs of cases) {
     for (const pin of Object.keys(c.conns)) if ((symPins && !symPins.has(pin)) || !pads.has(pin)) badPin.push(`${c.ref}.${pin}`);
   }
   check(`${cs.name}: 연결한 핀이 모두 기호 핀·실장 패드 번호와 맞다`, badPin.length === 0, badPin.join(', '));
-  const bom = hwBom(hw);
-  const smt = bom.filter((r) => r.smt);
-  check(`${cs.name}: 부품표 ${bom.length}줄, SMT ${smt.length}줄 중 LCSC 번호 ${smt.filter((r) => r.lcsc).length}줄`, bom.length > 5 && smt.every((r) => !r.lcsc || /^C\d+$/.test(r.lcsc)));
-
-  const layout = cs.layout || defaultLayout(hw.comps.reduce((s, c) => { const b = lib.FOOTPRINTS[c.part.fp]?.bbox; return s + (b ? (b[2] - b[0]) * (b[3] - b[1]) : 0); }, 0));
-  const sch = toKicadSch(hw, lib, { title: cs.name, project: cs.key, seed: cs.key });
-  const pcb = toKicadPcb(hw, lib, layout, { schPlaced: sch.placed, project: cs.key, seed: cs.key });
-  const dir = path.join(tmp, cs.key);
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, `${cs.key}.kicad_sch`), sch.text);
-  fs.writeFileSync(path.join(dir, `${cs.key}.kicad_pcb`), pcb.text);
-  fs.writeFileSync(path.join(dir, `${cs.key}.kicad_pro`), toKicadPro(cs.key));
-  const dxf = toDxf(layout);
-  check(`${cs.name}: DXF 외곽 선 ${layout.outline.length}개 + 구멍 ${layout.holes.length}개 (mm)`, (dxf.match(/\nLINE\n8\nOUTLINE/g) || []).length === layout.outline.length && (dxf.match(/\nCIRCLE\n8\nHOLES/g) || []).length === layout.holes.length && /\$INSUNITS\n70\n4/.test(dxf));
-  const onBoard = pcb.place.list.filter((p) => !p.outside).length;
-  console.log(`   기판 ${layout.size.join('×')} mm, 면적 ${Math.round(layout.area)} mm², 부품 자리 합 ${Math.round(pcb.place.usedArea)} mm² (${Math.round(pcb.place.density * 100)} %), 뒷면 ${pcb.place.bottom.length}개, 못 넣음 ${pcb.place.outside.join(', ') || '없음'}${pcb.place.clash.length ? `, 앵커 겹침 ${pcb.place.clash.join(', ')}` : ''}`);
-  if (cs.key !== 'lamp') check(`${cs.name}: 부품이 모두 기판 안에 들어간다`, pcb.place.outside.length === 0, pcb.place.outside.join(', '));
-  else check(`${cs.name}: 받침대 기판(Ø60×64 타원)에 부품 ${onBoard}/${pcb.place.list.length}개, 못 넣은 것은 알린다`, onBoard >= pcb.place.list.length - 6 && pcb.place.outside.length > 0);
-
-  if (kicad) {
-    execFileSync('kicad-cli', ['sch', 'export', 'netlist', '-o', path.join(dir, 'k.net'), path.join(dir, `${cs.key}.kicad_sch`)], { stdio: 'ignore' });
-    const net = parse(fs.readFileSync(path.join(dir, 'k.net'), 'utf8'))[0];
-    const theirs = {};
-    for (const n of kids(kid(net, 'nets'), 'net')) {
-      const name = str(kid(n, 'name')[1]).replace(/^\//, '');
-      const nodes = kids(n, 'node').map((x) => `${str(kid(x, 'ref')[1])}.${str(kid(x, 'pin')[1])}`).filter((s) => !s.startsWith('#'));
-      if (nodes.length && !/^(unconnected|Net-)/.test(name)) theirs[name] = nodes.sort();
-    }
-    const diff = [];
-    for (const [n, list] of hw.nets) {
-      const mine = list.map((x) => `${x.ref}.${x.pin}`).sort();
-      if (JSON.stringify(mine) !== JSON.stringify(theirs[n] || [])) diff.push(n);
-    }
-    const extra = Object.keys(theirs).filter((n) => !hw.nets.has(n));
-    check(`${cs.name}: KiCad(kicad-cli)가 회로도에서 읽은 넷리스트가 만든 연결과 같다 (넷 ${hw.nets.size}개)`, diff.length === 0 && extra.length === 0, `${diff.join(',')} | ${extra.join(',')}`);
+  const smt = pkg.bom.filter((r) => r.smt);
+  check(`${cs.name}: 부품표 ${pkg.bom.length}줄, SMT ${smt.length}줄 중 LCSC 번호 ${smt.filter((r) => r.lcsc).length}줄`, pkg.bom.length > 5 && smt.every((r) => !r.lcsc || /^C\d+$/.test(r.lcsc)));
+  if (pkg.boards.length > 1) {
+    const link = hw.comps.filter((c) => c.block.startsWith('link_'));
+    check(`${cs.name}: 두 기판을 잇는 커넥터가 양쪽에 같은 핀 배치로 있다 (${link[0]?.note})`, link.length === 2 && JSON.stringify(link[0].conns) === JSON.stringify(link[1].conns) && link[0].board !== link[1].board);
   }
-  if (pcbnewOk) {
-    const py = `
+  for (const b of pkg.boards) {
+    const tag = `${cs.name}${pkg.boards.length > 1 ? ` [${b.name}]` : ''}`;
+    const dxf = toDxf(b.layout);
+    check(`${tag}: DXF 외곽 선 ${b.layout.outline.length}개 + 구멍 ${b.layout.holes.length}개 (mm)`, (dxf.match(/\nLINE\n8\nOUTLINE/g) || []).length === b.layout.outline.length && (dxf.match(/\nCIRCLE\n8\nHOLES/g) || []).length === b.layout.holes.length && /\$INSUNITS\n70\n4/.test(dxf));
+    const pl = b.pcb.place;
+    console.log(`   기판 ${b.layout.size.join('×')} mm, 면적 ${Math.round(b.layout.area)} mm², 부품 자리 합 ${Math.round(pl.usedArea)} mm² (${Math.round(pl.density * 100)} %), 뒷면 ${pl.bottom.length}개, 못 넣음 ${pl.outside.join(', ') || '없음'}${pl.clash.length ? `, 앵커 겹침 ${pl.clash.join(', ')}` : ''}`);
+    if (cs.tight) check(`${tag}: 한 기판이면 부품이 넘친다고 알린다 (LED 구동 기판을 나누라는 근거)`, pl.outside.length > 0 || pl.density > 0.75);
+    else check(`${tag}: 부품이 모두 기판 안에 들어가고 외장 구멍 자리끼리 겹치지 않는다`, pl.outside.length === 0 && pl.clash.length === 0, `${pl.outside.join(', ')} | ${pl.clash.join(', ')}`);
+    const dir = path.join(tmp, b.slug);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, `${b.slug}.kicad_sch`), b.sch.text);
+    fs.writeFileSync(path.join(dir, `${b.slug}.kicad_pcb`), b.pcb.text);
+    fs.writeFileSync(path.join(dir, `${b.slug}.kicad_pro`), toKicadPro(b.slug));
+    if (kicad) {
+      execFileSync('kicad-cli', ['sch', 'export', 'netlist', '-o', path.join(dir, 'k.net'), path.join(dir, `${b.slug}.kicad_sch`)], { stdio: 'ignore' });
+      const net = parse(fs.readFileSync(path.join(dir, 'k.net'), 'utf8'))[0];
+      const theirs = {};
+      for (const n of kids(kid(net, 'nets'), 'net')) {
+        const name = str(kid(n, 'name')[1]).replace(/^\//, '');
+        const nodes = kids(n, 'node').map((x) => `${str(kid(x, 'ref')[1])}.${str(kid(x, 'pin')[1])}`).filter((x) => !x.startsWith('#'));
+        if (nodes.length && !/^(unconnected|Net-)/.test(name)) theirs[name] = nodes.sort();
+      }
+      const diff = [];
+      for (const [n, list] of b.hw.nets) if (JSON.stringify(list.map((x) => `${x.ref}.${x.pin}`).sort()) !== JSON.stringify(theirs[n] || [])) diff.push(n);
+      const extra = Object.keys(theirs).filter((n) => !b.hw.nets.has(n));
+      check(`${tag}: KiCad(kicad-cli)가 회로도에서 읽은 넷리스트가 만든 연결과 같다 (넷 ${b.hw.nets.size}개)`, diff.length === 0 && extra.length === 0, `${diff.join(',')} | ${extra.join(',')}`);
+    }
+    if (pcbnewOk) {
+      const py = `
 import sys, pcbnew, json
 b = pcbnew.LoadBoard(sys.argv[1])
-rep = sys.argv[2]
-pcbnew.WriteDRCReport(b, rep, pcbnew.EDA_UNITS_MILLIMETRES, False)
+pcbnew.WriteDRCReport(b, sys.argv[2], pcbnew.EDA_UNITS_MILLIMETRES, False)
 fps = list(b.GetFootprints())
 print(json.dumps({"fps": len(fps), "netted": sum(1 for f in fps for p in f.Pads() if p.GetNetname()), "w": pcbnew.ToMM(b.GetBoardEdgesBoundingBox().GetWidth())}))
 `;
-    const res = JSON.parse(execFileSync('/usr/bin/python3', ['-c', py, path.join(dir, `${cs.key}.kicad_pcb`), path.join(dir, 'drc.rpt')]).toString().trim().split('\n').pop());
-    const rpt = fs.readFileSync(path.join(dir, 'drc.rpt'), 'utf8');
-    const kinds = {};
-    for (const m of rpt.matchAll(/^\[(\w+)\]/gm)) kinds[m[1]] = (kinds[m[1]] || 0) + 1;
-    const hard = ['clearance', 'hole_clearance', 'copper_edge_clearance', 'solder_mask_bridge', 'drill_out_of_range', 'shorting_items'].reduce((s, k) => s + (kinds[k] || 0), 0);
-    const pads = hw.comps.reduce((s, c) => s + Object.keys(c.conns).length, 0);
-    check(`${cs.name}: KiCad(pcbnew)로 열림 — 실장 모양 ${res.fps}개, 넷 붙은 패드 ${res.netted}개, 외곽 폭 ${res.w.toFixed(1)} mm`, res.fps === hw.comps.filter((c) => c.part.fp).length + layout.holes.filter((h) => h.kind === 'mount').length && res.netted >= pads * 0.9);
-    check(`${cs.name}: DRC 구리 간격·가장자리·솔더마스크 오류 ${hard}개 (2개 이하)`, hard <= 2, JSON.stringify(kinds));
+      const res = JSON.parse(execFileSync('/usr/bin/python3', ['-c', py, path.join(dir, `${b.slug}.kicad_pcb`), path.join(dir, 'drc.rpt')]).toString().trim().split('\n').pop());
+      const rpt = fs.readFileSync(path.join(dir, 'drc.rpt'), 'utf8');
+      const kinds = {};
+      for (const m of rpt.matchAll(/^\[(\w+)\]/gm)) kinds[m[1]] = (kinds[m[1]] || 0) + 1;
+      // 같은 실장 모양 안의 문제(라이브러리 부품 자체의 구멍~패드 간격 등)는 빼고 센다
+      const blocks = rpt.split(/\n(?=\[)/).filter((t) => /^\[(clearance|hole_clearance|copper_edge_clearance|solder_mask_bridge|drill_out_of_range|shorting_items)\]/.test(t));
+      const hard = blocks.filter((t) => { const owners = [...t.matchAll(/ of ([A-Z]+\d+)/g)].map((m) => m[1]); return !(owners.length >= 2 && owners.every((o) => o === owners[0])); }).length;
+      const pads = b.hw.comps.reduce((x, c) => x + Object.keys(c.conns).length, 0);
+      check(`${tag}: KiCad(pcbnew)로 열림 — 실장 모양 ${res.fps}개, 넷 붙은 패드 ${res.netted}개, 외곽 폭 ${res.w.toFixed(1)} mm`, res.fps === b.hw.comps.filter((c) => c.part.fp).length + b.layout.holes.filter((h) => h.kind === 'mount').length && res.netted >= pads * 0.9);
+      check(`${tag}: DRC 구리 간격·가장자리·솔더마스크 오류 ${hard}개 (2개 이하)`, hard <= 2, JSON.stringify(kinds));
+    }
   }
 }
 if (!kicad || !pcbnewOk) console.log('  (KiCad 7 이 없어 KiCad 재검증은 건너뜀: apt install kicad kicad-symbols kicad-footprints)');

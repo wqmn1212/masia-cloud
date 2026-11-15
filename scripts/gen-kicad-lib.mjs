@@ -95,7 +95,12 @@ function footprintEntry(id) {
       body = [Math.min(body[0], Number(at[1]) - rot[0]), Math.min(body[1], Number(at[2]) - rot[1]), Math.max(body[2], Number(at[1]) + rot[0]), Math.max(body[3], Number(at[2]) + rot[1])].map((v) => Math.round(v * 100) / 100);
     }
   }
-  return { text: print(node, 1), pads, bbox: body, court, smd };
+  // 부품이 바라보는 쪽(CAD 각도, y 위): 패드 중심에서 부품 자리가 가장 멀리 뻗은 방향 (USB 입구·잭 입구·옆 누름 버튼·누운 축)
+  const real = pads.filter((p) => p.num);
+  const cx = real.reduce((a, p) => a + p.x, 0) / (real.length || 1), cy = real.reduce((a, p) => a + p.y, 0) / (real.length || 1);
+  const reach = [[0, court[2] - cx], [180, cx - court[0]], [90, cy - court[1]], [270, court[3] - cy]];
+  const face = reach.sort((a, b) => b[1] - a[1])[0][0];
+  return { text: print(node, 1), pads, bbox: body, court, smd, face };
 }
 
 const SYMBOLS = Object.fromEntries(syms.map((id) => [id, symbolEntry(id)]));

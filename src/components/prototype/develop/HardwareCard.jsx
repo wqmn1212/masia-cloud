@@ -32,16 +32,17 @@ function PcbPreview({ layout, place }) {
 }
 
 // 회로 설계: 기능 → 실제 회로도(MCU·전원·기능 회로) → KiCad 프로젝트·기판 외곽 DXF·JLCPCB 부품표
-export default function HardwareCard({ project, dev, user, onSaved }) {
+export default function HardwareCard({ project, dev, user, onSaved, change }) {
   const [mods, setMods] = useState(null);
   const [busy, setBusy] = useState('');
   const [open, setOpen] = useState('');
+  const [boardKey, setBoardKey] = useState('main');
   useEffect(() => {
     let alive = true;
     Promise.all([import('@/lib/hw/kicadLib.data.js'), import('@/lib/hw/exportHw.js')]).then(([lib, ex]) => { if (alive) setMods({ lib, ex }); }).catch((e) => toast({ title: errorText(e), variant: 'destructive' }));
     return () => { alive = false; };
   }, []);
-  const key = JSON.stringify([dev.features, dev.mcu, dev.supply_v, dev.rules, dev.mold_design?.template, dev.mold_design?.params]);
+  const key = JSON.stringify([dev.features, dev.mcu, dev.supply_v, dev.rules, dev.mold_design?.template, dev.mold_design?.params, dev.hw]);
   const pkg = useMemo(() => {
     if (!mods) return null;
     try { return mods.ex.buildHwPackage(dev, mods.lib, { title: project.title, seed: project.id, date: new Date().toISOString().slice(0, 10) }); }
@@ -50,10 +51,17 @@ export default function HardwareCard({ project, dev, user, onSaved }) {
 
   if (!mods || !pkg) return <Card title="실제 회로도 · 기판 (KiCad)" icon={Cpu}><p className="flex items-center gap-2 text-caption text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />부품 라이브러리 불러오는 중</p></Card>;
   if (pkg.error) return <Card title="실제 회로도 · 기판 (KiCad)" icon={Cpu}><p className="text-caption text-destructive">{pkg.error}</p></Card>;
-  const { hw, layout, pcb, bom } = pkg;
-  const smt = bom.filter((r) => r.smt);
+  const { hw, bom } = pkg;
+  const board = pkg.boards.find((b) => b.key === boardKey) || pkg.boards[0];
+  const { layout, pcb } = board;
+  const split = (dev.hw?.split || []).includes('light');
+  const hasLight = (dev.features || []).some((f) => f.kind === 'light');
+  const mainPlace = pkg.boards[0].pcb.place;
+  const suggestSplit = hasLight && !split && (mainPlace.outside.length > 0 || mainPlace.density > 0.75);
+  const setSplit = (on) => change?.((d) => ({ hw: { ...(d.hw || {}), split: on ? ['light'] : [] } }));
+  const smt = (pkg.boards.find((b) => b.key === boardKey) || pkg.boards[0]).bom.filter((r) => r.smt);
   const withLcsc = smt.filter((r) => r.lcsc).length;
-  const notes = [...hw.notes, ...(pcb.place.clash.length ? [`외장 구멍 자리에 맞춘 부품끼리 겹칩니다 (${pcb.place.clash.join(', ')}). 3D 도면에서 구멍 간격을 벌리거나 부품을 바꾸세요.`] : []), ...(pcb.place.outside.length ? [`기판에 못 넣은 부품 ${pcb.place.outside.length}개 (${pcb.place.outside.join(', ')}) — 기판 오른쪽 밖에 두었습니다. 기판을 키우거나 부품을 작게·별도 기판으로 나누세요.`] : [])];
+  const notes = [...hw.notes, ...(board.key === 'main' ? [] : layout.notes || []), ...(pcb.place.clash.length ? [`외장 구멍 자리에 맞춘 부품끼리 겹칩니다 (${pcb.place.clash.join(', ')}). 3D 도면에서 구멍 간격을 벌리거나 부품을 바꾸세요.`] : []), ...(pcb.place.outside.length ? [`기판에 못 넣은 부품 ${pcb.place.outside.length}개 (${pcb.place.outside.join(', ')}) — 기판 오른쪽 밖에 두었습니다. 기판을 키우거나 부품을 작게·별도 기판으로 나누세요.`] : [])];
   const files = () => mods.ex.hwFiles(pkg, project.title);
   const download = async (kind) => {
     setBusy(kind);
@@ -64,9 +72,9 @@ export default function HardwareCard({ project, dev, user, onSaved }) {
         downloadBlob(new Blob([makeZip(files())], { type: 'application/zip' }), `${pkg.slug}-kicad-${stamp()}.zip`);
       } else if (kind === 'dxf') {
         const { toDxf } = await import('@/lib/hw/kicad.js');
-        downloadText(toDxf(layout), `${pkg.slug}-pcb-outline-${stamp()}.dxf`, 'application/dxf');
+        downloadText(toDxf(layout), `${board.slug}-pcb-outline-${stamp()}.dxf`, 'application/dxf');
       } else if (kind === 'bom') {
-        downloadText(mods.ex.jlcBomCsv(bom), `${pkg.slug}-bom-jlcpcb-${stamp()}.csv`, 'text/csv');
+        downloadText(mods.ex.jlcBomCsv(board.bom), `${board.slug}-bom-jlcpcb-${stamp()}.csv`, 'text/csv');
       }
     } catch (e) { toast({ title: errorText(e), variant: 'destructive' }); }
     setBusy('');
@@ -92,8 +100,22 @@ export default function HardwareCard({ project, dev, user, onSaved }) {
         <Button size="sm" variant="outline" onClick={() => download('bom')} disabled={!!busy}><FileDown className="w-4 h-4" />JLCPCB 부품표</Button>
         <Button size="sm" variant="outline" onClick={save} disabled={!!busy}>{busy === 'save' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}프로젝트에 저장</Button>
       </>}>
+      {hasLight && (
+        <div className={`flex flex-wrap items-center gap-2 rounded-lg px-3 py-2 text-caption ${suggestSplit ? 'border border-warning/40 bg-warning/10 text-warning-text' : 'bg-secondary'}`}>
+          <label className="flex items-center gap-2 font-medium"><input type="checkbox" checked={split} onChange={(e) => setSplit(e.target.checked)} disabled={!change} />LED 구동부를 별도 기판으로 (본체 안, LED 판 가까이)</label>
+          <span className="text-micro">{suggestSplit ? `제어 기판이 좁습니다 (부품 자리 ${pct(mainPlace.density)}${mainPlace.outside.length ? `, 못 넣은 부품 ${mainPlace.outside.length}개` : ''}). 나누면 두 기판을 8핀 이하 커넥터 하나로 잇습니다.` : split ? '제어 기판 ↔ LED 구동 기판을 커넥터 하나로 잇습니다.' : '부품이 넘치면 나누세요.'}</span>
+        </div>
+      )}
+      {pkg.boards.length > 1 && (
+        <div className="inline-flex rounded-lg border bg-card p-0.5" role="tablist" aria-label="기판">
+          {pkg.boards.map((b) => (
+            <button key={b.key} type="button" role="tab" aria-selected={board.key === b.key} onClick={() => setBoardKey(b.key)}
+              className={`rounded-md px-3 py-1.5 text-label font-semibold ${board.key === b.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{b.name} · {b.hw.comps.length}</button>
+          ))}
+        </div>
+      )}
       <div className="grid gap-2 sm:grid-cols-4">
-        {[['넷 (연결)', `${hw.nets.size}개`], ['부품표', `${bom.length}줄 · SMT ${smt.length}`], ['LCSC 번호', `${withLcsc}/${smt.length} 확정`], ['기판', `${layout.size.join(' × ')} mm`]].map(([k, v]) => (
+        {[['넷 (연결)', `${board.hw.nets.size}개`], ['부품표', `${board.bom.length}줄 · SMT ${smt.length}`], ['LCSC 번호', `${withLcsc}/${smt.length} 확정`], [board.name, `${layout.size.join(' × ')} mm`]].map(([k, v]) => (
           <div key={k} className="rounded-lg bg-secondary px-3 py-2"><p className="text-micro text-muted-foreground">{k}</p><p className="text-label font-semibold tabular-nums">{v}</p></div>
         ))}
       </div>
@@ -115,7 +137,7 @@ export default function HardwareCard({ project, dev, user, onSaved }) {
           <div className="max-h-[330px] overflow-y-auto rounded-lg border">
             <table className="w-full text-caption">
               <tbody>
-                {hw.pinMap.map((p) => <tr key={p.gpio} className="border-b last:border-0"><td className="px-2 py-1 tabular-nums text-muted-foreground">GPIO{p.gpio}</td><td className="px-2 py-1 font-mono text-micro">{p.net}</td><td className="px-2 py-1 text-muted-foreground truncate max-w-[110px]">{p.role}</td></tr>)}
+                {(board.key === 'main' ? hw.pinMap : []).map((p) => <tr key={p.gpio} className="border-b last:border-0"><td className="px-2 py-1 tabular-nums text-muted-foreground">GPIO{p.gpio}</td><td className="px-2 py-1 font-mono text-micro">{p.net}</td><td className="px-2 py-1 text-muted-foreground truncate max-w-[110px]">{p.role}</td></tr>)}
               </tbody>
             </table>
           </div>
@@ -123,7 +145,7 @@ export default function HardwareCard({ project, dev, user, onSaved }) {
       </div>
 
       <div className="space-y-1.5">
-        {hw.blocks.map((b) => (
+        {board.hw.blocks.map((b) => (
           <div key={b.id} className="rounded-lg border">
             <button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left" onClick={() => setOpen((o) => (o === b.id ? '' : b.id))} aria-expanded={open === b.id}>
               <span className="text-label font-semibold">{b.name}</span>

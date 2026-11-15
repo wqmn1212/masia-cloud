@@ -178,8 +178,6 @@ export function toKicadSch(hw, lib, { title = 'AEGIS prototype', project = 'aegi
 // ───────────────────────── 기판
 const LAYERS = [[0, 'F.Cu', 'signal'], [31, 'B.Cu', 'signal'], [32, 'B.Adhes', 'user', 'B.Adhesive'], [33, 'F.Adhes', 'user', 'F.Adhesive'], [34, 'B.Paste', 'user'], [35, 'F.Paste', 'user'], [36, 'B.SilkS', 'user', 'B.Silkscreen'], [37, 'F.SilkS', 'user', 'F.Silkscreen'], [38, 'B.Mask', 'user'], [39, 'F.Mask', 'user'], [40, 'Dwgs.User', 'user', 'User.Drawings'], [41, 'Cmts.User', 'user', 'User.Comments'], [42, 'Eco1.User', 'user', 'User.Eco1'], [43, 'Eco2.User', 'user', 'User.Eco2'], [44, 'Edge.Cuts', 'user'], [45, 'Margin', 'user'], [46, 'B.CrtYd', 'user', 'B.Courtyard'], [47, 'F.CrtYd', 'user', 'F.Courtyard'], [48, 'B.Fab', 'user'], [49, 'F.Fab', 'user']];
 const HOLE_FP = (d) => (d <= 2.3 ? 'MountingHole:MountingHole_2.2mm_M2' : d <= 2.9 ? 'MountingHole:MountingHole_2.7mm_M2.5' : 'MountingHole:MountingHole_3.2mm_M3');
-// 실장 모양의 기본 방향: USB-C 는 입구가 아래(+y), DC 잭은 입구가 왼쪽(−x)
-const FACING = { usb: -90, jack: 180 };
 
 /** 부품 자리 정하기: 고정 자리(앵커) 먼저, 나머지는 외곽 안에 위에서부터 채운다 (0.5 mm 격자, 앞면 → 작은 SMD 는 뒷면) */
 export function placeParts(hw, lib, layout) {
@@ -256,7 +254,7 @@ export function placeParts(hw, lib, layout) {
   for (const c of comps) {
     const an = c.anchor ? takeAnchor(c.anchor) : null;
     if (!an) { pending.push(c); continue; }
-    const rot = (((an.dir - (FACING[an.kind] ?? an.dir)) % 360) + 360) % 360;
+    const rot = (((an.dir - (lib.FOOTPRINTS[c.part.fp].face ?? an.dir)) % 360) + 360) % 360; // 부품이 바라보는 쪽을 벽 쪽으로
     const r0 = rectOf(c.part.fp, 0, 0, rot);
     let x = an.x - (r0[0] + r0[2]) / 2, y = an.y - (r0[1] + r0[3]) / 2;
     const d = Math.hypot(cx0 - an.x, cy0 - an.y) || 1;

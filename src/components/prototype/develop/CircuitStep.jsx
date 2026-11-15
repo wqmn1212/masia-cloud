@@ -13,7 +13,7 @@ import { starterCircuit, hasBlock } from '@/lib/devkit/circuitStarter';
 import { actorName, errorText } from '@/lib/prototypeApi';
 
 // 4단계: 기능 → 회로 블록 → 회로 시뮬레이터 시작 회로, 그리고 부품 목록
-export default function CircuitStep({ project, dev, user, onSaved }) {
+export default function CircuitStep({ project, dev, user, onSaved, change }) {
   const nav = useNavigate();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -73,7 +73,7 @@ export default function CircuitStep({ project, dev, user, onSaved }) {
           <p className="text-micro text-muted-foreground">기능 단위 요약입니다. 저항·콘덴서까지 들어간 실제 부품표와 LCSC 번호는 아래 실제 회로도에서 받습니다.</p>
         </Card>
       </div>
-      <HardwareCard project={project} dev={dev} user={user} onSaved={onSaved} />
+      <HardwareCard project={project} dev={dev} user={user} onSaved={onSaved} change={change} />
       <ProjectCircuits project={project} />
     </div>
   );
