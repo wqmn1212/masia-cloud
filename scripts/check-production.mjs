@@ -110,5 +110,14 @@ check('인증 자료: 무선 시험 모드 명령(rftest 0·19·39·off), 사용
   check('출하 검사 기록: 양산 시리얼 형식(카드·일련번호·판정·불합격 항목·MAC)', rec.card_id === 'c' && rec.serial === 'SN-261115-001' && rec.verdict === 'FAIL' && rec.failed_items.length === 1 && rec.checks.mac === 'aa:bb:cc:dd:ee:ff' && /불합격/.test(rec.fail_note));
 }
 
+// 8. 고객 공유용 미팅 내용
+{
+  const { shareSnapshot, shareLink, shareInvite } = await import('../src/lib/devkit/meetingShare.js');
+  const snap = shareSnapshot(project, { ...devM, cost_quotes: { factory: '东莞精模', parts: {} }, meeting: { attendees: '김 대표', decisions: '- 갭 6 mm 로 늘린다\n조명 기판은 따로 만든다', actions: '금형 견적 3곳 요청' } }, { concept: { version_no: 2 } });
+  const flat = JSON.stringify(snap);
+  check('고객 공유: 진행 7단계·요약·결정 2건·할 일 1건, 핀 번호·공장 이름·원가는 들어가지 않는다', snap.steps.length === 7 && snap.decisions.length === 2 && snap.decisions[0] === '갭 6 mm 로 늘린다' && snap.actions.length === 1 && !/GPIO|东莞|원$|LCSC/.test(flat) && !/"pin"/.test(flat));
+  check('고객 공유: 링크는 /m/<토큰>, 안내 문구에 링크·PIN·기한', shareLink('https://a.b/', 'tok') === 'https://a.b/m/tok' && /PIN 123456/.test(shareInvite({ link: 'L', pin: '123456', title: 'T', expires_at: '2026-12-01T00:00:00Z' })) && /2026-12-01/.test(shareInvite({ link: 'L', pin: '1', title: 'T', expires_at: '2026-12-01T00:00:00Z' })));
+}
+
 console.log(`\n${pass}개 검산 통과${fails.length ? `, ${fails.length}개 실패` : ''}`);
 if (fails.length) process.exit(1);

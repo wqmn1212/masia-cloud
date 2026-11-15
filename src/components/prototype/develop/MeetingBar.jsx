@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Presentation, ChevronRight, FileText, Loader2, Check, Circle, X, ShieldCheck } from 'lucide-react';
+import { Presentation, ChevronRight, FileText, Loader2, Check, Circle, X, ShieldCheck, Share2, Copy } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { shareSnapshot, shareLink, shareInvite } from '@/lib/devkit/meetingShare';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -40,6 +42,21 @@ export default function MeetingBar({ project, dev, change, concept, circuits, st
     } catch (e) { toast({ title: errorText(e), variant: 'destructive' }); }
     setBusy('');
   };
+  // 고객과 공유: 링크 + PIN (내부 정보는 빼고 진행 단계·요약·결정 사항·할 일만). 고객이 결정 사항마다 확인을 남긴다
+  const [shared, setShared] = useState(null);
+  const [shares, setShares] = useState(null);
+  const loadShares = () => base44.functions.invoke('protoShare', { action: 'list', project_id: project.id }).then((r) => setShares(r.data?.shares || [])).catch(() => setShares([]));
+  const share = async () => {
+    setBusy('share');
+    try {
+      const { data } = await base44.functions.invoke('protoShare', { action: 'create', project_id: project.id, days: 14, snapshot: shareSnapshot(project, dev, { concept, circuits }) });
+      if (data?.error) throw new Error(data.error);
+      setShared({ link: shareLink(window.location.origin, data.token), pin: data.pin, expires_at: data.expires_at });
+      loadShares();
+    } catch (e) { toast({ title: errorText(e), variant: 'destructive' }); }
+    setBusy('');
+  };
+  const copy = async (text) => { try { await navigator.clipboard.writeText(text); toast({ title: '복사했습니다' }); } catch { toast({ title: '복사하지 못했습니다', variant: 'destructive' }); } };
   const doneCount = list.filter((s) => s.done).length;
 
   return (
@@ -52,6 +69,7 @@ export default function MeetingBar({ project, dev, change, concept, circuits, st
           {next && <Button size="sm" onClick={() => go(next.key)}>다음: {next.label}<ChevronRight className="w-4 h-4" /></Button>}
           <Button size="sm" variant="outline" onClick={() => make('report')} disabled={!!busy}>{busy === 'report' ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}미팅 결과 요약</Button>
           <Button size="sm" variant="outline" onClick={() => make('cert')} disabled={!!busy}>{busy === 'cert' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}인증 준비 자료</Button>
+          <Button size="sm" variant="outline" onClick={share} disabled={!!busy}>{busy === 'share' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}고객과 공유</Button>
           <Button size="sm" variant="ghost" onClick={onClose} aria-label="미팅 모드 닫기"><X className="w-4 h-4" /></Button>
         </div>
       </div>
@@ -70,6 +88,23 @@ export default function MeetingBar({ project, dev, change, concept, circuits, st
         <Textarea aria-label="결정 사항" value={m.decisions || ''} onChange={(e) => setM({ decisions: e.target.value })} placeholder="결정 사항 (한 줄에 하나)" className="min-h-[72px] text-caption" />
         <Textarea aria-label="할 일" value={m.actions || ''} onChange={(e) => setM({ actions: e.target.value })} placeholder="할 일 (한 줄에 하나)" className="min-h-[72px] text-caption md:col-span-2" />
       </div>
+      {shared && (
+        <div className="rounded-lg border bg-card p-3 text-caption space-y-1.5">
+          <p>고객용 링크를 만들었습니다 (기한 {shared.expires_at?.slice(0, 10)}). 내부 정보(핀·부품·원가·공장 견적)는 들어가지 않습니다. 고객이 결정 사항마다 “확인”을 누를 수 있습니다.</p>
+          <div className="flex flex-wrap items-center gap-2"><code className="truncate rounded bg-secondary px-2 py-1">{shared.link}</code><code className="rounded bg-secondary px-2 py-1 tabular-nums">PIN {shared.pin}</code><Button size="sm" variant="outline" onClick={() => copy(shareInvite({ ...shared, title: project.title }))}><Copy className="w-3.5 h-3.5" />안내 문구 복사</Button></div>
+        </div>
+      )}
+      <details className="text-caption" onToggle={(e) => { if (e.currentTarget.open && !shares) loadShares(); }}>
+        <summary className="cursor-pointer text-muted-foreground">고객 확인 현황</summary>
+        <div className="mt-1.5 space-y-1">
+          {!shares ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : shares.length === 0 ? <p className="text-muted-foreground">아직 공유한 링크가 없습니다.</p> : shares.map((s) => (
+            <div key={s.id} className="rounded-lg bg-card px-3 py-1.5">
+              <p>{String(s.created_date || '').slice(0, 10)} 공유 · {s.status === 'ACTIVE' ? `열림 (~${String(s.expires_at).slice(0, 10)})` : s.status === 'EXPIRED' ? '기한 지남' : '닫음'} · 결정 {s.decisions}건 중 {s.confirmations.length}건 확인{s.last_opened_at ? ` · 마지막 열람 ${String(s.last_opened_at).slice(0, 10)}` : ' · 아직 안 열어 봄'}</p>
+              {s.confirmations.map((c) => <p key={c.index} className="text-micro text-success-text">✓ {c.text} — {c.name} ({String(c.at).slice(0, 10)})</p>)}
+            </div>
+          ))}
+        </div>
+      </details>
     </section>
   );
 }
