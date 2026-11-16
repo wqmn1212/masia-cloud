@@ -103,7 +103,7 @@ export default function SimStep({ concept, dev, change, viewer = false, pin = nu
     <div className="space-y-4">
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <div className="relative min-h-[460px] overflow-hidden rounded-xl border bg-gradient-to-b from-secondary to-card">
-          <SimCanvas parts={parts} links={links} lidPartId={lidPartId} simRef={simRef} onPress={press} onLid={() => setLid(s.input.lid > 0.5 ? 0 : 1)} onSwitch={flip} pivot={dev.pivot} pinMode={!!pin?.mode} onPickPart={pin?.onPick} pins={pin?.pins} />
+          <SimCanvas parts={parts} links={links} lidPartId={lidPartId} simRef={simRef} onPress={press} onLid={() => setLid(s.input.lid > 0.5 ? 0 : 1)} onSwitch={flip} pivot={dev.pivot} pinMode={!!pin?.mode} onPickPart={pin?.onPick} pins={pin?.pins} onHover={pin?.onHover} />
           <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-1.5">
             <span className={`rounded-full px-2.5 py-1 text-caption font-medium backdrop-blur ${s.mcu.on ? 'bg-success/15 text-success-text' : 'bg-destructive/15 text-destructive'}`}>{s.mcu.on ? 'MCU 동작' : 'MCU 꺼짐·재부팅'}</span>
             <span className="rounded-full bg-card/85 px-2.5 py-1 text-caption tabular-nums backdrop-blur">입력 {s.rails.vin.toFixed(2)} V · {fmtA(s.rails.i)}</span>

@@ -67,6 +67,7 @@ const ClientMolds = lazy(() => import('@/pages/ClientMolds'));
 const LogisticsRates = lazy(() => import('@/pages/LogisticsRates'));
 const FactoryUpload = lazy(() => import('@/pages/FactoryUpload'));
 const MeetingShare = lazy(() => import('@/pages/MeetingShare'));
+const DesignReview = lazy(() => import('@/pages/DesignReview'));
 const Prototypes = lazy(() => import('@/pages/Prototypes'));
 const PrototypeDetail = lazy(() => import('@/pages/PrototypeDetail'));
 const PrototypeReview = lazy(() => import('@/pages/PrototypeReview'));
@@ -95,6 +96,8 @@ const AuthenticatedApp = () => {
   if (location.pathname.startsWith('/f/')) return <Suspense fallback={<Spinner />}><FactoryUpload /></Suspense>;
   // 개발 미팅 공유 링크 — 고객이 계정 없이 링크 + PIN으로 연다
   if (location.pathname.startsWith('/m/')) return <Suspense fallback={<Spinner />}><MeetingShare /></Suspense>;
+  // 실시간 디자인 리뷰 — 팀원·고객사 계정은 로그인으로, 초대받은 사람은 이메일 링크로, 그 밖은 링크 + PIN 으로 연다 (권한은 서버가 본다)
+  if (location.pathname.startsWith('/design/')) return <Suspense fallback={<Spinner />}><DesignReview /></Suspense>;
   // 물류비 계산기는 고객 전용 — 예전 공개 주소는 고객 포털로 보낸다 (로그인 필요)
   if (location.pathname === '/tools/landed-cost') return <Navigate to="/client/landed-cost" replace />;
   if (location.pathname === '/cloud-guide') return <Navigate to="/cloud" replace />;

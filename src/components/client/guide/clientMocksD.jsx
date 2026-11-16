@@ -59,3 +59,13 @@ export function DevMock() {
     </Frame>
   );
 }
+
+export function DesignRoomClientMock() {
+  return (
+    <Frame title="디자인 실시간 리뷰">
+      <Mark n={1}><div className="flex items-center gap-1.5 p-1"><span>박스 인쇄 시안 · 열린 댓글 2</span><Btn primary>열기</Btn></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="relative h-14 rounded bg-destructive/80 p-1"><span className="absolute left-[60%] top-[45%] rounded bg-primary px-1 text-[9px] text-white">▲ 이호민</span></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="flex items-center gap-1.5 p-1"><Btn>댓글 (C)</Btn><span>① 로고 2mm 위로 · 답글 · 해결</span></div></Mark>
+    </Frame>
+  );
+}

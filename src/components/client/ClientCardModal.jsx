@@ -25,6 +25,7 @@ import ClientSharedFiles from '@/components/client/ClientSharedFiles';
 import ClientFileReviewSection from './filereview/ClientFileReviewSection';
 import { ClientDecisionProvider } from './approval/ClientDecisionContext';
 import ClientDevTab, { devQueryKey } from './ClientDevTab';
+import DesignRoomsPanel from '@/components/design/DesignRoomsPanel';
 
 const TABS = ['overview', 'quotation', 'qc', 'chat', 'settlement', 'files', 'dev'];
 
@@ -118,6 +119,7 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
               </TabsContent>
               <TabsContent value="files" className="mt-4">
                 <ClientFileReviewSection cardId={data.card.id} reviews={data.file_reviews || []} />
+                <DesignRoomsPanel cardId={data.card.id} />
                 <ClientSharedFiles cardId={data.card.id} />
               </TabsContent>
               {devProjects.length > 0 && (

@@ -1,0 +1,95 @@
+{
+  "name": "DesignPresence",
+  "type": "object",
+  "description": "실시간 디자인 리뷰 접속자·커서 (탭마다 한 줄, 15초 넘게 소식 없으면 나간 것으로 본다)",
+  "properties": {
+    "tenant_id": {
+      "type": "string"
+    },
+    "room_id": {
+      "type": "string"
+    },
+    "sid": {
+      "type": "string",
+      "description": "브라우저 탭 ID"
+    },
+    "name": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "staff",
+        "client",
+        "guest"
+      ]
+    },
+    "color": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number"
+    },
+    "cursor": {
+      "type": "object",
+      "description": "{page, x, y} 또는 {point:[x,y,z]} 또는 null",
+      "additionalProperties": true
+    },
+    "seen_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "room_id",
+    "sid"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

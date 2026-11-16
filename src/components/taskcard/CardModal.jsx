@@ -37,6 +37,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import MilestoneTab from '@/components/taskcard/milestones/MilestoneTab';
 import CardOwnerBar from '@/components/taskcard/CardOwnerBar';
 import ReorderDialog from '@/components/taskcard/ReorderDialog';
+import DesignRoomsPanel from '@/components/design/DesignRoomsPanel';
 import CardNowPanel from '@/components/taskcard/CardNowPanel';
 import { CARD_TABS, resolveCardTab } from '@/lib/cardTabs';
 import { Button } from '@/components/ui/button';
@@ -187,6 +188,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
           </TabsContent>
 
           <TabsContent value="files" className="mt-4">
+            {isStaff && <DesignRoomsPanel cardId={card.id} staff />}
             <FilesTab card={card} user={user} />
           </TabsContent>
         </Tabs>

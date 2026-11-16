@@ -1,0 +1,136 @@
+{
+  "name": "DesignRoom",
+  "type": "object",
+  "description": "실시간 디자인 리뷰 방: 이미지·PDF 시안 판(versions) 또는 시제품 3D 스냅샷(model)에 여러 사람이 동시에 핀·댓글을 남긴다. 쓰기는 designRoom 함수만",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "소속 팀 ID"
+    },
+    "card_id": {
+      "type": "string",
+      "description": "업무 카드 ID"
+    },
+    "title": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "description": "file = 이미지·PDF, model = 시제품 3D",
+      "enum": [
+        "file",
+        "model"
+      ]
+    },
+    "versions": {
+      "type": "array",
+      "description": "[{v, attachment_id, file_name, file_type, at, by}] 시안 판 (지우지 않고 쌓인다)",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "project_id": {
+      "type": "string",
+      "description": "model 방: 시제품 ID"
+    },
+    "model": {
+      "type": "object",
+      "description": "model 방: {at, by, dev, parts} 3D·시뮬레이션 스냅샷",
+      "additionalProperties": true
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "OPEN",
+        "CLOSED"
+      ],
+      "default": "OPEN"
+    },
+    "link": {
+      "type": "object",
+      "description": "공유 링크 {on, token_hash, pin_hash, expires_at, failed_pin_count, locked_until, at, by}",
+      "additionalProperties": true
+    },
+    "invites": {
+      "type": "array",
+      "description": "이메일 초대 [{email, name, token_hash, at, by, last_seen_at, revoked}]",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "client_visible": {
+      "type": "boolean",
+      "description": "카드 고객사 계정도 들어올 수 있음",
+      "default": true
+    },
+    "comment_count": {
+      "type": "number",
+      "default": 0
+    },
+    "open_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_activity_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "card_id",
+    "kind"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

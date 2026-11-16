@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Users, Box, FileText, MessageSquare, Loader2, Check, Send, EyeOff, CircleAlert } from 'lucide-react';
+import { Users, Box, FileText, MessageSquare, MessagesSquare, Loader2, Check, Send, EyeOff, CircleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { Card } from '@/components/prototype/develop/DevBits';
 import { base44 } from '@/api/base44Client';
 import { userManualDraft, nameplateDraft } from '@/lib/devkit/meetingReport';
+import { callRoom } from '@/lib/designRoomLive';
+import { openDesignRoom } from '@/lib/designRoom';
 
 const DOCS = [
   { key: 'nameplate', label: '명판·라벨 문구', draft: nameplateDraft, hint: '제품 바닥·뒷면에 찍을 문구입니다. □ 는 정해지면 채우세요.' },
@@ -45,6 +47,13 @@ export default function ClientSharePanel({ project, dev, concept }) {
   };
   const parts = concept?.preview?.parts || [];
   const shareModel = () => run('model', { action: 'share_model', snapshot: { dev, parts, render_url: concept?.preview?.render_url || '' } }, share.model?.on ? '고객 화면의 3D·시뮬레이션을 지금 설계로 바꿨습니다' : '3D·동작 시뮬레이션을 고객에게 공개했습니다');
+  // 3D 실시간 리뷰 방: 지금 설계로 방을 만들거나(이미 있으면 모형만 갱신) 새 탭으로 연다
+  const openRoom = async () => {
+    setBusy('room');
+    const r = await callRoom({ action: 'create', project_id: project.id, snapshot: { dev, parts, render_url: concept?.preview?.render_url || '' } });
+    setBusy('');
+    if (r.error) toast({ title: r.error, variant: 'destructive' }); else openDesignRoom(r.room.id);
+  };
   const comments = [...(review.comments || [])].reverse();
   const open = comments.filter((c) => !c.resolved).length;
 
@@ -64,6 +73,7 @@ export default function ClientSharePanel({ project, dev, concept }) {
             <div className="flex flex-wrap gap-2">
               <Button size="sm" onClick={shareModel} disabled={!!busy || !(dev.features || []).length}>{busy === 'model' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}{share.model?.on ? '지금 설계로 갱신' : '고객에게 공개'}</Button>
               {share.model?.on && <Button size="sm" variant="ghost" onClick={() => run('off', { action: 'share_model', on: false }, '3D 공개를 멈췄습니다')} disabled={!!busy}><EyeOff className="w-4 h-4" />공개 중단</Button>}
+              <Button size="sm" variant="outline" onClick={openRoom} disabled={!!busy || !(dev.features || []).length}>{busy === 'room' ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessagesSquare className="w-4 h-4" />}3D 실시간 리뷰 방</Button>
             </div>
           </div>
 

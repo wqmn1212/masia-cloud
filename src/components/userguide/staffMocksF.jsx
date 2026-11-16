@@ -81,3 +81,14 @@ export function WbClientShareMock({ zh }) {
     </Frame>
   );
 }
+
+export function DesignRoomMock({ zh }) {
+  return (
+    <Frame title={L(zh, '디자인 실시간 리뷰 · 박스 인쇄 시안', '设计实时评审 · 包装印刷稿')} badge={Ex(zh)}>
+      <Mark n={1}><div className="flex flex-wrap items-center gap-1 p-1"><Btn primary>{L(zh, '리뷰 방 열기', '打开评审室')}</Btn><span className="text-muted-foreground">{L(zh, '카드 파일 탭 · 이미지·PDF', '卡片文件页 · 图片·PDF')}</span></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="relative h-14 rounded bg-destructive/80 p-1"><span className="absolute left-[30%] top-[30%] flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[9px] font-bold text-white">1</span><span className="absolute left-[62%] top-[52%] rounded bg-primary px-1 text-[9px] text-white">{L(zh, '▲ 박디자이너', '▲ 朴设计师')}</span></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn>{L(zh, '댓글 (C)', '评论 (C)')}</Btn><span>{L(zh, '① 로고 2mm 위로 · 답글 · 해결', '① Logo上移2mm · 回复 · 解决')}</span></div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn primary>{L(zh, '공유', '共享')}</Btn><span className="font-mono">PIN 482913</span><span className="text-muted-foreground">{L(zh, '이메일 초대 2명', '邮件邀请 2人')}</span></div></Mark>
+    </Frame>
+  );
+}

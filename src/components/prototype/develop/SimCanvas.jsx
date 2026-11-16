@@ -33,10 +33,11 @@ function drawClock(ctx, text, on, base) {
  * - LED 는 밝기만큼 빛나고, 모터 부품은 돌고, 히터 부품은 온도만큼 붉어지고, 서보 부품은 각도만큼 돈다
  * links: { [part_id]: { feature_id, kind } }, lidPartId: 뚜껑 부품
  */
-export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, onLid, onSwitch, pivot, pinMode = false, onPickPart, pins }) {
+// pins: [{point, color?, resolved?, active?}] 위치 점, onHover({part_id, point}|null): 실시간 리뷰 커서
+export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, onLid, onSwitch, pivot, pinMode = false, onPickPart, pins, onHover }) {
   const hostRef = useRef(null);
   const cb = useRef({});
-  cb.current = { links, lidPartId, onPress, onLid, onSwitch, pinMode, onPickPart };
+  cb.current = { links, lidPartId, onPress, onLid, onSwitch, pinMode, onPickPart, onHover };
   const drawPinsRef = useRef(null);
   const pinsRef = useRef(pins);
   pinsRef.current = pins;
@@ -116,8 +117,9 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
     const drawPins = (list) => {
       markers.children.slice().forEach((m) => { markers.remove(m); m.material.dispose(); });
       list.filter((p) => Array.isArray(p.point)).forEach((p) => {
-        const m = new THREE.Mesh(pinGeo, new THREE.MeshBasicMaterial({ color: p.resolved ? 0x94a3b8 : p.active ? 0x2563eb : 0xf97316 }));
+        const m = new THREE.Mesh(pinGeo, new THREE.MeshBasicMaterial({ color: p.color ? new THREE.Color(p.color) : p.resolved ? 0x94a3b8 : p.active ? 0x2563eb : 0xf97316 }));
         m.position.set(p.point[0], p.point[1], p.point[2]);
+        if (p.scale) m.scale.setScalar(p.scale);
         markers.add(m);
       });
     };
@@ -164,7 +166,18 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
       if (p.type === 'switch') cb.current.onSwitch?.(p.id);
     };
     const up = () => { if (holding) cb.current.onPress?.(holding, false); holding = null; controls.enabled = true; };
-    const move = (e) => { if (!holding) renderer.domElement.style.cursor = cb.current.pinMode ? 'crosshair' : pick(e) ? 'pointer' : 'grab'; };
+    let lastHover = 0;
+    const move = (e) => {
+      if (!holding) renderer.domElement.style.cursor = cb.current.pinMode ? 'crosshair' : pick(e) ? 'pointer' : 'grab';
+      if (cb.current.onHover && performance.now() - lastHover > 120) {
+        lastHover = performance.now();
+        const r = renderer.domElement.getBoundingClientRect();
+        ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+        ray.setFromCamera(ndc, camera);
+        const hit = ray.intersectObjects(built.items.map((it) => it.mesh), false)[0];
+        cb.current.onHover(hit ? { part_id: meshToId.get(hit.object) || null, point: built.group.worldToLocal(hit.point.clone()).toArray() } : null);
+      }
+    };
     renderer.domElement.addEventListener('pointerdown', down);
     window.addEventListener('pointerup', up);
     renderer.domElement.addEventListener('pointermove', move);
