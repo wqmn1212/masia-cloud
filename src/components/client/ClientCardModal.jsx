@@ -24,10 +24,11 @@ import ClientImportRequirements from './ClientImportRequirements';
 import ClientSharedFiles from '@/components/client/ClientSharedFiles';
 import ClientFileReviewSection from './filereview/ClientFileReviewSection';
 import { ClientDecisionProvider } from './approval/ClientDecisionContext';
+import ClientDevTab, { devQueryKey } from './ClientDevTab';
 
-const TABS = ['overview', 'quotation', 'qc', 'chat', 'settlement', 'files'];
+const TABS = ['overview', 'quotation', 'qc', 'chat', 'settlement', 'files', 'dev'];
 
-// 고객 전용 카드 모달 — 진행 정보 · 견적 · 검수 · 문의 · 결제 · 파일 탭만 존재한다.
+// 고객 전용 카드 모달 — 진행 정보 · 견적 · 검수 · 문의 · 결제 · 파일 탭, 시제품을 공개했으면 개발 탭.
 // 어드민 CardModal 에 조건 분기를 넣지 않고 별도 컴포넌트로 분리해 원가 노출 경로를 원천 차단한다.
 export default function ClientCardModal({ cardId, open, onClose, initialTab, onOpenCard }) {
   const { user } = useAuth();
@@ -40,6 +41,14 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
     },
     enabled: !!cardId && open,
   });
+  // 개발 중인 시제품을 담당자가 공개했을 때만 "개발" 탭을 보인다
+  const { data: dev } = useQuery({
+    queryKey: devQueryKey(cardId),
+    queryFn: async () => (await base44.functions.invoke('protoClient', withClientView({ action: 'list', card_id: cardId }))).data,
+    enabled: !!cardId && open, staleTime: 30_000,
+  });
+  const devProjects = dev?.projects || [];
+  const devPending = devProjects.some((p) => p.pending.eco + p.pending.doc > 0);
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -65,8 +74,8 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
             </DialogHeader>
             <ClientReorderDialog open={reorderOpen} onOpenChange={setReorderOpen} card={data.card} onOpenCard={onOpenCard} />
             <ClientDecisionProvider cardId={data.card.id} approvals={data.approvals || []} team={data.team || null}>
-            <Tabs key={`${cardId}-${initialTab || ''}`} defaultValue={TABS.includes(initialTab) ? initialTab : 'overview'} className="mt-3">
-              <TabsList className="flex w-full justify-start overflow-x-auto sm:grid sm:grid-cols-6">
+            <Tabs key={`${cardId}-${initialTab || ''}-${devProjects.length > 0}`} defaultValue={TABS.includes(initialTab) && (initialTab !== 'dev' || devProjects.length) ? initialTab : 'overview'} className="mt-3">
+              <TabsList className={`flex w-full justify-start overflow-x-auto sm:grid ${devProjects.length ? 'sm:grid-cols-7' : 'sm:grid-cols-6'}`}>
                 <TabsTrigger value="overview" className="text-caption sm:text-body">진행 정보</TabsTrigger>
                 <TabsTrigger value="quotation" className="text-caption sm:text-body">견적서</TabsTrigger>
                 <TabsTrigger value="qc" className="relative text-caption sm:text-body">
@@ -82,6 +91,12 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
                   파일
                   {(data.file_reviews || []).some((r) => r.status === 'PENDING') && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" aria-label="확인할 디자인 있음" />}
                 </TabsTrigger>
+                {devProjects.length > 0 && (
+                  <TabsTrigger value="dev" className="relative text-caption sm:text-body">
+                    개발
+                    {devPending && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" aria-label="승인·확인할 것 있음" />}
+                  </TabsTrigger>
+                )}
               </TabsList>
               <TabsContent value="overview" className="mt-4">
                 <ClientShipmentPanel cardId={data.card.id} shipments={data.shipments || []} onChanged={refetch} />
@@ -105,6 +120,11 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
                 <ClientFileReviewSection cardId={data.card.id} reviews={data.file_reviews || []} />
                 <ClientSharedFiles cardId={data.card.id} />
               </TabsContent>
+              {devProjects.length > 0 && (
+                <TabsContent value="dev" className="mt-4">
+                  <ClientDevTab cardId={data.card.id} projects={devProjects} />
+                </TabsContent>
+              )}
               <TabsContent value="settlement" className="mt-4">
                 <ClientSettlementPanel cardId={data.card.id} stages={data.payment_stages || []} factoryPayment={data.factory_payment || null} receipts={(data.attachments || []).filter((a) => a.document_type?.startsWith('REMITTANCE_'))} canReport={user?.account_tier === 'client'} />
               </TabsContent>

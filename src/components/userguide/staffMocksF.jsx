@@ -70,3 +70,14 @@ export function WbFactoryTestMock({ zh }) {
     </Frame>
   );
 }
+
+export function WbClientShareMock({ zh }) {
+  return (
+    <Frame title={L(zh, '시험·양산 → 고객 공유', '测试·量产 → 客户共享')} badge={Ex(zh)}>
+      <Mark n={1}><div className="flex flex-wrap items-center gap-1 p-1"><span className="flex-1">{L(zh, '3D·동작 시뮬레이션', '3D·动作仿真')} <Badge tone="green">{L(zh, '공개 중', '公开中')}</Badge></span><Btn primary>{L(zh, '지금 설계로 갱신', '按当前设计更新')}</Btn></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="space-y-0.5 p-1"><div>{L(zh, '명판·라벨 문구', '铭牌·标签文字')} <Badge>{L(zh, 'v1 수정 요청', 'v1 要求修改')}</Badge></div><div className="text-muted-foreground">{L(zh, '김담당: 제조국 표기 추가', '金经理：增加制造国标注')}</div><Btn>{L(zh, '고친 내용으로 다시 요청 (v2)', '按修改内容再次请求 (v2)')}</Btn></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="space-y-0.5 p-1"><div>ECO-001 · {L(zh, '구배 2° → 3°', '拔模 2° → 3°')}</div><div className="text-accent">{L(zh, '고객 포털: 고객 승인 · 김담당', '客户门户：客户已批准 · 金经理')}</div><Btn primary>{L(zh, '승인하고 새 확정본', '批准并生成新定版')}</Btn></div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><span className="flex-1">{L(zh, '다이얼 버튼 · 조금 더 컸으면', '旋钮 · 希望再大一点')}</span><Btn>{L(zh, '처리함', '已处理')}</Btn></div></Mark>
+    </Frame>
+  );
+}

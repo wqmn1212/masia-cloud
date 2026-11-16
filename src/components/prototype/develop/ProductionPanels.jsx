@@ -10,6 +10,8 @@ import { snapshotOf, diffDesign, impactOf, canApproveEco, ecoTasks, ecoNotice } 
 import { base44 } from '@/api/base44Client';
 import { uploadProtoFile, addProtoFiles } from '@/lib/prototypeApi';
 import { actorName } from '@/lib/prototypeApi';
+import { useQueryClient } from '@tanstack/react-query';
+import { useProtoClient } from '@/components/prototype/develop/ClientSharePanel';
 
 const won = (v) => `${Math.round(v).toLocaleString('ko-KR')}원`;
 
@@ -103,7 +105,11 @@ export function CostCard({ project, dev, change }) {
 }
 
 // 설계 확정(동결)과 변경 요청서(ECO): 확정본 뒤에 바뀐 점을 모아 검토·승인하면 새 확정본이 된다
-export function FreezeCard({ dev, change, user, project, onSaved }) {
+export function FreezeCard({ dev, change, user, project, onSaved, dirty }) {
+  const qc = useQueryClient();
+  const { data: pc } = useProtoClient(project?.card_id ? project.id : null);
+  const sentToPortal = (no) => (pc?.share?.ecos || []).some((e) => e.no === no && !e.withdrawn);
+  const clientSaid = (no) => pc?.review?.ecos?.[no] || null;
   const [reason, setReason] = useState('');
   const [needClient, setNeedClient] = useState(false);
   const approver = canApproveEco(user);
@@ -135,17 +141,27 @@ export function FreezeCard({ dev, change, user, project, onSaved }) {
       toast({ title: `${eco.no}: 업무 카드에 할 일 ${tasks.length}개를 만들었습니다` });
     } catch (e) { toast({ title: `할 일을 만들지 못했습니다: ${e.message || e}`, variant: 'destructive' }); }
   };
-  // 고객 확인이 필요한 변경: 통지서를 시제품 파일로 저장하고 고객 확인을 기다린다
+  // 고객 확인이 필요한 변경: 고객 포털 "개발" 탭으로 승인 요청을 보내고(업무 카드가 있을 때), 통지서도 시제품 파일로 남긴다
   const askClient = async (eco) => {
+    if (dirty) { toast({ title: '설정을 먼저 저장하세요', description: '저장된 변경 요청서만 고객에게 보낼 수 있습니다 (잠시 뒤 자동 저장)' }); return; }
     setBusy(true);
     try {
+      let portal = false;
+      if (project?.card_id) {
+        const res = await base44.functions.invoke('protoClient', { action: 'share_eco', project_id: project.id, no: eco.no });
+        if (res.data?.error) throw new Error(res.data.error);
+        portal = true;
+        qc.invalidateQueries({ queryKey: ['proto-client', project.id] });
+      }
       const name = `${eco.no}-design-change-notice.md`;
       const f = await uploadProtoFile(new File([ecoNotice(project, eco)], name, { type: 'text/markdown' }), user, { category: 'REFERENCE', note: `설계 변경 통지서 ${eco.no} (고객 확인용)` });
       await addProtoFiles(project.id, [f]);
       onSaved?.();
-      change((d) => ({ ecos: (d.ecos || []).map((e) => (e.no === eco.no ? { ...e, status: 'WAIT_CLIENT', sent_by: by, sent_at: new Date().toISOString(), notice_file: name } : e)) }));
-      toast({ title: '설계 변경 통지서를 시제품 파일에 저장했습니다', description: '업무 카드 파일의 “고객 확인 요청”이나 전자서명으로 고객에게 보내고, 확인을 받으면 여기서 승인하세요' });
-    } catch (e) { toast({ title: `통지서를 만들지 못했습니다: ${e.message || e}`, variant: 'destructive' }); }
+      change((d) => ({ ecos: (d.ecos || []).map((e) => (e.no === eco.no ? { ...e, status: 'WAIT_CLIENT', sent_by: by, sent_at: new Date().toISOString(), notice_file: name, portal } : e)) }));
+      toast(portal
+        ? { title: '고객 포털로 승인을 요청했습니다', description: '고객이 업무 카드 “개발” 탭에서 승인하면 여기서 새 확정본을 만들 수 있습니다. 통지서도 시제품 파일에 남겼습니다.' }
+        : { title: '설계 변경 통지서를 시제품 파일에 저장했습니다', description: '업무 카드가 없어 포털로는 보내지 못했습니다. 전자서명 등으로 확인을 받은 뒤 승인하세요' });
+    } catch (e) { toast({ title: `보내지 못했습니다: ${e?.response?.data?.error || e.message || e}`, variant: 'destructive' }); }
     setBusy(false);
   };
   const makeEco = () => {
@@ -189,13 +205,17 @@ export function FreezeCard({ dev, change, user, project, onSaved }) {
               <p className="flex flex-wrap items-center gap-2"><span className="font-semibold">{e.no}</span><span>{e.reason}</span><span className="text-muted-foreground">v{e.from_version} · {e.at?.slice(0, 10)} · {e.by}</span>
                 <span className={`ml-auto rounded-full px-2 py-0.5 font-semibold ${e.status === 'APPROVED' ? 'bg-success/15 text-success-text' : e.status === 'REJECTED' ? 'bg-destructive/10 text-destructive' : 'bg-warning/15 text-warning-text'}`}>{e.status === 'APPROVED' ? `승인 → v${e.to_version}` : e.status === 'REJECTED' ? '반려' : e.status === 'WAIT_CLIENT' ? '고객 확인 대기' : '검토 중'}</span></p>
               <p className="text-muted-foreground">{(e.changes || []).length}건 · 다시 할 일: {(e.impact || []).join(' · ') || '없음'}</p>
+              {sentToPortal(e.no) && (() => {
+                const c = clientSaid(e.no);
+                return <p className={c?.decision === 'APPROVED' ? 'text-success-text' : c ? 'text-destructive' : 'text-warning-text'}>고객 포털: {c ? `${c.decision === 'APPROVED' ? '고객 승인' : '고객 반려'} · ${c.by} · ${String(c.at).slice(0, 10)}${c.note ? ` — ${c.note}` : ''}` : '고객 승인 기다리는 중 (고객이 승인해야 새 확정본을 만들 수 있습니다)'}</p>;
+              })()}
               {(e.status === 'OPEN' || e.status === 'WAIT_CLIENT') && (
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  {e.need_client && e.status === 'OPEN' && <Button size="sm" variant="outline" className="h-7" onClick={() => askClient(e)} disabled={busy || !project}>고객 통지서 만들기</Button>}
-                  <Button size="sm" className="h-7" onClick={() => freeze(e)} disabled={busy || !approver || e !== open[open.length - 1] || (e.need_client && e.status === 'OPEN')}><Check className="w-3.5 h-3.5" />{e.status === 'WAIT_CLIENT' ? '고객 확인 받음 · 승인하고 새 확정본' : '승인하고 새 확정본'}</Button>
+                  {e.need_client && e.status === 'OPEN' && <Button size="sm" variant="outline" className="h-7" onClick={() => askClient(e)} disabled={busy || !project}>{project?.card_id ? '고객에게 승인 요청' : '고객 통지서 만들기'}</Button>}
+                  <Button size="sm" className="h-7" onClick={() => freeze(e)} disabled={busy || !approver || e !== open[open.length - 1] || (e.need_client && e.status === 'OPEN') || (sentToPortal(e.no) && clientSaid(e.no)?.decision !== 'APPROVED')}><Check className="w-3.5 h-3.5" />{e.status === 'WAIT_CLIENT' ? (sentToPortal(e.no) ? '승인하고 새 확정본' : '고객 확인 받음 · 승인하고 새 확정본') : '승인하고 새 확정본'}</Button>
                   <Button size="sm" variant="ghost" className="h-7" onClick={() => reject(e)} disabled={!approver}><X className="w-3.5 h-3.5" />반려</Button>
                   {!approver && <span className="text-muted-foreground">승인·반려는 대표·팀 관리자만 할 수 있습니다</span>}
-                  {e.need_client && e.status === 'OPEN' && approver && <span className="text-muted-foreground">고객 확인이 필요한 변경입니다 — 통지서를 먼저 보내세요</span>}
+                  {e.need_client && e.status === 'OPEN' && approver && <span className="text-muted-foreground">고객 확인이 필요한 변경입니다 — 고객에게 먼저 보내세요</span>}
                 </div>
               )}
             </div>

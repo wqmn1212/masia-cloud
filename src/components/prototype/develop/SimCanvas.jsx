@@ -33,10 +33,14 @@ function drawClock(ctx, text, on, base) {
  * - LED 는 밝기만큼 빛나고, 모터 부품은 돌고, 히터 부품은 온도만큼 붉어지고, 서보 부품은 각도만큼 돈다
  * links: { [part_id]: { feature_id, kind } }, lidPartId: 뚜껑 부품
  */
-export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, onLid, onSwitch, pivot }) {
+export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, onLid, onSwitch, pivot, pinMode = false, onPickPart, pins }) {
   const hostRef = useRef(null);
   const cb = useRef({});
-  cb.current = { links, lidPartId, onPress, onLid, onSwitch };
+  cb.current = { links, lidPartId, onPress, onLid, onSwitch, pinMode, onPickPart };
+  const drawPinsRef = useRef(null);
+  const pinsRef = useRef(pins);
+  pinsRef.current = pins;
+  useEffect(() => { drawPinsRef.current?.(pins || []); }, [pins]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -105,6 +109,20 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
     const center = built.center.clone();
     const meshToId = new Map(built.items.map((it) => [it.mesh, it.id]));
     built.items.forEach((it) => { it.baseColor = it.mesh.material.color.clone(); it.mesh.material.depthWrite = true; });
+    // 고객 위치 의견 표시: 부품 위 점 (부품 좌표계 = built.group 기준)
+    const markers = new THREE.Group();
+    built.group.add(markers);
+    const pinGeo = new THREE.SphereGeometry(Math.max(radius * 0.03, 1.5), 16, 12);
+    const drawPins = (list) => {
+      markers.children.slice().forEach((m) => { markers.remove(m); m.material.dispose(); });
+      list.filter((p) => Array.isArray(p.point)).forEach((p) => {
+        const m = new THREE.Mesh(pinGeo, new THREE.MeshBasicMaterial({ color: p.resolved ? 0x94a3b8 : p.active ? 0x2563eb : 0xf97316 }));
+        m.position.set(p.point[0], p.point[1], p.point[2]);
+        markers.add(m);
+      });
+    };
+    drawPinsRef.current = drawPins;
+    drawPins(pinsRef.current || []);
 
     const resize = () => { const w = host.clientWidth, h = Math.max(host.clientHeight, 1); renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); };
     resize();
@@ -128,6 +146,16 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
     };
     let holding = null;
     const down = (e) => {
+      if (cb.current.pinMode) {
+        const r = renderer.domElement.getBoundingClientRect();
+        ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+        ray.setFromCamera(ndc, camera);
+        const hit = ray.intersectObjects(built.items.map((it) => it.mesh), false)[0];
+        if (!hit) return;
+        const local = built.group.worldToLocal(hit.point.clone());
+        cb.current.onPickPart?.({ part_id: meshToId.get(hit.object) || null, point: [local.x, local.y, local.z] });
+        return;
+      }
       const p = pick(e);
       if (!p) return;
       controls.enabled = false;
@@ -136,7 +164,7 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
       if (p.type === 'switch') cb.current.onSwitch?.(p.id);
     };
     const up = () => { if (holding) cb.current.onPress?.(holding, false); holding = null; controls.enabled = true; };
-    const move = (e) => { if (!holding) renderer.domElement.style.cursor = pick(e) ? 'pointer' : 'grab'; };
+    const move = (e) => { if (!holding) renderer.domElement.style.cursor = cb.current.pinMode ? 'crosshair' : pick(e) ? 'pointer' : 'grab'; };
     renderer.domElement.addEventListener('pointerdown', down);
     window.addEventListener('pointerup', up);
     renderer.domElement.addEventListener('pointermove', move);
@@ -208,6 +236,7 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
       window.removeEventListener('pointerup', up);
       renderer.domElement.removeEventListener('pointermove', move);
       clocks.forEach((c) => c.tex.dispose());
+      drawPinsRef.current = null; markers.children.forEach((m) => m.material.dispose()); pinGeo.dispose();
       disposeGroup(built.group); floor.geometry.dispose(); floor.material.dispose();
       renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove();
     };
