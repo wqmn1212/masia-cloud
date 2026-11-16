@@ -72,6 +72,13 @@ assert.deepEqual([boss.team.active, boss.team.client_waits, boss.team.factory_su
 const nobody = D.buildOpsDigest({ user: { id: 'u5', full_name: '신입', account_tier: 'sub' }, today, now, data });
 assert.equal(nobody.empty, true, '맡은 것이 없으면 보내지 않는다');
 
+// 카드 한 장 보기 (업무 카드 '지금' 탭): 책임자와 상관없이 그 카드 신호만, 팀 숫자는 없다
+const one = D.buildOpsDigest({ user: { id: 'u5', full_name: '신입', account_tier: 'sub' }, admin: false, today, now, data, focus: me.sections.risk[0].card_id });
+const oneAll = Object.values(one.sections).flat();
+assert.ok(oneAll.length > 0, '남의 카드도 카드 한 장 보기에서는 신호가 나온다');
+assert.ok(oneAll.every((x) => x.card_id === me.sections.risk[0].card_id), '그 카드 신호만');
+assert.equal(one.team, null);
+
 const ko = D.digestText(me, { name: '이호민' });
 assert.match(ko.subject, /^\[오늘 업무\] 11\/2 · 14건$/);
 assert.match(ko.body, /■ 지연 위험 \(5\)\n- 휴대용 선풍기 박스 · 샘플 · 5일 지남/);

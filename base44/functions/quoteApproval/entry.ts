@@ -89,7 +89,7 @@ export default async function (req: Request) {
     };
     const title = q.quote_title || q.product_name || q.factory_name || '견적서';
     const cardTitle = card?.title || title;
-    const link = card ? `/task-board?card=${card.id}&tab=quotation` : '/quotations';
+    const link = card ? `/task-board?card=${card.id}&tab=quote` : '/quotations';
 
     if (action === 'preview') {
       return Response.json({ summary: quoteSummary(q), checks, rule, can_send: canSend(checks), can_approve: approver, status: q.status, published: isPublished(q), review_note: q.review_note || '', review_rejected_reason: q.review_rejected_reason || '' });

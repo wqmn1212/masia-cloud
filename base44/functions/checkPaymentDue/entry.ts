@@ -32,7 +32,7 @@ export default async function (req: Request) {
           type: 'payment_overdue',
           title: `[결제 기한 지남] ${card.title} ${label}`,
           body: `결제 기한 ${s.due_date}이 ${-step.left}일 지났는데 고객이 아직 송금했다고 알리지 않았습니다. 고객에게 연락하거나 기한을 고쳐 다시 보내 주세요.`,
-          link: `/task-board?card=${card.id}&tab=settlement`, task_card_id: card.id, card_title: card.title,
+          link: `/task-board?card=${card.id}&tab=ship`, task_card_id: card.id, card_title: card.title,
         }).catch(() => 0);
         await db.PaymentStage.update(s.id, { overdue_notified_for: step.key });
         overdue++;

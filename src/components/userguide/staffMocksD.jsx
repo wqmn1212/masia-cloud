@@ -88,7 +88,7 @@ export function QuoteAcceptMock({ zh }) {
 // 고객 포털 3단계 직원 쪽 예시 화면 (문의 양식·소싱 진행률, 재주문 예상·주문 시점, 불량 보상·공장 회신 기한)
 export function InquiryFormStaffMock({ zh }) {
   return (
-    <Frame title={L(zh, '카드 → 오버뷰 (고객 문의로 만든 카드)', '卡片 → 概览（由客户咨询生成）')} badge={L(zh, '예시 화면', '示例画面')}>
+    <Frame title={L(zh, '카드 → 지금 탭 (고객 문의로 만든 카드)', '卡片 → 当前页（由客户咨询生成）')} badge={L(zh, '예시 화면', '示例画面')}>
       <Mark n={1}><div className="whitespace-pre-line p-1 text-[10px]">{L(zh, '카테고리: 전자 · 전기 / 수량: 3,000\n[사양] 충전 단자: USB-C · 정격 전압·전력: (미입력)', '카테고리: 전자 · 전기 / 수량: 3,000\n[사양] 충전 단자: USB-C · 정격 전압·전력: (미입력)')}</div></Mark>
       <Mark n={2} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1">{L(zh, '납기 2027-01-10 · 수입 요건', '交期 2027-01-10 · 进口要求')} <Badge tone="amber">{L(zh, '전기용품 KC 인증 · 필요', '电器 KC 认证 · 需要')}</Badge></div></Mark>
       <Mark n={3} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1 text-[10px]">{[L(zh, '요구사항 확인', '确认需求'), L(zh, '공장 후보 3곳', '候选工厂3家'), L(zh, '견적 2건 받음', '已收报价2份'), L(zh, '비교표 준비', '准备比价表')].map((k, i) => <span key={k} className={`rounded-full px-1.5 py-0.5 ${i <= 2 ? 'bg-primary text-primary-foreground' : 'border text-muted-foreground'}`}>{k}</span>)}</div></Mark>

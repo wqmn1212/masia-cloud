@@ -52,7 +52,7 @@ export default function SerialLookup() {
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-title font-semibold">{u.serial}</span>
               <span className={`rounded-md px-2 py-0.5 text-micro font-semibold ${STATUS[u.status]?.[1] || ''}`}>{STATUS[u.status]?.[0] || u.status}</span>
-              <Button asChild size="sm" variant="ghost" className="ml-auto gap-1"><Link to={`/task-board?card=${u.card_id}&tab=production`}>{u.card_title || '카드'}<ArrowUpRight className="h-3.5 w-3.5" /></Link></Button>
+              <Button asChild size="sm" variant="ghost" className="ml-auto gap-1"><Link to={`/task-board?card=${u.card_id}&tab=quality%23card-production`}>{u.card_title || '카드'}<ArrowUpRight className="h-3.5 w-3.5" /></Link></Button>
             </div>
             <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-label sm:grid-cols-4">
               {[['고객사', u.client_name], ['LOT', u.lot], ['검사일', u.inspected_date], ['검사자', u.inspector], ['파레트', u.pallet], ['박스', u.box], ['출하일', u.shipped_date], ['출하', u.shipment_label]].map(([k, v]) => (

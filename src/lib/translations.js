@@ -2,6 +2,7 @@ export const translations = {
   ko: {
     // Sidebar sections
     'nav.hq': '본사 관리', 'nav.agent': '에이전트', 'nav.client': '고객사',
+    'nav.g.daily': '자주 쓰는 메뉴', 'nav.g.sales': '영업·견적', 'nav.g.project': '프로젝트', 'nav.g.dev': '개발 도구', 'nav.g.quality': '품질·양산', 'nav.g.finance': '정산·재무', 'nav.g.settings': '설정·도움말',
     'nav.dashboard': '대시보드', 'nav.quotations': '견적 관리', 'nav.taskboard': '소싱 칸반 보드',
     'nav.settlement': '정산 대시보드', 'nav.knowledge': '지식 베이스', 'nav.factories': '공장 관리',
     'nav.agentquotes': '견적 업로드', 'nav.requirements': '요구사항 트래커', 'nav.clients': '고객사 관리',
@@ -126,7 +127,7 @@ export const translations = {
     'qcp.aiSame': '같은 사양으로 이미 AI 점검을 했습니다', 'qcp.how': '확인·예방', 'qcp.criteria': '합격 기준', 'qcp.question': '공장 질문', 'qcp.factoryAnswer': '공장 답 (업로드 링크)',
     'qcp.source.RULE': '규칙', 'qcp.source.CASE': '우리 사례', 'qcp.source.AI': 'AI',
     'qcp.decision.TASK': '업무 등록됨', 'qcp.decision.SPEC': '기준서 추가됨', 'qcp.decision.QUESTION': '공장 질문', 'qcp.decision.DISMISSED': '제외됨',
-    'qcp.summary': '사전 QC 점검', 'qcp.summaryNone': '아직 점검하지 않았습니다', 'qcp.goTasks': '업무 탭에서 보기',
+    'qcp.summary': '사전 QC 점검', 'qcp.summaryNone': '아직 점검하지 않았습니다', 'qcp.goTasks': '품질 탭에서 보기',
     'qcp.taskAdded': '업무로 등록했습니다', 'qcp.specAdded': '품질 기준서 초안에 추가했습니다', 'qcp.specResend': '보낸 기준서가 있어 새 버전 초안에 추가했습니다. 고객 재승인이 필요합니다.',
     'qcp.saved': '사양을 저장했습니다', 'qcp.gate': '사전 QC 점검', 'qcp.gateOpen': '정할 사양·처리 안 한 위험이 남아 있습니다 (생산 전 확인 권장)', 'qcp.gateNone': '사전 QC 점검을 하지 않았습니다 (생산 전 점검 권장)', 'qcp.gateOk': '정할 사양·위험 처리 완료',
     'cmp.title': "견적 비교표", 'cmp.cfContract': "확정한 견적으로 계약서 만들기 (계약서 화면으로 이동해 전자서명 요청)", 'cmp.sheetTitle': "비교표 제목", 'cmp.dialogDesc': "금액은 견적에서 다시 계산합니다. 금액을 고치려면 견적을 수정하세요", 'cmp.lastPublished': "마지막 공개",
@@ -209,6 +210,7 @@ export const translations = {
   zh: {
     // Sidebar sections
     'nav.hq': '总部管理', 'nav.agent': '代理商', 'nav.client': '客户',
+    'nav.g.daily': '常用菜单', 'nav.g.sales': '销售·报价', 'nav.g.project': '项目', 'nav.g.dev': '开发工具', 'nav.g.quality': '质量·量产', 'nav.g.finance': '结算·财务', 'nav.g.settings': '设置·帮助',
     'nav.dashboard': '仪表盘', 'nav.quotations': '报价管理', 'nav.taskboard': '采购看板',
     'nav.settlement': '结算概览', 'nav.knowledge': '知识库', 'nav.factories': '工厂管理',
     'nav.agentquotes': '上传报价', 'nav.requirements': '需求跟踪', 'nav.clients': '客户管理',
@@ -333,7 +335,7 @@ export const translations = {
     'qcp.aiSame': '相同规格已做过AI检查', 'qcp.how': '确认·预防', 'qcp.criteria': '合格标准', 'qcp.question': '工厂问题', 'qcp.factoryAnswer': '工厂回答（上传链接）',
     'qcp.source.RULE': '规则', 'qcp.source.CASE': '我方案例', 'qcp.source.AI': 'AI',
     'qcp.decision.TASK': '已登记任务', 'qcp.decision.SPEC': '已加入标准书', 'qcp.decision.QUESTION': '已问工厂', 'qcp.decision.DISMISSED': '已排除',
-    'qcp.summary': '事前QC检查', 'qcp.summaryNone': '尚未检查', 'qcp.goTasks': '在任务页查看',
+    'qcp.summary': '事前QC检查', 'qcp.summaryNone': '尚未检查', 'qcp.goTasks': '在质量页查看',
     'qcp.taskAdded': '已登记为任务', 'qcp.specAdded': '已加入品质标准书草稿', 'qcp.specResend': '已有发送的标准书，已加入新版本草稿，需客户重新确认。',
     'qcp.saved': '规格已保存', 'qcp.gate': '事前QC检查', 'qcp.gateOpen': '仍有未定规格·未处理风险（建议生产前确认）', 'qcp.gateNone': '尚未做事前QC检查（建议生产前检查）', 'qcp.gateOk': '规格·风险已处理',
     'cmp.title': "报价对比表", 'cmp.cfContract': "用确认的报价生成合同（跳转到合同页面发起电子签名）", 'cmp.sheetTitle': "对比表标题", 'cmp.dialogDesc': "金额每次都从报价重新计算。如需修改金额，请修改报价", 'cmp.lastPublished': "最近公开",

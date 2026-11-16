@@ -48,15 +48,16 @@ export function clientWaitsFrom(overview: any) {
  * data: { cards, milestones, tasks, clientWaits, factoryRequests, chats, plans, signatures, quotes }
  *  - plans 는 ProductPlan (order_by·runout 을 저장해 둔 것), product_key 의 카드 책임자에게 간다
  */
-export function buildOpsDigest({ user, admin = false, today, now, data }: any) {
+/** focus: 카드 한 장만 본다 (업무 카드 '지금' 탭). 책임자와 상관없이 그 카드의 신호를 모두 모은다 */
+export function buildOpsDigest({ user, admin = false, today, now, data, focus = '' }: any) {
   const d = data || {};
   const cards = (d.cards || []).filter((c: any) => !['DONE', 'CANCELLED'].includes(c.status));
   const cardById = new Map(cards.map((c: any) => [c.id, c]));
   const allCards = new Map((d.cards || []).map((c: any) => [c.id, c]));
   const title = (id: string) => (allCards.get(id) as any)?.title || '';
   const titleCn = (id: string) => (allCards.get(id) as any)?.title_cn || title(id);
-  const mineCard = (id: string) => (cardById.get(id) as any)?.owner_id === user.id;
-  const mineStep = (m: any) => (m.owner_ids || []).includes(user.id) || m.owner_id === user.id || mineCard(m.card_id);
+  const mineCard = (id: string) => (focus ? id === focus : (cardById.get(id) as any)?.owner_id === user.id);
+  const mineStep = (m: any) => (focus ? m.card_id === focus : (m.owner_ids || []).includes(user.id) || m.owner_id === user.id || mineCard(m.card_id));
   const nowIso = now || new Date().toISOString();
   const S: Record<string, any[]> = Object.fromEntries(SECTIONS.map((k) => [k, []]));
   const push = (k: string, card_id: string, ko: string, cn: string, extra: any = {}) => S[k].push({ card_id, card_title: title(card_id), card_title_cn: titleCn(card_id), ko, cn, ...extra });
@@ -68,7 +69,7 @@ export function buildOpsDigest({ user, admin = false, today, now, data }: any) {
     else if (late > 0) push('risk', m.card_id, `${m.label} · ${late}일 지남`, `${m.label_cn || m.label} · 已逾期${late}天`, { days: late });
     else if (-late <= SOON_DAYS) push('risk', m.card_id, `${m.label} · ${md(m.planned_date)}까지 (${-late}일 남음)`, `${m.label_cn || m.label} · ${md(m.planned_date)}截止（剩${-late}天）`);
   }
-  for (const t of (d.tasks || []).filter((t: any) => t.status !== 'DONE' && t.due_date && cardById.has(t.card_id) && (t.assignee_name ? t.assignee_name === user.full_name : mineCard(t.card_id)))) {
+  for (const t of (d.tasks || []).filter((t: any) => t.status !== 'DONE' && t.due_date && cardById.has(t.card_id) && (focus ? t.card_id === focus : t.assignee_name ? t.assignee_name === user.full_name : mineCard(t.card_id)))) {
     if (t.due_date === today) push('due_today', t.card_id, `${t.title} (업무)`, `${t.title_cn || t.title}（任务）`);
     else if (t.due_date < today) push('risk', t.card_id, `${t.title} · 업무 ${dayDiff(t.due_date, today)}일 지남`, `${t.title_cn || t.title} · 任务已逾期${dayDiff(t.due_date, today)}天`, { days: dayDiff(t.due_date, today) });
   }
@@ -124,7 +125,7 @@ export function buildOpsDigest({ user, admin = false, today, now, data }: any) {
       if (q.review_rejected_reason && (mine || q.review_requested_by_id === user.id)) push('to_check', q.card_id, `견적 반려됨 · ${qName(q)}: ${q.review_rejected_reason}`, `报价被退回 · ${qName(q)}：${q.review_rejected_reason}`);
       else if (q.factory_request_id && mine) push('to_check', q.card_id, `공장 견적 초안 · ${q.factory_name || qName(q)} (마진 확인 후 검토 요청)`, `工厂报价草稿 · ${q.factory_name || qName(q)}（确认利润后申请审核）`);
     }
-    if (admin && q.status === 'REVIEW' && !q.client_published_at && q.review_requested_at) {
+    if ((admin || (focus && q.card_id === focus)) && q.status === 'REVIEW' && !q.client_published_at && q.review_requested_at) {
       const wait = dayDiff(kst(q.review_requested_at), today);
       if (wait >= APPROVAL_WAIT_DAYS) push('to_check', q.card_id, `견적 승인 대기 ${wait}일째 · ${qName(q)}${q.review_requested_by_name ? ` (요청 ${q.review_requested_by_name})` : ''}`, `报价待审批第${wait}天 · ${qName(q)}`, { days: wait });
     }
@@ -140,7 +141,7 @@ export function buildOpsDigest({ user, admin = false, today, now, data }: any) {
     }
   }
 
-  for (const p of (d.plans || []).filter((p: any) => p.order_by && (admin ? true : mineCard(p.product_key) || (allCards.get(p.product_key) as any)?.owner_id === user.id))) {
+  for (const p of (d.plans || []).filter((p: any) => p.order_by && (focus ? p.product_key === focus : admin ? true : mineCard(p.product_key) || (allCards.get(p.product_key) as any)?.owner_id === user.id))) {
     const left = dayDiff(today, p.order_by);
     if (left > REORDER_DAYS) continue;
     const name = p.product_name || '상품';
@@ -149,7 +150,7 @@ export function buildOpsDigest({ user, admin = false, today, now, data }: any) {
   }
 
   let team = null;
-  if (admin) {
+  if (admin && !focus) {
     const lateCards = new Map<string, number>();
     for (const m of steps) { const late = dayDiff(m.planned_date, today); if (late > 0) lateCards.set(m.card_id, Math.max(lateCards.get(m.card_id) || 0, late)); }
     const waitingTotal = (d.factoryRequests || []).reduce((n: number, r: any) => n + (r.items || []).filter((i: any) => i.status === 'SUBMITTED').length, 0);

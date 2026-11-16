@@ -17,7 +17,7 @@ import UnassignedCardsSection from '@/components/leads/UnassignedCardsSection';
 const STAGE = { DOWN_PAYMENT: ['선금', '首款'], INTERIM_PAYMENT: ['중도금', '中期款'], BALANCE_PAYMENT: ['잔금', '尾款'] };
 const CLAIM = { SUBMITTED: ['접수', '受理'], REVIEWING: ['확인 중', '确认中'], FACTORY_CONFIRMED: ['공장 확인', '工厂确认'] };
 const won = (n) => (n == null ? '' : `${Math.round(Number(n)).toLocaleString('ko-KR')}원`);
-const cardLink = (id, tab) => `/task-board?card=${id}${tab ? `&tab=${tab}` : ''}`;
+const cardLink = (id, tab) => `/task-board?card=${id}${tab ? `&tab=${encodeURIComponent(tab)}` : ''}`;
 
 function useInbox() {
   const status = useQuery({ queryKey: ['admin-inbox', 'status'], queryFn: async () => (await base44.functions.invoke('assistantStatus', { topic: 'all' })).data });
@@ -154,7 +154,7 @@ export default function AdminInbox() {
             badge={p.reported ? <Badge className="border-0 bg-primary/10 text-micro text-primary">{L(['고객 송금 알림', '客户已告知汇款'])}</Badge> : null}
             meta={[p.amount ? `${p.currency || ''} ${Number(p.amount).toLocaleString('ko-KR')}` : '', p.paid_date ? `${L(['입금일', '到账日'])} ${p.paid_date}` : '', p.reported ? `${L(['고객이 적은 송금일', '客户填写的汇款日'])} ${p.client_reported_paid_date || ''}${p.client_reported_by_name ? ` (${p.client_reported_by_name})` : ''}` : '', p.has_receipt ? L(['송금확인증 있음', '有汇款凭证']) : ''].filter(Boolean).join(' · ')}
             warn={!p.has_receipt && REMITTANCE_FOR_STAGE[p.stage_type] ? L(['송금확인증이 없습니다. 고객에게 요청하거나 통장 내역으로 확인하세요.', '没有汇款凭证。请向客户索取，或以银行流水核对。']) : null}
-            to={cardLink(p.card_id, 'settlement')} action={L(['입금 확인', '确认到账'])} />
+            to={cardLink(p.card_id, 'ship')} action={L(['입금 확인', '确认到账'])} />
         ))}
       </Section>
 
@@ -165,7 +165,7 @@ export default function AdminInbox() {
           <Row key={p.id} title={`${cardTitle(p.card_id)} · ${L(STAGE[p.stage_type] || ['결제', '付款'])} ${p.percentage ?? ''}%`}
             badge={<Badge variant="outline" className="border-warning/40 text-micro text-warning-text">{L([`${-p.left}일 지남`, `逾期 ${-p.left} 天`])}</Badge>}
             meta={[p.amount ? `${p.currency || ''} ${Number(p.amount).toLocaleString('ko-KR')}` : '', `${L(['기한', '期限'])} ${p.due_date}`, p.requested_by_name ? `${L(['요청', '请求'])} ${p.requested_by_name}` : ''].filter(Boolean).join(' · ')}
-            to={cardLink(p.card_id, 'settlement')} action={L(['결제 요청 보기', '查看付款请求'])} />
+            to={cardLink(p.card_id, 'ship')} action={L(['결제 요청 보기', '查看付款请求'])} />
         ))}
       </Section>
 
@@ -175,7 +175,7 @@ export default function AdminInbox() {
         {comparisons.map((c) => (
           <Row key={c.card_id} title={c.card_title} badge={<Badge className="border-0 bg-primary/10 text-micro text-primary">{c.client_choice}</Badge>}
             meta={`${c.client_name || ''}${c.published_date ? ` · ${L(['공개', '公开'])} ${c.published_date}` : ''}`} warn={c.client_note ? `${L(['고객 메모', '客户备注'])}: ${c.client_note}` : null}
-            to={cardLink(c.card_id, 'quotation')} action={L(['확정하기', '去确认'])} />
+            to={cardLink(c.card_id, 'quote')} action={L(['확정하기', '去确认'])} />
         ))}
       </Section>
 
@@ -197,7 +197,7 @@ export default function AdminInbox() {
         {costs.cards.map((c) => (
           <Row key={`c-${c.card_id}`} title={c.card_title} badge={<Badge variant="outline" className="text-micro">{L(['원가 확정', '确认成本'])}</Badge>}
             meta={c.client_name} warn={c.actual_missing ? L(['실제 도착 비용이 빠진 선적이 있어 예상액으로 채워집니다.', '有发货缺少实际到岸费用，将以预估金额填入。']) : null}
-            to={cardLink(c.card_id, 'settlement')} action={L(['원가 확정하기', '去确认成本'])} />
+            to={cardLink(c.card_id, 'ship#card-settlement')} action={L(['원가 확정하기', '去确认成本'])} />
         ))}
         {costs.shipments.map((sh) => (
           <Row key={`s-${sh.shipment_id}`} title={`${sh.card_title} · ${sh.label}`} badge={<Badge variant="outline" className="text-micro">{L(['도착 비용', '到岸费用'])}</Badge>}
@@ -214,7 +214,7 @@ export default function AdminInbox() {
             badge={<Badge variant="outline" className={`text-micro ${c.stale || c.factory_overdue ? 'border-warning/40 text-warning-text' : ''}`}>{c.promise && !OPEN_CLAIM.includes(c.status) ? L(['보상 미반영', '补偿未兑现']) : L(CLAIM[c.status])}</Badge>}
             meta={`${c.submitted_by_name || ''}${c.age != null ? ` · ${ago(c.age)} ${L(['접수', '受理'])}` : ''}${c.defect_qty != null ? ` · ${L(['불량', '不良'])} ${c.defect_qty}${c.received_qty ? `/${c.received_qty}` : ''}` : ''}${c.wait ? ` · ${L(['공장 회신 대기', '等待工厂回复'])} ${c.wait.business}${L(['영업일', '个工作日'])}` : ''}`}
             warn={c.factory_overdue ? L(['공장 회신 기한(3영업일)이 지났습니다. 공장에 독촉하고 회신을 기록하세요.', '已超过工厂回复期限（3 个工作日），请催促工厂并记录回复。']) : c.stale ? L(['접수 후 2일 넘게 확인하지 않았습니다.', '受理后超过 2 天未确认。']) : c.promise && !OPEN_CLAIM.includes(c.status) ? L(['약속한 보상을 다음 주문에 반영했는지 기록하세요.', '请记录承诺的补偿是否已在下次订单中兑现。']) : null}
-            to={cardLink(c.card_id, 'tasks')} action={L(['처리하기', '去处理'])} />
+            to={cardLink(c.card_id, 'quality#card-claims')} action={L(['처리하기', '去处理'])} />
         ))}
       </Section>
 
@@ -244,13 +244,13 @@ function FactoryAndReorderSections({ L, cardTitle }) {
   return (
     <>
       <Section id="inbox-factory" icon={Factory} title={L(['공장 제출 확인 대기', '工厂提交待确认'])} count={factoryRows.length} loading={factory.isLoading} error={factory.isError && L(['불러오지 못했습니다.', '加载失败。'])}
-        desc={L(['공장이 업로드 링크로 올린 사진·서류·답 중 아직 채택하거나 재요청하지 않은 것입니다. 카드 업무 탭의 공장 업로드 링크에서 처리합니다.', '工厂通过上传链接提交、尚未确认或要求重新提交的照片、文件和回答。请在卡片任务页的工厂上传链接中处理。'])}
+        desc={L(['공장이 업로드 링크로 올린 사진·서류·답 중 아직 채택하거나 재요청하지 않은 것입니다. 카드 소통 탭의 공장 업로드 링크에서 처리합니다.', '工厂通过上传链接提交、尚未确认或要求重新提交的照片、文件和回答。请在卡片任务页的工厂上传链接中处理。'])}
         empty={L(['확인할 공장 제출이 없습니다.', '没有待确认的工厂提交。'])}>
         {factoryRows.map((r) => (
           <Row key={r.id} title={`${cardTitle(r.card_id)} · ${r.factory_name || L(['공장', '工厂'])}`}
             badge={<Badge className="border-0 bg-primary/10 text-micro text-primary">{L([`확인 대기 ${(r.items || []).filter((i) => i.status === 'SUBMITTED').length}건`, `待确认 ${(r.items || []).filter((i) => i.status === 'SUBMITTED').length} 项`])}</Badge>}
             meta={`${L(['마지막 제출', '最近提交'])} ${String(r.last_submitted_at || '').slice(0, 10)} · ${r.created_by_name || ''}`}
-            to={cardLink(r.card_id, 'tasks')} action={L(['확인하기', '去确认'])} />
+            to={cardLink(r.card_id, 'talk#card-factory-request')} action={L(['확인하기', '去确认'])} />
         ))}
       </Section>
       <Section id="inbox-reorder" icon={CalendarClock} title={L(['고객 재주문 시점 (2주 이내)', '客户返单时机（2周内）'])} count={planRows.length} loading={plans.isLoading} error={plans.isError && L(['불러오지 못했습니다.', '加载失败。'])}
@@ -260,7 +260,7 @@ function FactoryAndReorderSections({ L, cardTitle }) {
           <Row key={p.id} title={`${p.company_name || L(['고객사', '客户'])} · ${p.product_name || L(['상품', '产品'])}`}
             badge={<Badge variant="outline" className={`text-micro ${p.order_by < kstToday ? 'border-warning/40 text-warning-text' : ''}`}>{p.order_by < kstToday ? L(['권장일 지남', '已过建议日']) : L(['주문 권장', '建议下单'])} {p.order_by}</Badge>}
             meta={[p.runout ? `${L(['예상 소진', '预计用完'])} ${p.runout}` : '', p.recommended_qty ? `${L(['권장 발주량', '建议数量'])} ${Number(p.recommended_qty).toLocaleString('ko-KR')}${p.unit_label || ''}` : '', p.lead_days ? `${L(['발주→도착 평균', '下单→到货平均'])} ${p.lead_days}${L(['일', '天'])}` : ''].filter(Boolean).join(' · ')}
-            to={cardLink(p.product_key, 'overview')} action={L(['카드 보기', '查看卡片'])} />
+            to={cardLink(p.product_key, 'now')} action={L(['카드 보기', '查看卡片'])} />
         ))}
       </Section>
     </>
