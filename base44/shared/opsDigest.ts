@@ -62,6 +62,27 @@ export function buildOpsDigest({ user, admin = false, today, now, data, focus = 
   const S: Record<string, any[]> = Object.fromEntries(SECTIONS.map((k) => [k, []]));
   const push = (k: string, card_id: string, ko: string, cn: string, extra: any = {}) => S[k].push({ card_id, card_title: title(card_id), card_title_cn: titleCn(card_id), ko, cn, ...extra });
 
+  // 영업 팔로업: 내 담당 영업 대상의 다음 연락일 (카드가 없어 영업 화면으로 연결)
+  if (!focus) {
+    for (const p of (d.prospects || []).filter((p: any) => (p.owner_email && p.owner_email === user.email) || (!p.owner_email && p.owner_name && p.owner_name === user.full_name))) {
+      const late = dayDiff(p.next_follow_up, today);
+      if (late < 0) continue;
+      const extra = { card_title: '영업 팔로업', card_title_cn: '销售跟进', href: `/sales?p=${p.id}`, ...(late > 0 ? { days: late } : {}) };
+      if (late === 0) push('due_today', '', `${p.company} 연락하기`, `联系${p.company}`, extra);
+      else push('risk', '', `${p.company} 연락 · ${late}일 지남`, `联系${p.company} · 已逾期${late}天`, extra);
+    }
+  }
+
+  // 고객 자료 요청: 고객이 올린 것은 확인할 것, 오래 안 온 것은 고객 대기
+  for (const r of (d.clientRequests || []).filter((r: any) => mineCard(r.card_id) && r.status === 'OPEN')) {
+    const items = r.items || [];
+    const sent = items.filter((x: any) => x.status === 'SUBMITTED').length;
+    const waiting = items.filter((x: any) => ['WAITING', 'REDO'].includes(x.status)).length;
+    if (sent) push('to_check', r.card_id, `고객 자료 ${sent}건 확인 대기 · ${r.title}`, `客户资料${sent}项待确认 · ${r.title}`);
+    const age = dayDiff(kst(r.sent_at || r.created_date), today);
+    if (waiting && age > STALE_DAYS) push('client_wait', r.card_id, `자료 요청 ${waiting}건 · ${age}일째`, `资料请求${waiting}项 · 第${age}天`, { days: age });
+  }
+
   const steps = (d.milestones || []).filter((m: any) => cardById.has(m.card_id) && open(m) && m.planned_date);
   for (const m of steps.filter(mineStep)) {
     const late = dayDiff(m.planned_date, today);
@@ -248,7 +269,8 @@ export function digestHtml(digest: any, { name = '', lang = 'ko', base = 'https:
     for (const r of rows) { const key = `${r.card_id}|${zh ? r.card_title_cn : r.card_title}`; groups.set(key, [...(groups.get(key) || []), r]); }
     const groupHtml = [...groups].map(([key, items]) => {
       const [cardId, cardTitle] = key.split('|');
-      const head = `<tr><td colspan="3" style="padding:12px 0 4px"><a href="${esc(url(`/task-board?card=${encodeURIComponent(cardId)}`))}" style="color:${C.muted};font-size:12.5px;font-weight:600;text-decoration:none">${esc(cardTitle || (zh ? '项目' : '프로젝트'))} ›</a></td></tr>`;
+      const href = items[0]?.href && !cardId ? items[0].href : `/task-board?card=${encodeURIComponent(cardId)}`;
+      const head = `<tr><td colspan="3" style="padding:12px 0 4px"><a href="${esc(url(href))}" style="color:${C.muted};font-size:12.5px;font-weight:600;text-decoration:none">${esc(cardTitle || (zh ? '项目' : '프로젝트'))} ›</a></td></tr>`;
       const lines = items.map((r: any) => {
         const { main, tags } = splitItem(zh ? r.cn : r.ko);
         const badges = tags.map((tag) => `<span style="display:inline-block;margin-left:4px;padding:2px 10px;border-radius:8px;font-size:11px;line-height:16px;font-weight:600;white-space:nowrap;${badgeStyle(tag, r.days)}">${esc(tag)}</span>`).join('');

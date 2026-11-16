@@ -49,6 +49,7 @@ const MoldReview = lazy(() => import('@/pages/MoldReview'));
 const Agreements = lazy(() => import('@/pages/Agreements'));
 const ArtCraft = lazy(() => import('@/pages/ArtCraft'));
 const Leads = lazy(() => import('@/pages/Leads'));
+const SalesPipeline = lazy(() => import('@/pages/SalesPipeline'));
 const ClientPortalDashboard = lazy(() => import('@/pages/ClientPortalDashboard'));
 const ClientBoard = lazy(() => import('@/pages/ClientBoard'));
 const ClientDocuments = lazy(() => import('@/pages/ClientDocuments'));
@@ -159,6 +160,7 @@ const AuthenticatedApp = () => {
         <Route path="/my-work" element={<MyWork />} />
         <Route path="/user-guide" element={<UserGuide />} />
         <Route path="/leads" element={<Leads />} />
+        <Route path="/sales" element={<SalesPipeline />} />
         <Route path="/marketing" element={<Marketing />} />
         <Route path="/china-holidays" element={<ChinaHolidays />} />
         <Route path="/portfolio-admin" element={<PortfolioAdmin />} />

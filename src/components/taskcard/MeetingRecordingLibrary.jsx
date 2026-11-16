@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Headphones, ChevronDown, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import MeetingAudioArchive from '@/components/taskcard/MeetingAudioArchive';
-const labels = { ONLINE: '화상', OFFLINE: '대면', CALL: '전화', WECHAT: '위챗' };
+const labels = { ONLINE: '화상', OFFLINE: '대면', CALL: '전화', WECHAT: '위챗', KAKAO: '카톡' };
 export default function MeetingRecordingLibrary({ logs }) {
   const recordings = logs.filter(log => log.recording_uris?.length || log.transcript_uri);
   const [open, setOpen] = useState({});

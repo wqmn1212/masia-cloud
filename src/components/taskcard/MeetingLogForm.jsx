@@ -10,8 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const TYPES = [
   { v: 'ONLINE', l: '화상' }, { v: 'OFFLINE', l: '대면' },
-  { v: 'CALL', l: '전화' }, { v: 'WECHAT', l: '위챗' },
+  { v: 'CALL', l: '전화' }, { v: 'WECHAT', l: '위챗' }, { v: 'KAKAO', l: '카톡' },
 ];
+
+// 녹음이 없는 기록만 메신저 대화를 붙여 넣을 수 있다 (녹음 전사와 섞이지 않게)
+const canPasteChat = (log) => !log || (!log.recording_uris?.length && !log.transcript_uri && !log.audio_parts?.length);
 
 const EMPTY = {
   meeting_date: new Date().toISOString().slice(0, 10),
@@ -30,8 +33,13 @@ export default function MeetingLogForm({ onSubmit, onCancel, saving, initial, au
       notes: initial.notes || '',
       decisions: initial.decisions || '',
       next_steps: initial.next_steps || '',
-    } : {}),
+      // 녹음에서 나온 전사는 녹음 기록에서만 고친다
+      ...(canPasteChat(initial) ? { transcript: initial.transcript || '' } : {}),
+    } : { transcript: '' }),
   });
+  const chatOk = canPasteChat(initial);
+  const [chatOpen, setChatOpen] = useState(false);
+  const showChat = chatOpen || !!form.transcript || ['KAKAO', 'WECHAT'].includes(form.meeting_type);
   const set = (k, v) => setForm(f => editBilingual(f, k, v));
 
   const { status } = useDeferredBilingualSave({
@@ -52,6 +60,15 @@ export default function MeetingLogForm({ onSubmit, onCancel, saving, initial, au
       </div>
       <BilingualField record={form} field="attendees" placeholder="참석자 / 参与者" onChange={handleChange} />
       <BilingualField record={form} field="notes" multiline rows={3} placeholder="논의 내용 / 讨论内容" onChange={handleChange} />
+      {chatOk && (showChat ? (
+        <div className="space-y-1">
+          <label htmlFor="meeting-chat" className="text-caption font-semibold text-muted-foreground">메신저 대화 (카톡·위챗) — 그대로 붙여 넣으면 저장 후 ‘AI 분석’이 결정·할 일을 뽑아 줍니다</label>
+          <Textarea id="meeting-chat" rows={6} value={form.transcript || ''} onChange={e => handleChange('transcript', e.target.value.slice(0, 60000))} placeholder={'[길상현] [오후 2:14] 버튼은 뒤쪽으로 옮겨 주세요\n[이호민] [오후 2:15] 네, 다음 주 월요일까지 수정안 드리겠습니다'} className="text-caption font-mono" />
+          <p className="text-micro text-muted-foreground">{(form.transcript || '').length.toLocaleString()}자 · 대화방 ‘대화 내보내기’ 텍스트도 됩니다 (최대 60,000자)</p>
+        </div>
+      ) : (
+        <button type="button" className="text-caption text-primary" onClick={() => setChatOpen(true)}>+ 카톡·위챗 대화 붙여넣기</button>
+      ))}
       <BilingualField record={form} field="decisions" multiline rows={2} placeholder="결정 사항 / 决定事项" onChange={handleChange} />
       <BilingualField record={form} field="next_steps" multiline rows={2} placeholder="다음 액션 / 下一步" onChange={handleChange} />
       <div className="flex justify-end items-center gap-2">

@@ -92,3 +92,36 @@ export function DesignRoomMock({ zh }) {
     </Frame>
   );
 }
+
+export function SalesMock({ zh }) {
+  return (
+    <Frame title={L(zh, '영업 파이프라인', '销售管道')} badge={Ex(zh)}>
+      <Mark n={1}><div className="flex flex-wrap items-center gap-1 p-1"><Btn>{L(zh, '엑셀 목록 붙여넣기', '粘贴Excel列表')}</Btn><Btn primary>{L(zh, '영업 대상 추가', '添加销售对象')}</Btn><span className="text-muted-foreground">{L(zh, '오늘 연락할 곳 2', '今天要联系 2')}</span></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><span>{L(zh, '1차 팔로업 · 제목: 지난번 드린 제안 관련', '第1次跟进 · 标题：关于上次的提案')}</span><Btn>{L(zh, '복사', '复制')}</Btn><Btn primary>{L(zh, '보냈다고 기록', '记录已发送')}</Btn></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Badge>{L(zh, '통화', '通话')}</Badge><span>{L(zh, '11-16 담당자와 통화 · 다음 연락 11-18', '11-16 与负责人通话 · 下次联系 11-18')}</span></div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn primary>{L(zh, '수주 → 업무 카드', '成交 → 任务卡片')}</Btn><Btn>{L(zh, '보류', '搁置')}</Btn></div></Mark>
+    </Frame>
+  );
+}
+
+export function ClientRequestStaffMock({ zh }) {
+  return (
+    <Frame title={L(zh, '고객 자료 요청 · 디자인 전달 자료', '客户资料请求 · 设计交接资料')} badge={Ex(zh)}>
+      <Mark n={1}><div className="flex flex-wrap items-center gap-1 p-1"><Btn primary>{L(zh, '자료 요청 보내기', '发送资料请求')}</Btn><span className="text-muted-foreground">{L(zh, '서식 · 항목 6 · 기한 11-20', '模板 · 6项 · 期限 11-20')}</span></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><span>{L(zh, '각도별 이미지', '各角度图片')}</span><Badge>{L(zh, '확인 필요', '待确认')}</Badge><span className="text-muted-foreground">{L(zh, '정면.png · 측면.png', '正面.png · 侧面.png')}</span></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn primary>{L(zh, '확인', '确认')}</Btn><Btn>{L(zh, '다시 요청', '要求重发')}</Btn><span className="h-1.5 w-16 rounded bg-primary/30"><span className="block h-1.5 w-8 rounded bg-primary" /></span><span>3/6</span></div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn>{L(zh, '마감', '截止')}</Btn></div></Mark>
+    </Frame>
+  );
+}
+
+export function MeetingBriefMock({ zh }) {
+  return (
+    <Frame title={L(zh, '미팅 준비 · 무니스 수면 조명', '会议准备 · 睡眠灯项目')} badge={Ex(zh)}>
+      <Mark n={1}><div className="space-y-0.5 p-1"><p className="font-semibold">{L(zh, '고객에게 물어볼 것 2', '要问客户的 2')}</p><p>{L(zh, '부품별 3D 파일 · 11-20까지', '分件3D文件 · 11-20前')}</p><p className="font-semibold">{L(zh, '우리가 답할 것 3', '我们要答复的 3')}</p><p className="text-destructive">{L(zh, '렌더 수정 · 11-12 지남', '渲染修改 · 11-12 已过')}</p></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn>{L(zh, '안건 복사', '复制议程')}</Btn><Btn>{L(zh, '인쇄·PDF', '打印·PDF')}</Btn></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn primary>{L(zh, '이 안건으로 미팅 기록 시작', '以此议程开始会议记录')}</Btn></div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="space-y-0.5 p-1 font-mono text-[10px]"><p>[길상현] [오후 2:14] 버튼은 뒤쪽으로</p><p>[이호민] [오후 2:15] 월요일까지 수정안</p><Btn>{L(zh, 'AI 분석', 'AI分析')}</Btn></div></Mark>
+    </Frame>
+  );
+}

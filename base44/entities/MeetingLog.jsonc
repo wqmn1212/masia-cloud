@@ -18,7 +18,8 @@
         "ONLINE",
         "OFFLINE",
         "CALL",
-        "WECHAT"
+        "WECHAT",
+        "KAKAO"
       ],
       "default": "ONLINE"
     },

@@ -29,6 +29,7 @@ export function resolveCardTab(value) {
 export function signalTarget(section, text) {
   const t = String(text || '');
   if (/고객 새 메시지/.test(t)) return 'talk';
+  if (/자료 요청|고객 자료/.test(t)) return 'talk#card-client-request';
   if (/클레임|불량|보상/.test(t)) return 'quality#card-claims';
   if (/검수|QC|성적서|기준 샘플/.test(t)) return 'quality';
   if (/선적|출하 서류|통관|입고|송금|입금|결제|정산/.test(t)) return /정산/.test(t) ? 'ship#card-settlement' : 'ship';

@@ -38,6 +38,7 @@ import MilestoneTab from '@/components/taskcard/milestones/MilestoneTab';
 import CardOwnerBar from '@/components/taskcard/CardOwnerBar';
 import ReorderDialog from '@/components/taskcard/ReorderDialog';
 import DesignRoomsPanel from '@/components/design/DesignRoomsPanel';
+import ClientRequestPanel from '@/components/requests/ClientRequestPanel';
 import CardNowPanel from '@/components/taskcard/CardNowPanel';
 import { CARD_TABS, resolveCardTab } from '@/lib/cardTabs';
 import { Button } from '@/components/ui/button';
@@ -179,6 +180,7 @@ export default function CardModal({ card: initialCard, open, onClose, initialTab
           <TabsContent value="talk" className="mt-4 space-y-5">
             <ChatTab card={card} user={user} viewLang={viewLang} />
             <section id="card-factory-request"><FactoryRequestPanel card={card} /></section>
+            {isStaff && <section id="card-client-request"><ClientRequestPanel card={card} /></section>}
             <Section id="card-meetings" title={lang === 'zh' ? '会议·分析' : '미팅·분석'}>
               <MeetingLogPanel card={card} user={user} onRecordingBusy={setRecordingBusy} />
               <div className="mt-4 border-t pt-4"><TaskInsightPanel card={card} user={user} /></div>

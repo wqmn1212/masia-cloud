@@ -7,7 +7,7 @@ import { Trash2, Pencil, FileText, ChevronDown, ChevronRight, Sparkles, Share2 }
 import MeetingRecorder from '@/components/taskcard/MeetingRecorder';
 import MeetingLiveNotes from '@/components/taskcard/MeetingLiveNotes';
 import { useLanguage } from '@/lib/LanguageContext';
-const TYPE_LABEL = { ONLINE: '화상', OFFLINE: '대면', CALL: '전화', WECHAT: '위챗' };
+const TYPE_LABEL = { ONLINE: '화상', OFFLINE: '대면', CALL: '전화', WECHAT: '위챗', KAKAO: '카톡' };
 
 export default function MeetingLogItem({ log, onDelete, onEdit, onAnalyze, onShare, userId, onBusy, disabled, recordDisabled }) {
   const [open, setOpen] = useState(false);
@@ -48,6 +48,12 @@ export default function MeetingLogItem({ log, onDelete, onEdit, onAnalyze, onSha
           {(log.notes || log.notes_cn) && <p className="text-caption whitespace-pre-wrap">{content(log, 'notes')}</p>}
           {(log.decisions || log.decisions_cn) && <p className="text-caption whitespace-pre-wrap"><span className="font-semibold">{lang === 'zh' ? '决定' : '결정'}: </span>{content(log, 'decisions')}</p>}
           {(log.next_steps || log.next_steps_cn) && <p className="text-caption whitespace-pre-wrap"><span className="font-semibold">{lang === 'zh' ? '下一步' : '다음 액션'}: </span>{content(log, 'next_steps')}</p>}
+          {log.transcript && !log.recording_uris?.length && !log.transcript_uri && (
+            <details className="rounded border bg-muted/30 px-2 py-1">
+              <summary className="cursor-pointer text-caption font-medium">{lang === 'zh' ? '聊天记录' : '붙여 넣은 대화'} ({log.transcript.length.toLocaleString()}자)</summary>
+              <div className="max-h-60 overflow-y-auto whitespace-pre-wrap py-1 font-mono text-caption">{log.transcript}</div>
+            </details>
+          )}
         </div>
       )}
       {writing && <MeetingLiveNotes log={log} onSaved={() => qc.invalidateQueries({ queryKey: ['meeting-logs', log.card_id] })} />}

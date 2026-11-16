@@ -69,3 +69,13 @@ export function DesignRoomClientMock() {
     </Frame>
   );
 }
+
+export function ClientRequestMock() {
+  return (
+    <Frame title="요청드린 자료 · 디자인 전달 자료">
+      <Mark n={1}><div className="flex flex-wrap items-center gap-1.5 p-1"><span>각도별 이미지 *</span><Btn>파일 고르기</Btn><span className="text-muted-foreground">정면.png</span></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="flex items-center gap-1.5 p-1"><Btn primary>보내기</Btn><Badge>담당자 확인 중</Badge></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="p-1 text-destructive">담당자: 받침대 높이도 적어 주세요</div></Mark>
+    </Frame>
+  );
+}

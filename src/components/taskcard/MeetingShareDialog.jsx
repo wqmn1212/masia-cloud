@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/components/ui/use-toast';
 
-const TYPE_LABEL = { ONLINE: '화상 미팅', OFFLINE: '대면 미팅', CALL: '전화', WECHAT: '위챗' };
+const TYPE_LABEL = { ONLINE: '화상 미팅', OFFLINE: '대면 미팅', CALL: '전화', WECHAT: '위챗', KAKAO: '카톡' };
 const pick = (log, key) => (log[key] || log[`${key}_cn`] || '').trim();
 
 // 고객에게 보낼 미팅 요약 초안 (한국어 원문 우선, 없으면 중국어)

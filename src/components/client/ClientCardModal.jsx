@@ -26,6 +26,7 @@ import ClientFileReviewSection from './filereview/ClientFileReviewSection';
 import { ClientDecisionProvider } from './approval/ClientDecisionContext';
 import ClientDevTab, { devQueryKey } from './ClientDevTab';
 import DesignRoomsPanel from '@/components/design/DesignRoomsPanel';
+import ClientRequestSection from '@/components/requests/ClientRequestSection';
 
 const TABS = ['overview', 'quotation', 'qc', 'chat', 'settlement', 'files', 'dev'];
 
@@ -50,6 +51,14 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
   });
   const devProjects = dev?.projects || [];
   const devPending = devProjects.some((p) => p.pending.eco + p.pending.doc > 0);
+  // 담당자가 요청한 자료 (진행 정보 탭 맨 위)
+  const { data: reqData } = useQuery({
+    queryKey: ['client-requests-portal', cardId],
+    queryFn: async () => (await base44.functions.invoke('clientRequest', withClientView({ action: 'list', card_id: cardId }))).data,
+    enabled: !!cardId && open, staleTime: 30_000,
+  });
+  const requests = reqData?.requests || [];
+  const reqWaiting = requests.some((r) => r.status === 'OPEN' && r.progress.waiting > 0);
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -77,7 +86,7 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
             <ClientDecisionProvider cardId={data.card.id} approvals={data.approvals || []} team={data.team || null}>
             <Tabs key={`${cardId}-${initialTab || ''}-${devProjects.length > 0}`} defaultValue={TABS.includes(initialTab) && (initialTab !== 'dev' || devProjects.length) ? initialTab : 'overview'} className="mt-3">
               <TabsList className={`flex w-full justify-start overflow-x-auto sm:grid ${devProjects.length ? 'sm:grid-cols-7' : 'sm:grid-cols-6'}`}>
-                <TabsTrigger value="overview" className="text-caption sm:text-body">진행 정보</TabsTrigger>
+                <TabsTrigger value="overview" className="relative text-caption sm:text-body">진행 정보{reqWaiting && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" aria-label="보내 주실 자료 있음" />}</TabsTrigger>
                 <TabsTrigger value="quotation" className="text-caption sm:text-body">견적서</TabsTrigger>
                 <TabsTrigger value="qc" className="relative text-caption sm:text-body">
                   검수
@@ -100,6 +109,7 @@ export default function ClientCardModal({ cardId, open, onClose, initialTab, onO
                 )}
               </TabsList>
               <TabsContent value="overview" className="mt-4">
+                <ClientRequestSection cardId={data.card.id} requests={requests} />
                 <ClientShipmentPanel cardId={data.card.id} shipments={data.shipments || []} onChanged={refetch} />
                 <ClientMilestonePanel milestones={data.milestones} />
                 <ClientFactoryCheck check={data.factory_check || null} />

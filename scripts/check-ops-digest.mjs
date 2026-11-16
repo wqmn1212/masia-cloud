@@ -79,6 +79,28 @@ assert.ok(oneAll.length > 0, '남의 카드도 카드 한 장 보기에서는 �
 assert.ok(oneAll.every((x) => x.card_id === me.sections.risk[0].card_id), '그 카드 신호만');
 assert.equal(one.team, null);
 
+// 영업 팔로업: 내 담당 영업 대상의 오늘·밀린 연락 (카드 없이 영업 화면으로)
+const ME2 = { ...ME, email: 'me@aegis.example' };
+const withSales = D.buildOpsDigest({ user: ME2, today, now, data: { ...data, prospects: [
+  { id: 'p1', company: '무니스', stage: 'SENT', next_follow_up: '2026-11-02', owner_email: 'me@aegis.example' },
+  { id: 'p2', company: '바이어상사', stage: 'REPLIED', next_follow_up: '2026-10-30', owner_email: 'me@aegis.example' },
+  { id: 'p3', company: '다음주', stage: 'SENT', next_follow_up: '2026-11-09', owner_email: 'me@aegis.example' },
+  { id: 'p4', company: '남의 영업', stage: 'SENT', next_follow_up: '2026-11-02', owner_email: 'other@aegis.example' },
+] } });
+const salesRows = Object.values(withSales.sections).flat().filter((x) => x.href);
+assert.deepEqual(salesRows.map((x) => [x.ko, x.href]), [['무니스 연락하기', '/sales?p=p1'], ['바이어상사 연락 · 3일 지남', '/sales?p=p2']], '내 담당, 오늘·밀린 것만');
+assert.match(D.digestHtml(withSales, { name: '이호민', base: 'https://x.example' }), /https:\/\/x\.example\/sales\?p=p1/, '메일에서 영업 화면으로 연결');
+assert.equal(D.buildOpsDigest({ user: ME2, today, now, data: { ...data, prospects: [{ id: 'p1', company: '무니스', stage: 'SENT', next_follow_up: '2026-11-02', owner_email: 'me@aegis.example' }] }, focus: 'c1' }).sections.due_today.some((x) => x.href), false, '카드 한 장 보기에는 영업 없음');
+
+// 고객 자료 요청: 올라온 것은 확인할 것, 3일 넘게 안 온 것은 고객 대기
+const withReq = D.buildOpsDigest({ user: ME, today, now, data: { ...data, clientRequests: [
+  { id: 'r1', card_id: 'c1', title: '디자인 전달 자료', status: 'OPEN', sent_at: '2026-10-27T01:00:00Z', items: [{ status: 'SUBMITTED' }, { status: 'WAITING' }, { status: 'REDO' }, { status: 'ACCEPTED' }] },
+  { id: 'r2', card_id: 'c2', title: '남의 카드', status: 'OPEN', sent_at: '2026-10-01T01:00:00Z', items: [{ status: 'SUBMITTED' }] },
+] } });
+assert.ok(withReq.sections.to_check.some((x) => x.ko === '고객 자료 1건 확인 대기 · 디자인 전달 자료'));
+assert.ok(withReq.sections.client_wait.some((x) => x.ko === '자료 요청 2건 · 6일째'));
+assert.ok(!Object.values(withReq.sections).flat().some((x) => /남의 카드/.test(x.ko)), '남의 카드 자료 요청은 빼고');
+
 const ko = D.digestText(me, { name: '이호민' });
 assert.match(ko.subject, /^\[오늘 업무\] 11\/2 · 14건$/);
 assert.match(ko.body, /■ 지연 위험 \(5\)\n- 휴대용 선풍기 박스 · 샘플 · 5일 지남/);
