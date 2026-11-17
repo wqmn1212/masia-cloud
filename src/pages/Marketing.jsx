@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
@@ -20,6 +21,10 @@ export default function Marketing() {
   });
 
   const open = (post) => { setEditing(post || {}); setTab('editor'); };
+  // 알림 링크(/marketing?post=…)로 들어오면 그 게시물을 연다
+  const [params] = useSearchParams();
+  const linked = params.get('post');
+  useEffect(() => { const p = linked && posts.find((x) => x.id === linked); if (p) open(p); }, [linked, posts.length]);
   const refresh = () => qc.invalidateQueries({ queryKey: ['marketingPosts'] });
 
   return (

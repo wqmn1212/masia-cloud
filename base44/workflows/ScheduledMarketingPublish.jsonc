@@ -1,0 +1,45 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/15 * * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "scheduled_marketing_publish",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "publish_due": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "publishMarketingPosts",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "예약 게시",
+            "description": "예약 시각이 된 인스타그램 게시물 올리기"
+          }
+        }
+      }
+    ]
+  },
+  "name": "마케팅 예약 게시",
+  "description": "15분마다 예약 시각이 지난 승인된 게시물을 인스타그램에 올립니다"
+}

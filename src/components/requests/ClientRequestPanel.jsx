@@ -121,6 +121,7 @@ export default function ClientRequestPanel({ card }) {
   const refresh = () => qc.invalidateQueries({ queryKey: key });
   const list = data?.requests || [];
   const setStatus = async (id, action) => { try { await callRequest({ action, id }); refresh(); } catch (e) { toast({ title: e.message, variant: 'destructive' }); } };
+  const setRemind = async (id, on) => { try { await callRequest({ action: 'set_remind', id, auto_remind: on }); refresh(); } catch (e) { toast({ title: e.message, variant: 'destructive' }); } };
   return (
     <section className="space-y-3 rounded-xl border p-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -136,6 +137,13 @@ export default function ClientRequestPanel({ card }) {
             <span className="text-caption text-muted-foreground">확인 {r.progress.done}/{r.progress.total}{r.progress.submitted ? ` · 확인 필요 ${r.progress.submitted}` : ''}{r.due_date ? ` · 기한 ${r.due_date}` : ''}{r.status === 'CLOSED' ? ' · 마감' : ''}</span>
             <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={() => setStatus(r.id, r.status === 'CLOSED' ? 'reopen' : 'close')}>{r.status === 'CLOSED' ? '다시 열기' : '마감'}</Button>
           </div>
+          {r.status === 'OPEN' && (
+            <label className="flex flex-wrap items-center gap-2 text-caption text-muted-foreground">
+              <input type="checkbox" checked={r.auto_remind} onChange={(e) => setRemind(r.id, e.target.checked)} />
+              안 온 자료를 고객에게 자동으로 알리기 (기한 전날·기한 지난 뒤 3일마다, 기한이 없으면 4일마다 · 최대 5번)
+              {r.reminder_count > 0 && <span>· 지금까지 {r.reminder_count}번, 마지막 {r.reminded_on}</span>}
+            </label>
+          )}
           <div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary" style={{ width: `${r.progress.total ? ((r.progress.done + r.progress.submitted * 0.5) / r.progress.total) * 100 : 0}%` }} /></div>
           <ul className="space-y-1.5">{r.items.map((x) => <ReviewItem key={x.key} req={r} item={x} onChanged={refresh} />)}</ul>
         </div>

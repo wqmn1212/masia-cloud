@@ -9,6 +9,8 @@ export default function PostWorkflowActions({ post, user, errors, saving, save, 
   const [urls, setUrls] = useState(() => Object.fromEntries((post.platforms || []).map((pl) => [pl, ''])));
   const slots = [...new Set([post.scheduled_at, ...nextSlots(6)].filter(Boolean))];
   const ok = errors.length === 0;
+  const hasIg = (post.platforms || []).includes('instagram');
+  const igUrl = (post.published_urls || []).find((u) => u.platform === 'instagram')?.url;
 
   if (post.status === 'published') {
     return (
@@ -40,10 +42,33 @@ export default function PostWorkflowActions({ post, user, errors, saving, save, 
             </select>
             <Button variant="outline" disabled={saving} onClick={() => run('schedule', { scheduled_at: slot })}>예약</Button>
           </div>
-          <p className="text-caption text-warning-text bg-warning/10 rounded-lg px-3 py-2">자동 게시는 준비 중입니다. 예약 시각에 직접 올리고 게시 완료로 표시하세요.</p>
+          {hasIg && (
+            <div className="space-y-2 rounded-xl border p-4">
+              <p className="text-body font-medium">인스타그램 자동 게시</p>
+              {igUrl ? (
+                <p className="text-body text-success-text">올라갔습니다 · <a href={igUrl} target="_blank" rel="noreferrer" className="underline">게시물 보기</a></p>
+              ) : (
+                <>
+                  <label className="flex items-center gap-2 text-body">
+                    <input type="checkbox" checked={post.auto_publish !== false} disabled={saving} onChange={(e) => run('set_auto', { auto_publish: e.target.checked })} />
+                    예약 시각에 자동으로 올리기 {post.status === 'scheduled' && post.scheduled_at ? `(${formatKst(post.scheduled_at)})` : '— 먼저 예약하세요'}
+                  </label>
+                  {post.ig_container_id && !post.publish_error?.startsWith('인스타그램 연결') && <p className="text-caption text-muted-foreground">인스타그램이 영상을 처리하는 중입니다. 15분 안에 이어서 올립니다.</p>}
+                  {post.publish_error && !post.ig_container_id && (
+                    <div role="alert" className="flex flex-wrap items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-caption text-destructive">
+                      <span className="flex-1">게시 실패{post.publish_attempts ? ` (${post.publish_attempts}회)` : ''}: {post.publish_error}</span>
+                      <Button size="sm" variant="outline" disabled={saving} onClick={() => run('retry_publish')}>다시 시도</Button>
+                    </div>
+                  )}
+                  <Button size="sm" disabled={saving || !ok} onClick={() => { if (window.confirm('지금 인스타그램에 올립니다. 올린 뒤에는 이 화면에서 지울 수 없습니다.')) run('publish_now'); }}>지금 인스타그램에 올리기</Button>
+                  <p className="text-caption text-muted-foreground">15분마다 예약 시각이 지난 글을 확인해 올립니다. 올라가면 알림이 옵니다.</p>
+                </>
+              )}
+            </div>
+          )}
           <div className="rounded-xl bg-muted/50 p-4 space-y-2">
-            <p className="text-body font-medium">수동 게시 완료 처리</p>
-            {(post.platforms || []).map((pl) => (
+            <p className="text-body font-medium">{hasIg ? '직접 올린 경우 · 유튜브 주소 넣기' : '게시 완료 처리'}</p>
+            {(post.platforms || []).filter((pl) => !(pl === 'instagram' && igUrl)).map((pl) => (
               <Input key={pl} placeholder={`${PLATFORMS[pl]} 게시물 URL`} value={urls[pl] || ''} onChange={(e) => setUrls({ ...urls, [pl]: e.target.value })} />
             ))}
             <Button disabled={saving || !Object.values(urls).some((u) => u.trim())}

@@ -126,6 +126,29 @@
       "type": "string",
       "format": "date-time"
     },
+    "auto_publish": {
+      "type": "boolean",
+      "default": true,
+      "description": "예약 시각에 인스타그램에 자동 게시"
+    },
+    "publish_lock_at": {
+      "type": "string",
+      "description": "게시 중 잠금 (두 번 올라가지 않게)"
+    },
+    "publish_attempts": {
+      "type": "number",
+      "default": 0
+    },
+    "publish_error": {
+      "type": "string"
+    },
+    "ig_container_id": {
+      "type": "string",
+      "description": "영상 처리 중인 인스타그램 컨테이너"
+    },
+    "ig_media_id": {
+      "type": "string"
+    },
     "published_urls": {
       "type": "array",
       "items": {

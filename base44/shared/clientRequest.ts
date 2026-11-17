@@ -66,5 +66,41 @@ export function requestView(r: any) {
     items: (r.items || []).map((x: any) => ({ key: x.key, label: x.label, hint: x.hint, kind: x.kind, required: !!x.required, status: x.status, answer: x.answer || '', staff_note: x.staff_note || '',
       files: (x.files || []).map((f: any, i: number) => ({ idx: i, name: f.name, size: f.size || 0, at: f.at, by: f.by })), submitted_at: x.submitted_at || null, submitted_by: x.submitted_by || '', reviewed_at: x.reviewed_at || null })),
     progress: progressOf(r.items),
+    auto_remind: r.auto_remind !== false, reminded_on: r.reminded_on || '', reminder_count: Number(r.reminder_count || 0),
+  };
+}
+
+// ── 자동 독촉 ──
+// 하루 한 번(DailyClientChecks) 고객에게 아직 안 온 항목을 알린다. 같은 날 두 번 보내지 않고, 모두 5번까지만.
+//  · 기한 전날: 한 번
+//  · 기한이 지났으면: 기한 다음 날부터 3일마다
+//  · 기한이 없으면: 보낸 지 4일 뒤부터 4일마다
+export const MAX_REMINDERS = 5;
+const dayNum = (d: string) => Math.floor(Date.parse(`${String(d).slice(0, 10)}T00:00:00Z`) / 86400000);
+export function reminderDue(r: any, today: string): null | { reason: 'due_tomorrow' | 'overdue' | 'nudge'; waiting: any[] } {
+  if (!r || r.status === 'CLOSED' || r.auto_remind === false) return null;
+  if (r.reminded_on === today || Number(r.reminder_count || 0) >= MAX_REMINDERS) return null;
+  const waiting = (r.items || []).filter((x: any) => x.status === 'WAITING' || x.status === 'REDO');
+  if (!waiting.length) return null;
+  const t = dayNum(today);
+  const sent = dayNum(r.sent_at || r.created_date || today);
+  if (t - sent < 1) return null; // 보낸 날은 조용히
+  const last = r.reminded_on ? dayNum(r.reminded_on) : null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(r.due_date || ''))) {
+    const due = dayNum(r.due_date);
+    if (t === due - 1 && last !== t) return { reason: 'due_tomorrow', waiting };
+    if (t > due && (last === null || last < due || t - last >= 3)) return { reason: 'overdue', waiting };
+    return null;
+  }
+  if (t - sent >= 4 && (last === null || t - last >= 4)) return { reason: 'nudge', waiting };
+  return null;
+}
+
+export function reminderMessage(r: any, cardTitle: string, due: { reason: string; waiting: any[] }) {
+  const names = due.waiting.slice(0, 5).map((x: any) => `· ${x.label}${x.status === 'REDO' ? ' (다시 요청)' : ''}`).join('\n') + (due.waiting.length > 5 ? `\n외 ${due.waiting.length - 5}개` : '');
+  const head = due.reason === 'due_tomorrow' ? `내일(${r.due_date})이 회신 기한입니다.` : due.reason === 'overdue' ? `회신 기한(${r.due_date})이 지났습니다.` : '요청드린 자료를 아직 기다리고 있습니다.';
+  return {
+    title: `[자료 요청 ${due.reason === 'overdue' ? '기한 지남' : '안내'}] ${cardTitle} · ${r.title}`,
+    body: `${head} 남은 항목 ${due.waiting.length}개:\n${names}\n준비된 것부터 하나씩 보내 주셔도 됩니다.`,
   };
 }

@@ -1,0 +1,47 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "20 9,13,17 * * 1-5",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sales_reply_check",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "check_replies": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "salesMail",
+            "args": {
+              "action": "check_replies"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "영업 회신 찾기",
+            "description": "Gmail 에서 영업 대상의 회신을 찾아 기록"
+          }
+        }
+      }
+    ]
+  },
+  "name": "영업 메일 회신 확인",
+  "description": "평일 9시·13시·17시에 Gmail 에서 영업 대상의 회신을 찾아 단계를 바꾸고 담당자에게 알립니다"
+}

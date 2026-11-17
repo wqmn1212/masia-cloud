@@ -5,7 +5,7 @@ import { uploadPrivateAttachments, linkCardAttachments } from '../../shared/priv
 import { TEMPLATES, cleanItems, requestView, progressOf } from '../../shared/clientRequest.ts';
 
 // 고객 자료 요청 체크리스트
-// 직원 (같은 팀): templates · create {card_id, template, title, note, due_date, items} · list {card_id} · review {id, key, decision: ACCEPTED|REDO, note} · close {id} · reopen {id} · file {id, key, idx}
+// 직원 (같은 팀): templates · create {card_id, template, title, note, due_date, items} · list {card_id} · review {id, key, decision: ACCEPTED|REDO, note} · close {id} · reopen {id} · set_remind {id, auto_remind} · file {id, key, idx}
 // 고객 (카드가 공개된 고객사): list {card_id} · submit {id, key, answer, attachments[]} · file {id, key, idx}
 // 고객이 올린 파일은 카드 파일 탭에도 고객 공개로 남는다. 자료는 지우지 않고, 다시 올리면 쌓인다.
 const STAFF = ['master', 'service', 'sub'];
@@ -75,6 +75,10 @@ export default async function (req: Request) {
       if (action === 'close' || action === 'reopen') {
         await svc.entities.ClientRequest.update(reqRow.id, action === 'close' ? { status: 'CLOSED', closed_at: nowIso } : { status: 'OPEN' });
         return json({ ok: true });
+      }
+      if (action === 'set_remind') {
+        await svc.entities.ClientRequest.update(reqRow.id, { auto_remind: !!body.auto_remind });
+        return json({ request: requestView({ ...reqRow, auto_remind: !!body.auto_remind }) });
       }
       if (action === 'review') {
         if (!['ACCEPTED', 'REDO'].includes(body.decision)) return json({ error: '확인 또는 다시 요청을 고르세요' }, 400);
