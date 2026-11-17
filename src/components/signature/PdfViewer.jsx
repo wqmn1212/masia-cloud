@@ -13,7 +13,7 @@ const loadPdfjs = () => {
   return pdfjsPromise;
 };
 
-function Page({ doc, number, width, overlay, onPageClick }) {
+function Page({ doc, number, width, overlay, onPageClick, onPageMove, onPageLeave }) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(number <= 2);
   const [ratio, setRatio] = useState(1.414);
@@ -45,8 +45,12 @@ function Page({ doc, number, width, overlay, onPageClick }) {
     const box = e.currentTarget.getBoundingClientRect();
     onPageClick(number, (e.clientX - box.left) / box.width, (e.clientY - box.top) / box.height);
   } : undefined;
+  const move = onPageMove ? (e) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    onPageMove(number, (e.clientX - box.left) / box.width, (e.clientY - box.top) / box.height);
+  } : undefined;
   return (
-    <div className={`relative overflow-hidden rounded-sm bg-white shadow-sm ring-1 ring-black/5 ${onPageClick ? 'cursor-crosshair' : ''}`} style={{ width, height: width * ratio }} onClick={click}>
+    <div data-page={number} className={`relative overflow-hidden rounded-sm bg-white shadow-sm ring-1 ring-black/5 ${onPageClick ? 'cursor-crosshair' : ''}`} style={{ width, height: width * ratio }} onClick={click} onMouseMove={move} onMouseLeave={onPageLeave}>
       <canvas ref={ref} className="h-full w-full" aria-label={`${number}쪽`} />
       <span className="absolute bottom-1 right-2 text-micro text-muted-foreground">{number}</span>
       {overlay?.(number)}
@@ -54,7 +58,8 @@ function Page({ doc, number, width, overlay, onPageClick }) {
   );
 }
 
-export default function PdfViewer({ url, onReachEnd, className = '', overlay, onPageClick, maxWidth = 820, endLabel = '계약서 끝', errorText = '계약서를 불러오지 못했습니다. 잠시 뒤 다시 열어 주세요.' }) {
+// onPageMove(쪽, x, y)·onPageLeave: 실시간 리뷰에서 내 커서 위치를 알릴 때
+export default function PdfViewer({ url, onReachEnd, className = '', overlay, onPageClick, onPageMove, onPageLeave, maxWidth = 820, endLabel = '계약서 끝', errorText = '계약서를 불러오지 못했습니다. 잠시 뒤 다시 열어 주세요.' }) {
   const box = useRef(null);
   const end = useRef(null);
   const fired = useRef(false);
@@ -91,7 +96,7 @@ export default function PdfViewer({ url, onReachEnd, className = '', overlay, on
         : !doc ? <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         : (
           <div className="flex flex-col items-center gap-2">
-            {width > 0 && Array.from({ length: doc.numPages }, (_, i) => <Page key={i} doc={doc} number={i + 1} width={width} overlay={overlay} onPageClick={onPageClick} />)}
+            {width > 0 && Array.from({ length: doc.numPages }, (_, i) => <Page key={i} doc={doc} number={i + 1} width={width} overlay={overlay} onPageClick={onPageClick} onPageMove={onPageMove} onPageLeave={onPageLeave} />)}
             <div ref={end} className="py-2 text-center text-caption text-muted-foreground">— {endLabel} ({doc.numPages}쪽) —</div>
           </div>
         )}

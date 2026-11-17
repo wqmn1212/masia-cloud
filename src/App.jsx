@@ -49,6 +49,7 @@ const MoldReview = lazy(() => import('@/pages/MoldReview'));
 const Agreements = lazy(() => import('@/pages/Agreements'));
 const ArtCraft = lazy(() => import('@/pages/ArtCraft'));
 const Leads = lazy(() => import('@/pages/Leads'));
+const SalesPipeline = lazy(() => import('@/pages/SalesPipeline'));
 const ClientPortalDashboard = lazy(() => import('@/pages/ClientPortalDashboard'));
 const ClientBoard = lazy(() => import('@/pages/ClientBoard'));
 const ClientDocuments = lazy(() => import('@/pages/ClientDocuments'));
@@ -66,11 +67,14 @@ const ClientProductCosts = lazy(() => import('@/pages/ClientProductCosts'));
 const ClientMolds = lazy(() => import('@/pages/ClientMolds'));
 const LogisticsRates = lazy(() => import('@/pages/LogisticsRates'));
 const FactoryUpload = lazy(() => import('@/pages/FactoryUpload'));
+const MeetingShare = lazy(() => import('@/pages/MeetingShare'));
+const DesignReview = lazy(() => import('@/pages/DesignReview'));
 const Prototypes = lazy(() => import('@/pages/Prototypes'));
 const PrototypeDetail = lazy(() => import('@/pages/PrototypeDetail'));
 const PrototypeReview = lazy(() => import('@/pages/PrototypeReview'));
 const PrototypeConcept = lazy(() => import('@/pages/PrototypeConcept'));
 const PrototypeDevelop = lazy(() => import('@/pages/PrototypeDevelop'));
+const PrototypeFactoryTest = lazy(() => import('@/pages/PrototypeFactoryTest'));
 const DesignArchive = lazy(() => import('@/pages/DesignArchive'));
 const CircuitLab = lazy(() => import('@/pages/CircuitLab'));
 
@@ -91,6 +95,10 @@ const AuthenticatedApp = () => {
   if (location.pathname === '/cloud') return <Cloud />;
   // 공장 업로드 링크 — 공장 담당자가 계정 없이 링크 + PIN으로 연다
   if (location.pathname.startsWith('/f/')) return <Suspense fallback={<Spinner />}><FactoryUpload /></Suspense>;
+  // 개발 미팅 공유 링크 — 고객이 계정 없이 링크 + PIN으로 연다
+  if (location.pathname.startsWith('/m/')) return <Suspense fallback={<Spinner />}><MeetingShare /></Suspense>;
+  // 실시간 디자인 리뷰 — 팀원·고객사 계정은 로그인으로, 초대받은 사람은 이메일 링크로, 그 밖은 링크 + PIN 으로 연다 (권한은 서버가 본다)
+  if (location.pathname.startsWith('/design/')) return <Suspense fallback={<Spinner />}><DesignReview /></Suspense>;
   // 물류비 계산기는 고객 전용 — 예전 공개 주소는 고객 포털로 보낸다 (로그인 필요)
   if (location.pathname === '/tools/landed-cost') return <Navigate to="/client/landed-cost" replace />;
   if (location.pathname === '/cloud-guide') return <Navigate to="/cloud" replace />;
@@ -152,6 +160,7 @@ const AuthenticatedApp = () => {
         <Route path="/my-work" element={<MyWork />} />
         <Route path="/user-guide" element={<UserGuide />} />
         <Route path="/leads" element={<Leads />} />
+        <Route path="/sales" element={<SalesPipeline />} />
         <Route path="/marketing" element={<Marketing />} />
         <Route path="/china-holidays" element={<ChinaHolidays />} />
         <Route path="/portfolio-admin" element={<PortfolioAdmin />} />
@@ -177,6 +186,7 @@ const AuthenticatedApp = () => {
         <Route path="/prototypes/:projectId/review" element={<PrototypeReview />} />
         <Route path="/prototypes/:projectId/concept" element={<PrototypeConcept />} />
         <Route path="/prototypes/:projectId/develop" element={<PrototypeDevelop />} />
+        <Route path="/prototypes/:projectId/factory-test" element={<PrototypeFactoryTest />} />
         <Route path="/circuit-lab" element={<CircuitLab />} />
         <Route path="/agreements" element={<Agreements />} />
         <Route path="/logistics-rates" element={<LogisticsRates />} />

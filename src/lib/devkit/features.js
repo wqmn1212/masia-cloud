@@ -139,10 +139,12 @@ export const FEATURE_GROUPS = { in: '입력·센서', out: '출력·구동', cmd
 
 // MCU 모듈별로 쓸 수 있는 핀 (부팅 설정 핀·플래시 핀은 뒤로 미루거나 뺐다)
 export const MCUS = {
-  esp32c3: { label: 'ESP32-C3 (RISC-V, BLE 5)', module: 'ESP32-C3-MINI-1', board: 'ESP32C3 Dev Module', adc: [0, 1, 3, 4], io: [5, 6, 7, 10, 20, 21, 3, 4, 2] },
-  esp32s3: { label: 'ESP32-S3 (BLE 5, 여유 핀 많음)', module: 'ESP32-S3-WROOM-1', board: 'ESP32S3 Dev Module', adc: [1, 2, 4, 5, 6, 7, 8, 9, 10], io: [11, 12, 13, 14, 15, 16, 17, 18, 38, 39, 40, 41, 42] },
-  esp32: { label: 'ESP32 (클래식)', module: 'ESP32-WROOM-32E', board: 'ESP32 Dev Module', adc: [32, 33, 34, 35, 36, 39], io: [16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 13, 14] },
+  esp32c3: { label: 'ESP32-C3 (RISC-V, BLE 5)', module: 'ESP32-C3-WROOM-02', board: 'ESP32C3 Dev Module', fqbn: 'esp32:esp32:esp32c3:CDCOnBoot=cdc,PartitionScheme=min_spiffs', adc: [0, 1, 3, 4], io: [5, 6, 7, 10, 20, 21, 3, 4, 2], i2c: [8, 2], boot: 9, usb: [18, 19] },
+  esp32s3: { label: 'ESP32-S3 (BLE 5, 여유 핀 많음)', module: 'ESP32-S3-WROOM-1', board: 'ESP32S3 Dev Module', fqbn: 'esp32:esp32:esp32s3:CDCOnBoot=cdc,PartitionScheme=min_spiffs', adc: [1, 2, 4, 5, 6, 7, 8, 9, 10], io: [11, 12, 13, 14, 15, 16, 17, 18, 38, 39, 40, 41, 42], i2c: [47, 48], boot: 0, usb: [19, 20] },
+  esp32: { label: 'ESP32 (클래식)', module: 'ESP32-WROOM-32E', board: 'ESP32 Dev Module', fqbn: 'esp32:esp32:esp32:PartitionScheme=min_spiffs', adc: [32, 33, 34, 35, 36, 39], io: [16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 13, 14], i2c: [21, 22], boot: 0, usb: null },
 };
+// ADC 전용(입력만) 핀: 출력·풀업이 필요한 기능에 쓰면 안 된다
+export const INPUT_ONLY = { esp32: [34, 35, 36, 39] };
 
 // 구동 전원이 6 V 를 넘으면 LDO 대신 벅 컨버터 (LDO 는 입력 최대 6.5 V 이고 (입력 − 3.3 V) × 전류가 다 열이 된다)
 export const BASE_BOM = (mcu, supplyV = 5) => [
@@ -164,33 +166,79 @@ export const lightSpec = (f) => {
 /** 히터 정격 전력 (W). 기능에 적은 값, 없으면 기본값 */
 export const heaterWatts = (f) => (Number(f?.power_w) > 0 ? Number(f.power_w) : FEATURE_KINDS.heater.power_w);
 
-/** 핀을 정한다. 사용자가 고른 핀(pin 숫자)은 그대로 두고 비어 있는 것만 채운다 */
-export function assignPins(features, mcu = 'esp32c3') {
+// 핀이 더 필요한 기능: 다이얼(A·B상), 시간 표시(데이터·클럭·래치, 기본 핀은 밝기·끄기 OE)
+export const EXTRA_PINS = { encoder: { a: '엔코더 A상', b: '엔코더 B상' }, display: { sdi: '표시 데이터', clk: '표시 클럭', le: '표시 래치' } };
+/** 시계(RTC)가 필요한가: 시간 표시나 수면 일정이 있으면 (규칙을 모르면 조명 + 토글이면 기본 수면 일정이 생긴다) */
+export const needsClock = (features, rules) => features.some((f) => f.kind === 'display')
+  || (Array.isArray(rules) ? rules.some((r) => r.type === 'schedule') : features.some((f) => f.kind === 'light') && features.some((f) => f.kind === 'switch'));
+
+/**
+ * 핀 계획: 사용자가 고른 핀(숫자)은 그대로 두고 빈 것만 채운다. 시계가 필요하면 I2C(SDA·SCL)를 먼저 잡는다.
+ * 돌려줌 { features: [{..., pin, pins:{a,b}}], i2c: {sda, scl} | null }
+ */
+export function pinPlan(features, mcu = 'esp32c3', rules) {
   const m = MCUS[mcu] || MCUS.esp32c3;
-  const used = new Set(features.map((f) => f.pin).filter((p) => Number.isInteger(p)));
+  const used = new Set();
+  features.forEach((f) => {
+    if (Number.isInteger(f.pin)) used.add(f.pin);
+    Object.values(f.pins || {}).forEach((p) => Number.isInteger(p) && used.add(p));
+  });
+  const pool = [...new Set([...m.io, ...m.adc])];
   const take = (list) => { const p = list.find((x) => !used.has(x)); if (p != null) used.add(p); return p ?? null; };
-  return features.map((f) => {
+  const digital = () => take(m.io.filter((p) => !m.adc.includes(p))) ?? take(m.io) ?? take(pool.filter((p) => !(INPUT_ONLY[mcu] || []).includes(p)));
+  let i2c = null;
+  if (needsClock(features, rules)) {
+    const sda = used.has(m.i2c[0]) ? digital() : take([m.i2c[0]]);
+    const scl = used.has(m.i2c[1]) ? digital() : take([m.i2c[1]]);
+    i2c = { sda, scl };
+  }
+  const out = features.map((f) => {
     const k = FEATURE_KINDS[f.kind];
     if (!k || k.pin === 'none') return { ...f, pin: null };
-    if (Number.isInteger(f.pin)) return f;
-    // ADC 핀이 남으면 ADC 에, 아니면 일반 핀에
-    const pin = k.pin === 'adc' ? take(m.adc) : take(m.io.filter((p) => !m.adc.includes(p))) ?? take(m.io);
-    return { ...f, pin };
+    const pin = Number.isInteger(f.pin) ? f.pin : k.pin === 'adc' ? take(m.adc) : digital();
+    const extra = EXTRA_PINS[f.kind];
+    if (!extra) return { ...f, pin };
+    const pins = { ...(f.pins || {}) };
+    Object.keys(extra).forEach((key) => { if (!Number.isInteger(pins[key])) pins[key] = digital(); });
+    return { ...f, pin, pins };
   });
+  return { features: out, i2c };
 }
 
+/** 핀을 정한다 (pinPlan 의 기능 목록) */
+export const assignPins = (features, mcu = 'esp32c3', rules) => pinPlan(features, mcu, rules).features;
+
 /** 핀 충돌·부족 점검 */
-export function pinProblems(features, mcu = 'esp32c3') {
+export function pinProblems(features, mcu = 'esp32c3', i2c = null) {
   const m = MCUS[mcu] || MCUS.esp32c3;
   const out = [];
   const seen = new Map();
+  const claim = (pin, who) => {
+    if (seen.has(pin)) out.push(`GPIO${pin} 을 ${seen.get(pin)} 와 ${who} 이 함께 씁니다.${/부트|USB/.test(seen.get(pin)) ? ' 기능 정의에서 핀을 ‘자동’으로 바꾸세요.' : ''}`);
+    else seen.set(pin, who);
+  };
+  // 시스템이 쓰는 핀 (부트 버튼, USB D−·D+, 클래식은 UART0) — 기능이 쓰면 굽기·부팅이 안 된다
+  claim(m.boot, '부트 버튼');
+  if (m.usb) { claim(m.usb[0], 'USB D−'); claim(m.usb[1], 'USB D+'); } else { claim(1, 'USB-시리얼 TX'); claim(3, 'USB-시리얼 RX'); }
+  const pool = new Set([...m.io, ...m.adc, ...(m.i2c || [])]);
+  const notInPool = (pin, who) => { if (!pool.has(pin)) out.push(`${who}: GPIO${pin} 은 ${m.label} 에서 쓸 수 있는 핀 목록에 없습니다. 기능 정의에서 핀을 ‘자동’으로 바꾸세요.`); };
+  if (i2c) {
+    if (!Number.isInteger(i2c.sda) || !Number.isInteger(i2c.scl)) out.push('시계(RTC)용 I2C 핀이 남지 않았습니다. 더 큰 MCU(ESP32-S3)를 고르세요.');
+    else { claim(i2c.sda, '시계 I2C SDA'); claim(i2c.scl, '시계 I2C SCL'); }
+  }
   features.forEach((f) => {
     const k = FEATURE_KINDS[f.kind];
     if (!k || k.pin === 'none') return;
     if (!Number.isInteger(f.pin)) { out.push(`${f.name}: 남은 핀이 없습니다. 더 큰 MCU(ESP32-S3)를 고르세요.`); return; }
-    if (seen.has(f.pin)) out.push(`GPIO${f.pin} 을 ${seen.get(f.pin)} 와 ${f.name} 이 함께 씁니다.`);
-    seen.set(f.pin, f.name);
+    claim(f.pin, f.name);
+    notInPool(f.pin, f.name);
     if (k.pin === 'adc' && !m.adc.includes(f.pin)) out.push(`${f.name}: GPIO${f.pin} 은 ADC 핀이 아닙니다 (ADC: ${m.adc.join(', ')}).`);
+    if (k.pin !== 'adc' && (INPUT_ONLY[mcu] || []).includes(f.pin) && k.group === 'out') out.push(`${f.name}: GPIO${f.pin} 은 입력 전용 핀이라 출력에 쓸 수 없습니다.`);
+    Object.entries(EXTRA_PINS[f.kind] || {}).forEach(([key, label]) => {
+      const p = f.pins?.[key];
+      if (!Number.isInteger(p)) out.push(`${f.name}: ${label} 핀이 남지 않았습니다. 더 큰 MCU(ESP32-S3)를 고르세요.`);
+      else claim(p, `${f.name} ${label}`);
+    });
   });
   return out;
 }

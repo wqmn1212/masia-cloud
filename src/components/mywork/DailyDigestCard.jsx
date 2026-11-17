@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sun, ChevronDown, ChevronUp } from 'lucide-react';
@@ -14,6 +15,7 @@ export default function DailyDigestCard({ user, cards, onOpen }) {
   const { lang } = useLanguage();
   const zh = lang === 'zh';
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [all, setAll] = useState(false);
   const { data, isLoading } = useQuery({ queryKey: ['ops-digest', user.id], queryFn: async () => (await base44.functions.invoke('getOpsDigest', {})).data, staleTime: 60_000 });
   if (isLoading || !data?.digest) return null;
@@ -43,7 +45,7 @@ export default function DailyDigestCard({ user, cards, onOpen }) {
             <p className={`text-label font-semibold ${TONE[k]}`}>{SECTION_LABEL[k][zh ? 'cn' : 'ko']} {list.length}</p>
             <ul className="space-y-0.5">
               {shown.map((r, n) => (
-                <li key={n}><button type="button" className="w-full truncate rounded px-1 py-0.5 text-left text-label hover:bg-muted" onClick={() => open(r.card_id)}><span className="text-muted-foreground">{zh ? r.card_title_cn : r.card_title}</span> · {zh ? r.cn : r.ko}</button></li>
+                <li key={n}><button type="button" className="w-full truncate rounded px-1 py-0.5 text-left text-label hover:bg-muted" onClick={() => (r.href ? navigate(r.href) : open(r.card_id))}><span className="text-muted-foreground">{zh ? r.card_title_cn : r.card_title}</span> · {zh ? r.cn : r.ko}</button></li>
               ))}
             </ul>
           </div>

@@ -48,3 +48,34 @@ export function ApprovalMock() {
     </Frame>
   );
 }
+
+export function DevMock() {
+  return (
+    <Frame title="프로젝트 상세 → 개발 탭">
+      <Mark n={1}><div className="space-y-1 p-1"><div className="flex items-center gap-1.5"><b>ECO-001</b><span className="text-muted-foreground">구배 2° → 3°</span><Badge>승인 필요</Badge></div><div className="flex gap-1.5"><Btn primary>이 변경 승인</Btn><Btn>반려</Btn></div></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="space-y-1 p-1"><div>명판·라벨 문구 v1</div><div className="rounded bg-secondary px-1 py-0.5 font-mono text-[9px]">모델명: RENIGHT-L1 · DC 5 V</div><div className="flex gap-1.5"><Btn primary>이대로 승인</Btn><Btn>수정 요청</Btn></div></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="flex items-center gap-1.5 p-1"><Btn primary>3D·시뮬레이션 열기</Btn><span className="text-muted-foreground">버튼·조명 눌러 보기</span></div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="relative flex h-14 items-center justify-center rounded bg-secondary p-1"><span className="h-10 w-10 rounded-full border-2 border-muted-foreground/40" /><span className="absolute left-[52%] top-[40%] h-2.5 w-2.5 rounded-full bg-warning" /><span className="ml-2"><Btn>위치에 의견 남기기</Btn></span></div></Mark>
+    </Frame>
+  );
+}
+
+export function DesignRoomClientMock() {
+  return (
+    <Frame title="디자인 실시간 리뷰">
+      <Mark n={1}><div className="flex items-center gap-1.5 p-1"><span>박스 인쇄 시안 · 열린 댓글 2</span><Btn primary>열기</Btn></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="relative h-14 rounded bg-destructive/80 p-1"><span className="absolute left-[60%] top-[45%] rounded bg-primary px-1 text-[9px] text-white">▲ 이호민</span></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="flex items-center gap-1.5 p-1"><Btn>댓글 (C)</Btn><span>① 로고 2mm 위로 · 답글 · 해결</span></div></Mark>
+    </Frame>
+  );
+}
+
+export function ClientRequestMock() {
+  return (
+    <Frame title="요청드린 자료 · 디자인 전달 자료">
+      <Mark n={1}><div className="flex flex-wrap items-center gap-1.5 p-1"><span>각도별 이미지 *</span><Btn>파일 고르기</Btn><span className="text-muted-foreground">정면.png</span></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="flex items-center gap-1.5 p-1"><Btn primary>보내기</Btn><Badge>담당자 확인 중</Badge></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="p-1 text-destructive">담당자: 받침대 높이도 적어 주세요</div></Mark>
+    </Frame>
+  );
+}

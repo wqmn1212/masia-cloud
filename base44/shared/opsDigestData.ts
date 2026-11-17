@@ -17,13 +17,14 @@ export async function loadOpsData(svc: any, tenantId: string, { staffUser }: { s
   const cards = (await db.TaskCard.filter({ tenant_id: tenantId }, '-updated_date', 500)).filter((c: any) => c.tenant_id === tenantId && !['DONE', 'CANCELLED'].includes(c.status));
   const ids = cards.map((c: any) => c.id);
   const since = new Date(Date.now() - 8 * 86400000).toISOString();
-  const [milestones, tasks, factoryRequests, chats, quotes] = ids.length ? await Promise.all([
+  const [milestones, tasks, factoryRequests, chats, quotes, clientRequests] = ids.length ? await Promise.all([
     byCards(db.CardMilestone, ids, 'planned_date'),
     byCards(db.TaskItem, ids, 'due_date'),
     byCards(db.FactoryRequest, ids, '-created_date', 200),
     byCards(db.CardChat, ids, '-created_date', 300).then((rows) => rows.filter((m: any) => (m.created_date || '') >= since)),
     byCards(db.Quotation, ids, '-updated_date', 300),
-  ]) : [[], [], [], [], []];
+    byCards(db.ClientRequest, ids, '-created_date', 200).catch(() => []),
+  ]) : [[], [], [], [], [], []];
   // 고객 대기: 고객사마다 대시보드와 같은 계산으로 결정할 것을 모은다 (직원 계정으로 부르면 서명 대기는 빠지므로 따로 읽는다)
   const clientWaits: any[] = [];
   for (const companyId of [...new Set(cards.map((c: any) => c.client_id).filter(Boolean))] as string[]) {
@@ -36,7 +37,12 @@ export async function loadOpsData(svc: any, tenantId: string, { staffUser }: { s
   // 재주문 상품의 첫 카드(product_key)는 완료된 카드라 위 목록에 없을 수 있다: 책임자·제목만 따로 읽는다
   const extra = [];
   for (const key of [...new Set(plans.map((p: any) => p.product_key))] as string[]) if (!ids.includes(key)) { const c = await db.TaskCard.get(key).catch(() => null); if (c) extra.push(c); }
+  // 영업 팔로업: 진행 중인 영업 대상 (다음 연락일이 있는 것)
+  const prospects = (await db.SalesProspect.filter({ tenant_id: tenantId }, 'next_follow_up', 500).catch(() => []))
+    .filter((p: any) => p.tenant_id === tenantId && p.next_follow_up && ['TARGET', 'SENT', 'REPLIED', 'MEETING', 'QUOTE'].includes(p.stage));
   return {
+    prospects,
+    clientRequests: (clientRequests || []).filter((r: any) => r.status === 'OPEN'),
     cards: [...cards, ...extra], milestones, tasks, factoryRequests, chats, clientWaits, signatures, quotes,
     plans: plans.map((p: any) => ({ ...p, company_name: companies.get(p.company_id) || '' })),
   };

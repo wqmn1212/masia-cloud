@@ -1,0 +1,112 @@
+{
+  "name": "ProtoShare",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "소속 팀 ID (데이터 격리 키)"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "시제품(ProtoProject) ID"
+    },
+    "title": {
+      "type": "string"
+    },
+    "token_hash": {
+      "type": "string",
+      "description": "공유 링크 토큰의 SHA-256"
+    },
+    "pin_hash": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "REVOKED"
+      ],
+      "default": "ACTIVE"
+    },
+    "snapshot": {
+      "type": "object",
+      "description": "공유한 시점의 미팅 내용 (진행 단계·결정 사항·할 일·요약)",
+      "additionalProperties": true
+    },
+    "confirmations": {
+      "type": "array",
+      "description": "고객이 확인한 결정 사항 [{index, text, name, at}]",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "failed_pin_count": {
+      "type": "number"
+    },
+    "locked_until": {
+      "type": "string"
+    },
+    "last_opened_at": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "token_hash"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

@@ -124,6 +124,14 @@
       "type": "object",
       "description": "개발 워크벤치 설정 {device_name, mcu: esp32c3|esp32s3|esp32, supply_v, uuid_base, features[{id, kind, name, pin, uuid, part_id, note, power_w}], cad{shape, width, depth, height, wall, corner, pocket, concept_id}, rules[{id, type: event|guard|show, src, dst, action, cond, value}], power{source, usb_limit, adapter_v, adapter_a, battery_mah, soc0, usb_plugged, ambient, tank_ml, water_ml}, sim_params{reg: ldo|buck, ldo_vmax, buck_eff, adapter_eff, fet_rds, fet_rth, mcu_ma, case_w, case_d, case_h, case_hc, inside_max, touch_max, price_kwh, hours_day, ...}, lid_part_id, updated_at, updated_by_name}"
     },
+    "client_share": {
+      "type": "object",
+      "description": "고객 포털에 공개한 개발 내용 (protoClient 함수만 씀) {model{on, at, by, dev, parts, render_url}, docs{nameplate|manual{version, text, at, by}}, doc_history[], ecos[{no, reason, changes, impact, from_version, at, by}]}"
+    },
+    "client_review": {
+      "type": "object",
+      "description": "고객의 결정·의견 (protoClient 함수만 씀) {ecos{ECO-001{decision: APPROVED|REJECTED, note, by, at}}, docs{nameplate|manual[{version, decision: APPROVED|CHANGES, note, by, at}]}, comments[{id, part_id, part_name, point, text, by, at, resolved}]}"
+    },
     "open_risk_count": {
       "type": "number",
       "default": 0,

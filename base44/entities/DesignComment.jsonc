@@ -1,0 +1,134 @@
+{
+  "name": "DesignComment",
+  "type": "object",
+  "description": "실시간 디자인 리뷰 댓글·핀. 쓰기는 designRoom 함수만",
+  "properties": {
+    "tenant_id": {
+      "type": "string"
+    },
+    "room_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "description": "시안 판 번호 (3D 는 0)"
+    },
+    "page": {
+      "type": "number",
+      "description": "PDF 쪽 (이미지 1)"
+    },
+    "x": {
+      "type": "number",
+      "description": "0~1 가로 위치"
+    },
+    "y": {
+      "type": "number",
+      "description": "0~1 세로 위치"
+    },
+    "point": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "description": "3D 위치 [x,y,z]"
+    },
+    "part_name": {
+      "type": "string",
+      "description": "3D 부품 이름"
+    },
+    "parent_id": {
+      "type": "string",
+      "description": "답글이면 원 댓글 ID"
+    },
+    "text": {
+      "type": "string"
+    },
+    "resolved": {
+      "type": "boolean",
+      "default": false
+    },
+    "resolved_by": {
+      "type": "string"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "author_kind": {
+      "type": "string",
+      "enum": [
+        "staff",
+        "client",
+        "guest"
+      ]
+    },
+    "author_name": {
+      "type": "string"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "guest 에게는 보내지 않음"
+    },
+    "author_key": {
+      "type": "string",
+      "description": "작성자 식별 (사용자 ID·초대 이메일·링크 손님 표시)"
+    },
+    "changed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "마지막으로 바뀐 때 (실시간 동기화 기준)"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "room_id",
+    "text"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

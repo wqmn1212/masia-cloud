@@ -125,7 +125,7 @@ export default async function (req) {
             type: 'payment_reported',
             title: `[송금 알림] ${card.title} ${label}`,
             body: `${senderName}: ${checked.patch.client_reported_paid_date} 송금${files.length ? ` · 송금확인증 ${files.map((f) => f.name).join(', ')}` : ' · 송금확인증 없음'}${memo ? `\n${memo}` : ''}\n통장 입금을 확인한 뒤 정산 탭에서 입금 확인을 눌러 주세요.`,
-            link: `/task-board?card=${card.id}&tab=settlement`,
+            link: `/task-board?card=${card.id}&tab=ship`,
             task_card_id: card.id,
             card_title: card.title,
           });
@@ -157,7 +157,7 @@ export default async function (req) {
           type: 'chat_message',
           title: `[고객 문의] ${card.title}`,
           body: `${senderName} 님이 문의를 남겼습니다.\n\n${(text || chinese).slice(0, 300)}`,
-          link: `/task-board?card=${card.id}&tab=chat`,
+          link: `/task-board?card=${card.id}&tab=talk`,
           task_card_id: card.id,
           card_title: card.title,
         };
@@ -399,7 +399,7 @@ export default async function (req) {
             type: 'quote_accepted',
             title: `[견적 수락] ${card.title}`,
             body: `${senderName}: ${t.label}으로 진행을 요청했습니다.${memo ? `\n${memo.slice(0, 300)}` : ''}\n확인한 뒤 견적 상태를 수주로 바꾸고 계약서를 만들어 주세요.`,
-            link: `/task-board?card=${card.id}&tab=quotation`,
+            link: `/task-board?card=${card.id}&tab=quote`,
             task_card_id: card.id,
             card_title: card.title,
           });

@@ -60,7 +60,8 @@
       "enum": [
         "manual",
         "landing_lead",
-        "reorder"
+        "reorder",
+        "sales"
       ],
       "default": "manual"
     },

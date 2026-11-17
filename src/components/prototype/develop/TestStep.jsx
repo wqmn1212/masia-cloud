@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { FlaskConical, ClipboardCheck, Eye, Factory, Wrench, CheckCircle2, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/prototype/develop/DevBits';
+import { CostCard, FreezeCard, BringupCard } from '@/components/prototype/develop/ProductionPanels';
+import ClientSharePanel from '@/components/prototype/develop/ClientSharePanel';
 
 // 6단계: 시제품 조립·시험·개선과 양산 준비로 이어지는 바로 가기, 그리고 지금까지의 점검표
-export default function TestStep({ project, concept, circuits, dev }) {
+export default function TestStep({ project, concept, circuits, dev, change, user, onSaved, dirty }) {
   const files = project.files || [];
   const checks = [
     ['컨셉 3D 확정', !!concept],
@@ -21,9 +23,11 @@ export default function TestStep({ project, concept, circuits, dev }) {
     [Eye, '3D 검토', 'STEP 을 돌려 보며 부품 확인·시뮬레이션', `/prototypes/${project.id}?tab=viewer`],
     [FlaskConical, '시험·개선', '시험 기록과 불합격 항목 개선', `/prototypes/${project.id}?tab=tests`],
     [ClipboardCheck, '설계 검토', '요구사항 대비 설계 위험 검토', `/prototypes/${project.id}/review`],
+    [ClipboardCheck, '출하 검사대', '기기마다 굽기·자동 검사·판정·일련번호 기록 (공장용, 중국어)', `/prototypes/${project.id}/factory-test`],
     [Factory, '금형 검토', '사출 외장의 두께·구배·언더컷 점검', '/mold-review'],
   ];
   return (
+    <div className="space-y-4">
     <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
       <Card title="시험·양산으로" icon={FlaskConical}>
         <div className="grid gap-2 sm:grid-cols-2">
@@ -45,6 +49,13 @@ export default function TestStep({ project, concept, circuits, dev }) {
         <p className="text-micro text-muted-foreground">기능 {dev.features?.length || 0}개 · {dev.mcu?.toUpperCase()}</p>
         <Button asChild variant="outline" size="sm" className="w-full"><Link to={`/prototypes/${project.id}?tab=tests`}>시험 기록하러 가기</Link></Button>
       </Card>
+    </div>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <FreezeCard dev={dev} change={change} user={user} project={project} onSaved={onSaved} dirty={dirty} />
+        <CostCard project={project} dev={dev} change={change} />
+      </div>
+      <ClientSharePanel project={project} dev={dev} concept={concept} />
+      <BringupCard dev={dev} change={change} user={user} />
     </div>
   );
 }

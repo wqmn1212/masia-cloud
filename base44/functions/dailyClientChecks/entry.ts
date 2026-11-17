@@ -45,7 +45,7 @@ export default async function (req: Request) {
           type: 'claim_factory_overdue',
           title: `[공장 회신 지연] ${card.title}`,
           body: `불량 신고 "${c.title}"의 중국어 문서를 보낸 지 ${w.business}영업일이 지났지만 공장 회신 기록이 없습니다 (기한 ${FACTORY_REPLY_DAYS}영업일). 공장에 독촉하고 회신을 기록해 주세요. 고객 화면에는 '공장 회신 대기 ${w.days}일'로 보입니다.`,
-          link: `/task-board?card=${card.id}&tab=tasks`,
+          link: `/task-board?card=${card.id}&tab=quality%23card-claims`,
           task_card_id: card.id,
           card_title: card.title,
         });

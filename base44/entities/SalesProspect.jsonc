@@ -1,0 +1,205 @@
+{
+  "name": "SalesProspect",
+  "type": "object",
+  "description": "아웃바운드 영업 대상: 콜드메일·소개·전시회로 찾은 잠재 고객과 연락 기록. 수주하면 고객사·업무 카드로 전환",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "소속 팀 ID"
+    },
+    "company": {
+      "type": "string",
+      "description": "회사명"
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "담당자 이름"
+    },
+    "contact_title": {
+      "type": "string",
+      "description": "직함"
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "website": {
+      "type": "string"
+    },
+    "industry": {
+      "type": "string",
+      "description": "업종·제품군"
+    },
+    "product_idea": {
+      "type": "string",
+      "description": "만들 만한 제품·관심사"
+    },
+    "source": {
+      "type": "string",
+      "description": "어떻게 찾았나",
+      "enum": [
+        "cold_email",
+        "referral",
+        "exhibition",
+        "inbound",
+        "other"
+      ],
+      "default": "cold_email"
+    },
+    "stage": {
+      "type": "string",
+      "description": "영업 단계",
+      "enum": [
+        "TARGET",
+        "SENT",
+        "REPLIED",
+        "MEETING",
+        "QUOTE",
+        "WON",
+        "LOST"
+      ],
+      "default": "TARGET"
+    },
+    "owner_name": {
+      "type": "string",
+      "description": "담당 직원"
+    },
+    "owner_email": {
+      "type": "string"
+    },
+    "next_follow_up": {
+      "type": "string",
+      "description": "다음 연락일 (YYYY-MM-DD, 한국 날짜)"
+    },
+    "touches": {
+      "type": "array",
+      "description": "연락 기록 [{at, kind: email|call|meeting|message|note, note, by, stage}]",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "lost_reason": {
+      "type": "string",
+      "description": "보류·종료 이유"
+    },
+    "notes": {
+      "type": "string",
+      "description": "메모"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "수주 뒤 만든 고객사 ID"
+    },
+    "task_card_id": {
+      "type": "string",
+      "description": "수주 뒤 만든 업무 카드 ID"
+    },
+    "won_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "company"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

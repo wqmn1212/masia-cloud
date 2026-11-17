@@ -1,16 +1,21 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Bluetooth, BluetoothOff, Loader2, Send, Cpu, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { encodeValue, decodeValue, bytesHex, showValue } from '@/lib/devkit/ble';
+import DeviceTools from '@/components/prototype/develop/DeviceTools';
 
 const now = () => new Date().toTimeString().slice(0, 8);
 
 // 가상 장치: 실제 장치 없이 앱 화면·통신 흐름을 미리 보는 용도. 펌웨어와 같은 값 형식으로 움직인다
-function virtualDevice(gatt, onNotify) {
+function virtualDevice(gatt, onNotify, onSys) {
   const vals = new Map();
+  const cal = {};
+  let clock = { base: 0, at: Date.now() };
+  let sched = new Uint8Array([1, 23, 0, 30, 8, 0, 30, 100]);
+  const devUnits = (c) => { const v = decodeValue(c, vals.get(c.uuid)) ?? 0; return Math.round(c.kind === 'temp' ? v * 10 + 7 : c.kind === 'analog' ? v * 1.03 : v); }; // 일부러 조금 틀린 센서
   gatt.chars.forEach((c) => vals.set(c.uuid, encodeValue(c, c.kind === 'temp' ? 24.8 : c.kind === 'battery' ? 87 : c.kind === 'analog' ? 1650 : 0)));
   let t = 0;
   const timer = setInterval(() => {
@@ -30,15 +35,45 @@ function virtualDevice(gatt, onNotify) {
       onNotify(c, b);
     });
   }, 700);
+  const reply = (key, bytes, ms) => setTimeout(() => onSys(key, bytes), ms);
+  const ota = { size: 0, got: 0, on: false };
+  const ota5 = (code, v) => { const r = new Uint8Array(5); r[0] = code; new DataView(r.buffer).setUint32(1, v >>> 0, true); return r; };
   return {
     read: async (c) => vals.get(c.uuid) || new Uint8Array(0),
     write: async (c, b) => { vals.set(c.uuid, b); if (c.type === 'bytes') setTimeout(() => onNotify(c, b), 120); },
+    sysRead: async (key) => {
+      if (key === 'time') { const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, (clock.base + Math.floor((Date.now() - clock.at) / 1000)) >>> 0, true); return b; }
+      if (key === 'schedule') return sched.slice();
+      return new Uint8Array(0);
+    },
+    sysWrite: async (key, b) => {
+      if (key === 'ping') reply('ping', b.slice(), 25 + Math.random() * 35);
+      if (key === 'ota') { // 가상 장치: 받은 크기만 센다
+        if (b[0] === 0x01) { ota.size = new DataView(b.buffer, b.byteOffset).getUint32(1, true); ota.got = 0; ota.on = true; reply('ota', ota5(0x01, ota.size), 30); }
+        else if (b[0] === 0x02 && ota.on) ota.got += b.length - 1;
+        else if (b[0] === 0x03 && ota.on) { ota.on = false; reply('ota', ota5(ota.got === ota.size ? 0x03 : 0xe3, ota.got), 60); }
+        else if (b[0] === 0x04) { ota.on = false; reply('ota', ota5(0x04, 0), 20); }
+      }
+      if (key === 'time') clock = { base: new DataView(b.buffer, b.byteOffset).getUint32(0, true), at: Date.now() };
+      if (key === 'schedule') sched = b.slice(0, 8);
+      if (key === 'calib') {
+        if (b[0] === 0x01) {
+          const c = gatt.chars.find((x) => x.index === b[1]);
+          const raw = c ? devUnits(c) : 0;
+          const k = cal[b[1]] || { off: 0, gain: 1000 };
+          const r = new Uint8Array(10); const dv = new DataView(r.buffer);
+          r[0] = 1; r[1] = b[1]; dv.setInt32(2, raw, true); dv.setInt32(6, Math.round((raw * k.gain) / 1000) + k.off, true);
+          reply('calib', r, 40);
+        } else if (b[0] === 0x02) { const dv = new DataView(b.buffer, b.byteOffset); cal[b[1]] = { off: dv.getInt16(2, true), gain: dv.getUint16(4, true) }; reply('calib', new Uint8Array([2, b[1]]), 40); }
+        else if (b[0] === 0x03) { Object.keys(cal).forEach((k) => delete cal[k]); reply('calib', new Uint8Array([3]), 40); }
+      }
+    },
     close: () => clearInterval(timer),
   };
 }
 
 // 실제 장치: Web Bluetooth (크롬·엣지 데스크톱, 안드로이드 크롬). 서비스 UUID 로 걸러 찾는다
-async function realDevice(gatt, onNotify, onGone) {
+async function realDevice(gatt, onNotify, onGone, onSys) {
   const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [gatt.service] }], optionalServices: [gatt.service] });
   device.addEventListener('gattserverdisconnected', onGone);
   const server = await device.gatt.connect();
@@ -54,17 +89,31 @@ async function realDevice(gatt, onNotify, onGone) {
       }
     } catch { /* 펌웨어에 없는 항목은 건너뛴다 */ }
   }
+  const sys = new Map();
+  for (const c of gatt.sys || []) {
+    try {
+      const ch = await svc.getCharacteristic(c.uuid);
+      sys.set(c.key, ch);
+      if (c.access.includes('notify')) {
+        ch.addEventListener('characteristicvaluechanged', (e) => onSys(c.key, new Uint8Array(e.target.value.buffer)));
+        await ch.startNotifications();
+      }
+    } catch { /* 예전 펌웨어에는 시스템 항목이 없다 */ }
+  }
   let fw = '';
   try { fw = new TextDecoder().decode((await svc.getCharacteristic(gatt.info.uuid).then((x) => x.readValue())).buffer); } catch { /* 없음 */ }
   return {
     name: device.name, fw, missing: gatt.chars.filter((c) => !chars.has(c.uuid)).map((c) => c.name),
     read: async (c) => new Uint8Array((await chars.get(c.uuid).readValue()).buffer),
     write: async (c, b) => chars.get(c.uuid).writeValue(b),
+    sysRead: async (key) => { const ch = sys.get(key); if (!ch) throw new Error('장치 펌웨어에 이 항목이 없습니다 (펌웨어를 다시 구우세요)'); return new Uint8Array((await ch.readValue()).buffer); },
+    sysWrite: async (key, b) => { const ch = sys.get(key); if (!ch) throw new Error('장치 펌웨어에 이 항목이 없습니다 (펌웨어를 다시 구우세요)'); await ch.writeValue(b); },
+    sysKeys: [...sys.keys()],
     close: () => { try { device.gatt.disconnect(); } catch { /* 이미 끊김 */ } },
   };
 }
 
-export default function BleTester({ gatt }) {
+export default function BleTester({ gatt, calibration, onCalibration }) {
   const [mode, setMode] = useState(null); // null | 'sim' | 'real'
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -77,7 +126,24 @@ export default function BleTester({ gatt }) {
 
   const push = (dir, c, b) => setLog((l) => [{ t: now(), dir, name: c.name, hex: bytesHex(b), value: showValue(c, decodeValue(c, b)) }, ...l].slice(0, 60));
   const onNotify = (c, b) => { setVals((v) => ({ ...v, [c.uuid]: decodeValue(c, b) })); push('←', c, b); };
+  const listeners = useRef(new Map());
+  const onSys = (key, b) => (listeners.current.get(key) || new Set()).forEach((fn) => fn(b));
   const stop = () => { dev.current?.close(); dev.current = null; setMode(null); setInfo(null); };
+  // 시스템 항목(보정·응답 확인·시각·일정) 주고받기: request 는 알림으로 온 답을 기다린다
+  const api = useMemo(() => (mode ? {
+    read: (key) => dev.current.sysRead(key),
+    write: (key, b) => dev.current.sysWrite(key, b),
+    request: (key, b, match, timeout = 3000) => new Promise((resolve, reject) => {
+      const set = listeners.current.get(key) || new Set();
+      listeners.current.set(key, set);
+      let timer = null;
+      const fn = (r) => { if (match(r)) { done(); resolve(r); } };
+      const done = () => { set.delete(fn); clearTimeout(timer); };
+      set.add(fn);
+      timer = setTimeout(() => { done(); reject(new Error('장치가 응답하지 않습니다 (펌웨어에 이 항목이 있는지 확인하세요)')); }, timeout);
+      dev.current.sysWrite(key, b).catch((e) => { done(); reject(e); });
+    }),
+  } : null), [mode]);
   useEffect(() => () => dev.current?.close(), []);
   useEffect(() => { stop(); setVals({}); setLog([]); }, [gatt.service]);  
 
@@ -90,7 +156,7 @@ export default function BleTester({ gatt }) {
   const start = async (kind) => {
     setErr(''); setBusy(true);
     try {
-      const d = kind === 'sim' ? virtualDevice(gatt, onNotify) : await realDevice(gatt, onNotify, () => { setErr('장치 연결이 끊겼습니다.'); stop(); });
+      const d = kind === 'sim' ? virtualDevice(gatt, onNotify, onSys) : await realDevice(gatt, onNotify, () => { setErr('장치 연결이 끊겼습니다.'); stop(); }, onSys);
       dev.current = d;
       setMode(kind);
       setInfo(kind === 'sim' ? { name: `${gatt.device_name} (가상)`, fw: '가상 장치' } : { name: d.name, fw: d.fw, missing: d.missing });
@@ -159,6 +225,8 @@ export default function BleTester({ gatt }) {
           );
         })}
       </div>
+
+      {mode && <DeviceTools gatt={gatt} api={api} calibration={calibration} onRecord={mode === 'real' ? onCalibration : undefined} />}
 
       <div className="rounded-lg border">
         <p className="border-b px-3 py-1.5 text-caption font-semibold text-muted-foreground">통신 기록 (→ 앱이 보냄 · ← 장치 알림)</p>

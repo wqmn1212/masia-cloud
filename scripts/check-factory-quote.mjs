@@ -121,7 +121,7 @@ assert.equal(note.recipient_id, 'u9', '카드 책임자에게');
 assert.match(note.title, /\[공장 견적 도착\] 타정기 5구 · 운용/);
 assert.match(note.body, /견적 초안을 만들었습니다: .* · 품목 2개 · 공장 원가 ¥17,000/);
 assert.match(note.body, /"검토 요청"/);
-assert.equal(note.link, '/task-board?card=c1&tab=quotation');
+assert.equal(note.link, '/task-board?card=c1&tab=quote');
 assert.deepEqual(globalThis.__db.ProjectAuditLog.map((a) => a.event_type), ['FACTORY_QUOTE_IMPORTED']);
 
 // 다시 불러도 같은 견적서로 초안을 또 만들지 않는다

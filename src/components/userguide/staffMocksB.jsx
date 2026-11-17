@@ -5,7 +5,7 @@ const L = (zh, ko, cn) => (zh ? cn : ko);
 
 export function MemberMock({ zh }) {
   return (
-    <Frame title={L(zh, '일정 탭 · 팀원', '日程页 · 团队成员')} badge={L(zh, '예시 화면', '示例画面')}>
+    <Frame title={L(zh, '생산 탭 일정 · 팀원', '日程页 · 团队成员')} badge={L(zh, '예시 화면', '示例画面')}>
       <div className="flex items-center gap-2 py-1.5">
         <span className="flex-1">{L(zh, '1차 샘플', '第一次样品')} · 왕QC</span>
         <Mark n={2} inline><span className="text-muted-foreground">10-20</span></Mark>
@@ -94,7 +94,7 @@ export function HolidayMock({ zh }) {
 
 export function ScheduleMock({ zh }) {
   return (
-    <Frame title="오버뷰 · 견적·납품 일정 관리" badge={L(zh, '예시 화면', '示例画面')}>
+    <Frame title="생산 탭 · 견적·납품 일정 관리" badge={L(zh, '예시 화면', '示例画面')}>
       <div className="flex flex-wrap items-center gap-2 mb-2">
         <Mark n={1} inline><Badge tone="amber">국경절과 겹침</Badge></Mark>
         <Mark n={2} inline><Btn>고객에게 안내</Btn></Mark>
@@ -107,7 +107,7 @@ export function ScheduleMock({ zh }) {
         <Mark n={7}><Field label="변경 사유" value="공장 설비 점검" /></Mark>
         <Mark n={8}><div className="p-1 text-muted-foreground">변경 이력 · 11-10 → 11-13</div></Mark>
       </div>
-      <div className="mt-2 text-[10px] text-muted-foreground">일정 계획이 있는 카드는 납품일이 잠기고 일정 탭에서 바뀝니다.</div>
+      <div className="mt-2 text-[10px] text-muted-foreground">일정 계획이 있는 카드는 납품일이 잠기고 생산 탭 일정에서 바뀝니다.</div>
     </Frame>
   );
 }

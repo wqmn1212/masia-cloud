@@ -154,7 +154,7 @@ function QuoteImportState({ r, s, L }) {
     onError: (e) => toast({ title: L('읽지 못했습니다', '读取失败'), description: e?.response?.data?.error || e.message, variant: 'destructive' }),
   });
   if (s.quotation_id) {
-    return <Link to={`/task-board?card=${r.card_id}&tab=quotation`} className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-primary hover:underline"><FileSpreadsheet className="h-3 w-3" />{L('견적 초안 만듦 · 견적 탭에서 보기', '已生成报价草稿')}</Link>;
+    return <Link to={`/task-board?card=${r.card_id}&tab=quote`} className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-primary hover:underline"><FileSpreadsheet className="h-3 w-3" />{L('견적 초안 만듦 · 견적 탭에서 보기', '已生成报价草稿')}</Link>;
   }
   const stuck = !s.import_error && Date.now() - Date.parse(s.import_started_at || s.submitted_at) > 10 * 60000;
   if (!s.import_error && !stuck) return <span className="inline-flex items-center gap-1 text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" />{L('견적서 읽는 중', '正在读取报价单')}</span>;

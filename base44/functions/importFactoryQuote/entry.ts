@@ -82,7 +82,7 @@ export default async function (req: Request) {
         type: 'factory_quote_imported',
         title: `[공장 견적 도착] ${card.title} · ${request.factory_name || '공장'}`,
         body: lines.join('\n'),
-        link: `/task-board?card=${card.id}&tab=quotation`, task_card_id: card.id, card_title: card.title,
+        link: `/task-board?card=${card.id}&tab=quote`, task_card_id: card.id, card_title: card.title,
       });
     } catch (_e) { /* 알림 실패가 처리를 막지 않는다 */ }
     return Response.json({ ok: true, created: ok.length, failed: bad.length, quotation_ids: ok.map((r) => r.quotation_id), errors: bad.map((r) => r.error) });

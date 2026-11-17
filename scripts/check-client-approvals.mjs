@@ -169,7 +169,7 @@ assert.equal(r.status, 200);
 assert.equal(r.data.pending_approval, undefined, '900만원 < 기준 1,000만원 → 바로 수락');
 assert.equal(db.Quotation[0].client_accepted_by_name, '김실무');
 assert.equal(db.Quotation[0].client_accept_note, '11월 첫 주 발주 예정');
-assert.match(notes('quote_accepted').at(-1).link, /tab=quotation/);
+assert.match(notes('quote_accepted').at(-1).link, /tab=quote\b/);
 assert.match(notes('quote_accepted').at(-1).body, /계약서/);
 r = await call('clientCardAction', { card_id: 'c2', action: 'quote_accept', quotation_id: 'qt1' });
 assert.equal(r.status, 409, '이미 수락');

@@ -1,0 +1,35 @@
+# 검산 자동 실행: 푸시·PR 마다 모든 검산(check:*)과 빌드를 돌린다. 하나라도 실패하면 빨간 표시.
+name: checks
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install KiCad 7 (회로도·기판 검산용)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends kicad > /dev/null
+          kicad-cli version
+      - run: npm ci
+      - name: 검산 전체
+        run: npm run check
+      - name: 빌드
+        run: npm run build

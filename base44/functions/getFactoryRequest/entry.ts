@@ -26,7 +26,11 @@ export default async function (req: Request) {
     }
     await svc.entities.FactoryRequest.update(request.id, { ...(pin.patch || {}), last_opened_at: now.toISOString() });
     const card = await svc.entities.TaskCard.get(request.card_id).catch(() => null);
-    return Response.json({ ok: true, request: factoryView(request, card, now.toISOString()) }, { headers: { 'Cache-Control': 'no-store' } });
+    // 참고 파일은 PIN 이 맞을 때만, 1시간짜리 서명 링크로
+    const refs = await Promise.all((request.ref_files || []).slice(0, 10).map(async (f: any) => {
+      try { const r = await svc.integrations.Core.CreateFileSignedUrl({ file_uri: f.uri, expires_in: 3600 }); return { name: f.name, size: f.size || 0, note_cn: f.note_cn || '', url: r?.signed_url || '' }; } catch (_e) { return null; }
+    }));
+    return Response.json({ ok: true, request: { ...factoryView(request, card, now.toISOString()), ref_files: refs.filter((x) => x && x.url) } }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     return Response.json({ error: (error as Error).message }, { status: 500 });
   }

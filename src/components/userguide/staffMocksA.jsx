@@ -47,7 +47,7 @@ export function OwnerMock({ zh }) {
 
 export function CreateMock({ zh }) {
   return (
-    <Frame title={L(zh, '일정 탭', '日程页')} badge={L(zh, '예시 화면', '示例画面')}>
+    <Frame title={L(zh, '생산 탭 일정', '日程页')} badge={L(zh, '예시 화면', '示例画面')}>
       <div className="space-y-2">
         <Mark n={1}><Field label={L(zh, '템플릿', '模板')} value={L(zh, '일반 OEM · 11단계', '通用OEM · 11步')} /></Mark>
         <Mark n={2}><Field label={L(zh, '시작일', '开始日期')} value="2026-10-12" /></Mark>
@@ -59,7 +59,7 @@ export function CreateMock({ zh }) {
 
 export function ConfirmMock({ zh }) {
   return (
-    <Frame title={L(zh, '일정 탭', '日程页')} badge={L(zh, '예시 화면', '示例画面')}>
+    <Frame title={L(zh, '생산 탭 일정', '日程页')} badge={L(zh, '예시 화면', '示例画面')}>
       <div className="flex justify-end gap-2 mb-2"><Mark n={5} inline><Btn>{L(zh, '다시 만들기', '重新创建')}</Btn></Mark><Mark n={1} inline><Btn primary>{L(zh, '계획 확정', '确认计划')}</Btn></Mark></div>
       {[['사양 확정', '规格确认', '10-15', '김PM'], ['공장 확정', '工厂确认', '10-19', '리PM']].map(([k, c, d, o], i) => (
         <div key={k} className="flex items-center gap-2 py-1.5 border-t">
@@ -97,7 +97,7 @@ export function QcMock({ zh }) {
 
 export function DelayMock({ zh }) {
   return (
-    <Frame title={L(zh, '일정 탭', '日程页')} badge={L(zh, '예시 화면', '示例画面')}>
+    <Frame title={L(zh, '생산 탭 일정', '日程页')} badge={L(zh, '예시 화면', '示例画面')}>
       <div className="mb-2"><Mark n={1} inline><Badge tone="red">{L(zh, '납품 +4일', '交货 +4天')}</Badge></Mark></div>
       <div className="flex items-center gap-2 py-1.5 border-t">
         <span className="flex-1">{L(zh, '양산', '量产')}</span>

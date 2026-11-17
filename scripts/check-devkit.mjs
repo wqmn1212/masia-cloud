@@ -552,7 +552,7 @@ ok('조명 기본 규칙: 시계는 조명이 켜져 있을 때만, 수면 모�
   assert.ok(t.some((x) => x.startsWith('수면 모드 토글 이(가) 켜져 있으면 → 취침 23:00 전 30분')), t.join('\n'));
   assert.ok(t.includes('블루투스 버튼 을(를) 누르면 → 블루투스 페어링 (앱 연결)'));
   const fw = firmwareSketch({ features: lamp, rules: lampRules, mcu: 'esp32c3', uuid_base: randomBase(() => 0.5) });
-  assert.ok(fw.includes('ledcAttach(PIN_F') && fw.includes('TODO 수면 일정') && fw.includes('BLEDevice::startAdvertising();  // 블루투스 페어링'));
+  assert.ok(fw.includes('ledcAttach(PIN_F') && fw.includes('void schedule()') && !fw.includes('TODO') && fw.includes('BLEDevice::startAdvertising();  // 블루투스 페어링'));
 });
 
 ok('다이얼: 짧게 누르면 뒤 수면등 60 % 가 서서히 켜지고 시계도 켜짐, 길게 누르면 앞으로, 돌리면 밝기', () => {

@@ -1,0 +1,117 @@
+# 펌웨어 빌드 서버 (ESP32, arduino-cli + Arduino-ESP32 코어 3.x)
+# 1) 푸시: 워크벤치가 만드는 예시 제품 펌웨어(scripts/firmware-samples.mjs)를 모두 컴파일해 코드 생성기가 깨지지 않았는지 확인한다.
+# 2) 수동 실행(workflow_dispatch): 워크벤치의 "빌드" 버튼이 서버 함수(firmwareBuild)를 거쳐 스케치를 보내면 컴파일해서
+#    합친 바이너리(merged.bin, 0x0 에 굽는다)를 아티팩트로 올린다. 브라우저가 받아 USB(WebSerial)로 굽는다.
+name: firmware
+run-name: firmware ${{ inputs.request_id || github.sha }}
+
+on:
+  push:
+    paths:
+      - 'src/lib/devkit/**'
+      - 'scripts/firmware-samples.mjs'
+      - 'scripts/check-firmware.mjs'
+      - 'scripts/fw-stubs/**'
+      - '.github/workflows/firmware.yml'
+  schedule:
+    - cron: '17 3 1 * *'   # 매달 1일: 공용 펌웨어 묶음(보관 90일)이 사라지지 않게 다시 만든다
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: '빌드 요청 번호 (서버 함수가 정한다)'
+        required: false
+        default: ''
+      fqbn:
+        description: '보드 (예: esp32:esp32:esp32c3:CDCOnBoot=cdc,PartitionScheme=huge_app)'
+        required: false
+        default: ''
+      sketch_gz_b64:
+        description: '스케치 (gzip → base64)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firmware-${{ inputs.request_id || github.ref }}
+  cancel-in-progress: false
+
+env:
+  ESP32_CORE: '3.0.7'
+  ESP32_INDEX: 'https://espressif.github.io/arduino-esp32/package_esp32_index.json'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Cache Arduino cores
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.arduino15
+          key: arduino-esp32-${{ env.ESP32_CORE }}
+      - name: Install ESP32 core
+        run: |
+          arduino-cli config init --overwrite
+          arduino-cli config add board_manager.additional_urls "$ESP32_INDEX"
+          arduino-cli core update-index
+          arduino-cli core install "esp32:esp32@$ESP32_CORE"
+      - name: Prepare sketches
+        env:
+          REQ: ${{ inputs.request_id }}
+          FQBN: ${{ inputs.fqbn }}
+          SKETCH: ${{ inputs.sketch_gz_b64 }}
+        run: |
+          mkdir -p build/src
+          if [ -n "$SKETCH" ]; then
+            case "$FQBN" in esp32:esp32:*) ;; *) echo "bad fqbn"; exit 1 ;; esac
+            mkdir -p build/src/fw
+            printf '%s' "$SKETCH" | base64 -d | gunzip > build/src/fw/fw.ino
+            echo "fw $FQBN" > build/src/targets.txt
+          else
+            node scripts/firmware-samples.mjs build/src
+          fi
+          cat build/src/targets.txt
+      - name: Compile
+        run: |
+          mkdir -p build/out
+          set -o pipefail
+          fail=0
+          while read -r name fqbn; do
+            [ -z "$name" ] && continue
+            echo "::group::$name ($fqbn)"
+            if arduino-cli compile --fqbn "$fqbn" --export-binaries --output-dir "build/out/$name" "build/src/$name" 2>&1 | tee "build/out/$name.log"; then
+              ls -la "build/out/$name"
+            else
+              fail=1
+            fi
+            echo "::endgroup::"
+          done < build/src/targets.txt
+          exit $fail
+      - name: Upload binaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ inputs.request_id || github.sha }}
+          path: |
+            build/out/**/*.merged.bin
+            build/out/**/*.ino.bin
+            build/out/*.log
+          retention-days: 7
+          if-no-files-found: warn
+      # 공용 펌웨어(칩 3종): 워크벤치 "공용 펌웨어로 바로 굽기"가 서버 함수로 받아 간다
+      - name: Upload universal firmware
+        if: ${{ !inputs.sketch_gz_b64 }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: universal-${{ github.sha }}
+          path: build/out/universal_*/*.merged.bin
+          retention-days: 90
+          if-no-files-found: error

@@ -32,7 +32,7 @@ function QuoteRow({ row, kind }) {
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-          {row.card_id && <Button asChild variant="ghost" size="sm" className="h-8 gap-1 px-2 text-label"><Link to={`/task-board?card=${row.card_id}&tab=quotation`}>카드<ArrowUpRight className="h-3.5 w-3.5" /></Link></Button>}
+          {row.card_id && <Button asChild variant="ghost" size="sm" className="h-8 gap-1 px-2 text-label"><Link to={`/task-board?card=${row.card_id}&tab=quote`}>카드<ArrowUpRight className="h-3.5 w-3.5" /></Link></Button>}
           <QuoteApprovalActions quote={quote} cardId={row.card_id} approver />
         </div>
       </div>

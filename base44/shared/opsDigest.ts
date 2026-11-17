@@ -48,18 +48,40 @@ export function clientWaitsFrom(overview: any) {
  * data: { cards, milestones, tasks, clientWaits, factoryRequests, chats, plans, signatures, quotes }
  *  - plans 는 ProductPlan (order_by·runout 을 저장해 둔 것), product_key 의 카드 책임자에게 간다
  */
-export function buildOpsDigest({ user, admin = false, today, now, data }: any) {
+/** focus: 카드 한 장만 본다 (업무 카드 '지금' 탭). 책임자와 상관없이 그 카드의 신호를 모두 모은다 */
+export function buildOpsDigest({ user, admin = false, today, now, data, focus = '' }: any) {
   const d = data || {};
   const cards = (d.cards || []).filter((c: any) => !['DONE', 'CANCELLED'].includes(c.status));
   const cardById = new Map(cards.map((c: any) => [c.id, c]));
   const allCards = new Map((d.cards || []).map((c: any) => [c.id, c]));
   const title = (id: string) => (allCards.get(id) as any)?.title || '';
   const titleCn = (id: string) => (allCards.get(id) as any)?.title_cn || title(id);
-  const mineCard = (id: string) => (cardById.get(id) as any)?.owner_id === user.id;
-  const mineStep = (m: any) => (m.owner_ids || []).includes(user.id) || m.owner_id === user.id || mineCard(m.card_id);
+  const mineCard = (id: string) => (focus ? id === focus : (cardById.get(id) as any)?.owner_id === user.id);
+  const mineStep = (m: any) => (focus ? m.card_id === focus : (m.owner_ids || []).includes(user.id) || m.owner_id === user.id || mineCard(m.card_id));
   const nowIso = now || new Date().toISOString();
   const S: Record<string, any[]> = Object.fromEntries(SECTIONS.map((k) => [k, []]));
   const push = (k: string, card_id: string, ko: string, cn: string, extra: any = {}) => S[k].push({ card_id, card_title: title(card_id), card_title_cn: titleCn(card_id), ko, cn, ...extra });
+
+  // 영업 팔로업: 내 담당 영업 대상의 다음 연락일 (카드가 없어 영업 화면으로 연결)
+  if (!focus) {
+    for (const p of (d.prospects || []).filter((p: any) => (p.owner_email && p.owner_email === user.email) || (!p.owner_email && p.owner_name && p.owner_name === user.full_name))) {
+      const late = dayDiff(p.next_follow_up, today);
+      if (late < 0) continue;
+      const extra = { card_title: '영업 팔로업', card_title_cn: '销售跟进', href: `/sales?p=${p.id}`, ...(late > 0 ? { days: late } : {}) };
+      if (late === 0) push('due_today', '', `${p.company} 연락하기`, `联系${p.company}`, extra);
+      else push('risk', '', `${p.company} 연락 · ${late}일 지남`, `联系${p.company} · 已逾期${late}天`, extra);
+    }
+  }
+
+  // 고객 자료 요청: 고객이 올린 것은 확인할 것, 오래 안 온 것은 고객 대기
+  for (const r of (d.clientRequests || []).filter((r: any) => mineCard(r.card_id) && r.status === 'OPEN')) {
+    const items = r.items || [];
+    const sent = items.filter((x: any) => x.status === 'SUBMITTED').length;
+    const waiting = items.filter((x: any) => ['WAITING', 'REDO'].includes(x.status)).length;
+    if (sent) push('to_check', r.card_id, `고객 자료 ${sent}건 확인 대기 · ${r.title}`, `客户资料${sent}项待确认 · ${r.title}`);
+    const age = dayDiff(kst(r.sent_at || r.created_date), today);
+    if (waiting && age > STALE_DAYS) push('client_wait', r.card_id, `자료 요청 ${waiting}건 · ${age}일째`, `资料请求${waiting}项 · 第${age}天`, { days: age });
+  }
 
   const steps = (d.milestones || []).filter((m: any) => cardById.has(m.card_id) && open(m) && m.planned_date);
   for (const m of steps.filter(mineStep)) {
@@ -68,7 +90,7 @@ export function buildOpsDigest({ user, admin = false, today, now, data }: any) {
     else if (late > 0) push('risk', m.card_id, `${m.label} · ${late}일 지남`, `${m.label_cn || m.label} · 已逾期${late}天`, { days: late });
     else if (-late <= SOON_DAYS) push('risk', m.card_id, `${m.label} · ${md(m.planned_date)}까지 (${-late}일 남음)`, `${m.label_cn || m.label} · ${md(m.planned_date)}截止（剩${-late}天）`);
   }
-  for (const t of (d.tasks || []).filter((t: any) => t.status !== 'DONE' && t.due_date && cardById.has(t.card_id) && (t.assignee_name ? t.assignee_name === user.full_name : mineCard(t.card_id)))) {
+  for (const t of (d.tasks || []).filter((t: any) => t.status !== 'DONE' && t.due_date && cardById.has(t.card_id) && (focus ? t.card_id === focus : t.assignee_name ? t.assignee_name === user.full_name : mineCard(t.card_id)))) {
     if (t.due_date === today) push('due_today', t.card_id, `${t.title} (업무)`, `${t.title_cn || t.title}（任务）`);
     else if (t.due_date < today) push('risk', t.card_id, `${t.title} · 업무 ${dayDiff(t.due_date, today)}일 지남`, `${t.title_cn || t.title} · 任务已逾期${dayDiff(t.due_date, today)}天`, { days: dayDiff(t.due_date, today) });
   }
@@ -124,7 +146,7 @@ export function buildOpsDigest({ user, admin = false, today, now, data }: any) {
       if (q.review_rejected_reason && (mine || q.review_requested_by_id === user.id)) push('to_check', q.card_id, `견적 반려됨 · ${qName(q)}: ${q.review_rejected_reason}`, `报价被退回 · ${qName(q)}：${q.review_rejected_reason}`);
       else if (q.factory_request_id && mine) push('to_check', q.card_id, `공장 견적 초안 · ${q.factory_name || qName(q)} (마진 확인 후 검토 요청)`, `工厂报价草稿 · ${q.factory_name || qName(q)}（确认利润后申请审核）`);
     }
-    if (admin && q.status === 'REVIEW' && !q.client_published_at && q.review_requested_at) {
+    if ((admin || (focus && q.card_id === focus)) && q.status === 'REVIEW' && !q.client_published_at && q.review_requested_at) {
       const wait = dayDiff(kst(q.review_requested_at), today);
       if (wait >= APPROVAL_WAIT_DAYS) push('to_check', q.card_id, `견적 승인 대기 ${wait}일째 · ${qName(q)}${q.review_requested_by_name ? ` (요청 ${q.review_requested_by_name})` : ''}`, `报价待审批第${wait}天 · ${qName(q)}`, { days: wait });
     }
@@ -140,7 +162,7 @@ export function buildOpsDigest({ user, admin = false, today, now, data }: any) {
     }
   }
 
-  for (const p of (d.plans || []).filter((p: any) => p.order_by && (admin ? true : mineCard(p.product_key) || (allCards.get(p.product_key) as any)?.owner_id === user.id))) {
+  for (const p of (d.plans || []).filter((p: any) => p.order_by && (focus ? p.product_key === focus : admin ? true : mineCard(p.product_key) || (allCards.get(p.product_key) as any)?.owner_id === user.id))) {
     const left = dayDiff(today, p.order_by);
     if (left > REORDER_DAYS) continue;
     const name = p.product_name || '상품';
@@ -149,7 +171,7 @@ export function buildOpsDigest({ user, admin = false, today, now, data }: any) {
   }
 
   let team = null;
-  if (admin) {
+  if (admin && !focus) {
     const lateCards = new Map<string, number>();
     for (const m of steps) { const late = dayDiff(m.planned_date, today); if (late > 0) lateCards.set(m.card_id, Math.max(lateCards.get(m.card_id) || 0, late)); }
     const waitingTotal = (d.factoryRequests || []).reduce((n: number, r: any) => n + (r.items || []).filter((i: any) => i.status === 'SUBMITTED').length, 0);
@@ -247,7 +269,8 @@ export function digestHtml(digest: any, { name = '', lang = 'ko', base = 'https:
     for (const r of rows) { const key = `${r.card_id}|${zh ? r.card_title_cn : r.card_title}`; groups.set(key, [...(groups.get(key) || []), r]); }
     const groupHtml = [...groups].map(([key, items]) => {
       const [cardId, cardTitle] = key.split('|');
-      const head = `<tr><td colspan="3" style="padding:12px 0 4px"><a href="${esc(url(`/task-board?card=${encodeURIComponent(cardId)}`))}" style="color:${C.muted};font-size:12.5px;font-weight:600;text-decoration:none">${esc(cardTitle || (zh ? '项目' : '프로젝트'))} ›</a></td></tr>`;
+      const href = items[0]?.href && !cardId ? items[0].href : `/task-board?card=${encodeURIComponent(cardId)}`;
+      const head = `<tr><td colspan="3" style="padding:12px 0 4px"><a href="${esc(url(href))}" style="color:${C.muted};font-size:12.5px;font-weight:600;text-decoration:none">${esc(cardTitle || (zh ? '项目' : '프로젝트'))} ›</a></td></tr>`;
       const lines = items.map((r: any) => {
         const { main, tags } = splitItem(zh ? r.cn : r.ko);
         const badges = tags.map((tag) => `<span style="display:inline-block;margin-left:4px;padding:2px 10px;border-radius:8px;font-size:11px;line-height:16px;font-weight:600;white-space:nowrap;${badgeStyle(tag, r.days)}">${esc(tag)}</span>`).join('');

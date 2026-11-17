@@ -1,0 +1,109 @@
+{
+  "name": "ClientRequest",
+  "type": "object",
+  "description": "고객 자료 요청 체크리스트: 직원이 항목(디자인 전달 자료 등)을 보내고 고객이 포털에서 항목마다 파일·답을 올린다. 쓰기는 clientRequest 함수만",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "소속 팀 ID"
+    },
+    "card_id": {
+      "type": "string",
+      "description": "업무 카드 ID"
+    },
+    "title": {
+      "type": "string"
+    },
+    "template": {
+      "type": "string",
+      "description": "design_handoff|product_brief|artwork|custom"
+    },
+    "note": {
+      "type": "string",
+      "description": "고객에게 보이는 안내"
+    },
+    "due_date": {
+      "type": "string",
+      "description": "회신 기한 YYYY-MM-DD"
+    },
+    "items": {
+      "type": "array",
+      "description": "[{key, label, hint, kind: file|text, required, status: WAITING|SUBMITTED|ACCEPTED|REDO, files[{name, uri, size, at, by}], answer, staff_note, submitted_at, submitted_by, reviewed_at, reviewed_by, history[]}]",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "OPEN",
+        "CLOSED"
+      ],
+      "default": "OPEN"
+    },
+    "created_by_name": {
+      "type": "string"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "closed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "card_id",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

@@ -25,7 +25,8 @@ const fmtT = (s) => (s < 60 ? `${s.toFixed(1)}초` : s < 3600 ? `${Math.floor(s 
 const unit = (f) => FEATURE_KINDS[f.kind]?.ble.unit || '';
 
 // 6단계: 동작 시뮬레이션 — 전원·버튼·뚜껑·기울기·센서·앱 명령을 넣으면 규칙대로 움직이고 전압·전류·온도를 계산한다
-export default function SimStep({ concept, dev, change }) {
+// viewer: 고객 포털 보기 (설정 편집 칸 숨김, 바꾼 값은 저장 안 됨). pin: 위치 의견 {mode, onPick, pins}
+export default function SimStep({ concept, dev, change, viewer = false, pin = null }) {
   const features = dev.features || [];
   const rules = useMemo(() => validRules(dev.rules ?? defaultRules(features), features), [dev.rules, features]);
   const power = useMemo(() => ({ ...defaultPower(features), ...(dev.power || {}) }), [dev.power, features]);
@@ -102,7 +103,7 @@ export default function SimStep({ concept, dev, change }) {
     <div className="space-y-4">
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <div className="relative min-h-[460px] overflow-hidden rounded-xl border bg-gradient-to-b from-secondary to-card">
-          <SimCanvas parts={parts} links={links} lidPartId={lidPartId} simRef={simRef} onPress={press} onLid={() => setLid(s.input.lid > 0.5 ? 0 : 1)} onSwitch={flip} pivot={dev.pivot} />
+          <SimCanvas parts={parts} links={links} lidPartId={lidPartId} simRef={simRef} onPress={press} onLid={() => setLid(s.input.lid > 0.5 ? 0 : 1)} onSwitch={flip} pivot={dev.pivot} pinMode={!!pin?.mode} onPickPart={pin?.onPick} pins={pin?.pins} onHover={pin?.onHover} />
           <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-1.5">
             <span className={`rounded-full px-2.5 py-1 text-caption font-medium backdrop-blur ${s.mcu.on ? 'bg-success/15 text-success-text' : 'bg-destructive/15 text-destructive'}`}>{s.mcu.on ? 'MCU 동작' : 'MCU 꺼짐·재부팅'}</span>
             <span className="rounded-full bg-card/85 px-2.5 py-1 text-caption tabular-nums backdrop-blur">입력 {s.rails.vin.toFixed(2)} V · {fmtA(s.rails.i)}</span>
@@ -117,7 +118,9 @@ export default function SimStep({ concept, dev, change }) {
             <Button size="sm" variant="outline" onClick={() => setResetN((n) => n + 1)}><RotateCcw className="w-4 h-4" />처음부터</Button>
             <span className="ml-auto rounded-full bg-card/85 px-2.5 py-1 text-caption tabular-nums text-muted-foreground backdrop-blur">{fmtT(s.t)}</span>
           </div>
-          <p className="pointer-events-none absolute right-3 top-3 hidden max-w-[220px] rounded-lg md:block bg-card/85 px-2.5 py-1.5 text-micro text-muted-foreground backdrop-blur">{usingFallback ? '컨셉이 없어 기본 상자 모형으로 보여 줍니다. ' : ''}파란 버튼 부품을 누르고 있으면 눌림, 뚜껑을 누르면 열림·닫힘. 드래그로 회전.</p>
+          {pin?.mode
+            ? <p className="pointer-events-none absolute right-3 top-3 max-w-[240px] rounded-lg bg-primary px-2.5 py-1.5 text-micro text-primary-foreground">의견을 남길 곳을 누르세요. 드래그는 회전입니다.</p>
+            : <p className="pointer-events-none absolute right-3 top-3 hidden max-w-[220px] rounded-lg md:block bg-card/85 px-2.5 py-1.5 text-micro text-muted-foreground backdrop-blur">{usingFallback ? '컨셉이 없어 기본 상자 모형으로 보여 줍니다. ' : ''}파란 버튼 부품을 누르고 있으면 눌림, 뚜껑을 누르면 열림·닫힘. 드래그로 회전.</p>}
         </div>
 
         <div className="space-y-3">
@@ -299,13 +302,13 @@ export default function SimStep({ concept, dev, change }) {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
+      {!viewer && <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
         <PartParamsPanel params={simParams} changed={changedParams} features={features}
           onChange={(k, v) => change((d) => ({ sim_params: { ...(d.sim_params || {}), [k]: v } }))}
           onReset={() => change({ sim_params: {} })}
           onHeaterW={(id, w) => change((d) => ({ features: (d.features || []).map((x) => (x.id === id ? { ...x, power_w: w } : x)) }))} />
         <RulesEditor features={features} rules={rules} onChange={(next) => change({ rules: next })} />
-      </div>
+      </div>}
 
       <div className="grid gap-4 lg:grid-cols-2">
           <Card title="앱 화면 (블루투스로 보이는 값)" icon={Smartphone}>
@@ -333,7 +336,7 @@ export default function SimStep({ concept, dev, change }) {
             </div>
           </Card>
       </div>
-      {!usingFallback && (
+      {!usingFallback && !viewer && (
         <Card title="3D 부품 연결" icon={Link2}>
           <p className="text-caption text-muted-foreground">기능을 컨셉의 어느 부품이 보여 줄지 정합니다. 연결한 버튼 부품은 3D 에서 눌러지고, LED·모터·히터 부품은 상태에 따라 빛나거나 돌거나 달아오릅니다.</p>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
