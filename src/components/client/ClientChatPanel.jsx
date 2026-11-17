@@ -6,7 +6,6 @@ import { mergeFiles, toAttachmentPayload } from '@/lib/clientFileUpload';
 import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import BilingualField from '@/components/language/BilingualField';
 import { useLanguage } from '@/lib/LanguageContext';

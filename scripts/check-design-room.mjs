@@ -170,3 +170,23 @@ r = await call({ action: 'list', card_id: 'c1' });
 assert.equal(r.data.rooms.length, 2);
 assert.equal(db.DesignComment.length, 4, '댓글은 지우지 않는다');
 console.log('design-room functions ok');
+
+// ── 동기화 간격과 실시간 알림 거르기 ──
+{
+  const L = await import(new URL('../src/lib/designRoomSync.js', import.meta.url).href);
+  assert.equal(L.syncDelay({ hidden: false, idleMs: 0, others: 1 }), 1000, '구독 없음: 같이 보면 1초');
+  assert.equal(L.syncDelay({ hidden: false, idleMs: 0, others: 0 }), 2500);
+  assert.equal(L.syncDelay({ hidden: false, idleMs: 0, others: 3, live: true }), 6000, '구독: 접속 표시만 6초마다');
+  assert.equal(L.syncDelay({ hidden: false, idleMs: 0, others: 3, live: true, dirty: true }), 400, '내 커서가 움직였으면 곧');
+  assert.equal(L.syncDelay({ hidden: true, idleMs: 0, others: 3, live: true }), 12000);
+  assert.ok(L.syncDelay({ hidden: true, idleMs: 9e9, others: 0, live: true }) < 15000, '접속 표시 유지 시간(15초)보다 짧게');
+  const ctx = { roomId: 'r1', sid: 'me', known: { a: { cursor: { x: 0.1, y: 0.2 }, version: 2 } } };
+  assert.equal(L.shouldWake('DesignComment', { type: 'create', data: { room_id: 'r1' } }, ctx), true, '새 댓글');
+  assert.equal(L.shouldWake('DesignComment', { type: 'create', data: { room_id: 'r9' } }, ctx), false, '다른 방');
+  assert.equal(L.shouldWake('DesignPresence', { type: 'update', data: { room_id: 'r1', sid: 'me', cursor: { x: 1, y: 1 } } }, ctx), false, '내 것');
+  assert.equal(L.shouldWake('DesignPresence', { type: 'update', data: { room_id: 'r1', sid: 'a', cursor: { x: 0.1, y: 0.2 }, version: 2, seen_at: 'later' } }, ctx), false, '접속 시각만 바뀜 → 핑퐁 없음');
+  assert.equal(L.shouldWake('DesignPresence', { type: 'update', data: { room_id: 'r1', sid: 'a', cursor: { x: 0.5, y: 0.2 }, version: 2 } }, ctx), true, '커서 이동');
+  assert.equal(L.shouldWake('DesignPresence', { type: 'update', data: { room_id: 'r1', sid: 'a', cursor: { x: 0.1, y: 0.2 }, version: 3 } }, ctx), true, '판 바꿈');
+  assert.equal(L.shouldWake('DesignPresence', { type: 'create', data: { room_id: 'r1', sid: 'b' } }, ctx), true, '새로 들어옴');
+  console.log('design-room sync rules ok');
+}

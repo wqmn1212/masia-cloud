@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Copy, Loader2, Mail, Trophy, PauseCircle, Send } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Copy, Loader2, Mail, Trophy, PauseCircle, Send, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,10 @@ const FIELDS = [
 const PREF = 'masia.sales.pref';
 const readPref = () => { try { return JSON.parse(localStorage.getItem(PREF) || '{}'); } catch { return {}; } };
 const writePref = (v) => { try { localStorage.setItem(PREF, JSON.stringify(v)); } catch { /* 저장 불가 환경 */ } };
+const callMail = async (body) => {
+  try { return (await base44.functions.invoke('salesMail', body)).data; }
+  catch (e) { const d = e?.response?.data; throw new Error(d?.error || e.message); }
+};
 const when = (iso) => (iso ? new Date(iso).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '');
 // 연락을 남기면 단계가 자연히 앞으로 간다 (뒤로는 가지 않는다)
 const NEXT = { email: { TARGET: 'SENT' }, call: { TARGET: 'SENT' }, message: { TARGET: 'SENT' }, meeting: { TARGET: 'MEETING', SENT: 'MEETING', REPLIED: 'MEETING' } };
@@ -62,6 +67,27 @@ export default function ProspectDialog({ prospect, user, onClose, onSaved }) {
   };
   const copy = async () => { try { await navigator.clipboard.writeText(`제목: ${subject}\n\n${bodyText}`); toast({ title: '메일 문안을 복사했습니다' }); } catch { toast({ title: '복사하지 못했습니다' }); } };
   const mailto = () => { window.location.href = `mailto:${encodeURIComponent(form.email || '')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`; };
+  // Gmail: 연결 상태(보내기 권한)는 한 번만 묻는다
+  const { data: gmail } = useQuery({ queryKey: ['sales-mail-status'], queryFn: () => callMail({ action: 'status' }).catch((e) => ({ connected: false, error: e.message })), staleTime: 10 * 60_000, enabled: !!prospect });
+  const sendGmail = async () => {
+    if (!window.confirm(`${form.email} 로 지금 보냅니다.\n보내는 계정: ${gmail?.email || '연결된 Gmail'}`)) return;
+    setBusy('gmail');
+    try {
+      const r = await callMail({ action: 'send', prospect_id: prospect.id, subject, body: bodyText });
+      setForm((f) => ({ ...f, ...r.prospect })); setDraft(null); onSaved?.();
+      toast({ title: '보냈습니다', description: `다음 연락 ${r.prospect.next_follow_up || '없음'} · 회신이 오면 자동으로 기록됩니다` });
+    } catch (e) { toast({ title: '보내지 못했습니다', description: e.message, variant: 'destructive' }); }
+    setBusy('');
+  };
+  const checkReplies = async () => {
+    setBusy('reply');
+    try {
+      const r = await callMail({ action: 'check_replies', prospect_id: prospect.id });
+      if (r.found) { const fresh = await base44.entities.SalesProspect.get(prospect.id); setForm((f) => ({ ...f, ...fresh })); onSaved?.(); }
+      toast({ title: r.found ? `회신 ${r.found}건을 기록했습니다` : '새 회신이 없습니다' });
+    } catch (e) { toast({ title: '회신을 확인하지 못했습니다', description: e.message, variant: 'destructive' }); }
+    setBusy('');
+  };
   // 수주: 고객사와 업무 카드를 만들고 연결한다 (이미 같은 이름의 고객사가 있으면 그 고객사)
   const win = async () => {
     setBusy('win');
@@ -122,8 +148,11 @@ export default function ProspectDialog({ prospect, user, onClose, onSaved }) {
                 </div>
               </div>
             )}
+            {gmail?.can_read && form.email && (form.touches || []).some((t) => t.kind === 'email') && ACTIVE.includes(form.stage) && (
+              <Button size="sm" variant="ghost" className="h-7" onClick={checkReplies} disabled={!!busy}>{busy === 'reply' ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}Gmail 에서 회신 찾기</Button>
+            )}
             <ul className="space-y-1.5">{[...(form.touches || [])].reverse().map((t, i) => (
-              <li key={i} className="rounded-lg bg-secondary px-3 py-2 text-caption"><span className="font-semibold">{TOUCH_KINDS[t.kind] || t.kind}</span> <span className="text-muted-foreground">{when(t.at)} · {t.by}{t.stage ? ` · ${stageOf(t.stage).label}` : ''}</span>{t.note && <span className="block text-foreground">{t.note}</span>}</li>
+              <li key={i} className="rounded-lg bg-secondary px-3 py-2 text-caption"><span className="font-semibold">{t.direction === 'in' ? '받은 메일' : TOUCH_KINDS[t.kind] || t.kind}{t.gmail_id && t.direction !== 'in' ? ' (Gmail)' : ''}</span> <span className="text-muted-foreground">{when(t.at)} · {t.by}{t.stage ? ` · ${stageOf(t.stage).label}` : ''}</span>{t.note && <span className="block text-foreground">{t.note}</span>}</li>
             ))}{!(form.touches || []).length && <li className="text-caption text-muted-foreground">아직 연락 기록이 없습니다.</li>}</ul>
             {form.stage === 'WON' ? (
               <p className="rounded-lg bg-success/10 px-3 py-2 text-caption text-success-text">수주 · <button type="button" className="underline" onClick={() => { onClose(); navigate(`/task-board?card=${form.task_card_id}`); }}>업무 카드 열기</button></p>
@@ -149,11 +178,19 @@ export default function ProspectDialog({ prospect, user, onClose, onSaved }) {
             <label className="block space-y-1 text-caption">제목<Input aria-label="메일 제목" value={subject} onChange={(e) => setDraft({ key: cur.key, subject: e.target.value, body: bodyText })} className="h-9" /></label>
             <label className="block space-y-1 text-caption">본문<Textarea aria-label="메일 본문" rows={11} value={bodyText} onChange={(e) => setDraft({ key: cur.key, subject, body: e.target.value })} className="text-label" /></label>
             <div className="flex flex-wrap gap-2">
+              {gmail?.can_send && <Button size="sm" onClick={sendGmail} disabled={!!busy || !form.email}>{busy === 'gmail' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Gmail 로 보내기</Button>}
               <Button size="sm" variant="outline" onClick={copy}><Copy className="h-4 w-4" />복사</Button>
               <Button size="sm" variant="outline" onClick={mailto} disabled={!form.email}><Mail className="h-4 w-4" />메일 앱으로 열기</Button>
-              <Button size="sm" onClick={() => addTouch('email', `${cur.label} 보냄 — ${subject}`)} disabled={!!busy}><Send className="h-4 w-4" />보냈다고 기록</Button>
+              <Button size="sm" variant={gmail?.can_send ? 'ghost' : 'default'} onClick={() => addTouch('email', `${cur.label} 보냄 — ${subject}`)} disabled={!!busy}>{!gmail?.can_send && <Send className="h-4 w-4" />}다른 곳에서 보냈다고 기록</Button>
             </div>
-            <p className="text-micro text-muted-foreground">이 화면은 문안만 만듭니다. 메일은 평소 쓰는 메일 앱에서 보내고 “보냈다고 기록”을 누르세요. 보내는 사람·자료 링크는 이 브라우저에 기억됩니다.</p>
+            <p className="text-micro text-muted-foreground">
+              {gmail?.can_send
+                ? `“Gmail 로 보내기”는 ${gmail.email || '연결된 Gmail'} 계정으로 바로 보내고 연락 기록·다음 연락일을 남깁니다. 회신은 평일 9·13·17시에 자동으로 찾아 기록합니다.`
+                : gmail?.connected
+                  ? 'Gmail 이 읽기 권한으로만 연결되어 있어 여기서 보낼 수는 없습니다. 관리자가 Gmail 연결을 다시 하면 “Gmail 로 보내기”가 생깁니다. 지금은 메일 앱에서 보내고 기록하세요 — 회신은 자동으로 찾습니다.'
+                  : '메일 앱에서 보내고 “다른 곳에서 보냈다고 기록”을 누르세요.'}
+              {' '}보내는 사람·자료 링크는 이 브라우저에 기억됩니다.
+            </p>
           </div>
         )}
       </DialogContent>

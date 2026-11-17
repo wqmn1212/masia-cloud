@@ -78,3 +78,49 @@ as(KIL);
 r = await call({ action: 'submit', id, key: 'cmf', answer: '오프화이트' });
 assert.equal(r.status, 409, '마감된 요청');
 console.log('client-request functions ok');
+
+// ── 자동 독촉 규칙 ──
+{
+  const S = await import(new URL('../base44/shared/clientRequest.ts', import.meta.url).href);
+  const items = [{ key: 'a', label: '렌더', status: 'WAITING' }, { key: 'b', label: '치수', status: 'REDO' }, { key: 'c', label: '색', status: 'ACCEPTED' }];
+  const base = { status: 'OPEN', sent_at: '2026-11-10T01:00:00Z', due_date: '2026-11-20', items };
+  assert.equal(S.reminderDue(base, '2026-11-10'), null, '보낸 날은 조용히');
+  assert.equal(S.reminderDue(base, '2026-11-15'), null, '기한 전에는 전날만');
+  assert.equal(S.reminderDue(base, '2026-11-19').reason, 'due_tomorrow');
+  assert.equal(S.reminderDue(base, '2026-11-19').waiting.length, 2, '확인 끝난 항목은 빼고');
+  assert.equal(S.reminderDue({ ...base, reminded_on: '2026-11-19' }, '2026-11-19'), null, '같은 날 두 번 없음');
+  assert.equal(S.reminderDue({ ...base, reminded_on: '2026-11-19' }, '2026-11-20'), null, '기한 당일은 조용히');
+  assert.equal(S.reminderDue({ ...base, reminded_on: '2026-11-19' }, '2026-11-21').reason, 'overdue', '기한 다음 날');
+  assert.equal(S.reminderDue({ ...base, reminded_on: '2026-11-21' }, '2026-11-23'), null, '3일 간격');
+  assert.equal(S.reminderDue({ ...base, reminded_on: '2026-11-21' }, '2026-11-24').reason, 'overdue');
+  assert.equal(S.reminderDue({ ...base, reminder_count: 5 }, '2026-11-24'), null, '최대 5번');
+  assert.equal(S.reminderDue({ ...base, auto_remind: false }, '2026-11-19'), null, '끄면 안 보냄');
+  assert.equal(S.reminderDue({ ...base, status: 'CLOSED' }, '2026-11-19'), null);
+  assert.equal(S.reminderDue({ ...base, items: [items[2]] }, '2026-11-19'), null, '남은 것 없음');
+  const noDue = { ...base, due_date: '' };
+  assert.equal(S.reminderDue(noDue, '2026-11-13'), null);
+  assert.equal(S.reminderDue(noDue, '2026-11-14').reason, 'nudge', '기한 없으면 4일 뒤');
+  assert.equal(S.reminderDue({ ...noDue, reminded_on: '2026-11-14' }, '2026-11-17'), null);
+  assert.equal(S.reminderDue({ ...noDue, reminded_on: '2026-11-14' }, '2026-11-18').reason, 'nudge');
+  const m = S.reminderMessage(base, '무니스 조명', S.reminderDue(base, '2026-11-21'));
+  assert.match(m.title, /기한 지남/);
+  assert.match(m.body, /치수 \(다시 요청\)/);
+
+  // 매일 점검 함수: 고객에게 알림, 하루 한 번
+  const D = new URL('../base44/functions/dailyClientChecks/entry.ts', import.meta.url).href;
+  globalThis.__db = {
+    TaskCard: [{ id: 'c1', tenant_id: 't1', title: '무니스 수면 조명', client_id: 'co1', client_visible: true }, { id: 'c2', tenant_id: 't1', title: '비공개', client_id: 'co1', client_visible: false }],
+    User: [KIL], Company: [{ id: 'co1' }], Notification: [], ProductPlan: [], QualityClaim: [], ChinaHoliday: [], OperationSetting: [],
+    ClientRequest: [{ id: 'r1', card_id: 'c1', title: '디자인 자료', ...base, due_date: '2000-01-01', sent_at: '1999-12-20T00:00:00Z' }, { id: 'r2', card_id: 'c2', title: '숨김', ...base, due_date: '2000-01-01', sent_at: '1999-12-20T00:00:00Z' }],
+  };
+  globalThis.__user = null;
+  const runDaily = async () => { const m2 = await import(D); const res = await m2.default(new Request('https://x', { method: 'POST', body: '{}' })); return res.json(); };
+  let out = await runDaily();
+  assert.equal(out.request_reminders, 1, JSON.stringify(out));
+  assert.ok(globalThis.__db.Notification.some((n) => n.recipient_id === 'u-kil' && /자료 요청 기한 지남/.test(n.title)));
+  assert.equal(globalThis.__db.ClientRequest[0].reminder_count, 1);
+  assert.ok(!globalThis.__db.ClientRequest[1].reminded_on, '고객 비공개 카드는 보내지 않음');
+  out = await runDaily();
+  assert.equal(out.request_reminders, 0, '같은 날 다시 돌려도 한 번');
+  console.log('client-request reminders ok');
+}

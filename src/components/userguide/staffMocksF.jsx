@@ -125,3 +125,14 @@ export function MeetingBriefMock({ zh }) {
     </Frame>
   );
 }
+
+export function MarketingPublishMock({ zh }) {
+  return (
+    <Frame title={L(zh, '마케팅 관리 · 게시물 편집', '营销管理 · 编辑帖子')} badge={Ex(zh)}>
+      <Mark n={1}><div className="flex flex-wrap items-center gap-1 p-1"><span>{L(zh, '11/20 (금) 10:00', '11/20 (五) 10:00')}</span><Btn>{L(zh, '예약', '预约')}</Btn><span className="text-muted-foreground">☑ {L(zh, '예약 시각에 자동으로 올리기', '在预约时间自动发布')}</span></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="p-1"><Btn primary>{L(zh, '지금 인스타그램에 올리기', '立即发布到Instagram')}</Btn></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1 text-destructive"><span>{L(zh, '게시 실패 (1회): 사진 주소를 열 수 없습니다', '发布失败(1次)：无法打开图片链接')}</span><Btn>{L(zh, '다시 시도', '重试')}</Btn></div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Field label={L(zh, '유튜브 게시물 URL', 'YouTube帖子URL')} value="https://youtu.be/…" /><Btn>{L(zh, '게시 완료로 표시', '标记为已发布')}</Btn></div></Mark>
+    </Frame>
+  );
+}

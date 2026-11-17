@@ -45,6 +45,19 @@
     "created_by_name": {
       "type": "string"
     },
+    "auto_remind": {
+      "type": "boolean",
+      "default": true,
+      "description": "남은 항목을 고객에게 자동으로 알림"
+    },
+    "reminded_on": {
+      "type": "string",
+      "description": "마지막 자동 알림 날짜 (KST YYYY-MM-DD)"
+    },
+    "reminder_count": {
+      "type": "number",
+      "default": 0
+    },
     "sent_at": {
       "type": "string",
       "format": "date-time"

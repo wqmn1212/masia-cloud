@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { parseKakao, kakaoTranscript, fitFrom } from '@/lib/chatImport';
 import { Input } from '@/components/ui/input';
 import BilingualField from '@/components/language/BilingualField';
 import { editBilingual } from '@/lib/saveBilingual';
@@ -15,6 +16,44 @@ const TYPES = [
 
 // 녹음이 없는 기록만 메신저 대화를 붙여 넣을 수 있다 (녹음 전사와 섞이지 않게)
 const canPasteChat = (log) => !log || (!log.recording_uris?.length && !log.transcript_uri && !log.audio_parts?.length);
+
+// 카톡 '대화 내보내기' 파일(.txt·.csv)을 읽어 날짜 범위를 골라 넣는다
+function ChatFileImport({ onUse }) {
+  const input = useRef(null);
+  const [parsed, setParsed] = useState(null);
+  const [range, setRange] = useState({ from: '', to: '' });
+  const [error, setError] = useState('');
+  const read = async (file) => {
+    setError('');
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) { setError('20MB 보다 큰 파일은 대화방에서 기간을 줄여 다시 내보내 주세요'); return; }
+    const r = parseKakao(await file.text());
+    if (!r.messages.length) { setError('카카오톡 대화 내보내기 파일이 아닌 것 같습니다. 대화를 복사해 붙여 넣어 주세요'); return; }
+    setParsed({ ...r, name: file.name });
+    setRange({ from: fitFrom(r.messages, r.dates), to: r.dates.at(-1) || '' });
+  };
+  const text = parsed ? kakaoTranscript(parsed.messages, range) : '';
+  return (
+    <div className="space-y-1.5">
+      <input ref={input} type="file" accept=".txt,.csv,text/plain,text/csv" className="hidden" onChange={(e) => { read(e.target.files?.[0]); e.target.value = ''; }} />
+      <Button type="button" size="sm" variant="outline" onClick={() => input.current?.click()}>카톡 내보내기 파일 올리기 (.txt·.csv)</Button>
+      {error && <p role="alert" className="text-caption text-destructive">{error}</p>}
+      {parsed && (
+        <div className="flex flex-wrap items-center gap-2 rounded border bg-background px-2 py-1.5 text-caption">
+          <span className="font-medium">{parsed.name}</span>
+          <span className="text-muted-foreground">메시지 {parsed.messages.length.toLocaleString()}개</span>
+          {parsed.dates.length > 0 && <>
+            <Input type="date" aria-label="시작 날짜" className="h-7 w-36" value={range.from} min={parsed.dates[0]} max={range.to || undefined} onChange={(e) => setRange((x) => ({ ...x, from: e.target.value }))} />
+            <span>~</span>
+            <Input type="date" aria-label="끝 날짜" className="h-7 w-36" value={range.to} min={range.from || undefined} max={parsed.dates.at(-1)} onChange={(e) => setRange((x) => ({ ...x, to: e.target.value }))} />
+          </>}
+          <span className={text.length > 60000 ? 'text-destructive' : 'text-muted-foreground'}>{text.length.toLocaleString()}자{text.length > 60000 ? ' · 60,000자를 넘어 오래된 앞부분이 잘립니다' : ''}</span>
+          <Button type="button" size="sm" className="h-7" disabled={!text} onClick={() => { onUse(text.slice(-60000)); setParsed(null); }}>이 기간 넣기</Button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const EMPTY = {
   meeting_date: new Date().toISOString().slice(0, 10),
@@ -63,6 +102,7 @@ export default function MeetingLogForm({ onSubmit, onCancel, saving, initial, au
       {chatOk && (showChat ? (
         <div className="space-y-1">
           <label htmlFor="meeting-chat" className="text-caption font-semibold text-muted-foreground">메신저 대화 (카톡·위챗) — 그대로 붙여 넣으면 저장 후 ‘AI 분석’이 결정·할 일을 뽑아 줍니다</label>
+          <ChatFileImport onUse={(text) => handleChange('transcript', text)} />
           <Textarea id="meeting-chat" rows={6} value={form.transcript || ''} onChange={e => handleChange('transcript', e.target.value.slice(0, 60000))} placeholder={'[길상현] [오후 2:14] 버튼은 뒤쪽으로 옮겨 주세요\n[이호민] [오후 2:15] 네, 다음 주 월요일까지 수정안 드리겠습니다'} className="text-caption font-mono" />
           <p className="text-micro text-muted-foreground">{(form.transcript || '').length.toLocaleString()}자 · 대화방 ‘대화 내보내기’ 텍스트도 됩니다 (최대 60,000자)</p>
         </div>

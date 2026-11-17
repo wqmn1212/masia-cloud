@@ -3,10 +3,12 @@ import { notifyUsers, clientUsersOfCompany, internalUsersOfTenant } from '../../
 import { kstToday } from '../../shared/chinaHoliday.ts';
 import { factoryHolidays, refreshPlan } from '../../shared/productPlan.ts';
 import { factoryWait, FACTORY_REPLY_DAYS } from '../../shared/claimTracking.ts';
+import { reminderDue, reminderMessage } from '../../shared/clientRequest.ts';
 
 // 매일 고객 포털 점검 (워크플로 DailyClientChecks, 10:10 KST)
 //  1. 재주문 시점: 고객이 적은 재고·월 사용량으로 주문 권장일 2주 전이 되면 고객과 담당 팀에 한 번 알린다
 //  2. 공장 회신 기한: 중국어 클레임 문서를 보낸 뒤 3영업일이 지나도 회신 기록이 없으면 담당 팀에 한 번 알린다
+//  3. 고객 자료 요청 독촉: 기한 전날·기한 지남·오래 안 온 항목을 고객에게 알린다 (shared/clientRequest reminderDue)
 export default async function (req: Request) {
   try {
     const base44 = createClientFromRequest(req);
@@ -16,7 +18,7 @@ export default async function (req: Request) {
     const svc = base44.asServiceRole;
     const today = kstToday();
     const holidays = await factoryHolidays(svc, today);
-    let reorder = 0, overdue = 0;
+    let reorder = 0, overdue = 0, reminders = 0;
 
     // ── 재주문 시점 ──
     const plans = (await svc.entities.ProductPlan.list('-updated_date', 500)).filter((p: any) => Number(p.monthly_usage) > 0 && p.stock_as_of);
@@ -53,7 +55,22 @@ export default async function (req: Request) {
       await svc.entities.QualityClaim.update(c.id, { factory_overdue_notified_at: new Date().toISOString() });
       overdue += 1;
     }
-    return Response.json({ ok: true, reorder_alerts: reorder, factory_overdue: overdue });
+    // ── 고객 자료 요청 독촉 ──
+    const reqs = await svc.entities.ClientRequest.filter({ status: 'OPEN' }, '-created_date', 300);
+    for (const r of reqs) {
+      const due = reminderDue(r, today);
+      if (!due) continue;
+      const card = await svc.entities.TaskCard.get(r.card_id).catch(() => null);
+      if (!card || card.client_visible !== true || !card.client_id) continue;
+      const msg = reminderMessage(r, card.title, due);
+      try {
+        const sent = await notifyUsers(svc, await clientUsersOfCompany(svc, card.client_id), { type: 'client_request', ...msg, link: `/client/board?card=${card.id}&tab=overview`, task_card_id: card.id, card_title: card.title });
+        if (!sent) continue;
+      } catch (_e) { continue; }
+      await svc.entities.ClientRequest.update(r.id, { reminded_on: today, reminder_count: Number(r.reminder_count || 0) + 1 });
+      reminders += 1;
+    }
+    return Response.json({ ok: true, reorder_alerts: reorder, factory_overdue: overdue, request_reminders: reminders });
   } catch (error) {
     return Response.json({ error: (error as Error).message }, { status: 500 });
   }

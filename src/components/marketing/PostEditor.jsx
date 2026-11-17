@@ -39,7 +39,9 @@ export default function PostEditor({ post, user, onSaved, onNew }) {
       const res = await base44.functions.invoke('marketingPostAction', { action, id, data: action === 'save' ? p : data });
       setP(res.data.post); setOrig(res.data.post); onSaved(res.data.post);
     } catch (e) {
-      toast({ title: '저장하지 못했습니다', description: e.response?.data?.error || e.message, variant: 'destructive' });
+      const fresh = e.response?.data?.post;
+      if (fresh) { setP(fresh); setOrig(fresh); onSaved(fresh); }
+      toast({ title: fresh ? '게시하지 못했습니다' : '저장하지 못했습니다', description: e.response?.data?.error || e.message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }

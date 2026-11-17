@@ -3,8 +3,6 @@ import { editBilingual } from '@/lib/saveBilingual';
 import useDeferredBilingualSave from '@/components/language/useDeferredBilingualSave';
 import DeferredSaveStatus from '@/components/language/DeferredSaveStatus';
 import BilingualField from '@/components/language/BilingualField';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 const fields = ['attendees', 'notes', 'decisions', 'next_steps'];
 export default function MeetingLiveNotes({ log, onSaved }) {
   const key = `meeting-notes:${log.id}`;

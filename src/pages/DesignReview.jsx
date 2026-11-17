@@ -221,7 +221,7 @@ function Room({ live, auth }) {
             {[['open', `열림 ${numbered.filter(({ c }) => !c.resolved).length}`], ['done', `해결 ${numbered.filter(({ c }) => c.resolved).length}`], ['all', '전체']].map(([k, l]) => (
               <button key={k} type="button" role="tab" aria-selected={filter === k} onClick={() => setFilter(k)} className={`rounded-md px-2 py-1 ${filter === k ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>{l}</button>
             ))}
-            <span className="ml-auto self-center text-micro text-muted-foreground">{live.transport === 'poll' ? '약 1초마다 맞춤' : '실시간'}</span>
+            <span className="ml-auto self-center text-micro text-muted-foreground">{live.transport === 'poll' ? '약 1초마다 맞춤' : '실시간 연결'}</span>
           </div>
           <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
             {shown.length === 0 ? <li className="py-8 text-center text-caption text-muted-foreground">{filter === 'open' ? '열린 댓글이 없습니다. “댓글 (C)”을 누르고 위치를 찍어 보세요.' : '없습니다'}</li>
