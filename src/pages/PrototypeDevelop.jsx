@@ -17,8 +17,9 @@ import FeaturesStep from '@/components/prototype/develop/FeaturesStep';
 import CircuitStep from '@/components/prototype/develop/CircuitStep';
 import BleStep from '@/components/prototype/develop/BleStep';
 import TestStep from '@/components/prototype/develop/TestStep';
-import SimStep from '@/components/prototype/develop/SimStep';
+import ModelShowcase from '@/components/prototype/develop/ModelShowcase';
 import MeetingBar from '@/components/prototype/develop/MeetingBar';
+import ProtoCardLink from '@/components/prototype/develop/ProtoCardLink';
 
 const STEPS = [
   { key: 'concept', label: '스케치·컨셉', icon: Sparkles },
@@ -117,7 +118,8 @@ export default function PrototypeDevelop() {
           <h1 className="mt-1 text-2xl font-bold tracking-tight">스케치에서 동작하는 시제품까지</h1>
           <p className="mt-1 text-caption text-muted-foreground">현장 스케치 → 컨셉 → 3D 도면 → 기능 → 회로 → 블루투스·앱 → 시험을 단계마다 이어서 진행합니다.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <ProtoCardLink project={project} user={user} />
           {dirty ? <span className="text-caption text-warning-text">저장하지 않은 변경 (잠시 뒤 자동 저장)</span>
             : autoAt && <span className="text-caption text-muted-foreground">자동 저장됨 {autoAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>}
           {!meeting && <Button variant="outline" onClick={() => setMeeting(true)}><Presentation className="w-4 h-4" />미팅 모드</Button>}
@@ -160,7 +162,7 @@ export default function PrototypeDevelop() {
       {step === 'features' && <FeaturesStep {...props} />}
       {step === 'circuit' && <CircuitStep {...props} />}
       {step === 'ble' && <BleStep {...props} />}
-      {step === 'sim' && <SimStep {...props} />}
+      {step === 'sim' && <ModelShowcase {...props} viewer={false} initial="detail" labels={['고객 시연 미리보기', '동작 시뮬레이션']} />}
       {step === 'test' && <TestStep {...props} />}
     </div>
   );

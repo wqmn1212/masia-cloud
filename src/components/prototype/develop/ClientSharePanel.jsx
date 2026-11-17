@@ -46,18 +46,18 @@ export default function ClientSharePanel({ project, dev, concept }) {
     setBusy('');
   };
   const parts = concept?.preview?.parts || [];
-  const shareModel = () => run('model', { action: 'share_model', snapshot: { dev, parts, render_url: concept?.preview?.render_url || '' } }, share.model?.on ? '고객 화면의 3D·시뮬레이션을 지금 설계로 바꿨습니다' : '3D·동작 시뮬레이션을 고객에게 공개했습니다');
+  const shareModel = () => run('model', { action: 'share_model', snapshot: { dev, parts, render_url: concept?.preview?.render_url || '', title: concept?.preview?.title || project.title, overall_mm: concept?.preview?.overall_mm } }, share.model?.on ? '고객 화면의 3D·시뮬레이션을 지금 설계로 바꿨습니다' : '3D·동작 시뮬레이션을 고객에게 공개했습니다');
   // 3D 실시간 리뷰 방: 지금 설계로 방을 만들거나(이미 있으면 모형만 갱신) 새 탭으로 연다
   const openRoom = async () => {
     setBusy('room');
-    const r = await callRoom({ action: 'create', project_id: project.id, snapshot: { dev, parts, render_url: concept?.preview?.render_url || '' } });
+    const r = await callRoom({ action: 'create', project_id: project.id, snapshot: { dev, parts, render_url: concept?.preview?.render_url || '', title: concept?.preview?.title || project.title, overall_mm: concept?.preview?.overall_mm } });
     setBusy('');
     if (r.error) toast({ title: r.error, variant: 'destructive' }); else openDesignRoom(r.room.id);
   };
   const comments = [...(review.comments || [])].reverse();
   const open = comments.filter((c) => !c.resolved).length;
 
-  if (!project.card_id) return <Card title="고객 공유" icon={Users}><p className="text-caption text-muted-foreground">업무 카드에 묶인 시제품만 고객 포털에 공개할 수 있습니다. 금형 견적 요청에서 업무 카드를 고르면 연결됩니다.</p></Card>;
+  if (!project.card_id) return <Card title="고객 공유" icon={Users}><p className="text-caption text-muted-foreground">업무 카드에 묶인 시제품만 고객 포털에 공개할 수 있습니다. 워크벤치 맨 위 “카드 연결” 에서 업무 카드를 고르세요.</p></Card>;
   return (
     <Card title="고객 공유" icon={Users} tag={open ? `새 의견 ${open}` : undefined}>
       <p className="text-caption text-muted-foreground">업무 카드 고객의 포털 “개발” 탭에 보입니다. 원가·부품 번호·내부 메모는 공개되지 않습니다.</p>
@@ -69,7 +69,7 @@ export default function ClientSharePanel({ project, dev, concept }) {
           <div className="space-y-2 rounded-lg border p-3">
             <p className="flex flex-wrap items-center gap-2 text-label font-semibold"><Box className="w-4 h-4 text-primary" />3D·동작 시뮬레이션
               <span className={`rounded-full px-2 py-0.5 text-micro ${share.model?.on ? 'bg-success/15 text-success-text' : 'bg-muted text-muted-foreground'}`}>{share.model?.on ? `공개 중 · ${when(share.model.at)}` : '공개 안 함'}</span></p>
-            <p className="text-caption text-muted-foreground">고객이 3D 를 돌려 보고 버튼·조명·앱 값을 직접 눌러 봅니다. 공개한 때의 설계로 보이며, 설계를 바꾸면 “갱신”을 누르세요.{!parts.length && ' 컨셉 3D 가 없어 기본 상자 모형으로 보입니다.'}</p>
+            <p className="text-caption text-muted-foreground">고객 화면은 “시연” 으로 열려 작동 순서를 자동으로 보여 주고, 버튼·조명을 직접 눌러 볼 수 있습니다 (설계 숫자는 “상세” 탭). 공개한 때의 설계로 보이며, 설계를 바꾸면 “갱신”을 누르세요.{!parts.length && ' 컨셉 3D 가 없어 기본 상자 모형으로 보입니다.'}</p>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" onClick={shareModel} disabled={!!busy || !(dev.features || []).length}>{busy === 'model' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}{share.model?.on ? '지금 설계로 갱신' : '고객에게 공개'}</Button>
               {share.model?.on && <Button size="sm" variant="ghost" onClick={() => run('off', { action: 'share_model', on: false }, '3D 공개를 멈췄습니다')} disabled={!!busy}><EyeOff className="w-4 h-4" />공개 중단</Button>}

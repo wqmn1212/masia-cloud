@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { MapPin, Loader2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import SimStep from '@/components/prototype/develop/SimStep';
+import ModelShowcase, { modelConcept } from '@/components/prototype/develop/ModelShowcase';
 
 const fmt = (iso) => (iso ? new Date(iso).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' }) : '');
 
@@ -12,7 +12,7 @@ export default function ClientSimView({ project, canComment, onComment }) {
   const [dev, setDev] = useState(model.dev);
   const change = (fn) => setDev((d) => ({ ...d, ...(typeof fn === 'function' ? fn(d) : fn) }));
   // 의견을 보내면 목록이 새로 오지만 3D 장면은 다시 만들지 않는다 (처음 받은 모형을 계속 쓴다)
-  const [concept] = useState(() => (model.parts?.length ? { id: `shared-${project.id}`, preview: { parts: model.parts } } : null));
+  const [concept] = useState(() => modelConcept(model, `shared-${project.id}`));
   const [partName] = useState(() => Object.fromEntries((model.parts || []).map((x) => [x.id, x.name])));
   const [mode, setMode] = useState(false);
   const [draft, setDraft] = useState(null);
@@ -49,7 +49,7 @@ export default function ClientSimView({ project, canComment, onComment }) {
           </div>
         </div>
       )}
-      <SimStep concept={concept} dev={dev} change={change} viewer pin={{ mode, pins, onPick: (p) => { setDraft(p); setMode(false); } }} />
+      <ModelShowcase concept={concept} dev={dev} change={change} pin={{ mode, pins, onPick: (p) => { setDraft(p); setMode(false); } }} />
       <div className="space-y-1.5 rounded-xl border p-3">
         <p className="text-label font-semibold">남긴 의견 {comments.length}건</p>
         {comments.length === 0 ? <p className="text-caption text-muted-foreground">아직 없습니다.</p> : (

@@ -82,6 +82,29 @@ export function WbClientShareMock({ zh }) {
   );
 }
 
+export function WbDemoMock({ zh }) {
+  return (
+    <Frame title={L(zh, '고객 화면 → 3D · 시연', '客户画面 → 3D · 演示')} badge={Ex(zh)}>
+      <Mark n={1}><div className="relative h-16 rounded bg-slate-900 p-1"><span className="absolute left-[40%] top-[18%] h-10 w-10 rounded-full bg-amber-300 shadow-[0_0_18px_6px_rgba(252,211,77,0.55)]" /><span className="absolute left-1 top-1 rounded bg-white/85 px-1 text-[9px]">{L(zh, '따뜻한 빛 60 % · 22:25', '暖光 60 % · 22:25')}</span></div><div className="p-1">{L(zh, '시연 6 / 9 · 잠들 때 — 23:00 전 30분 서서히 어둡게', '演示 6 / 9 · 入睡 — 23:00 前30分钟渐暗')}</div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn>{L(zh, '어두운 방', '暗房')}</Btn><Badge>{L(zh, '1. 켜기', '1. 开灯')}</Badge><Badge tone="blue">{L(zh, '6. 잠들 때', '6. 入睡')}</Badge><Badge>{L(zh, '7. 일어날 때', '7. 起床')}</Badge></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn primary>{L(zh, '켜기', '开灯')}</Btn><Badge>{L(zh, '따뜻한 빛 · 밝은 빛 · 모두 함께', '暖光 · 亮光 · 一起')}</Badge><span className="text-muted-foreground">{L(zh, '밝기 60 %', '亮度 60 %')}</span></div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Badge tone="blue">{L(zh, '시연', '演示')}</Badge><Badge>{L(zh, '상세 시뮬레이션', '详细仿真')}</Badge><span className="text-muted-foreground">{L(zh, '워크벤치: 고객 시연 미리보기', '工作台：客户演示预览')}</span></div></Mark>
+      <Mark n={5} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn>{L(zh, '3D 실시간 리뷰 방', '3D实时评审室')}</Btn><Btn primary>{L(zh, '공유 → 링크 + PIN', '共享 → 链接 + PIN')}</Btn></div></Mark>
+    </Frame>
+  );
+}
+
+export function WbCardMock({ zh }) {
+  return (
+    <Frame title={L(zh, '개발 워크벤치 맨 위 · 업무 카드 “지금” 탭', '开发工作台顶部 · 业务卡片“当前”页')} badge={Ex(zh)}>
+      <Mark n={1}><div className="flex flex-wrap items-center gap-1 p-1"><Badge tone="blue">{L(zh, '무드등 개발', '氛围灯开发')}</Badge><Btn>{L(zh, '바꾸기', '更换')}</Btn><Btn>{L(zh, '새 카드 만들기', '新建卡片')}</Btn><Btn>{L(zh, '연결 풀기', '解除关联')}</Btn></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="space-y-0.5 p-1"><div className="font-semibold">{L(zh, '무니스 스마트 조명 · RENIGHT-S1', 'Munice 智能灯 · RENIGHT-S1')}</div><div>{L(zh, '컨셉 v3 · 확정본 v1 · 설계 변경 진행 1 / 2 · 공장 시험 합격 12/12', '概念 v3 · 定版 v1 · 设计变更进行中 1 / 2 · 工厂测试合格 12/12')}</div></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="p-1 text-muted-foreground">{L(zh, '[시제품 · 무니스 스마트 조명] 설계 확정본 v1 을 만들었습니다 · 개발 워크벤치', '[样机 · Munice 智能灯] 已生成设计定版 v1 · 开发工作台')}</div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn>{L(zh, '시제품 연결', '关联样机')}</Btn><Btn>{L(zh, '새 시제품', '新建样机')}</Btn></div></Mark>
+    </Frame>
+  );
+}
+
 export function DesignRoomMock({ zh }) {
   return (
     <Frame title={L(zh, '디자인 실시간 리뷰 · 박스 인쇄 시안', '设计实时评审 · 包装印刷稿')} badge={Ex(zh)}>

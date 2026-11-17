@@ -34,10 +34,11 @@ function drawClock(ctx, text, on, base) {
  * links: { [part_id]: { feature_id, kind } }, lidPartId: 뚜껑 부품
  */
 // pins: [{point, color?, resolved?, active?}] 위치 점, onHover({part_id, point}|null): 실시간 리뷰 커서
-export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, onLid, onSwitch, pivot, pinMode = false, onPickPart, pins, onHover }) {
+// night: 방을 어둡게 해 빛이 잘 보이게 (고객 시연), camera: 처음 보는 방향 [x, y, z] (앞 = +z)
+export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, onLid, onSwitch, pivot, pinMode = false, onPickPart, pins, onHover, night = false, camera: camDir = null }) {
   const hostRef = useRef(null);
   const cb = useRef({});
-  cb.current = { links, lidPartId, onPress, onLid, onSwitch, pinMode, onPickPart, onHover };
+  cb.current = { links, lidPartId, onPress, onLid, onSwitch, pinMode, onPickPart, onHover, night };
   const drawPinsRef = useRef(null);
   const pinsRef = useRef(pins);
   pinsRef.current = pins;
@@ -51,10 +52,11 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     host.appendChild(renderer.domElement);
     const scene = new THREE.Scene();
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x8a93a6, 1.2));
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x8a93a6, 1.2);
     const key = new THREE.DirectionalLight(0xffffff, 1.8); key.position.set(1, 1.6, 1.2);
     const fill = new THREE.DirectionalLight(0xffffff, 0.6); fill.position.set(-1.2, 0.4, -1);
-    scene.add(key, fill);
+    scene.add(hemi, key, fill);
+    let dark = 0; // 0 = 낮, 1 = 밤 (부드럽게 바뀐다)
 
     // 바닥 중심을 기울기 축으로
     const box = new THREE.Box3().setFromObject(built.group);
@@ -70,7 +72,8 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
     const radius = Math.max(size.length() / 2, 1);
     const camera = new THREE.PerspectiveCamera(32, 1, radius / 100, radius * 60);
     const target = new THREE.Vector3(0, size.y * 0.45, 0);
-    camera.position.copy(target).add(new THREE.Vector3(1, 0.65, 1.3).normalize().multiplyScalar(radius * 4.2));
+    const viewDir = new THREE.Vector3(...(camDir || [1, 0.65, 1.3])).normalize();
+    camera.position.copy(target).addScaledVector(viewDir, radius * 4.2);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.copy(target);
     controls.enableDamping = true; controls.dampingFactor = 0.08;
@@ -92,13 +95,16 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
       const it = items.get(pid);
       if (!it) return;
       if (l.kind === 'light') {
-        const f = l.feature;
-        const ls = lightSpec(f);
-        const pl = new THREE.PointLight(cctColor(ls.cct), 0, 0, 0);
-        const dir = ls.face === 'rear' ? -1 : 1;
-        pl.position.copy(it.mesh.position).add(new THREE.Vector3(0, 0, dir * 40));
-        it.mesh.parent.add(pl);
-        glows.set(pid, { pl, color: cctColor(ls.cct), spec: ls });
+        // 한 부품에 빛이 여럿이면 빛마다 점광원을 두고, 부품 색은 켜진 밝기만큼 섞는다
+        const list = (l.lights || [l.feature]).map((f) => {
+          const ls = lightSpec(f);
+          const pl = new THREE.PointLight(cctColor(ls.cct), 0, 0, 0);
+          const dir = ls.face === 'rear' ? -1 : 1;
+          pl.position.copy(it.mesh.position).add(new THREE.Vector3(0, 0, dir * 40));
+          it.mesh.parent.add(pl);
+          return { id: f.id, pl, color: cctColor(ls.cct) };
+        });
+        glows.set(pid, list);
       }
       if (l.kind === 'display') {
         const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 84;
@@ -126,7 +132,14 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
     drawPinsRef.current = drawPins;
     drawPins(pinsRef.current || []);
 
-    const resize = () => { const w = host.clientWidth, h = Math.max(host.clientHeight, 1); renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); };
+    // 좁은(세로) 화면에서는 처음 거리를 늘려 제품이 잘리지 않게 한다. 사용자가 돌리거나 확대한 뒤에는 그대로 둔다
+    let touched = false;
+    controls.addEventListener('start', () => { touched = true; });
+    const resize = () => {
+      const w = host.clientWidth, h = Math.max(host.clientHeight, 1);
+      renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
+      if (!touched) camera.position.copy(controls.target).addScaledVector(viewDir, radius * 4.2 * Math.max(1, 1.15 / camera.aspect));
+    };
     resize();
     const ro = new ResizeObserver(resize); ro.observe(host);
 
@@ -184,8 +197,12 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
 
     let raf; let last = performance.now();
     const tmp = new THREE.Vector3();
+    const mix = new THREE.Color(), tmpC = new THREE.Color();
     const loop = (now) => {
       const dt = Math.min(0.1, (now - last) / 1000); last = now;
+      dark += ((cb.current.night ? 1 : 0) - dark) * 0.08;
+      hemi.intensity = 1.2 * (1 - dark * 0.85); key.intensity = 1.8 * (1 - dark * 0.9); fill.intensity = 0.6 * (1 - dark * 0.8);
+      floor.material.color.setHex(0xdfe3ea).multiplyScalar(1 - dark * 0.88);
       const s = simRef.current;
       if (s) {
         pivot.rotation.x += (rad(s.input.tilt.pitch) - pivot.rotation.x) * 0.2;
@@ -206,10 +223,14 @@ export default function SimCanvas({ parts, links, lidPartId, simRef, onPress, on
           const v = s.out[l.feature_id] || 0;
           m.emissive.setHex(0x000000);
           if (l.kind === 'light') {
-            const g = glows.get(pid);
-            const lv = (s.phys.light[l.feature_id] || 0) / 100;
-            const k = Math.pow(lv, 1 / 1.6); // 눈에 보이는 밝기 (감마보다 완만하게)
-            if (g) { m.emissive.copy(g.color); m.emissiveIntensity = k * 0.75; g.pl.intensity = Math.min(3, ((s.phys.lm[l.feature_id] || 0) / 150) * 1.2); }
+            let sum = 0;
+            mix.setRGB(0, 0, 0);
+            (glows.get(pid) || []).forEach((g) => {
+              const k = Math.pow((s.phys.light[g.id] || 0) / 100, 1 / 1.6); // 눈에 보이는 밝기 (감마보다 완만하게)
+              mix.add(tmpC.copy(g.color).multiplyScalar(k)); sum += k;
+              g.pl.intensity = Math.min(3, ((s.phys.lm[g.id] || 0) / 150) * 1.2) * (1 - dark * 0.5);
+            });
+            if (sum > 0) { m.emissive.copy(mix.multiplyScalar(1 / sum)); m.emissiveIntensity = Math.min(1, sum) * (0.75 - dark * 0.2); }
           }
           if (l.kind === 'display') {
             const c = clocks.get(pid);

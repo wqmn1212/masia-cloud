@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Loader2, CheckCircle2, Cpu, ClipboardList } from 'lucide-react';
+import { ArrowRight, Loader2, CheckCircle2, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import MeetingBriefDialog from './MeetingBriefDialog';
-import { Link } from 'react-router-dom';
+import CardProtoPanel from './CardProtoPanel';
 import { base44 } from '@/api/base44Client';
 import { useLanguage } from '@/lib/LanguageContext';
 import { SECTIONS, SECTION_LABEL } from '@/lib/opsDigest';
@@ -19,7 +19,6 @@ export default function CardNowPanel({ card, isStaff, onGo }) {
   const [brief, setBrief] = useState(false);
   const zh = lang === 'zh';
   const { data, isLoading } = useQuery({ queryKey: ['card-now', card.id], queryFn: async () => (await base44.functions.invoke('getOpsDigest', { card_id: card.id })).data, enabled: isStaff, staleTime: 30_000 });
-  const { data: protos = [] } = useQuery({ queryKey: ['card-protos', card.id], queryFn: () => base44.entities.ProtoProject.filter({ card_id: card.id }, '-updated_date', 5), enabled: isStaff, staleTime: 60_000 });
   const digest = data?.digest;
   const rows = digest ? SECTIONS.flatMap((k) => (digest.sections[k] || []).map((r) => ({ ...r, k }))) : [];
   const stage = STAGES.includes(card.status) ? card.status : 'TODO';
@@ -62,12 +61,7 @@ export default function CardNowPanel({ card, isStaff, onGo }) {
           )}
         </div>
       )}
-      {protos.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 border-t pt-2 text-caption">
-          <span className="flex items-center gap-1 text-muted-foreground"><Cpu className="h-3.5 w-3.5" />{zh ? '关联样机' : '연결된 시제품'}</span>
-          {protos.map((p) => <Link key={p.id} to={`/prototypes/${p.id}/develop`} className="rounded border px-2 py-0.5 hover:bg-muted">{p.title}</Link>)}
-        </div>
-      )}
+      {isStaff && <CardProtoPanel card={card} />}
       {isStaff && brief && <MeetingBriefDialog card={card} signals={rows} open={brief} onOpenChange={setBrief} onGo={onGo} />}
     </section>
   );
