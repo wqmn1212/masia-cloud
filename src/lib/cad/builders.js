@@ -5,6 +5,7 @@
 import { taper, pin, boss, rib, bar, box, notch, slotZ, screwThrough, attempt, tanD } from './geom.js';
 import { cleanParams, MATERIALS, handheldAsBox } from './catalog.js';
 import { pcbLayout } from './pcbLayout.js';
+import { sphereGeom } from './sphereGeom.js';
 
 const COLORS = { shell: '#E2DFD9', shell2: '#D9D6D0', pc: '#F1F1EE', fabric: '#C8C6C1', steel: '#8C8F93', zinc: '#A9ACB0', pcb: '#27684B', mcpcb: '#E6E5DB', alu: '#B7BBC0', part: '#3A3A3A', knob: '#D3CFC8' };
 const matLabel = (k) => MATERIALS[k]?.label || k;
@@ -364,7 +365,141 @@ function cylinderCase(R, p, notes) {
   return { parts, motion: null, overall: { x: p.dia, y: p.dia, z: H } };
 }
 
-const BUILDERS = { round_lamp: roundLamp, box: boxCase, cylinder: cylinderCase, handheld: (R, p, notes) => boxCase(R, handheldAsBox(p), notes) };
+// ---------------------------------------------------------------- 구형 셸 조명 (비스듬히 자른 공)
+
+function sphereLamp(R, p, notes) {
+  const g = sphereGeom(p);
+  const a = p.draft, w = p.wall, bd = Math.max(1.5, a);
+  const parts = [];
+  let last = Date.now();
+  const add = (o) => { const now = Date.now(); parts.push({ group: 'fixed', mold: false, role: '', ...o, ms: now - last }); last = now; };
+  const BIG = 4 * g.R;
+  // 로컬 → CAD 배치: 판(place) · 외장 테두리(placeR)
+  const place = (shape) => shape.rotate(90 - g.t, [0, 0, 0], [1, 0, 0]).translate([0, 0, g.zc]);
+  const placeR = (shape) => shape.rotate(90 - g.tr, [0, 0, 0], [1, 0, 0]).translate([0, 0, g.zc]);
+  const disc = (r, z0, z1) => R.makeCylinder(r, Math.abs(z1 - z0), [0, 0, Math.min(z0, z1)]);
+  // 사출 판: 앞(+z)이 넓고 뒤로 구배 (패브릭 프레임·확산판은 발광면 방향으로 뺀다)
+  const dDisc = (r, z0, z1) => taper(R, 'circle', r, r, 0, Math.max(z0, z1), Math.min(z0, z1), a);
+  const below = (y, z0, z1) => box(R, [0, y - BIG / 2, (z0 + z1) / 2], [BIG, BIG, Math.abs(z1 - z0) + 2]); // 로컬 y 아래쪽 반공간
+  const above = (y, z0, z1) => box(R, [0, y + BIG / 2, (z0 + z1) / 2], [BIG, BIG, Math.abs(z1 - z0) + 2]);
+  // 구배 있는 반공간: 경계면이 (y, zF) 를 지나고 앞(+z)으로 갈수록 y 가 k 만큼 움직인다 (y = y0 + k·(z − zF))
+  // 남는 쪽 면이 앞(빼기 방향)을 보게: 위쪽이 남으면 k > 0, 아래쪽이 남으면 k < 0
+  const half = (side, y0, zF, k) => box(R, [0, y0 + (side * BIG) / 2, zF], [BIG, BIG, BIG]).rotate((-Math.atan(k) * 180) / Math.PI, [0, y0, zF], [1, 0, 0]);
+  const kD = tanD(Math.max(1, a));
+
+  if (g.panelProud > 15) notes.push(`패브릭 판이 외장 테두리 위로 ${g.panelProud} mm 나옵니다. 판 위치(recess)를 뒤로 하거나 더 눕힘(rim_open)을 줄이세요.`);
+  if (g.off > 0.05) notes.push(`자르는 면을 중심에서 ${g.off} mm 앞으로 두면 외장 안쪽에 ${(g.Ri - Math.sqrt(g.Ri ** 2 - g.off ** 2)).toFixed(2)} mm 언더컷이 생겨 코어를 그대로 뺄 수 없습니다 (0 이하 권장).`);
+
+  // ---- 외장 (한 덩어리): 바깥 공 ∩ 바닥 위 ∩ 발광면 뒤 − 안쪽 공(바닥 두께 위)
+  const shellKey = JSON.stringify([p.dia, w, p.flat_d, p.face_tilt, p.rim_open, p.recess, p.mix, p.face_off, p.edge_r, g.swZ, g.jackZ, g.dialZ, p.dial_d, g.dialAng, g.bosses.map((b) => [b.x, b.y])]);
+  const shell = memo(`sphere|${shellKey}`, (notes) => {
+    let outer = R.makeSphere(g.R).translate([0, 0, g.zc]);
+    outer = outer.cut(box(R, [0, 0, -BIG / 2], [BIG, BIG, BIG]));
+    outer = outer.cut(placeR(box(R, [0, 0, g.off + BIG / 2], [BIG, BIG, BIG])));
+    let inner = R.makeSphere(g.Ri).translate([0, 0, g.zc]).cut(box(R, [0, 0, w - BIG / 2], [BIG, BIG, BIG]));
+    let sh = outer.cut(inner);
+    if (p.edge_r > 0) {
+      const rim = new R.Plane(g.toWorldR([0, 0, g.off]), [1, 0, 0], g.nR);
+      sh = attempt(() => sh.fillet(Math.min(p.edge_r, w * 0.45), (e) => e.inPlane(rim)), sh, notes, '외장 테두리 R');
+    }
+    // 방열판 고정 보스: 빼기 방향(테두리 로컬 z)과 평행하게 안쪽 벽에서 솟고, 끝은 방열판 뒷면 기울기로 자른다 (코어 핀 끝면 경사).
+    // 벽이 비스듬해 보스 발 한쪽이 벽에서 뜨지 않도록 뿌리를 벽 속 깊이 넣고 바깥 공으로 잘라 겉에 튀어나오지 않게 한다
+    const spBack = place(box(R, [0, 0, g.zSpB + BIG / 2], [BIG, BIG, BIG]));
+    const ball = R.makeSphere(g.R - 0.3).translate([0, 0, g.zc]);
+    for (const b of g.bosses) sh = sh.fuse(placeR(boss(R, b.x, b.y, b.zWall - 12, b.zTip + 3, 6, 2.2, 10, bd)).cut(spBack).intersect(ball));
+    // 뒤쪽: DC 잭·수면 모드 토글·블루투스 버튼, 오른쪽: 다이얼 (빼기 방향과 비스듬한 구멍 → 슬라이드)
+    const yJ = g.wallYAt(0, g.jackZ), yS = g.wallYAt(16, g.swZ);
+    sh = sh.cut(bar(R, 'y', [0, yJ, g.jackZ], 4.3, 4 * w + 10));
+    sh = sh.cut(box(R, [-16, g.wallYAt(-16, g.swZ), g.swZ], [7.5, 4 * w + 10, 3.8]));
+    sh = sh.cut(bar(R, 'y', [16, yS, g.swZ], 3.4, 4 * w + 10));
+    const rD = Math.sqrt(Math.max(0, g.R ** 2 - (g.dialZ - g.zc) ** 2));
+    sh = sh.cut(bar(R, 'x', [rD, 0, g.dialZ], p.dial_d / 2 + 0.6, 4 * w + 10).rotate(g.dialAng, [0, 0, 0], [0, 0, 1]));
+    return sh;
+  }, notes);
+  add({ id: 'shell', pull: g.nR, name: '외장 (공 셸)', role: '한 덩어리, 발광면 방향으로 뺀다. 뒤 잭·토글·버튼, 오른쪽 다이얼 구멍은 슬라이드', material: matLabel(p.material), color: COLORS.shell, mold: true, shape: shell });
+
+  // ---- 발광면 쌓임 (로컬에서 만들어 함께 배치)
+  const yb = g.yb, hasBand = p.clock_h > 0;
+  // 패브릭: 위쪽(밝은 면)과 아래 띠(어두운 면, 시계 투과)
+  let fab = disc(g.rp, g.zFabB, g.zFab);
+  if (hasBand) {
+    add({ id: 'fabric_main', name: '패브릭 (발광면)', role: '투광 멜란지 패브릭 0.6T, 프레임에 감아 붙인다', material: '폴리에스터 패브릭', color: COLORS.fabric, group: 'face', shape: place(fab.cut(below(yb, g.zFabB, g.zFab))) });
+    add({ id: 'fabric_band', name: '패브릭 (시계 띠)', role: '어두운 패브릭, 도트 시계가 비친다', material: '폴리에스터 패브릭 (진한 색)', color: '#8E857B', group: 'face', shape: place(fab.cut(above(yb, g.zFabB, g.zFab))) });
+  } else add({ id: 'fabric_main', name: '패브릭 (발광면)', material: '폴리에스터 패브릭', color: COLORS.fabric, group: 'face', shape: place(fab) });
+
+  // 패브릭 프레임: 테두리 6 mm + 위 창 + 시계 창 + 칸막이 + LED 판까지 내려가는 기둥 3개
+  const frameKey = JSON.stringify([g.rp, g.win, yb, g.zFabB, g.zFrB, g.zDifB, g.zLed, a]);
+  const frame = memo(`sframe|${frameKey}`, () => {
+    let f = dDisc(g.rp, g.zFrB, g.zFabB);
+    // 창: 앞이 넓다 (뒤 끝 반지름 = win)
+    const winCyl = taper(R, 'circle', g.win + (g.zFabB - g.zFrB + 2) * tanD(a), 0, 0, g.zFabB + 1, g.zFrB - 1, a);
+    if (hasBand) {
+      f = f.cut(winCyl.cut(half(-1, yb + 1, g.zFabB, -kD))); // 위 창: 칸막이 위 면이 앞을 본다
+      f = f.cut(winCyl.cut(half(1, yb - 1, g.zFabB, kD))); // 시계 창: 칸막이 아래 면이 앞을 본다
+      // 칸막이: 시계 띠와 위쪽 빛을 나눈다 (프레임 뒤에서 LED 판 앞 0.5 mm 까지)
+      const chord = 2 * Math.sqrt(Math.max(0, g.win ** 2 - yb ** 2));
+      f = f.fuse(taper(R, 'rrect', chord, 2.4, 0.3, g.zFrB + 0.3, g.zLed + 0.5, Math.max(0.5, a / 2)).translate([0, yb, 0]));
+    } else f = f.cut(winCyl);
+    // 걸림 3곳: 테두리 뒤에서 확산판 뒷면까지 내려오는 탭 (끝의 갈고리는 금형 상세 설계에서)
+    for (const c of g.clips) {
+      const tab = taper(R, 'rrect', 8, 2, 0.4, g.zFrB + 0.3, g.zDifB - 0.8, bd).rotate(c.a - 90, [0, 0, 0], [0, 0, 1]).translate([c.x, c.y, 0]);
+      f = f.fuse(tab);
+    }
+    return f;
+  }, notes);
+  add({ id: 'face_frame', pull: g.n, name: '패브릭 프레임', role: '패브릭을 감아 붙이는 틀, 시계 칸막이, 확산판 가장자리 걸림 3곳', material: 'PC/ABS', color: COLORS.shell2, mold: true, group: 'face', shape: place(frame) });
+
+  // 확산판 (시계 띠는 비운다, 기둥 자리 구멍)
+  let dif = dDisc(g.win + 2, g.zDifB, g.zDif);
+  if (hasBand) dif = dif.cut(half(-1, yb + 1.5, g.zDif, kD));
+  // 뒤 기둥 3곳 (LED 판 앞면까지, 나사 구멍 Ø2.2)
+  for (const q of g.posts) dif = dif.fuse(boss(R, q.x, q.y, g.zDifB + 0.3, g.zLed + 0.05, 5, 2.2, 8, bd));
+  add({ id: 'diffuser', pull: g.n, name: '확산판 (PC 유백)', role: 'LED 점이 안 보이게 고르게 퍼뜨린다. 뒤 기둥 3곳에 LED 판을 나사 고정', material: 'PC 확산 2T', color: COLORS.pc, mold: true, group: 'face', shape: place(dif) });
+
+  // LED 판 (MCPCB) + 방열판 (알루미늄): 시계 띠 위쪽만
+  let led = disc(g.rLed, g.zLedB, g.zLed);
+  let sp = disc(g.rLed, g.zSpB, g.zLedB);
+  if (hasBand) { led = led.cut(below(yb + 1.5, g.zLedB, g.zLed)); sp = sp.cut(below(yb + 1.5, g.zSpB, g.zLedB)); }
+  for (const b of g.bosses) sp = sp.cut(R.makeCylinder(1.7, 8, [b.panel[0], b.panel[1], g.zSpB - 3]));
+  for (const b of g.bosses) led = led.cut(R.makeCylinder(3, 8, [b.panel[0], b.panel[1], g.zLedB - 3]));
+  for (const q of g.posts) { led = led.cut(R.makeCylinder(1.4, 8, [q.x, q.y, g.zLedB - 3])); sp = sp.cut(R.makeCylinder(3, 8, [q.x, q.y, g.zSpB - 3])); }
+  add({ id: 'led_board', name: 'LED 판 (MCPCB, 2,200K + 4,000K 두 채널)', role: '따뜻한 빛(수면)·밝은 빛(기상) 섞어 일출 연출', material: 'MCPCB 1.6T', color: COLORS.mcpcb, group: 'face', shape: place(led) });
+  add({ id: 'spreader', name: '방열판 (알루미늄)', role: '보스 4곳에 나사 고정, 외부 비노출', material: '알루미늄 2T', color: COLORS.alu, group: 'face', shape: place(sp) });
+  if (hasBand && g.clock.w > 20) {
+    add({ id: 'clock', name: '도트 시계 모듈 (호박색)', role: '시:분 표시, 패브릭 띠 뒤', material: '모듈', color: COLORS.part, group: 'face', shape: place(box(R, [0, g.clock.y, g.clock.z], [g.clock.w, g.clock.h, g.clock.d])) });
+  }
+
+  // ---- 바닥: 무게판(접착) + 스탠드오프 3개 + 제어 기판
+  const lay = pcbLayout('sphere_lamp', p);
+  if (p.plate_t > 0) {
+    add({ id: 'weight_plate', name: '바닥 무게판 (강판, 양면 접착)', role: '무게 중심을 낮춘다. 기판 스탠드오프 3개 압입', material: '강판', color: COLORS.steel, shape: R.makeCylinder(g.plateR, p.plate_t, [0, 0, w + 0.05]).cut(box(R, [0, g.plateCut - BIG / 2, w + p.plate_t / 2], [BIG, BIG, p.plate_t + 2])) });
+  }
+  for (const h of lay.holes.filter((x) => x.kind === 'mount')) {
+    add({ id: `standoff_${h.id}`, name: '기판 스탠드오프 M2.5', material: '황동', color: COLORS.zinc, shape: R.makeCylinder(2.5, g.pcbZ - (w + p.plate_t) - 0.05, [h.x, h.y, w + p.plate_t + 0.05]) });
+  }
+  let pcb = R.makeCylinder(g.pcbR, 1.6, [0, 0, g.pcbZ]).cut(box(R, [0, g.yCut - BIG / 2, g.pcbZ + 0.8], [BIG, BIG, 4]));
+  for (const h of lay.holes) pcb = pcb.cut(bar(R, 'z', [h.x, h.y, g.pcbZ + 0.8], h.d / 2, 4));
+  add({ id: 'pcb', name: '제어 기판 (ESP32-S3·RTC·LED 드라이버 2채널)', material: 'FR-4 1.6T', color: COLORS.pcb, shape: pcb });
+  // 뒤쪽 직각 부품 (기판 가장자리 → 외장 구멍), 오른쪽 다이얼
+  const anchor = (id) => lay.anchors.find((x) => x.id === id);
+  const jk = anchor('jack'), tg = anchor('toggle'), bt = anchor('bt'), dl = anchor('dial');
+  add({ id: 'dc_jack', name: 'DC 잭 (12 V, 직각)', material: '부품', color: COLORS.part, shape: box(R, [jk.x, jk.y, g.pcbTop + 5.5], [9, 14, 11]) });
+  add({ id: 'toggle_sw', name: '수면 모드 토글 (직각)', material: '부품', color: COLORS.part, shape: box(R, [tg.x, tg.y, g.swZ], [10, 6, 5]).fuse(box(R, [tg.x, tg.y + 4, g.swZ], [2.5, 3, 2.5])) });
+  add({ id: 'bt_sw', name: '블루투스 버튼 (직각 택트)', material: '부품', color: COLORS.part, shape: box(R, [bt.x, bt.y, g.swZ], [6, 6, 5]).fuse(bar(R, 'y', [bt.x, bt.y + 3.8, g.swZ], 1.7, 2.4)) });
+  // 엔코더·노브는 +X 방향으로 만든 뒤 dialAng 만큼 돌린다 (기판 가장자리 → 외장 구멍)
+  const rWall = Math.sqrt(Math.max(0, g.R ** 2 - (g.dialZ - g.zc) ** 2)); // 바깥 벽 (다이얼 높이)
+  const rEnc = Math.hypot(dl.x, dl.y);
+  const turn = (shape) => shape.rotate(g.dialAng, [0, 0, 0], [0, 0, 1]);
+  add({ id: 'encoder', name: '로터리 엔코더 (직각, 밝기)', material: '부품', color: COLORS.part, shape: turn(box(R, [rEnc, 0, g.dialZ], [7, 12.4, 12.4]).fuse(bar(R, 'x', [(rEnc + 3 + rWall - 2) / 2, 0, g.dialZ], 3, rWall - 2 - rEnc - 3))) });
+  let knob = taper(R, 'circle', p.dial_d / 2, 0, 0, 0, 6, a);
+  knob = knob.cut(taper(R, 'circle', 3.35, 0, 0, -0.5, 4.5, bd));
+  add({ id: 'dial_knob', pull: [Math.cos((g.dialAng * Math.PI) / 180), Math.sin((g.dialAng * Math.PI) / 180), 0], name: '다이얼 노브 (오른쪽 뒤)', role: '돌리면 밝기, 누르면 켜기·끄기', material: matLabel(p.material), color: COLORS.knob, mold: true, shape: turn(knob.rotate(90, [0, 0, 0], [0, 1, 0]).translate([rWall - 1.5, 0, g.dialZ])) });
+
+  if (lay.notes?.length) notes.push(...lay.notes.filter((x) => /넘|닿/.test(x)));
+  return { parts, motion: null, overall: g.overall, look: { panel_proud: g.panelProud, lip: g.lip } };
+}
+
+const BUILDERS = { round_lamp: roundLamp, sphere_lamp: sphereLamp, box: boxCase, cylinder: cylinderCase, handheld: (R, p, notes) => boxCase(R, handheldAsBox(p), notes) };
 
 /** 템플릿 + 치수 → 부품 솔리드. 치수는 범위 안으로 잘라서 쓴다 */
 export function buildAssembly(R, template, rawParams) {

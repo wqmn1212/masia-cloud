@@ -1,7 +1,8 @@
 // 시제품 컨셉 공용: AI 응답 스키마와 저장 전 정리 (prototypeConcept 함수와 검산이 같이 쓴다)
 import { koFix } from './protoSketch.ts';
 
-export const SHAPES = ['box', 'rounded_box', 'cylinder', 'sphere', 'capsule', 'cone', 'torus'];
+// sphere_cut: 공을 평면으로 자른 그릇 (로컬 +Y 쪽을 잘라낸다, cut = 자르는 면 위치 / 반지름, 0 = 반구). rotation_deg 로 자른 면 방향을 돌린다
+export const SHAPES = ['box', 'rounded_box', 'cylinder', 'sphere', 'sphere_cut', 'capsule', 'cone', 'torus'];
 export const LAYERS = ['SHELL', 'INTERNAL', 'PCB', 'UI', 'OTHER'];
 export const FINISHES = ['matte', 'gloss', 'metal', 'glass', 'rubber'];
 const list = { type: 'array', items: { type: 'string' } };
@@ -23,7 +24,7 @@ export const SCENE_SCHEMA = {
     summary: { type: 'string' }, change_summary: { type: 'string' }, overall_mm: xyz,
     parts: { type: 'array', items: { type: 'object', properties: {
       name: { type: 'string' }, ref_key: { type: 'string' }, role: { type: 'string' }, layer: { type: 'string', enum: LAYERS }, shape: { type: 'string', enum: SHAPES },
-      size: xyz, position: xyz, rotation_deg: xyz, color: { type: 'string' }, finish: { type: 'string', enum: FINISHES }, material: { type: 'string' } } } },
+      size: xyz, position: xyz, rotation_deg: xyz, cut: { type: 'number' }, color: { type: 'string' }, finish: { type: 'string', enum: FINISHES }, material: { type: 'string' } } } },
     design_notes: list, assumptions: list, unverified: list,
   },
 };
@@ -52,6 +53,7 @@ export function cleanScene(ai: any) {
     position: { x: n2(p.position?.x, 0, -5000, 5000), y: n2(p.position?.y, 0, -5000, 5000), z: n2(p.position?.z, 0, -5000, 5000) },
     rotation_deg: { x: n2(p.rotation_deg?.x, 0, -360, 360), y: n2(p.rotation_deg?.y, 0, -360, 360), z: n2(p.rotation_deg?.z, 0, -360, 360) },
     color: /^#[0-9a-fA-F]{6}$/.test(p.color || '') ? p.color : '#b9c2d0', finish: pick(p.finish, FINISHES, 'matte'), material: str(p.material, 60),
+    ...(p.shape === 'sphere_cut' ? { cut: n2(p.cut, 0, -0.95, 0.95) } : {}),
   }));
   const o = ai?.overall_mm;
   return {

@@ -93,7 +93,7 @@ export function partCutouts(parts, partId) {
   return uiOn(parts, part).map((u) => {
     const ux = num(u.position?.x), uy = num(u.position?.y), uz = num(u.position?.z);
     const rx = Math.abs(num(u.rotation_deg?.x)) % 180 === 90;
-    const round = ['cylinder', 'sphere', 'cone', 'capsule', 'torus'].includes(u.shape);
+    const round = ['cylinder', 'sphere', 'sphere_cut', 'cone', 'capsule', 'torus'].includes(u.shape);
     // 표면에 수직인 축: 회전하지 않은 원기둥은 위를 보고, X 로 90° 돌린 것은 앞·뒤를 본다
     const halfY = num(u.size.y) / 2, halfZ = num(u.size.z, u.size.x) / 2;
     const onTop = !rx && uy + halfY >= b.maxY - tol(b.maxY - b.minY) && uy - halfY <= b.maxY + 1;
@@ -121,7 +121,7 @@ export function topCutouts(parts, params) {
     .filter((p) => !num(p.rotation_deg?.x) && !num(p.rotation_deg?.z))
     .map((p) => {
       const x = r1(num(p.position?.x) - b.cx), y = r1(-(num(p.position?.z) - b.cz));
-      const round = ['cylinder', 'sphere', 'cone', 'capsule', 'torus'].includes(p.shape);
+      const round = ['cylinder', 'sphere', 'sphere_cut', 'cone', 'capsule', 'torus'].includes(p.shape);
       return round
         ? { id: p.id, name: p.name, kind: 'circle', x, y, d: r1(Math.max(1, num(p.size.x))) }
         : { id: p.id, name: p.name, kind: 'rect', x, y, w: r1(Math.max(1, num(p.size.x))), h: r1(Math.max(1, num(p.size.z, p.size.x))) };
