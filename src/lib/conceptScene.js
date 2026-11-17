@@ -20,6 +20,12 @@ function geometry(p) {
   if (p.shape === 'cylinder') return new THREE.CylinderGeometry(0.5, 0.5, 1, 48).scale(x, y, z);
   if (p.shape === 'cone') return new THREE.ConeGeometry(0.5, 1, 48).scale(x, y, z);
   if (p.shape === 'sphere') return new THREE.SphereGeometry(0.5, 32, 24).scale(x, y, z);
+  if (p.shape === 'sphere_cut') {
+    // 공을 로컬 +Y 쪽 평면으로 자른 그릇: cut = 자르는 면 위치 / 반지름 (0 = 반구, 양수면 더 많이 남는다)
+    const c = Math.max(-0.95, Math.min(0.95, Number(p.cut) || 0));
+    const t0 = Math.acos(c);
+    return new THREE.SphereGeometry(0.5, 64, 32, 0, Math.PI * 2, t0, Math.PI - t0).scale(x, y, z);
+  }
   if (p.shape === 'capsule') {
     const r = Math.min(x, z, y) / 2;
     return new THREE.CapsuleGeometry(r, Math.max(0.01, y - 2 * r), 8, 24).scale(x / (2 * r), 1, z / (2 * r));
@@ -39,6 +45,7 @@ export function buildConceptGroup(parts) {
     const fin = FINISH[p.finish] || FINISH.matte;
     const baseOpacity = fin.opacity ?? 1;
     const material = new THREE.MeshStandardMaterial({ color: new THREE.Color(HEX.test(p.color || '') ? p.color : '#b9c2d0'), roughness: fin.roughness, metalness: fin.metalness, transparent: true, opacity: baseOpacity });
+    if (p.shape === 'sphere_cut') material.side = THREE.DoubleSide; // 그릇 안쪽도 보이게
     const mesh = new THREE.Mesh(geometry(p), material);
     mesh.position.copy(vec(p.position));
     mesh.rotation.set(rad(p.rotation_deg?.x), rad(p.rotation_deg?.y), rad(p.rotation_deg?.z));

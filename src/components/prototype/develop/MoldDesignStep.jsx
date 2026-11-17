@@ -112,13 +112,14 @@ export default function MoldDesignStep({ project, concept, dev, change, user, on
       setInter({ ...it, pcbParts: boxes.length });
       for (const p of res.parts.filter((x) => x.mold)) {
         if (!live()) return;
-        const ck = `${p.id}|${p.material}|${p.volume.toFixed(2)}|${[p.bbox[3] - p.bbox[0], p.bbox[4] - p.bbox[1], p.bbox[5] - p.bbox[2]].map((v) => v.toFixed(2)).join(',')}`;
+        const ck = `${p.id}|${p.material}|${(p.pull || []).map((v) => v.toFixed(3)).join(',')}|${p.volume.toFixed(2)}|${[p.bbox[3] - p.bbox[0], p.bbox[4] - p.bbox[1], p.bbox[5] - p.bbox[2]].map((v) => v.toFixed(2)).join(',')}`;
         const cached = moldCache.current.get(ck);
         if (cached) { setMold((m) => ({ ...m, [p.id]: cached })); continue; }
         setMold((m) => ({ ...m, [p.id]: { running: true } }));
         const input = await cadCall('moldMesh', { partId: p.id });
         if (!live()) return;
-        const job = runMoldReview(input, DEFAULT_ANALYSIS_OPTIONS);
+        // 비스듬히 놓인 부품은 설계가 정한 빼기 축으로 본다 (없으면 자동)
+        const job = runMoldReview(input, p.pull ? { ...DEFAULT_ANALYSIS_OPTIONS, pullDir: p.pull } : DEFAULT_ANALYSIS_OPTIONS);
         moldJob.current = job;
         const result = await job.promise;
         if (!live()) return;

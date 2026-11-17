@@ -307,7 +307,12 @@ function choosePullDirection(mesh, blocked, center, opt) {
   let fixedSign = false;
   let candidates = [];
   let tilted = false;
-  if (manual !== 'auto' && AXES[manual[0]]) {
+  if (Array.isArray(opt.pullDir) && opt.pullDir.length === 3 && Math.hypot(...opt.pullDir) > 1e-6) {
+    // 설계가 정한 빼기 방향 (비스듬히 놓인 부품: 구형 조명의 패브릭 프레임·확산판 등). 고정측은 아래에서 자동
+    dir = normalize(opt.pullDir.map(Number));
+    tilted = Math.max(...dir.map(Math.abs)) < 0.999;
+    candidates = [{ dir: dir.slice(), label: axisLabel(dir).replace(/[+−]$/, ''), under: 0, proj: 0, axis: !tilted }];
+  } else if (manual !== 'auto' && AXES[manual[0]]) {
     dir = AXES[manual[0]].slice();
     if (manual[1] === '-' || manual[1] === '−') {
       dir = dir.map((v) => -v);

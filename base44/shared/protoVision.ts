@@ -12,7 +12,7 @@ const KINDS = ['PHOTO', 'DRAWING', 'SKETCH', 'RENDER', 'OTHER'];
 const PERSPECTIVES = ['LOW', 'MEDIUM', 'HIGH'];
 const SIDES = ['LEFT', 'RIGHT', 'TOP', 'BOTTOM', 'UNKNOWN'];
 const AXES = ['WIDTH', 'HEIGHT', 'DEPTH', 'DIAMETER', 'OTHER'];
-const ROUND = ['cylinder', 'sphere', 'capsule', 'cone', 'torus'];
+const ROUND = ['cylinder', 'sphere', 'sphere_cut', 'capsule', 'cone', 'torus'];
 export const MAX_VISION_IMAGES = 4;
 
 const box = { type: 'array', items: { type: 'number' } };

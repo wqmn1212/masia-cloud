@@ -27,7 +27,7 @@ const moldMesh = (s) => { const m = s.mesh({ tolerance: 0.05, angularTolerance: 
 const interference = (asm) => checkInterference(asm.parts.map((p) => ({ id: p.id, name: p.name, group: p.group, ...viewMesh(p.shape) })), { motion: asm.motion });
 const moldOf = (part) => {
   const m = moldMesh(part.shape);
-  const res = analyzeMold(m.V, m.F, {}, () => {});
+  const res = analyzeMold(m.V, m.F, part.pull ? { pullDir: part.pull } : {}, () => {}); // 화면과 같이: 설계가 정한 빼기 축이 있으면 그것
   return { res, rep: buildMoldReport(res, { materialKey: /^PC/.test(part.material) ? 'PC' : 'ABS' }) };
 };
 const levelOf = (rep, id) => rep.items.find((i) => i.id === id)?.level;
@@ -71,7 +71,7 @@ check('사각: 배터리를 14 mm 로 키우면 메모와 함께 기판 간섭�
 // 3. 금형 점검: 템플릿이 만든 사출 부품은 구배·언더컷이 기본으로 해결되어 있어야 한다
 for (const t of TEMPLATE_KEYS) {
   for (const p of built[t].parts.filter((x) => x.mold)) {
-    if (t === 'round_lamp' && p.id === 'base_shell') continue; // 벽 구멍 방식은 아래에서 따로 본다
+    if ((t === 'round_lamp' && p.id === 'base_shell') || (t === 'sphere_lamp' && p.id === 'shell')) continue; // 벽 구멍(슬라이드)이 있는 외장은 따로 본다
     const { res, rep } = moldOf(p);
     check(`${t}/${p.name}: 구배 부족 없음 · 언더컷 없음 · 살두께 ${res.summary.nominal.toFixed(2)} mm`, levelOf(rep, 'draft') !== 'hi' && res.undercuts.length === 0 && Math.abs(res.summary.nominal - (/확산/.test(p.name) ? 1.5 : 2)) < 0.7, `draft ${levelOf(rep, 'draft')} · 언더컷 ${res.undercuts.length}`);
   }
@@ -117,6 +117,32 @@ check('테두리가 좁아 보스가 발광창에 걸리면 보스를 빼고 필
   const bad = boxMesh(tall.rect, pkg.boards[0].layout.z - 6, pkg.boards[0].layout.z);
   const r2 = checkInterference([...view, { id: 'pcbc_TEST', name: '시험 부품', group: pcbGroup, V: bad.V, F: bad.F }], { skip: skipPcbPair });
   check('기판 아래로 6 mm 내려간 부품은 간섭으로 잡힌다', r2.overlaps.some((o) => o.a === 'pcbc_TEST' || o.b === 'pcbc_TEST'));
+}
+
+// 구형 셸 조명 (비스듬히 자른 공): 간섭·외장 금형(빼기 방향 자동)·기판 D 외곽·컨셉 추정
+{
+  const { sphereGeom } = await import('../src/lib/cad/sphereGeom.js');
+  const { pcbLayout } = await import('../src/lib/cad/pcbLayout.js');
+  const sp = built.sphere_lamp;
+  const gs = sphereGeom(defaultParams('sphere_lamp'));
+  check(`구형 조명: 기본 Ø180 크기 ${sp.overall.x}×${sp.overall.y}×${sp.overall.z} mm, 판이 테두리 위로 ${gs.panelProud} mm, 앞 입술 ${gs.lip} mm`, sp.overall.x === 180 && sp.overall.z > 140 && sp.overall.z < 175 && gs.panelProud > 0 && gs.panelProud < 12 && gs.lip > 15);
+  const si = interference(sp);
+  check('구형 조명: 조립 상태에서 파고드는 부품 없음', si.overlaps.length === 0, si.overlaps.map((o) => `${o.aName}/${o.bName} ${o.depth.toFixed(2)}`).join(', '));
+  check('구형 조명: 방열판 고정 보스 4곳 (시계 띠 위)', gs.bosses.length === 4 && gs.bosses.every((b) => b.panel[1] > gs.yb));
+  const shell = sp.parts.find((p) => p.id === 'shell');
+  const auto = analyzeMold(...Object.values(moldMesh(shell.shape)), {}, () => {});
+  const tiltOk = Math.abs(auto.pull.dir[2]) > 0.3 && Math.abs(auto.pull.dir[1]) > 0.3;
+  check(`구형 조명: 외장 빼기 방향을 자동으로도 비스듬한 테두리 법선으로 찾는다 (${auto.pull.label})`, tiltOk, JSON.stringify(auto.pull.dir));
+  const sm = moldOf(shell);
+  const lifters = sm.res.undercuts.filter((u) => u.type !== 'slide');
+  check(`구형 조명 외장: 보스 뿌리까지 언더컷 없음, 옆 구멍만 슬라이드 ${sm.res.undercuts.length - lifters.length}개, 구배 부족 없음`, lifters.length === 0 && levelOf(sm.rep, 'draft') !== 'hi', JSON.stringify(sm.res.undercuts.map((u) => u.type)));
+  const lay = pcbLayout('sphere_lamp', defaultParams('sphere_lamp'));
+  check('구형 조명: 기판은 앞을 자른 D 모양, 뒤 잭·토글·버튼과 오른쪽 뒤 엔코더 자리', lay.kind === 'poly' && Math.min(...lay.outline.map((q) => q[1])) >= gs.yCut - 0.01 && ['jack', 'toggle', 'bt', 'dial'].every((id) => lay.anchors.some((a) => a.id === id)));
+  check('구형 조명: 시계 모듈 아래는 부품 높이 제한 구역', lay.zones.some((z) => /시계/.test(z.label) && z.maxH < 3));
+  const fwd = build('sphere_lamp', { face_off: 12 });
+  check('구형 조명: 자르는 면을 앞으로 내밀면 언더컷을 알려 준다', fwd.notes.some((n) => /언더컷/.test(n)));
+  const ball = guessFromConcept({ parts: [{ id: 'shell', layer: 'SHELL', shape: 'sphere', size: { x: 180, y: 176, z: 180 }, position: { x: 0, y: 88, z: 0 } }], cad_hint: { template: 'sphere_lamp', params: { face_tilt: 30 } } });
+  check('구형 조명: 공 모양 외장 컨셉에서 구형 템플릿·지름·힌트 치수 추정', ball.template === 'sphere_lamp' && ball.params.dia === 180 && ball.params.face_tilt === 30);
 }
 
 console.log(`\n${pass}개 검산 통과${fails.length ? `, ${fails.length}개 실패` : ''}`);

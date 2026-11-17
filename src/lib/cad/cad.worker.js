@@ -50,7 +50,7 @@ self.onmessage = async (event) => {
         let volume = 0;
         try { volume = R.measureVolume(p.shape); } catch { volume = 0; }
         const density = DENSITY[p.material] || 1.1;
-        return { id: p.id, name: p.name, role: p.role, material: p.material, color: p.color, mold: p.mold, group: p.group, mesh: m, bbox: [...bb[0], ...bb[1]], volume, weight: (volume / 1000) * density };
+        return { id: p.id, name: p.name, role: p.role, material: p.material, color: p.color, mold: p.mold, pull: p.pull || null, group: p.group, mesh: m, bbox: [...bb[0], ...bb[1]], volume, weight: (volume / 1000) * density };
       });
       current = { ...asm, view };
       const transfer = parts.flatMap((p) => [p.mesh.V.buffer, p.mesh.F.buffer, p.mesh.N.buffer]);

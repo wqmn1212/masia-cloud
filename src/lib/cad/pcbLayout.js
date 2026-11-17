@@ -1,6 +1,7 @@
 // 금형용 설계 템플릿 치수 → 제어 기판 외곽·구멍·부품 자리 (2D, CAD 좌표: X 오른쪽, Y 뒤(앞 = −Y), 단위 mm).
 // CAD 엔진 없이 계산하므로 화면·KiCad 내보내기·DXF 에서 바로 쓴다. builders.js 의 기판 솔리드도 이 값을 따른다.
 import { cleanParams, handheldAsBox } from './catalog.js';
+import { sphereGeom } from './sphereGeom.js';
 
 const DEG = Math.PI / 180;
 const tanD = (d) => Math.tan(d * DEG);
@@ -98,7 +99,50 @@ function cylinderCase(p) {
   return { kind: 'circle', outline: ellipsePts(0, 0, p.pcb_d / 2, p.pcb_d / 2), size: [p.pcb_d, p.pcb_d], z: r2(pcbTop - 1.6), backClear: r2(Math.max(0, pcbTop - 1.6 - w)), holes, anchors, notes: ['기판 고정 구멍 3개에 맞는 받침을 몸통 안쪽에 추가하세요 (금형 설계에는 아직 없음).'] };
 }
 
-const LAYOUTS = { round_lamp: roundLamp, box: boxCase, cylinder: cylinderCase, handheld: (p) => boxCase(handheldAsBox(p)) };
+// 구형 셸 조명: 바닥 무게판 위 원형 기판, 가장자리에 직각 부품(뒤 잭·토글·버튼, 오른쪽 엔코더)
+function sphereLamp(p) {
+  const g = sphereGeom(p);
+  const r = g.pcbR, yc = Math.max(-r + 10, g.yCut);
+  const edgeY = (x) => Math.sqrt(Math.max(0, r * r - x * x));
+  // 외곽: 원에서 앞쪽을 직선으로 자른 D 모양 (발광면 아래 끝 뒤로)
+  const outline = ellipsePts(0, 0, r, r, 96).filter(([, y]) => y >= yc);
+  const xc = Math.sqrt(Math.max(0, r * r - yc * yc));
+  outline.push([r2(-xc), r2(yc)], [r2(xc), r2(yc)]);
+  outline.sort((A, B) => Math.atan2(A[1] - (yc + r) / 2, A[0]) - Math.atan2(B[1] - (yc + r) / 2, B[0]));
+  const mounts = [150, 30, 270].map((a, i) => {
+    const y = Math.max(yc + 5, g.plateCut + 5, g.mountR * Math.sin(a * DEG));
+    return { id: `m${i + 1}`, x: r2(g.mountR * Math.cos(a * DEG)), y: r2(y), d: 2.7, kind: 'mount', keep: 3, label: 'M2.5 스탠드오프 (무게판에 압입)' };
+  });
+  const da = g.dialAng * DEG, dr = r - 4.5;
+  const anchors = [
+    { id: 'jack', kind: 'jack', x: 0, y: r2(edgeY(4.5) - 7), dir: 90, label: 'DC 잭 (뒤, 직각)' },
+    { id: 'toggle', kind: 'switch', x: -16, y: r2(edgeY(21) - 3), dir: 90, label: '수면 모드 토글 (뒤, 직각)', sideways: true },
+    { id: 'bt', kind: 'button', x: 16, y: r2(edgeY(19) - 3), dir: 90, label: '블루투스 버튼 (뒤, 직각)', sideways: true },
+    { id: 'dial', kind: 'encoder', x: r2(dr * Math.cos(da)), y: r2(dr * Math.sin(da)), dir: g.dialAng, label: '밝기 엔코더 (오른쪽 뒤, 직각)', sideways: true },
+  ];
+  // 발광면 쌓임(시계 모듈·LED 판 아래 끝)이 기판 위로 내려오는 곳은 높이 제한
+  const zones = [];
+  const zoneFrom = (pts, label) => {
+    const W = pts.map(g.toWorld);
+    const xs = W.map((q) => q[0]), ys = W.map((q) => q[1]), zs = W.map((q) => q[2]);
+    const y0 = Math.max(yc, Math.min(...ys) - 1);
+    if (y0 >= Math.max(...ys) + 1) return;
+    const maxH = r2(Math.min(...zs) - g.pcbTop - 0.5);
+    if (maxH < 25) zones.push({ rect: [r2(Math.min(...xs) - 1), r2(y0), r2(Math.max(...xs) + 1), r2(Math.max(...ys) + 1)], maxH: Math.max(0, maxH), label });
+  };
+  if (p.clock_h > 0) {
+    const c = g.clock;
+    const pts = [];
+    for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) pts.push([sx * c.w / 2, c.y + sy * c.h / 2, c.z + sz * c.d / 2]);
+    zoneFrom(pts, '도트 시계 모듈 아래');
+    const chord = Math.sqrt(Math.max(0, g.rLed ** 2 - (g.yb + 1.5) ** 2));
+    zoneFrom([[-chord, g.yb + 1.5, g.zSpB], [chord, g.yb + 1.5, g.zSpB], [0, g.yb + 1.5, g.zSpB], [-chord, g.yb + 1.5, g.zFrB], [chord, g.yb + 1.5, g.zFrB]], 'LED 판·칸막이 아래 끝');
+  }
+  const notes = ['블루투스 안테나는 금속 무게판·방열판에서 먼 쪽(기판 뒤 가장자리 가운데, 잭 옆)에 두세요. 실물에서 5 m 이상 되는지 재세요.'];
+  return { kind: 'poly', outline, size: [r2(2 * r), r2(r - yc)], center: [0, r2((r + yc) / 2)], z: g.pcbZ, backClear: r2(g.pcbZ - g.w - g.plateT), holes: mounts, anchors, zones, notes };
+}
+
+const LAYOUTS = { round_lamp: roundLamp, sphere_lamp: sphereLamp, box: boxCase, cylinder: cylinderCase, handheld: (p) => boxCase(handheldAsBox(p)) };
 
 /** 금형용 설계(dev.mold_design)의 기판. 템플릿이 없으면 null */
 export function pcbLayout(template, rawParams) {

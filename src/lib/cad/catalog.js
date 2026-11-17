@@ -72,6 +72,24 @@ export const TEMPLATES = {
       ...common,
     ],
   },
+  sphere_lamp: {
+    label: '구형 셸 조명 (비스듬히 자른 공·앞면 발광)',
+    hint: '공을 뒤로 누운 평면으로 자른 한 덩어리 외장(발광면 방향으로 뺀다), 평평한 바닥, 패브릭 프레임·확산판·LED 판·방열판, 아래 띠 도트 시계, 바닥 제어 기판, 뒤 버튼·잭과 오른쪽 다이얼',
+    params: [
+      { key: 'dia', label: '공 지름', unit: 'mm', min: 100, max: 300, step: 1, def: 180, group: '외장' },
+      { key: 'face_tilt', label: '패브릭 판 뒤로 눕힘', unit: '°', min: 0, max: 45, step: 1, def: 28, group: '외장', help: '0° = 똑바로 서 있음. 사진처럼 위를 보게 하려면 25~35°' },
+      { key: 'rim_open', label: '외장 테두리를 판보다 더 눕힘', unit: '°', min: 0, max: 20, step: 0.5, def: 14, group: '외장', help: '클수록 아래 입술이 두툼하고 판 윗부분이 테두리 위로 나온다' },
+      { key: 'face_off', label: '외장 자르는 면 위치 (중심에서 앞으로)', unit: 'mm', min: -30, max: 30, step: 0.5, def: 0, group: '외장', help: '0 이하면 외장을 한 번에 뺄 수 있다. 앞으로 내밀면 언더컷이 생긴다' },
+      { key: 'flat_d', label: '바닥 평면 지름', unit: 'mm', min: 30, max: 140, step: 1, def: 70, group: '외장' },
+      { key: 'recess', label: '패브릭 판 위치 (중심에서 뒤로)', unit: 'mm', min: -10, max: 20, step: 0.5, def: 7, group: '발광면', help: '클수록 판이 안으로 들어가 위쪽으로 덜 나온다' },
+      { key: 'mix', label: 'LED ↔ 확산판 거리 (혼광)', unit: 'mm', min: 6, max: 40, step: 0.5, def: 15, group: '발광면', help: 'LED 점이 안 보이려면 LED 간격의 1.2배 이상' },
+      { key: 'clock_h', label: '아래 시계 띠 높이', unit: 'mm', min: 0, max: 50, step: 0.5, def: 26, group: '발광면' },
+      { key: 'pcb_r', label: '제어 기판 반지름 (최대)', unit: 'mm', min: 20, max: 120, step: 0.5, def: 48, group: '내부' },
+      { key: 'plate_t', label: '바닥 무게판 두께 (강판, 접착)', unit: 'mm', min: 0, max: 10, step: 0.5, def: 3, group: '내부' },
+      { key: 'dial_d', label: '오른쪽 다이얼 지름', unit: 'mm', min: 8, max: 30, step: 0.5, def: 14, group: '조작부' },
+      ...common,
+    ],
+  },
   cylinder: {
     label: '원통형 (몸통·윗뚜껑)',
     hint: '원통 몸통(바닥 막힘)과 윗뚜껑으로 나누고, 뚜껑 윗면 배출구·버튼, 몸통 바닥 보스·리브를 넣는다',
@@ -119,6 +137,14 @@ const r1 = (v) => Math.round(v * 2) / 2;
 export function guessFromConcept(preview) {
   const parts = preview?.parts || [];
   const shells = parts.filter((p) => p.layer === 'SHELL');
+  // 공 모양 외장 (구형 셸 조명): 거의 같은 지름의 sphere 외장
+  const ball = shells.find((p) => ['sphere', 'sphere_cut'].includes(p.shape) && Math.max(p.size.x, p.size.y, p.size.z) / Math.min(p.size.x, p.size.y, p.size.z) < 1.15);
+  if (ball) {
+    const p = defaultParams('sphere_lamp');
+    p.dia = r1(Math.max(ball.size.x, ball.size.z));
+    const hint = preview.cad_hint?.template === 'sphere_lamp' ? preview.cad_hint.params || {} : {};
+    return { template: 'sphere_lamp', params: cleanParams('sphere_lamp', { ...p, ...hint }) };
+  }
   const disc = shells.find((p) => p.shape === 'cylinder' && Math.abs((p.rotation_deg?.x || 0)) === 90 && p.size.y < p.size.x * 0.45);
   if (disc) {
     const base = shells.filter((p) => p !== disc && p.position.y < disc.position.y).sort((a, b) => b.size.x * b.size.z - a.size.x * a.size.z)[0];
