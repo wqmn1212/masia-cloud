@@ -104,7 +104,12 @@
     },
     "preview": {
       "type": "object",
-      "description": "{title, summary, overall_mm{x,y,z}, parts[{id,name,ref_key,role,layer,shape,size,position,rotation_deg,color,finish,material}], design_notes[], assumptions[], unverified[], render_url, render_version(렌더를 만든 버전 번호), render_error, render_pending(형상 저장 뒤 render 로 만들 렌더가 남음), render_ref_ids(렌더 참고 사진의 프로젝트 파일 id), image_fit(첨부 이미지 측정·보정 기록), vision_appearance, vision_text, change_summary, generated_at, generated_by_name}"
+      "description": "{title, summary, overall_mm{x,y,z}, parts[{id,name,ref_key,role,layer,shape,size,position,rotation_deg,color,finish,material}], design_notes[], assumptions[], unverified[], render_url, render_version(렌더를 만든 버전 번호), render_error, render_pending(형상 저장 뒤 render 로 만들 렌더가 남음), render_ref_ids(렌더 참고 사진의 프로젝트 파일 id), image_fit(첨부 이미지 측정·보정 기록), vision_appearance, vision_text, change_summary, render_note(지금 렌더 설명), render_history[{url, version, note, at}](예전 렌더, 최근 12장), lock_fit{changes[], misses[]}(요구 치수 맞춤 기록), scoped{part_ids, changed, removed, added}(고른 부품만 바꾼 버전), edit{by, at, summary}(3D 직접 편집 버전), generated_at, generated_by_name}"
+    },
+    "dimension_locks": {
+      "type": "array",
+      "description": "요구 치수 고정 [{id, axis(x 가로·y 높이·z 깊이), mm, tol(허용 ±mm), part_id(없으면 제품 전체), label}] — 만들 때 AI 에 알리고 결과를 맞춘다. 다음 버전으로 이어진다",
+      "items": { "type": "object" }
     },
     "circuit": {
       "type": "object",

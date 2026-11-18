@@ -6,7 +6,8 @@ import { measureHull, buildHullScene } from '@/lib/conceptHullScene';
 
 // 컨셉 3D 프리뷰 캔버스 — 화면에 하나만 띄우고, 떠날 때 WebGL 컨텍스트를 반납한다
 // hull(시안 정면·측면 주소)이 있으면 시안 윤곽으로 만든 외형을 보여 주고, 없거나 실패하면 부품 3D 를 보여 준다.
-export default function ConceptCanvas({ parts, xray, explode, autoRotate, highlightId, hull, overall, onHull }) {
+// apiRef: { capture() } — 지금 보이는 3D 화면을 밝은 배경의 PNG(data URL)로 (3D 화면 기준 렌더에 쓴다)
+export default function ConceptCanvas({ parts, xray, explode, autoRotate, highlightId, hull, overall, onHull, apiRef }) {
   const hostRef = useRef(null);
   const state = useRef({});
   state.current = { xray, explode, autoRotate, highlightId };
@@ -18,7 +19,7 @@ export default function ConceptCanvas({ parts, xray, explode, autoRotate, highli
     if (!host || !parts?.length) return undefined;
     let cancelled = false;
     let stop = () => {};
-    const start = (built) => { if (!cancelled) stop = mount(host, built, state); else built.dispose?.(); };
+    const start = (built) => { if (!cancelled) stop = mount(host, built, state, apiRef); else built.dispose?.(); };
     if (hull) {
       measureHull(hull, overall)
         .then((m) => { if (cancelled) return; const b = buildHullScene(m, parts, overall); onHullRef.current?.({ size: b.size, warning: m.sideWarn }); start(b); })
@@ -31,7 +32,7 @@ export default function ConceptCanvas({ parts, xray, explode, autoRotate, highli
 }
 
 /** 장면을 캔버스에 올리고 돌려 보게 한다. 정리 함수를 돌려준다 */
-function mount(host, built, state) {
+function mount(host, built, state, apiRef) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   host.appendChild(renderer.domElement);
@@ -65,6 +66,21 @@ function mount(host, built, state) {
   const ro = new ResizeObserver(resize);
   ro.observe(host);
 
+  if (apiRef) {
+    apiRef.current = {
+      capture: () => {
+        renderer.render(scene, camera);
+        const src = renderer.domElement;
+        const k = Math.min(1, 1280 / Math.max(src.width, src.height));
+        const c = document.createElement('canvas'); c.width = Math.round(src.width * k); c.height = Math.round(src.height * k);
+        const g = c.getContext('2d');
+        g.fillStyle = '#eef1f5'; g.fillRect(0, 0, c.width, c.height);
+        g.drawImage(src, 0, 0, c.width, c.height);
+        return c.toDataURL('image/png');
+      },
+    };
+  }
+
   let raf;
   // 분해 보기를 켜고 끌 때 카메라가 그 범위에 맞게 부드럽게 따라간다 (보는 방향은 유지)
   let lastExplode = false;
@@ -93,6 +109,7 @@ function mount(host, built, state) {
   loop();
 
   return () => {
+    if (apiRef) apiRef.current = null;
     cancelAnimationFrame(raf);
     ro.disconnect();
     controls.dispose();

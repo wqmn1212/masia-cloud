@@ -143,6 +143,7 @@ const SCENE = { summary: '원통형 공기청정기', overall_mm: { x: 120, y: 2
 globalThis.__llm = (a) => {
   calls.llm.push(a);
   const keys = Object.keys(a.response_json_schema.properties);
+  if (keys.includes('remove_ids')) return globalThis.__scoped;
   if (keys.includes('variants') && keys.includes('shape')) return globalThis.__skPlan || { shape: 'A tall rectangle twice as tall as wide on a low base.', parts: ['body', 'base'], variants: [{ label: '화이트 무광', style: 'white matte' }, { label: '우드', style: 'oak base' }, { label: '블랙', style: 'black metal' }], notes: ['뒷면은 스케치에 없음'] };
   if (keys.includes('questions')) return { title: '미니 공기청정기', summary: '책상용', reference_kind: globalThis.__refKind || 'PHOTO', questions: [{ question: '높이는?', why: '형상', default_assumption: '200mm' }], assumptions: ['USB 전원으로 가정'] };
   if (keys.includes('parts')) return SCENE;
@@ -344,4 +345,66 @@ const mold = r.data.concept.mold;
 assert.equal(mold.verdict, 'CONDITIONAL', '모르는 판정은 보완 후 진행');
 assert.deepEqual(mold.findings.map((f) => [f.part_id, f.category, f.severity]), [['p1', 'DRAFT', 'HIGH'], ['', 'OTHER', 'MEDIUM']]);
 assert.ok(mold.rules.checks.some((c) => c.category === 'DRAFT'));
+
+// ── 3D 편집 ② 고른 부품만 AI 로: 고른 부품의 수정본·새 부품만 반영, 고르지 않은 부품은 AI 가 고쳐도 그대로
+globalThis.__scoped = { change_summary: '팬을 키우고 위에 버튼', parts: [{ keep_id: 'p2', size: { x: 100 } }, { keep_id: 'p1', size: { x: 999 } }, { name: '버튼', layer: 'UI', shape: 'cylinder', size: { x: 10, y: 4 }, position: { x: 0, y: 202, z: 0 } }], remove_ids: ['p1'], assumptions: ['버튼 지름 10mm 가정'] };
+const base = globalThis.__db.ProtoConcept.find((c) => c.id === concept.id);
+r = await call({ action: 'revise', concept_id: concept.id, change_request: '팬을 키우고 위에 버튼', part_ids: ['p2', 'nope'] });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+const sv = r.data.concept;
+assert.deepEqual(sv.preview.parts[0], base.preview.parts[0], '고르지 않은 외장은 AI 가 고치려 해도(·지우려 해도) 그대로');
+assert.deepEqual([sv.preview.parts[1].id, sv.preview.parts[1].size.x, sv.preview.parts[1].size.y], ['p2', 100, base.preview.parts[1].size.y], '고른 팬만 바뀌고 안 바꾼 치수는 유지');
+assert.deepEqual(sv.preview.parts.map((p) => p.id), ['p1', 'p2', 'n1'], '새 부품은 새 id');
+assert.deepEqual([sv.preview.scoped.ignored, sv.preview.scoped.part_ids], [1, ['p2']]);
+assert.match(sv.change_request, /^\[고른 부품: 팬\]/);
+assert.match(calls.llm.at(-1).prompt, /고른 부품만 바꾸는 규칙/);
+assert.equal(sv.preview.overall_mm.y, 204, '전체 크기는 부품 범위로 다시 잰다');
+globalThis.__scoped = { parts: [], remove_ids: [] };
+assert.equal((await call({ action: 'revise', concept_id: concept.id, change_request: '아무것도', part_ids: ['p2'] })).status, 422, '바뀐 것이 없으면 새 버전을 만들지 않는다');
+
+// ── ③ 요구 치수: 저장하면 점검 결과, 다음 생성은 AI 에 알리고 그 치수로 맞춘다
+r = await call({ action: 'set_locks', concept_id: sv.id, locks: [{ axis: 'y', mm: 240 }, { axis: 'x', mm: 50, part_id: 'p2', tol: 0.5 }, { axis: 'q', mm: 0 }] });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+assert.equal(r.data.concept.dimension_locks.length, 2, '잘못된 치수는 버린다');
+assert.deepEqual(r.data.check.map((c) => [c.actual, c.ok]), [[204, false], [100, false]]);
+r = await call({ action: 'revise', concept_id: sv.id, change_request: '전체 다듬기' });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+const lv = r.data.concept;
+assert.match(calls.llm.filter((c) => 'parts' in c.response_json_schema.properties).at(-1).prompt, /꼭 지킬 치수[\s\S]*높이\(y\) 240 mm/);
+const { sceneBounds: sb, partBounds: pb } = await import('../base44/shared/conceptEdit.ts');
+assert.equal(sb(lv.preview.parts).size.y, 240, '전체 높이를 240 으로 맞춤');
+assert.equal(pb(lv.preview.parts.find((p) => p.id === 'p2')).size.x, 50, '팬 폭을 50 으로 맞춤');
+assert.deepEqual([lv.preview.lock_fit.changes.length, lv.preview.lock_fit.misses.length, lv.dimension_locks.length], [2, 0, 2], '맞춘 기록, 다음 버전으로 이어짐');
+
+// ── ① 직접 편집 저장: id 를 지키고, 겹치는 id 는 새로, 전체 크기는 부품 범위로
+const edited = lv.preview.parts.map((p) => (p.id === 'p2' ? { ...p, position: { ...p.position, y: p.position.y + 5 } } : p));
+r = await call({ action: 'save_edit', concept_id: lv.id, parts: [...edited, { ...edited[0] }, { name: '빈 부품' }], note: '팬을 5mm 올림', summary: '수정 팬' });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+const ev = r.data.concept;
+assert.deepEqual(ev.preview.parts.map((p) => p.id), ['p1', 'p2', 'e1'], '같은 id 는 새 id, size 없는 부품은 버림');
+assert.equal(ev.preview.parts[1].position.y, lv.preview.parts[1].position.y + 5);
+assert.deepEqual([ev.change_request, ev.preview.edit.by, ev.based_on_id, ev.version_no > lv.version_no], ['[직접 편집] 팬을 5mm 올림', '왕리', lv.id, true]);
+assert.equal(ev.dimension_locks.length, 2);
+assert.ok(Array.isArray(r.data.lock_misses));
+assert.equal((await call({ action: 'save_edit', concept_id: lv.id, parts: [] })).status, 400);
+
+// ── ④ 3D 화면 기준 렌더 → 영역 편집 → 예전 렌더로 되돌리기 (예전 이미지는 기록으로)
+r = await call({ action: 'render', concept_id: ev.id, view_image: `data:image/png;base64,${b64('view')}` });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+assert.match(calls.img.at(-1).existing_image_urls[0], /3d-view/);
+assert.match(calls.img.at(-1).prompt, /screenshot of the 3D concept model/);
+const first = r.data.concept.preview.render_url;
+const hist0 = r.data.concept.preview.render_history.length;
+assert.equal(r.data.concept.preview.render_note, '3D 화면 기준 렌더');
+assert.equal((await call({ action: 'render_edit', concept_id: ev.id, instruction: '' })).status, 400);
+r = await call({ action: 'render_edit', concept_id: ev.id, instruction: '버튼을 금색으로', mark_image: b64('mark'), regions: [{ x: 0.1, y: 0.2, w: 0.2, h: 0.1 }] });
+assert.equal(r.status, 200, JSON.stringify(r.data));
+assert.equal(calls.img.at(-1).existing_image_urls[0], first, '지금 렌더를 고친다');
+assert.match(calls.img.at(-1).prompt, /left 10–30%, top 20–30%/);
+let pv = r.data.concept.preview;
+assert.deepEqual([pv.render_history.length, pv.render_history[0].url, pv.render_note], [hist0 + 1, first, '편집: 버튼을 금색으로']);
+r = await call({ action: 'render_pick', concept_id: ev.id, url: first });
+pv = r.data.concept.preview;
+assert.deepEqual([pv.render_url, pv.render_history.length, pv.render_history[0].note], [first, hist0 + 1, '편집: 버튼을 금색으로'], '되돌려도 고친 이미지는 기록에 남는다');
+assert.equal((await call({ action: 'render_pick', concept_id: ev.id, url: 'https://evil.example/x.png' })).status, 404, '기록에 없는 주소는 받지 않는다');
 console.log('proto-concept functions ok');
