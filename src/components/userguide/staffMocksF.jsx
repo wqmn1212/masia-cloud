@@ -82,6 +82,18 @@ export function WbClientShareMock({ zh }) {
   );
 }
 
+export function WbConcept3dMock({ zh }) {
+  return (
+    <Frame title={L(zh, '시제품 → 컨셉 스튜디오 → 3D 편집', '样机 → 概念工作室 → 3D编辑')} badge={Ex(zh)}>
+      <Mark n={1}><div className="flex flex-wrap items-center gap-1 p-1"><Badge tone="blue">{L(zh, '이동 W', '移动 W')}</Badge><Badge>{L(zh, '회전 E', '旋转 E')}</Badge><Badge>{L(zh, '크기 R', '缩放 R')}</Badge><span className="text-muted-foreground">{L(zh, '다이얼 · 가로 20 · 높이 14 mm', '旋钮 · 宽 20 · 高 14 mm')}</span><Btn primary>{L(zh, '새 버전으로 저장', '保存为新版本')}</Btn></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><span>{L(zh, '대상: 다이얼 — “지름 20mm 로, 오른쪽 뒤로”', '对象：旋钮 — “直径改为20mm，移到右后方”')}</span><Btn>{L(zh, '새 버전 만들기', '生成新版本')}</Btn></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="space-y-0.5 p-1"><div><Badge tone="green">✓</Badge> {L(zh, '제품 전체 가로 180 mm ±1 · 지금 180', '整体宽 180 mm ±1 · 当前 180')}</div><div className="text-destructive">{L(zh, '⚠ 제품 전체 높이 160 mm · 지금 172 (+12)', '⚠ 整体高 160 mm · 当前 172 (+12)')}</div><Btn>{L(zh, '어긋난 치수 맞추기', '调整不符尺寸')}</Btn></div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn primary>{L(zh, '지금 3D 화면으로 렌더', '按当前3D画面渲染')}</Btn></div></Mark>
+      <Mark n={5} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><span className="inline-block h-6 w-10 rounded border-2 border-destructive bg-destructive/20" /><span>{L(zh, '버튼을 무광 금색으로', '按钮改为哑光金色')}</span><Btn>{L(zh, '이 부분 다시 그리기', '重绘此部分')}</Btn><span className="text-muted-foreground">{L(zh, '예전 렌더 3', '旧渲染 3')}</span></div></Mark>
+    </Frame>
+  );
+}
+
 export function WbDemoMock({ zh }) {
   return (
     <Frame title={L(zh, '고객 화면 → 3D · 시연', '客户画面 → 3D · 演示')} badge={Ex(zh)}>

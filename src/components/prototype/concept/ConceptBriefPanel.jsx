@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import ConceptLocksPanel from '@/components/prototype/concept/ConceptLocksPanel';
 import ConceptNotes from '@/components/prototype/concept/ConceptNotes';
 import ConceptFilePicker from '@/components/prototype/concept/ConceptFilePicker';
 import ConceptSketchPanel from '@/components/prototype/concept/ConceptSketchPanel';
@@ -64,6 +65,7 @@ export default function ConceptBriefPanel({ concept, onChanged }) {
           {concept.brief_summary && <p className="border-t pt-2 text-caption text-muted-foreground">AI 이해: {concept.brief_summary}</p>}
         </div>
         <ConceptNotes groups={[{ title: 'AI가 둔 전제 — 확정된 요구사항이 아닙니다', kind: 'assume', items: concept.assumptions }]} />
+        <ConceptLocksPanel conceptId={concept.id} locks={concept.dimension_locks} parts={[]} onSaved={onChanged} />
       </div>
     </div>
   );

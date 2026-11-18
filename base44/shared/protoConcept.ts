@@ -45,16 +45,22 @@ export const strList = (v: unknown, max = 20, n = 400) => (Array.isArray(v) ? v 
 const n2 = (v: any, d: number, lo: number, hi: number) => { const x = Number(v); return Number.isFinite(x) ? Math.max(lo, Math.min(hi, Math.round(x * 100) / 100)) : d; };
 const pick = (v: any, allowed: string[], d: string) => (allowed.includes(v) ? v : d);
 
-/** AI 장면을 저장 가능한 모양으로 정리. 부품 id 는 서버가 p1.. 로 붙인다 */
-export function cleanScene(ai: any) {
-  const parts = (Array.isArray(ai?.parts) ? ai.parts : []).filter((p: any) => p && p.size).slice(0, 40).map((p: any, i: number) => ({
-    id: `p${i + 1}`, name: str(p.name, 80) || `부품 ${i + 1}`, ...(str(p.ref_key, 40) ? { ref_key: str(p.ref_key, 40).toLowerCase().replace(/[^a-z0-9_]+/g, '_') } : {}), role: str(p.role, 200), layer: pick(p.layer, LAYERS, 'OTHER'), shape: pick(p.shape, SHAPES, 'box'),
-    size: { x: n2(p.size.x, 10, 0.1, 5000), y: n2(p.size.y, 10, 0.1, 5000), z: n2(p.size.z, n2(p.size.x, 10, 0.1, 5000), 0.1, 5000) },
+/** 부품 하나를 저장 가능한 모양으로 정리. id 를 주면 그 id, 아니면 p{i+1} */
+export const PART_ID = /^[A-Za-z0-9_-]{1,24}$/;
+export function cleanPart(p: any, i: number, id?: string) {
+  return {
+    id: id && PART_ID.test(id) ? id : `p${i + 1}`, name: str(p.name, 80) || `부품 ${i + 1}`, ...(str(p.ref_key, 40) ? { ref_key: str(p.ref_key, 40).toLowerCase().replace(/[^a-z0-9_]+/g, '_') } : {}), role: str(p.role, 200), layer: pick(p.layer, LAYERS, 'OTHER'), shape: pick(p.shape, SHAPES, 'box'),
+    size: { x: n2(p.size?.x, 10, 0.1, 5000), y: n2(p.size?.y, 10, 0.1, 5000), z: n2(p.size?.z, n2(p.size?.x, 10, 0.1, 5000), 0.1, 5000) },
     position: { x: n2(p.position?.x, 0, -5000, 5000), y: n2(p.position?.y, 0, -5000, 5000), z: n2(p.position?.z, 0, -5000, 5000) },
     rotation_deg: { x: n2(p.rotation_deg?.x, 0, -360, 360), y: n2(p.rotation_deg?.y, 0, -360, 360), z: n2(p.rotation_deg?.z, 0, -360, 360) },
     color: /^#[0-9a-fA-F]{6}$/.test(p.color || '') ? p.color : '#b9c2d0', finish: pick(p.finish, FINISHES, 'matte'), material: str(p.material, 60),
     ...(p.shape === 'sphere_cut' ? { cut: n2(p.cut, 0, -0.95, 0.95) } : {}),
-  }));
+  };
+}
+
+/** AI 장면을 저장 가능한 모양으로 정리. 부품 id 는 서버가 p1.. 로 붙인다 */
+export function cleanScene(ai: any) {
+  const parts = (Array.isArray(ai?.parts) ? ai.parts : []).filter((p: any) => p && p.size).slice(0, 40).map((p: any, i: number) => cleanPart(p, i));
   const o = ai?.overall_mm;
   return {
     summary: koFix(str(ai?.summary, 1200)), change_summary: koFix(str(ai?.change_summary, 600)),
