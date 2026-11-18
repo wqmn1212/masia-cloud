@@ -8,9 +8,10 @@ import { Card, Field } from '@/components/prototype/develop/DevBits';
 import SimCanvas, { fallbackParts } from '@/components/prototype/develop/SimCanvas';
 import SimChart from '@/components/prototype/develop/SimChart';
 import RulesEditor from '@/components/prototype/develop/RulesEditor';
+import { simLinks } from '@/lib/devkit/simLinks';
 import { FEATURE_KINDS, OUTPUT_LEVELS, isOutput, findLidPart, lightSpec } from '@/lib/devkit/features';
 import { defaultRules, validRules } from '@/lib/devkit/rules';
-import { POWER_SOURCES, defaultPower, createSim, stepSim, setInput, appWrite, appValues, runtimeHours, tiltOf, refill, setParams, turnDial, setClock, clockText, pivotClearance } from '@/lib/devkit/deviceSim';
+import { POWER_SOURCES, defaultPower, createSim, stepSim, setInput, appWrite, appValues, runtimeHours, tiltOf, refill, setParams, turnDial, setClock, clockText, pivotClearance, lampModeText } from '@/lib/devkit/deviceSim';
 import { hhmm } from '@/lib/devkit/rules';
 import { DEFAULT_SIM_PARAMS } from '@/lib/devkit/thermal';
 import { mainShellId, partParams } from '@/lib/devkit/solidcraft';
@@ -18,7 +19,6 @@ import { PowerPanel, HeatPanel, PartParamsPanel } from '@/components/prototype/d
 
 const SPEEDS = [1, 10, 60, 600];
 const BOOL_TEXT = { button: ['—', '눌림'], lid: ['닫힘', '열림'], tilt: ['바로 섬', '기울어짐'], water: ['물 있음', '물 부족'], switch: ['꺼짐', '켜짐'] };
-const FACE_TEXT = { rear: '뒤 (수면등)', front: '앞 (기상등)', both: '앞뒤 함께' };
 const minus = (t, min) => { const m = (hhmm(t) - min + 1440) % 1440; return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
 const fmtA = (i) => (i >= 1 ? `${i.toFixed(2)} A` : `${Math.round(i * 1000)} mA`);
 const fmtT = (s) => (s < 60 ? `${s.toFixed(1)}초` : s < 3600 ? `${Math.floor(s / 60)}분 ${Math.floor(s % 60)}초` : `${(s / 3600).toFixed(1)}시간`);
@@ -44,14 +44,7 @@ export default function SimStep({ concept, dev, change, viewer = false, pin = nu
   const parts = useMemo(() => (conceptParts?.length ? conceptParts : fallbackParts(features)), [conceptParts, features]);
   const usingFallback = !conceptParts?.length;
   const lidPartId = usingFallback ? 'lid-plate' : (dev.lid_part_id ?? findLidPart(conceptParts)?.id ?? null);
-  const links = useMemo(() => {
-    const m = {};
-    features.forEach((f) => {
-      const pid = usingFallback ? (parts.some((p) => p.id === f.id) ? f.id : null) : (f.part_id || parts.find((p) => p.name === f.name)?.id);
-      if (pid) m[pid] = { feature_id: f.id, kind: f.kind, feature: f };
-    });
-    return m;
-  }, [features, parts, usingFallback]);
+  const links = useMemo(() => simLinks(features, parts, usingFallback), [features, parts, usingFallback]);
 
   const simRef = useRef(null);
   const [, setFrame] = useState(0);
@@ -136,11 +129,11 @@ export default function SimStep({ concept, dev, change, viewer = false, pin = nu
               </div>
             )}
             {encoders.map((f) => (
-              <Field group key={f.id} label={`${f.name} · ${FACE_TEXT[s.lamp.face]} · 밝기 ${Math.round(s.lamp.bright)} %`}>
+              <Field group key={f.id} label={`${f.name} · ${lampModeText(s)} · 밝기 ${Math.round(s.lamp.bright)} %`}>
                 <div className="flex flex-wrap gap-1.5">
                   <Button size="sm" variant="outline" onClick={() => { turnDial(s, f.id, -1); stepSim(s, 0.02); setFrame((n) => n + 1); }} aria-label="다이얼 돌려 어둡게"><Minus className="w-4 h-4" />어둡게</Button>
                   <Button size="sm" onClick={() => tap(f.id, 0.1)}>누르기 (켜기·끄기)</Button>
-                  <Button size="sm" variant="outline" onClick={() => tap(f.id, 0.9)}>길게 (면 바꾸기)</Button>
+                  <Button size="sm" variant="outline" onClick={() => tap(f.id, 0.9)}>길게 (빛 바꾸기)</Button>
                   <Button size="sm" variant="outline" onClick={() => { turnDial(s, f.id, 1); stepSim(s, 0.02); setFrame((n) => n + 1); }} aria-label="다이얼 돌려 밝게"><Plus className="w-4 h-4" />밝게</Button>
                 </div>
               </Field>

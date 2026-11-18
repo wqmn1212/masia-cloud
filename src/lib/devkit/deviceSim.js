@@ -51,7 +51,7 @@ export function createSim(dev, power = {}, params = {}) {
     t: 0,
     input: { pressed: {}, lid: 0, tilt: { pitch: 0, roll: 0 }, dial: {}, app: false, switches: {}, turn: {}, pivot: 0 },
     clock: hhmm(p.clock0) * 60, pivot: dev.pivot || null,
-    lamp: { face: 'rear', bright: 60, mem: null }, hold: {}, sched: { phase: '', from: {} },
+    lamp: { face: lampModes(features)[0].key, bright: 60, mem: null }, hold: {}, sched: { phase: '', from: {} },
     levels: {}, prevPressed: {},
     mcu: { on: true, boot: 0, resets: 0, why: '' },
     phys: { soc: Number(p.soc0) || 80, heaterT: Number(p.ambient) || 25, motor: {}, servo: {}, water: Math.max(0, Number(p.water_ml) || 0), steamRate: 0, steamTotal: 0, fuseBlown: false, light: {}, cut: {}, lux: {}, lm: {}, ledW: {} },
@@ -354,10 +354,37 @@ function tick(s, dt) {
   void vterm;
 }
 
-// ── 조명 제품: 다이얼(돌리기·짧게·길게 누르기)과 켜는 면 ──
-const FACES = ['rear', 'front', 'both'];
+// ── 조명 제품: 다이얼(돌리기·짧게·길게 누르기)과 켜는 빛 ──
+// 앞뒤 두 면 조명이면 뒤 → 앞 → 앞뒤 함께, 한 면에 색이 다른 빛이 여럿이면 빛마다 하나씩 → 모두 함께 (길게 누를 때마다 다음)
 const FACE_TEXT = { rear: '뒤 (수면등)', front: '앞 (기상등)', both: '앞뒤 함께' };
-const faceLights = (s, face = s.lamp.face) => s.features.filter((f) => f.kind === 'light' && (face === 'both' || lightSpec(f).face === face || s.features.filter((x) => x.kind === 'light').length === 1));
+const shortName = (f) => String(f.name || '').split(/\s[(—-]/)[0].trim() || f.name;
+export function lampModes(features) {
+  const lights = (features || []).filter((f) => f.kind === 'light');
+  if (lights.length <= 1) return [{ key: 'all', label: '조명', ids: lights.map((f) => f.id) }];
+  const faceOf = (f) => lightSpec(f).face;
+  if (lights.some((f) => faceOf(f) === 'rear') && lights.some((f) => faceOf(f) !== 'rear')) {
+    return ['rear', 'front', 'both'].map((k) => ({ key: k, label: FACE_TEXT[k], ids: lights.filter((f) => k === 'both' || (k === 'rear' ? faceOf(f) === 'rear' : faceOf(f) !== 'rear')).map((f) => f.id) }));
+  }
+  return [...lights.map((f) => ({ key: f.id, label: shortName(f), ids: [f.id] })), { key: 'both', label: '모두 함께', ids: lights.map((f) => f.id) }];
+}
+const lampMode = (s) => { const ms = lampModes(s.features); return ms.find((m) => m.key === s.lamp.face) || ms[0]; };
+/** 지금 다이얼이 켜는 빛 (화면 표시용 이름) */
+export const lampModeText = (s) => lampMode(s).label;
+/** 다이얼이 켤 빛 고르기 (모드 키: lampModes 의 key) */
+export function setLampMode(s, key) {
+  if (!lampModes(s.features).some((m) => m.key === key)) return;
+  s.lamp.face = key;
+  if (lampOn(s)) applyFace(s);
+  log(s, `켜는 빛: ${lampModeText(s)}`);
+}
+/** 밝기 바로 맞추기 (시연 화면 밝기 막대). 켜져 있으면 켜진 빛에 바로 반영 */
+export function setLampBright(s, v) {
+  s.lamp.bright = Math.max(1, Math.min(100, Math.round(Number(v) || 0)));
+  if (lampOn(s)) applyFace(s);
+}
+/** 조명이 하나라도 켜져 있는지 */
+export const lampIsOn = (s) => lampOn(s);
+const faceLights = (s) => { const ids = new Set(lampMode(s).ids); return s.features.filter((f) => ids.has(f.id)); };
 const lampOn = (s) => s.features.some((f) => f.kind === 'light' && (s.levels[f.id] || 0) > 0);
 function applyFace(s) {
   const on = new Set(faceLights(s).map((f) => f.id));
@@ -372,14 +399,15 @@ function lampControls(s) {
     if (held && h.t0 == null) { h.t0 = s.t; h.long = false; }
     if (held && !h.long && s.t - h.t0 >= K.longPress) {
       h.long = true;
-      s.lamp.face = FACES[(FACES.indexOf(s.lamp.face) + 1) % FACES.length];
+      const ms = lampModes(s.features);
+      s.lamp.face = ms[(ms.findIndex((m) => m.key === lampMode(s).key) + 1) % ms.length].key;
       if (lampOn(s)) applyFace(s);
-      log(s, `${f.name} 길게 누름 → 켜는 면: ${FACE_TEXT[s.lamp.face]}`);
+      log(s, `${f.name} 길게 누름 → 켜는 빛: ${lampModeText(s)}`);
     }
     if (!held && h.t0 != null) {
       if (!h.long) {
         if (lampOn(s)) { s.levels = Object.fromEntries(Object.entries(s.levels).map(([k, v]) => [k, s.features.find((x) => x.id === k)?.kind === 'light' ? 0 : v])); log(s, `${f.name} 짧게 누름 → 조명 끔`); }
-        else { applyFace(s); log(s, `${f.name} 짧게 누름 → ${FACE_TEXT[s.lamp.face]} ${Math.round(s.lamp.bright)} % 켬`); }
+        else { applyFace(s); log(s, `${f.name} 짧게 누름 → ${lampModeText(s)} ${Math.round(s.lamp.bright)} % 켬`); }
       }
       h.t0 = null;
     }

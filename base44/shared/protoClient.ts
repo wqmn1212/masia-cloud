@@ -30,6 +30,9 @@ export function modelSnapshot(input: any) {
     },
     parts,
     render_url: /^https:\/\//.test(String(input?.render_url || '')) ? String(input.render_url).slice(0, 1000) : '',
+    // 고객 시연 화면의 '제품' 칸: 이름과 크기(mm)만
+    title: str(input?.title, 120),
+    overall_mm: input?.overall_mm ? { x: num(input.overall_mm.x), y: num(input.overall_mm.y), z: num(input.overall_mm.z) } : undefined,
   };
   if (JSON.stringify(out).length > 900_000) throw new Error('3D 모형이 너무 커서 공개할 수 없습니다');
   return out;
@@ -52,7 +55,7 @@ export function clientView(p: any) {
   const review = p.client_review || {};
   return {
     id: p.id, title: p.title, stage: p.stage,
-    model: share.model?.on ? { at: share.model.at, dev: share.model.dev, parts: share.model.parts, render_url: share.model.render_url || '' } : null,
+    model: share.model?.on ? { at: share.model.at, dev: share.model.dev, parts: share.model.parts, render_url: share.model.render_url || '', title: share.model.title || '', overall_mm: share.model.overall_mm } : null,
     docs: Object.fromEntries(Object.keys(DOCS).filter((k) => share.docs?.[k]).map((k) => [k, { version: share.docs[k].version, text: share.docs[k].text, at: share.docs[k].at, decisions: review.docs?.[k] || [] }])),
     ecos: (share.ecos || []).filter((e: any) => !e.withdrawn).map((e: any) => ({ no: e.no, reason: e.reason, changes: e.changes || [], impact: e.impact || [], from_version: e.from_version, at: e.at, decision: review.ecos?.[e.no] || null })),
     comments: (review.comments || []).slice(-200),

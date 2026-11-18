@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
+import { noteProtoToCard } from '../../shared/protoCardNote.ts';
 import { simulate } from '../../shared/protoSim.ts';
 import { moldRuleChecks, MOLD_MATERIAL_KEYS } from '../../shared/protoMold.ts';
 import { BRIEF_SCHEMA, SCENE_SCHEMA, SCENE_RULES, cleanScene, strList } from '../../shared/protoConcept.ts';
@@ -357,6 +358,7 @@ Rules:
       // 렌더 이미지는 이 형상이 저장된 뒤 render 로 만든다 (형상과 같은 모양이 되도록 형상 설명으로 만든다)
       const preview = { title: concept.title, ...scene, render_url: '', render_version: null, render_error: '', render_pending: true, render_ref_ids: sk.length ? sk.map((f) => f.id) : photoIds(genFiles, va), generated_at: now(), generated_by_name: by };
       const saved = await svc.entities.ProtoConcept.update(concept.id, { questions, preview, status: 'READY', confirmed_at: now(), confirmed_by_name: by, last_request_id: rid });
+      await noteProtoToCard(svc, project, `컨셉 v${concept.version_no} 3D 형상을 만들었습니다 (부품 ${scene.parts.length}개) · ${by}`);
       return Response.json({ concept: saved, link, summary: scene.summary, part_count: scene.parts.length, render_pending: true, next: '이어서 action=render(concept_id)로 렌더 이미지를 만듭니다. 그다음 컨셉 스튜디오(link)에서 3D 프리뷰를 확인하고 회로 검토와 사출·금형 검토를 실행합니다. 미팅용 개념 시각화이며 CAD 가 아닙니다.' });
     }
 
@@ -393,6 +395,7 @@ Rules:
         ...(concept.circuit ? { circuit: { ...concept.circuit, stale: true } } : {}),
         ...(concept.mold ? { mold: { ...concept.mold, stale: true } } : {}),
       });
+      await noteProtoToCard(svc, project, `컨셉 v${versionNo} 을 만들었습니다 — 변경 요청: ${change.slice(0, 200)} · ${by}`);
       return Response.json({ concept: created, link, change_summary: scene.change_summary, render_pending: render.render_pending, ...(render.render_pending ? { next: '첨부한 사진으로 렌더 이미지를 다시 만들려면 이어서 action=render(concept_id=새 버전 id)를 호출합니다.' } : {}) });
     }
 

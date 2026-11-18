@@ -8,6 +8,7 @@ import { Card } from '@/components/prototype/develop/DevBits';
 import { estimateCost } from '@/lib/devkit/cost';
 import { snapshotOf, diffDesign, impactOf, canApproveEco, ecoTasks, ecoNotice } from '@/lib/devkit/freeze';
 import { base44 } from '@/api/base44Client';
+import { noteProtoToCard } from '@/lib/protoCardApi';
 import { uploadProtoFile, addProtoFiles } from '@/lib/prototypeApi';
 import { actorName } from '@/lib/prototypeApi';
 import { useQueryClient } from '@tanstack/react-query';
@@ -129,13 +130,14 @@ export function FreezeCard({ dev, change, user, project, onSaved, dirty }) {
       ecos: eco ? (d.ecos || []).map((e) => (e.no === eco.no ? { ...e, status: 'APPROVED', decided_by: by, decided_at: new Date().toISOString(), to_version: version } : e)) : d.ecos,
     }));
     toast({ title: `설계 확정본 v${version} 을 만들었습니다`, description: '잠시 뒤 자동 저장됩니다' });
+    noteProtoToCard(project, eco ? `${eco.no} 승인 → 설계 확정본 v${version} (${eco.reason}) · ${by}` : `설계 확정본 v${version} 을 만들었습니다 · ${by}`);
     if (eco) makeTasks(eco);
     setBusy(false);
   };
   // 승인된 변경의 "다시 할 일"을 업무 카드 할 일로 만든다 (시제품이 업무 카드에 묶여 있을 때)
   const makeTasks = async (eco) => {
     const tasks = ecoTasks(eco);
-    if (!project?.card_id || !tasks.length) { if (tasks.length) toast({ title: '업무 카드가 연결되지 않아 할 일은 만들지 않았습니다', description: '금형 견적 요청에서 업무 카드를 고르면 연결됩니다' }); return; }
+    if (!project?.card_id || !tasks.length) { if (tasks.length) toast({ title: '업무 카드가 연결되지 않아 할 일은 만들지 않았습니다', description: '워크벤치 맨 위 “카드 연결” 에서 업무 카드를 고르세요' }); return; }
     try {
       for (const t of tasks) await base44.entities.TaskItem.create({ tenant_id: project.tenant_id, card_id: project.card_id, status: 'TODO', priority: 'HIGH', cn_manual: true, ...t });
       toast({ title: `${eco.no}: 업무 카드에 할 일 ${tasks.length}개를 만들었습니다` });
@@ -158,6 +160,7 @@ export function FreezeCard({ dev, change, user, project, onSaved, dirty }) {
       await addProtoFiles(project.id, [f]);
       onSaved?.();
       change((d) => ({ ecos: (d.ecos || []).map((e) => (e.no === eco.no ? { ...e, status: 'WAIT_CLIENT', sent_by: by, sent_at: new Date().toISOString(), notice_file: name, portal } : e)) }));
+      noteProtoToCard(project, `${eco.no} 설계 변경을 고객 확인에 보냈습니다${portal ? ' (포털 “개발” 탭)' : ''} — ${eco.reason} · ${by}`);
       toast(portal
         ? { title: '고객 포털로 승인을 요청했습니다', description: '고객이 업무 카드 “개발” 탭에서 승인하면 여기서 새 확정본을 만들 수 있습니다. 통지서도 시제품 파일에 남겼습니다.' }
         : { title: '설계 변경 통지서를 시제품 파일에 저장했습니다', description: '업무 카드가 없어 포털로는 보내지 못했습니다. 전자서명 등으로 확인을 받은 뒤 승인하세요' });
@@ -170,8 +173,9 @@ export function FreezeCard({ dev, change, user, project, onSaved, dirty }) {
     change((d) => ({ ecos: [...(d.ecos || []), { no, at: new Date().toISOString(), by, reason: reason.trim(), from_version: fz.version, changes, impact: impactOf(changes), need_client: needClient, status: 'OPEN' }] }));
     setReason(''); setNeedClient(false);
     toast({ title: `${no} 변경 요청서를 만들었습니다` });
+    noteProtoToCard(project, `${no} 변경 요청서 — ${reason.trim()} (${changes.length}건 변경${needClient ? ', 고객 확인 필요' : ''}) · ${by}`);
   };
-  const reject = (eco) => change((d) => ({ ecos: (d.ecos || []).map((e) => (e.no === eco.no ? { ...e, status: 'REJECTED', decided_by: by, decided_at: new Date().toISOString() } : e)) }));
+  const reject = (eco) => { change((d) => ({ ecos: (d.ecos || []).map((e) => (e.no === eco.no ? { ...e, status: 'REJECTED', decided_by: by, decided_at: new Date().toISOString() } : e)) })); noteProtoToCard(project, `${eco.no} 변경 요청을 반려했습니다 · ${by}`); };
 
   return (
     <Card title="설계 확정 · 변경 관리" icon={Lock} tag={fz ? `확정본 v${fz.version}` : '확정 전'}>

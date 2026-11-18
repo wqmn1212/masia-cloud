@@ -180,7 +180,7 @@ export default function PrototypeFactoryTest() {
           <Button onClick={save} disabled={verdict === 'INCOMPLETE' || !!busy}>{busy === 'save' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}{T('기록 저장 · 다음', '保存记录 · 下一台')}</Button>
           <Button variant="outline" onClick={reset} disabled={!!busy}><RotateCcw className="w-4 h-4" />{T('다시', '重测')}</Button>
         </div>
-        {!project.card_id && <p className="text-caption text-warning-text">{T('이 시제품에 업무 카드가 연결되지 않았습니다. 금형 견적 요청에서 업무 카드를 고르면 연결됩니다.', '此样机未关联业务卡片。')}</p>}
+        {!project.card_id && <p className="text-caption text-warning-text">{T('이 시제품에 업무 카드가 연결되지 않았습니다. 개발 워크벤치 맨 위 “카드 연결” 에서 업무 카드를 고르세요.', '此样机未关联业务卡片。')}</p>}
         {json?.mac && <p className="text-center font-mono text-caption text-muted-foreground">{json.mac} · {json.fw} · {json.chip}</p>}
       </section>
       <details className="text-caption"><summary className="cursor-pointer text-muted-foreground">{T('시리얼 기록', '串口日志')}</summary><div className="mt-1 max-h-40 overflow-y-auto rounded-lg bg-secondary px-3 py-2 font-mono text-micro">{log.map((l, i) => <p key={i} className="whitespace-pre-wrap break-all">{l}</p>)}</div></details>

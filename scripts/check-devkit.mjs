@@ -11,7 +11,9 @@ import { createSim, stepSim, setInput, appWrite, appValues, runtimeHours, ocv, r
 import { shellParts, mainShellId, partParams, partCutouts } from '../src/lib/devkit/solidcraft.js';
 import { drawingSvg, pickScale } from '../src/lib/devkit/drawing.js';
 import { DEFAULT_SIM_PARAMS, SIM_PARAMS, caseThermal, monthlyCost } from '../src/lib/devkit/thermal.js';
-import { setParams } from '../src/lib/devkit/deviceSim.js';
+import { setParams, lampModes, lampModeText } from '../src/lib/devkit/deviceSim.js';
+import { demoScript, runStep } from '../src/lib/devkit/demoScript.js';
+import { simLinks } from '../src/lib/devkit/simLinks.js';
 import { operatingPoint } from '../src/lib/circuit/analysis.js';
 import { buildTopology } from '../src/lib/circuit/topology.js';
 
@@ -629,6 +631,59 @@ ok('블루투스 버튼: 누르면 페어링되어 앱 연결, 앱에서 밝기�
   hold(s, 'bt', 0.1);
   assert.ok(s.input.app && appWrite(s, 'front', 40));
   stepSim(s, 2); assert.ok(Math.abs(appValues(s).front - 40) < 0.01);
+});
+
+// ── 한 면에 색이 다른 빛 두 개 (구형 수면 조명): 다이얼 길게 = 따뜻한 → 밝은 → 모두, 고객 시연 순서 ──
+const sphereDev = {
+  supply_v: 12,
+  features: [
+    { id: 'f_warm', kind: 'light', name: '따뜻한 빛 (2,200K) — 수면·일출 시작', cct: 2200, face: 'front', part_id: 'b_front', power_w: 3 },
+    { id: 'f_cool', kind: 'light', name: '밝은 빛 (4,000K) — 기상', cct: 4000, face: 'front', part_id: 'b_front', power_w: 6 },
+    { id: 'f_clock', kind: 'display', name: '호박색 도트 시계 (4자리)', part_id: 'b_clock' },
+    { id: 'f_dial', kind: 'encoder', name: '다이얼 (오른쪽 뒤)', part_id: 'u_dial' },
+    { id: 'f_sleep', kind: 'switch', name: '수면 모드 토글 (뒤)', part_id: 'u_toggle' },
+    { id: 'f_bt', kind: 'button', name: '블루투스 버튼 (뒤)', part_id: 'u_bt' },
+  ],
+  rules: [
+    { id: 'r_pair', type: 'event', src: 'f_bt', action: 'pair', dst: '' },
+    { id: 'r_clock', type: 'show', src: '*', dst: 'f_clock' },
+    { id: 'r_sleep', type: 'schedule', src: 'f_sleep', dst: '*', bed: '23:00', dim_min: 30, wake: '07:00', rise_min: 30, wake_dst: 'f_cool', wake_level: 100 },
+  ],
+  power: { source: 'adapter', adapter_v: 12, adapter_a: 1.5, clock0: '22:25' },
+};
+
+ok('조명 모드: 앞뒤 두 면이면 뒤 → 앞 → 앞뒤, 한 면에 빛 둘이면 따뜻한 → 밝은 → 모두 함께', () => {
+  assert.deepEqual(lampModes(lamp).map((m) => m.key), ['rear', 'front', 'both']);
+  assert.deepEqual(lampModes(sphereDev.features).map((m) => m.label), ['따뜻한 빛', '밝은 빛', '모두 함께']);
+  const s = createSim(sphereDev, sphereDev.power);
+  hold(s, 'f_dial', 0.2);
+  assert.equal(s.levels.f_warm, 60, '짧게 누르면 첫 빛(따뜻한 빛)이 켜진다'); assert.ok(!s.levels.f_cool);
+  hold(s, 'f_dial', 1.0); assert.equal(lampModeText(s), '밝은 빛'); assert.equal(s.levels.f_cool, 60); assert.ok(!s.levels.f_warm);
+  hold(s, 'f_dial', 1.0); assert.equal(s.levels.f_warm, 60); assert.equal(s.levels.f_cool, 60);
+});
+
+ok('3D 연결: 한 부품에 조명이 둘이면 둘 다 담는다 (따뜻한 빛만 안 보이던 문제)', () => {
+  const parts = [{ id: 'b_front', name: '패브릭 발광면' }, { id: 'b_clock', name: '시계' }];
+  const l = simLinks(sphereDev.features, parts, false);
+  assert.deepEqual(l.b_front.lights.map((f) => f.id), ['f_warm', 'f_cool']);
+  assert.equal(l.b_clock.kind, 'display');
+});
+
+ok('고객 시연: 켜기 → 빛 바꾸기 → 밝기 → 시계 → 잠들 때(소등) → 일어날 때(밝은 빛 100 %) → 앱 → 끄기', () => {
+  const steps = demoScript(sphereDev);
+  assert.deepEqual(steps.map((x) => x.key), ['on', 'mode-f_cool', 'mode-both', 'bright', 'clock', 'sleep', 'wake', 'app', 'off']);
+  const s = createSim(sphereDev, sphereDev.power);
+  const at = {};
+  for (const st of steps) { runStep(s, st); at[st.key] = { ...s.levels, mode: s.lamp.face, clock: clockText(s), app: s.input.app }; }
+  assert.equal(at.on.f_warm, 60); assert.ok(!at.on.f_cool);
+  assert.equal(at['mode-f_cool'].f_cool, 60); assert.ok(!at['mode-f_cool'].f_warm);
+  assert.ok(at['mode-both'].f_warm === 60 && at['mode-both'].f_cool === 60);
+  assert.ok(at.bright.f_warm < 10, `밝기를 은은하게 내림 ${at.bright.f_warm}`);
+  assert.ok(!at.sleep.f_warm && !at.sleep.f_cool && at.sleep.clock >= '23:00', `취침 소등 ${at.sleep.clock}`);
+  assert.equal(at.wake.f_cool, 100); assert.ok(at.wake.clock >= '07:00' && at.wake.clock < '07:30', at.wake.clock);
+  assert.ok(at.app.app, '블루투스 버튼으로 앱 연결');
+  assert.ok(!at.off.f_warm && !at.off.f_cool && s.out.f_clock === 0, '끄면 시계도 꺼짐');
+  assert.deepEqual(demoScript({ features: [{ id: 'b', kind: 'button', name: '버튼' }] }), [], '조명이 없으면 시연 순서 없음 (직접 해 보기만)');
 });
 
 console.log(`\n${n}개 검산 통과`);

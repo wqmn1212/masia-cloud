@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import PdfViewer from '@/components/signature/PdfViewer';
-import SimStep from '@/components/prototype/develop/SimStep';
+import ModelShowcase, { modelConcept } from '@/components/prototype/develop/ModelShowcase';
 import DesignShareDialog from '@/components/design/DesignShareDialog';
 import { useDesignRoom } from '@/lib/designRoomLive';
 import { toast } from '@/components/ui/use-toast';
@@ -86,7 +86,7 @@ function ModelCanvas({ live, numbered, active, commentMode, onSpot }) {
   const model = live.room.model;
   const [dev, setDev] = useState(model.dev);
   const change = (fn) => setDev((d) => ({ ...d, ...(typeof fn === 'function' ? fn(d) : fn) }));
-  const concept = useMemo(() => (model.parts?.length ? { id: `room-${live.room.id}-${model.at}`, preview: { parts: model.parts } } : null), [model.parts, model.at, live.room.id]);
+  const concept = useMemo(() => modelConcept(model, `room-${live.room.id}-${model.at}`), [model, live.room.id]);
   const partName = useMemo(() => Object.fromEntries((model.parts || []).map((x) => [x.id, x.name])), [model.parts]);
   const pins = [
     ...numbered.filter(({ c }) => c.point).map(({ c }) => ({ point: c.point, color: active === c.id ? '#111827' : c.resolved ? '#94a3b8' : c.color })),
@@ -94,7 +94,7 @@ function ModelCanvas({ live, numbered, active, commentMode, onSpot }) {
   ];
   return (
     <div className="h-full overflow-auto p-3">
-      <SimStep concept={concept} dev={dev} change={change} viewer
+      <ModelShowcase concept={concept} dev={dev} change={change}
         pin={{ mode: commentMode, pins, onPick: (p) => onSpot({ point: p.point, part_name: partName[p.part_id] || '' }), onHover: (h) => live.setCursor(h ? { point: h.point } : null) }} />
     </div>
   );
