@@ -10,6 +10,7 @@ export const TEAM_MENU_OPTIONS = [
   { path: '/mold-review', label: '금형 사전 검토' },
   { path: '/prototypes', label: '시제품 개발' },
   { path: '/circuit-lab', label: '회로 시뮬레이터' },
+  { path: '/pcb-studio', label: 'PCB 아트웍' },
   { path: '/artcraft', label: 'ArtCraft' },
   { path: '/financial-report', label: '재무 리포트' },
   { path: '/task-board', label: '업무 보드' },

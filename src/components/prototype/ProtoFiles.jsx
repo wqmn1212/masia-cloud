@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { FileText, Upload, Loader2, Trash2, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { FileText, Upload, Loader2, Trash2, ExternalLink, CircuitBoard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { FILE_CATEGORIES, fileCategoryLabel, fmtDate } from '@/lib/prototype';
@@ -54,6 +55,7 @@ export default function ProtoFiles({ project, user, categories, versionNo, onCha
                 <p className="text-body truncate">{f.name}</p>
                 <p className="text-micro text-muted-foreground">{fileCategoryLabel(f.category)}{f.version_no ? ` · v${f.version_no}` : ''} · {f.uploaded_by_name} · {fmtDate(f.uploaded_at)}</p>
               </div>
+              {/\.(kicad_pcb|zip)$/i.test(f.name || '') && (f.category === 'PCB' || /\.kicad_pcb$/i.test(f.name || '')) && <Button size="sm" variant="ghost" asChild><Link to={`/pcb-studio?project=${project.id}&file=${f.id}`} title="PCB 아트웍 스튜디오에서 열기"><CircuitBoard className="w-4 h-4" />아트웍</Link></Button>}
               <Button size="icon" variant="ghost" onClick={() => openProtoFile(project.id, f.id).catch((e) => toast({ title: errorText(e), variant: 'destructive' }))}><ExternalLink className="w-4 h-4" /></Button>
               <Button size="icon" variant="ghost" onClick={() => remove(f)}><Trash2 className="w-4 h-4" /></Button>
             </li>

@@ -82,6 +82,19 @@ export function WbClientShareMock({ zh }) {
   );
 }
 
+export function PcbStudioMock({ zh }) {
+  return (
+    <Frame title={L(zh, 'PCB 아트웍 스튜디오', 'PCB布线图工作室')} badge={Ex(zh)}>
+      <Mark n={1}><div className="flex flex-wrap items-center gap-1 p-1"><Btn>{L(zh, '기판 파일 열기', '打开PCB文件')}</Btn><span className="text-muted-foreground">renight-l1.kicad_pcb · zip</span></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Badge>{L(zh, '고르기 S', '选择 S')}</Badge><Badge tone="blue">{L(zh, '배선 X', '布线 X')}</Badge><Badge>{L(zh, '비아', '过孔')}</Badge><span className="text-muted-foreground">F.Cu · {L(zh, '폭', '线宽')} 0.25 mm · R · F · V · Ctrl+Z</span></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="space-y-0.5 p-1"><div className="text-destructive">{L(zh, '● T1 1번(GND) 연결이 약함 — 1.2 mm 상당 < 필요 1.37 mm (3 A)', '● T1 1脚(GND)连接较弱 — 相当1.2 mm < 需要1.37 mm (3 A)')}</div><div className="text-warning-text">{L(zh, '● 구멍 사이가 좁음 0.42 mm', '● 孔间距过小 0.42 mm')}</div></div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><span>GND · {L(zh, '접지', '地')} · 0 V · <b>3 A</b></span><span className="text-muted-foreground">+5V · {L(zh, '전원', '电源')} · 5 V · 1.2 A</span></div></Mark>
+      <Mark n={5} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn primary>{L(zh, '시뮬레이션', '仿真')}</Btn><span>{L(zh, '강하 1.1 mV · 스포크 J2 2번 +3.6 °C', '压降 1.1 mV · 辐条 J2 2脚 +3.6 °C')}</span></div></Mark>
+      <Mark n={6} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn>.kicad_pcb</Btn><Btn>{L(zh, '검토 보고서', '检查报告')}</Btn><Btn primary>{L(zh, '시제품 파일에 저장', '保存到样机文件')}</Btn></div></Mark>
+    </Frame>
+  );
+}
+
 export function WbConcept3dMock({ zh }) {
   return (
     <Frame title={L(zh, '시제품 → 컨셉 스튜디오 → 3D 편집', '样机 → 概念工作室 → 3D编辑')} badge={Ex(zh)}>

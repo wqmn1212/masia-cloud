@@ -4,7 +4,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import {
   LayoutDashboard, Factory, FileText, Shield, Users,
   Clock, Wrench, Package, ChevronLeft, ChevronRight, ChevronDown, Cloud, Calculator, ListChecks, Kanban,
-  ShieldCheck, ClipboardCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, Inbox, Images, BookOpen, Megaphone, CalendarOff, ScanSearch, Palette, Handshake, Ship, ScanBarcode, Cpu, CircuitBoard, Archive, Briefcase
+  ShieldCheck, ClipboardCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, Inbox, Images, BookOpen, Megaphone, CalendarOff, ScanSearch, Palette, Handshake, Ship, ScanBarcode, Cpu, CircuitBoard, Layers, Archive, Briefcase
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { canAccessPath, CLIENT_MENU_OPTIONS } from '@/lib/menuPermissions';
@@ -54,6 +54,7 @@ const STAFF_GROUPS = [
     items: [
       { path: '/prototypes', icon: Cpu, labelKey: 'nav.prototypes' },
       { path: '/circuit-lab', icon: CircuitBoard, labelKey: 'nav.circuitLab' },
+      { path: '/pcb-studio', icon: Layers, labelKey: 'nav.pcbStudio' },
       { path: '/bom-extractor', icon: Boxes, labelKey: 'nav.bom' },
       { path: '/mold-review', icon: ScanSearch, labelKey: 'nav.moldReview' },
       { path: '/design-archive', icon: Archive, labelKey: 'nav.designArchive', tiers: ['master', 'service'] },
