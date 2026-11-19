@@ -1,6 +1,7 @@
 // 시제품 개발 내용 중 고객에게 공개하는 것: 설계 변경(ECO) 승인 요청, 명판·사용설명서 초안 확인, 3D·동작 시뮬레이션 보기와 위치 의견.
 // 직원이 공개한 내용은 ProtoProject.client_share, 고객의 결정·의견은 ProtoProject.client_review 에 따로 둔다.
 // (설계 데이터 dev 는 직원 화면이 통째로 자동 저장하므로 고객 기록을 섞지 않는다)
+import { cleanTour } from './teardownTour.ts';
 
 export const DOCS: Record<string, { ko: string; cn: string }> = {
   nameplate: { ko: '명판·라벨 문구', cn: '铭牌·标签文字' },
@@ -33,6 +34,8 @@ export function modelSnapshot(input: any) {
     // 고객 시연 화면의 '제품' 칸: 이름과 크기(mm)만
     title: str(input?.title, 120),
     overall_mm: input?.overall_mm ? { x: num(input.overall_mm.x), y: num(input.overall_mm.y), z: num(input.overall_mm.z) } : undefined,
+    // 작동 원리 투어 (직원이 고친·AI 가 쓴 것). 없으면 고객 화면이 부품·기능으로 기본 투어를 만든다
+    tour: input?.tour?.steps?.length ? (({ by: _by, ...t }) => t)(cleanTour(input.tour, parts)) : undefined,
   };
   if (JSON.stringify(out).length > 900_000) throw new Error('3D 모형이 너무 커서 공개할 수 없습니다');
   return out;
@@ -55,7 +58,7 @@ export function clientView(p: any) {
   const review = p.client_review || {};
   return {
     id: p.id, title: p.title, stage: p.stage,
-    model: share.model?.on ? { at: share.model.at, dev: share.model.dev, parts: share.model.parts, render_url: share.model.render_url || '', title: share.model.title || '', overall_mm: share.model.overall_mm } : null,
+    model: share.model?.on ? { at: share.model.at, dev: share.model.dev, parts: share.model.parts, render_url: share.model.render_url || '', title: share.model.title || '', overall_mm: share.model.overall_mm, tour: share.model.tour || null } : null,
     docs: Object.fromEntries(Object.keys(DOCS).filter((k) => share.docs?.[k]).map((k) => [k, { version: share.docs[k].version, text: share.docs[k].text, at: share.docs[k].at, decisions: review.docs?.[k] || [] }])),
     ecos: (share.ecos || []).filter((e: any) => !e.withdrawn).map((e: any) => ({ no: e.no, reason: e.reason, changes: e.changes || [], impact: e.impact || [], from_version: e.from_version, at: e.at, decision: review.ecos?.[e.no] || null })),
     comments: (review.comments || []).slice(-200),

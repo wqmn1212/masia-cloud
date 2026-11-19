@@ -119,6 +119,19 @@ export function WbDemoMock({ zh }) {
   );
 }
 
+export function TeardownMock({ zh }) {
+  return (
+    <Frame title={L(zh, '컨셉 스튜디오 · 워크벤치 → 작동 원리', '概念工作室 · 工作台 → 工作原理')} badge={Ex(zh)}>
+      <Mark n={1}><div className="flex flex-wrap items-center gap-1 p-1"><Btn>{L(zh, '외형 3D', '外形3D')}</Btn><Btn>{L(zh, '3D 편집', '3D编辑')}</Btn><Btn primary>{L(zh, '작동 원리', '工作原理')}</Btn></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="space-y-0.5 p-1"><div className="font-semibold">{L(zh, '8 / 10 패브릭 발광면', '8 / 10 织物发光面')}</div><div className="text-muted-foreground">{L(zh, '제어 기판은 패브릭 발광면을 PWM 으로 켜고 밝기를 조절합니다.', '控制板用PWM点亮织物发光面并调节亮度。')}</div><div className="flex flex-wrap gap-1"><Badge tone="amber">{L(zh, '전원', '电源')}</Badge><Badge tone="blue">{L(zh, '신호', '信号')}</Badge><Badge>{L(zh, '빛', '光')}</Badge></div></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Badge>{L(zh, '실물', '实物')}</Badge><Badge tone="blue">{L(zh, '투명 외장', '透明外壳')}</Badge><Badge>{L(zh, '단면', '剖面')}</Badge><span className="text-muted-foreground">{L(zh, '분해 ━━○ · 이름표', '分解 ━━○ · 标签')}</span></div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><span className="text-muted-foreground">{L(zh, '“수면 모드 위주로”', '“以睡眠模式为主”')}</span><Btn primary>{L(zh, 'AI 로 투어 쓰기', '用AI编写导览')}</Btn><Btn>{L(zh, '기본 투어로', '恢复默认导览')}</Btn></div></Mark>
+      <Mark n={5} className="mt-1.5"><div className="space-y-0.5 p-1"><div>{L(zh, 'Q. 밝기는 어떻게 바꿔요?', 'Q. 亮度怎么调？')}</div><div className="text-muted-foreground">{L(zh, '다이얼을 돌리면 제어 기판이 LED 판 밝기를 바꿉니다. · 근거: 다이얼', '转动旋钮，控制板改变LED板亮度。· 依据：旋钮')}</div></div></Mark>
+      <Mark n={6} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn>{L(zh, 'HTML 파일', 'HTML文件')}</Btn><Btn>{L(zh, '투어 영상', '导览视频')}</Btn></div></Mark>
+    </Frame>
+  );
+}
+
 export function WbCardMock({ zh }) {
   return (
     <Frame title={L(zh, '개발 워크벤치 맨 위 · 업무 카드 “지금” 탭', '开发工作台顶部 · 业务卡片“当前”页')} badge={Ex(zh)}>

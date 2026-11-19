@@ -6,6 +6,7 @@ import { BRIEF_SCHEMA, SCENE_SCHEMA, SCENE_RULES, cleanScene, strList } from '..
 import { SKETCH_PLAN_SCHEMA, SKETCH_VARIANTS, sketchPlanPrompt, frontPrompt, sidePrompt, isSideView, compareSketch, koFix } from '../../shared/protoSketch.ts';
 import { VISION_PROMPT, VISION_SCHEMA, MAX_VISION_IMAGES, imageSize, b64Bytes, cleanVision, measureVision, visionHint, fitScene } from '../../shared/protoVision.ts';
 import { uploadPrivateAttachments } from '../../shared/privateAttachments.ts';
+import { cleanTour, cleanAnswer, TOUR_SCHEMA, ANSWER_SCHEMA, tourPrompt, explainPrompt, partsBrief, featuresBrief } from '../../shared/teardownTour.ts';
 import { cleanLocks, checkLocks, fitLocks, locksText, scopedMerge, cleanEditedParts, sceneBounds, bodyParts, SCOPED_SCHEMA, SCOPED_RULES } from '../../shared/conceptEdit.ts';
 
 // 시제품 컨셉: 아이디어 정리(brief) → 미팅용 3D 프리뷰(generate·revise) → 렌더 이미지(render) → 회로 검토(circuit) → 사출·금형 검토(mold)
@@ -16,7 +17,7 @@ import { cleanLocks, checkLocks, fitLocks, locksText, scopedMerge, cleanEditedPa
 const MODEL = 'claude_opus_5_5';
 // 3D 형상과 렌더 이미지 설명처럼 이미지를 다루는 단계는 이 모델로 만든다
 const IMAGE_MODEL = 'gpt_6_astra';
-const ACTIONS = ['brief', 'sketch', 'generate', 'revise', 'render', 'circuit', 'mold', 'save_edit', 'set_locks', 'render_edit', 'render_pick'];
+const ACTIONS = ['brief', 'sketch', 'generate', 'revise', 'render', 'circuit', 'mold', 'save_edit', 'set_locks', 'render_edit', 'render_pick', 'tour', 'explain'];
 const MAX_RENDER_HISTORY = 12;
 const MAX_UPLOADS = 5;
 const AI_FILE = /\.(png|jpe?g|webp|pdf)$/i;
@@ -519,6 +520,39 @@ Rules:
       const next = cleanLocks(body.locks);
       const saved = await svc.entities.ProtoConcept.update(concept.id, { dimension_locks: next, last_request_id: rid });
       return Response.json({ concept: saved, link, check: concept.preview?.parts?.length ? checkLocks(concept.preview.parts, next) : [] });
+    }
+
+    // ── 3-6. 작동 원리 투어: AI 가 순서·설명만 쓰고 형상은 컨셉 부품 그대로 (버전을 만들지 않고 이 컨셉에 저장)
+    //   body.tour 가 있으면 화면에서 고친 투어를 저장, body.reset 이면 지워서 기본 투어로 돌아간다
+    const tourCtx = () => ({
+      title: str(concept.preview?.title, 120) || project.title || '', summary: str(concept.preview?.summary, 1500),
+      parts: partsBrief(concept.preview?.parts), features: featuresBrief(project.dev?.features), supplyV: num(project.dev?.supply_v),
+      notes: [...(concept.preview?.design_notes || []), ...(concept.preview?.assumptions || [])].filter((x) => typeof x === 'string').slice(0, 12),
+    });
+    if (action === 'tour') {
+      if (!concept.preview?.parts?.length) return Response.json({ error: '먼저 3D 프리뷰를 만들어 주세요.' }, { status: 400 });
+      let tour = null;
+      if (body.reset) tour = null;
+      else if (body.tour) tour = { ...cleanTour({ ...body.tour, source: 'edited' }, concept.preview.parts), source: 'edited' };
+      else {
+        const ai = await llm(tourPrompt({ ...tourCtx(), ask: str(body.ask, 500) }), TOUR_SCHEMA);
+        tour = { ...cleanTour({ ...ai, source: 'ai' }, concept.preview.parts), source: 'ai' };
+        if (tour.steps.length < 3) return Response.json({ error: 'AI 가 쓴 투어에 쓸 수 있는 단계가 너무 적습니다. 다시 시도해 주세요.' }, { status: 502 });
+      }
+      if (tour) Object.assign(tour, { at: now(), by, version: concept.version_no });
+      const saved = await svc.entities.ProtoConcept.update(concept.id, { preview: { ...concept.preview, tour }, last_request_id: rid });
+      return Response.json({ concept: saved, link });
+    }
+
+    // ── 3-7. 질문하면 3D 로 답하기 (저장하지 않는다 — 미팅 중 바로 보여 주는 용도)
+    if (action === 'explain') {
+      const question = str(body.question, 500).trim();
+      if (!question) return Response.json({ error: '질문을 입력해 주세요.' }, { status: 400 });
+      if (!concept.preview?.parts?.length) return Response.json({ error: '먼저 3D 프리뷰를 만들어 주세요.' }, { status: 400 });
+      const ai = await llm(explainPrompt({ ...tourCtx(), question, current: str(body.current, 300) }), ANSWER_SCHEMA);
+      const out = cleanAnswer(ai, concept.preview.parts);
+      if (!out.answer) return Response.json({ error: '답을 만들지 못했습니다. 질문을 바꿔 다시 시도해 주세요.' }, { status: 502 });
+      return Response.json(out);
     }
 
     // ── 4. 회로 구성 제안 + 정격값 기반 동작 계산

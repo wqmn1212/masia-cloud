@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/lib/AuthContext';
 import { protoKeys, useProtoProject, actorName, errorText } from '@/lib/prototypeApi';
-import { useProtoConcepts } from '@/lib/conceptApi';
+import { useProtoConcepts, conceptKey } from '@/lib/conceptApi';
 import { randomBase, pinUuids } from '@/lib/devkit/ble';
 import { pinPlan, pinProblems } from '@/lib/devkit/features';
 import ConceptStep from '@/components/prototype/develop/ConceptStep';
@@ -162,7 +162,7 @@ export default function PrototypeDevelop() {
       {step === 'features' && <FeaturesStep {...props} />}
       {step === 'circuit' && <CircuitStep {...props} />}
       {step === 'ble' && <BleStep {...props} />}
-      {step === 'sim' && <ModelShowcase {...props} viewer={false} initial="detail" labels={['고객 시연 미리보기', '동작 시뮬레이션']} />}
+      {step === 'sim' && <ModelShowcase {...props} viewer={false} initial="detail" labels={['고객 시연 미리보기', '동작 시뮬레이션']} onConceptChanged={() => qc.invalidateQueries({ queryKey: conceptKey(projectId) })} />}
       {step === 'test' && <TestStep {...props} />}
     </div>
   );

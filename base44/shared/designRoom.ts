@@ -54,7 +54,7 @@ export function roomView(room: any) {
   return {
     id: room.id, title: room.title, kind: room.kind, status: room.status || 'OPEN', card_id: room.card_id,
     versions: (room.versions || []).map((v: any) => ({ v: v.v, file_name: v.file_name, file_type: v.file_type, at: v.at })),
-    model: room.kind === 'model' && room.model ? { at: room.model.at, dev: room.model.dev, parts: room.model.parts, title: room.model.title || '', overall_mm: room.model.overall_mm } : null,
+    model: room.kind === 'model' && room.model ? { at: room.model.at, dev: room.model.dev, parts: room.model.parts, title: room.model.title || '', overall_mm: room.model.overall_mm, tour: room.model.tour || null } : null,
   };
 }
 
