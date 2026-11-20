@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Cpu, Download, Loader2, Save, FileDown, AlertTriangle, ExternalLink, Factory } from 'lucide-react';
+import { Cpu, Download, Loader2, Save, FileDown, AlertTriangle, ExternalLink, Factory, CircuitBoard } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { putHandoff } from '@/lib/pcbArt/handoff';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { Card } from '@/components/prototype/develop/DevBits';
@@ -34,6 +36,7 @@ function PcbPreview({ layout, place }) {
 
 // 회로 설계: 기능 → 실제 회로도(MCU·전원·기능 회로) → KiCad 프로젝트·기판 외곽 DXF·JLCPCB 부품표
 export default function HardwareCard({ project, dev, user, onSaved, change }) {
+  const nav = useNavigate();
   const [mods, setMods] = useState(null);
   const [busy, setBusy] = useState('');
   const [open, setOpen] = useState('');
@@ -120,6 +123,7 @@ export default function HardwareCard({ project, dev, user, onSaved, change }) {
         <Button size="sm" variant="outline" onClick={() => download('dxf')} disabled={!!busy}><FileDown className="w-4 h-4" />기판 외곽 DXF</Button>
         <Button size="sm" variant="outline" onClick={() => download('bom')} disabled={!!busy}><FileDown className="w-4 h-4" />JLCPCB 부품표</Button>
         <Button size="sm" variant="outline" onClick={save} disabled={!!busy}>{busy === 'save' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}프로젝트에 저장</Button>
+        <Button size="sm" variant="outline" onClick={() => nav(`/pcb-studio?project=${project.id}&board=${board.key}`)}><CircuitBoard className="w-4 h-4" />아트웍 스튜디오에서 열기</Button>
       </>}>
       {hasLight && (
         <div className={`flex flex-wrap items-center gap-2 rounded-lg px-3 py-2 text-caption ${suggestSplit ? 'border border-warning/40 bg-warning/10 text-warning-text' : 'bg-secondary'}`}>
@@ -216,7 +220,7 @@ export default function HardwareCard({ project, dev, user, onSaved, change }) {
           <div className={`text-micro ${fab.state === 'failed' ? 'text-destructive' : 'text-muted-foreground'}`}>
             {fab.state === 'queued' && `대기 중… ${fab.secs || 0}초`}{fab.state === 'building' && `배선·제조 파일 만드는 중… ${fab.secs || 0}초`}
             {fab.state === 'failed' && fab.error}
-            {fab.state === 'done' && 'zip 을 받았고 시제품 파일에 저장했습니다.'}
+            {fab.state === 'done' && <>zip 을 받았고 시제품 파일에 저장했습니다. {fab.zip && <button type="button" className="ml-1 font-semibold text-primary underline" onClick={() => { putHandoff({ bytes: fab.zip, name: `${pkg.slug}-pcb-fab.zip` }); nav(`/pcb-studio?project=${project.id}&from=fab`); }}>배선된 기판을 아트웍 스튜디오에서 검사하기</button>}</>}
             {fab.run_url && <a href={fab.run_url} target="_blank" rel="noreferrer" className="ml-1 inline-flex items-center gap-0.5 text-primary">기록<ExternalLink className="w-3 h-3" /></a>}
             {(fab.summaries || []).map((x) => (
               <div key={x.board} className="text-foreground">

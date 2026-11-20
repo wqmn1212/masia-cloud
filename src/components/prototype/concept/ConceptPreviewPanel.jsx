@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Box, Boxes, Image, Layers, Move3d, RotateCw, Info, Loader2, Wand2, AlertTriangle, PenLine, Camera, Brush, Ruler } from 'lucide-react';
+import { Box, Boxes, Image, Layers, Move3d, RotateCw, Info, Loader2, Wand2, AlertTriangle, PenLine, Camera, Brush, Ruler, Presentation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { runConcept } from '@/lib/conceptApi';
 import { errorText } from '@/lib/prototypeApi';
@@ -7,6 +7,7 @@ import ConceptCanvas from '@/components/prototype/concept/ConceptCanvas';
 import ConceptImageFit from '@/components/prototype/concept/ConceptImageFit';
 import ConceptEditor from '@/components/prototype/concept/ConceptEditor';
 import ConceptLocksPanel from '@/components/prototype/concept/ConceptLocksPanel';
+import TeardownView from '@/components/teardown/TeardownView';
 import { RenderEditor, RenderHistory } from '@/components/prototype/concept/RenderEditPanel';
 import { CONCEPT_LAYERS, CONCEPT_DISCLAIMER } from '@/lib/concept';
 import { hullSources } from '@/lib/conceptHullScene';
@@ -22,7 +23,8 @@ const Chip = ({ active, onClick, icon: Icon, children }) => (
 // 스케치 정리를 마친 컨셉은 '외형 3D'(고른 시안 정면·측면 윤곽으로 만든 겉모양)를 먼저 보여 주고,
 // '부품 3D'(기본 도형 조립)는 내부 배치·분해·금형 검토용으로 남겨 둔다.
 // '3D 편집' 으로 부품을 직접 고치거나 고른 부품만 AI 로 바꾸고, 요구 치수를 고정하고, 렌더 이미지를 3D 화면 기준으로 만들거나 일부만 고친다
-export default function ConceptPreviewPanel({ preview, version, conceptId, onChanged, highlightId, onHighlight, sketch, locks, onLocksSaved }) {
+// '작동 원리' 는 같은 부품으로 자동 해설 투어·보기 방식·질문 답변을 보여 준다 (dev: 워크벤치 기능 목록이 있으면 함께 쓴다)
+export default function ConceptPreviewPanel({ preview, version, conceptId, onChanged, highlightId, onHighlight, sketch, locks, onLocksSaved, dev }) {
   const src = hullSources(sketch);
   const hull = useMemo(() => src, [src?.front, src?.side]);
   const [hullInfo, setHullInfo] = useState(null);
@@ -61,6 +63,18 @@ export default function ConceptPreviewPanel({ preview, version, conceptId, onCha
     onChanged?.(c);
   };
 
+  if (mode === 'tour') {
+    return (
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-2">
+          <Chip active={false} onClick={() => setMode(hullOk ? 'hull' : '3d')} icon={Box}>3D 프리뷰로</Chip>
+          <Chip active onClick={() => {}} icon={Presentation}>작동 원리</Chip>
+        </div>
+        <TeardownView parts={preview.parts} savedTour={preview.tour} dev={dev} title={preview.title} overall={preview.overall_mm} conceptId={conceptId} version={version} onChanged={onChanged} staff />
+      </div>
+    );
+  }
+
   if (editing && conceptId) {
     return <ConceptEditor conceptId={conceptId} version={version} preview={preview} locks={locks} initialParts={editing.initial} onSaved={saved} onLocksSaved={onLocksSaved} onCancel={() => setEditing(null)} />;
   }
@@ -77,6 +91,7 @@ export default function ConceptPreviewPanel({ preview, version, conceptId, onCha
           <Chip active={view === '3d'} onClick={() => setMode('3d')} icon={hullOk ? Boxes : Box}>{hullOk ? '부품 3D' : '3D'}</Chip>
           {preview.render_url && <Chip active={!show3d} onClick={() => setMode('render')} icon={Image}>렌더 이미지</Chip>}
           {conceptId && <Chip active={false} onClick={() => setEditing({})} icon={PenLine}>3D 편집</Chip>}
+          <Chip active={false} onClick={() => setMode('tour')} icon={Presentation}>작동 원리</Chip>
         </div>
         {!show3d && conceptId && !editRender && <Button size="sm" variant="outline" className="absolute bottom-4 right-4 bg-card/90" onClick={() => setEditRender(true)}><Brush className="w-4 h-4" />이미지 고치기</Button>}
         {!show3d && editRender && <RenderEditor conceptId={conceptId} url={preview.render_url} onChanged={(c) => onChanged?.(c)} onClose={() => setEditRender(false)} />}

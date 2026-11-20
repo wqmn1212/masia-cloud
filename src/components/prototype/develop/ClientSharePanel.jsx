@@ -46,11 +46,11 @@ export default function ClientSharePanel({ project, dev, concept }) {
     setBusy('');
   };
   const parts = concept?.preview?.parts || [];
-  const shareModel = () => run('model', { action: 'share_model', snapshot: { dev, parts, render_url: concept?.preview?.render_url || '', title: concept?.preview?.title || project.title, overall_mm: concept?.preview?.overall_mm } }, share.model?.on ? '고객 화면의 3D·시뮬레이션을 지금 설계로 바꿨습니다' : '3D·동작 시뮬레이션을 고객에게 공개했습니다');
+  const shareModel = () => run('model', { action: 'share_model', snapshot: { dev, parts, render_url: concept?.preview?.render_url || '', title: concept?.preview?.title || project.title, overall_mm: concept?.preview?.overall_mm, tour: concept?.preview?.tour || null } }, share.model?.on ? '고객 화면의 3D·시뮬레이션을 지금 설계로 바꿨습니다' : '3D·동작 시뮬레이션을 고객에게 공개했습니다');
   // 3D 실시간 리뷰 방: 지금 설계로 방을 만들거나(이미 있으면 모형만 갱신) 새 탭으로 연다
   const openRoom = async () => {
     setBusy('room');
-    const r = await callRoom({ action: 'create', project_id: project.id, snapshot: { dev, parts, render_url: concept?.preview?.render_url || '', title: concept?.preview?.title || project.title, overall_mm: concept?.preview?.overall_mm } });
+    const r = await callRoom({ action: 'create', project_id: project.id, snapshot: { dev, parts, render_url: concept?.preview?.render_url || '', title: concept?.preview?.title || project.title, overall_mm: concept?.preview?.overall_mm, tour: concept?.preview?.tour || null } });
     setBusy('');
     if (r.error) toast({ title: r.error, variant: 'destructive' }); else openDesignRoom(r.room.id);
   };

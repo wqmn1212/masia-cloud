@@ -77,6 +77,7 @@ const PrototypeDevelop = lazy(() => import('@/pages/PrototypeDevelop'));
 const PrototypeFactoryTest = lazy(() => import('@/pages/PrototypeFactoryTest'));
 const DesignArchive = lazy(() => import('@/pages/DesignArchive'));
 const CircuitLab = lazy(() => import('@/pages/CircuitLab'));
+const PcbStudio = lazy(() => import('@/pages/PcbStudio'));
 
 const Spinner = () => (
   <div className="fixed inset-0 flex items-center justify-center">
@@ -188,6 +189,7 @@ const AuthenticatedApp = () => {
         <Route path="/prototypes/:projectId/develop" element={<PrototypeDevelop />} />
         <Route path="/prototypes/:projectId/factory-test" element={<PrototypeFactoryTest />} />
         <Route path="/circuit-lab" element={<CircuitLab />} />
+        <Route path="/pcb-studio" element={<PcbStudio />} />
         <Route path="/agreements" element={<Agreements />} />
         <Route path="/logistics-rates" element={<LogisticsRates />} />
         <Route path="/artcraft" element={<ArtCraft />} />

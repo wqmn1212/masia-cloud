@@ -82,6 +82,19 @@ export function WbClientShareMock({ zh }) {
   );
 }
 
+export function PcbStudioMock({ zh }) {
+  return (
+    <Frame title={L(zh, 'PCB 아트웍 스튜디오', 'PCB布线图工作室')} badge={Ex(zh)}>
+      <Mark n={1}><div className="flex flex-wrap items-center gap-1 p-1"><Btn>{L(zh, '기판 파일 열기', '打开PCB文件')}</Btn><span className="text-muted-foreground">renight-l1.kicad_pcb · zip</span></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Badge>{L(zh, '고르기 S', '选择 S')}</Badge><Badge tone="blue">{L(zh, '배선 X', '布线 X')}</Badge><Badge>{L(zh, '비아', '过孔')}</Badge><span className="text-muted-foreground">F.Cu · {L(zh, '폭', '线宽')} 0.25 mm · R · F · V · Ctrl+Z</span></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="space-y-0.5 p-1"><div className="text-destructive">{L(zh, '● T1 1번(GND) 연결이 약함 — 1.2 mm 상당 < 필요 1.37 mm (3 A)', '● T1 1脚(GND)连接较弱 — 相当1.2 mm < 需要1.37 mm (3 A)')}</div><div className="text-warning-text">{L(zh, '● 구멍 사이가 좁음 0.42 mm', '● 孔间距过小 0.42 mm')}</div></div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><span>GND · {L(zh, '접지', '地')} · 0 V · <b>3 A</b></span><span className="text-muted-foreground">+5V · {L(zh, '전원', '电源')} · 5 V · 1.2 A</span></div></Mark>
+      <Mark n={5} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn primary>{L(zh, '시뮬레이션', '仿真')}</Btn><span>{L(zh, '강하 1.1 mV · 스포크 J2 2번 +3.6 °C', '压降 1.1 mV · 辐条 J2 2脚 +3.6 °C')}</span></div></Mark>
+      <Mark n={6} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn>.kicad_pcb</Btn><Btn>{L(zh, '검토 보고서', '检查报告')}</Btn><Btn primary>{L(zh, '시제품 파일에 저장', '保存到样机文件')}</Btn></div></Mark>
+    </Frame>
+  );
+}
+
 export function WbConcept3dMock({ zh }) {
   return (
     <Frame title={L(zh, '시제품 → 컨셉 스튜디오 → 3D 편집', '样机 → 概念工作室 → 3D编辑')} badge={Ex(zh)}>
@@ -102,6 +115,19 @@ export function WbDemoMock({ zh }) {
       <Mark n={3} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn primary>{L(zh, '켜기', '开灯')}</Btn><Badge>{L(zh, '따뜻한 빛 · 밝은 빛 · 모두 함께', '暖光 · 亮光 · 一起')}</Badge><span className="text-muted-foreground">{L(zh, '밝기 60 %', '亮度 60 %')}</span></div></Mark>
       <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Badge tone="blue">{L(zh, '시연', '演示')}</Badge><Badge>{L(zh, '상세 시뮬레이션', '详细仿真')}</Badge><span className="text-muted-foreground">{L(zh, '워크벤치: 고객 시연 미리보기', '工作台：客户演示预览')}</span></div></Mark>
       <Mark n={5} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn>{L(zh, '3D 실시간 리뷰 방', '3D实时评审室')}</Btn><Btn primary>{L(zh, '공유 → 링크 + PIN', '共享 → 链接 + PIN')}</Btn></div></Mark>
+    </Frame>
+  );
+}
+
+export function TeardownMock({ zh }) {
+  return (
+    <Frame title={L(zh, '컨셉 스튜디오 · 워크벤치 → 작동 원리', '概念工作室 · 工作台 → 工作原理')} badge={Ex(zh)}>
+      <Mark n={1}><div className="flex flex-wrap items-center gap-1 p-1"><Btn>{L(zh, '외형 3D', '外形3D')}</Btn><Btn>{L(zh, '3D 편집', '3D编辑')}</Btn><Btn primary>{L(zh, '작동 원리', '工作原理')}</Btn></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="space-y-0.5 p-1"><div className="font-semibold">{L(zh, '8 / 10 패브릭 발광면', '8 / 10 织物发光面')}</div><div className="text-muted-foreground">{L(zh, '제어 기판은 패브릭 발광면을 PWM 으로 켜고 밝기를 조절합니다.', '控制板用PWM点亮织物发光面并调节亮度。')}</div><div className="flex flex-wrap gap-1"><Badge tone="amber">{L(zh, '전원', '电源')}</Badge><Badge tone="blue">{L(zh, '신호', '信号')}</Badge><Badge>{L(zh, '빛', '光')}</Badge></div></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Badge>{L(zh, '실물', '实物')}</Badge><Badge tone="blue">{L(zh, '투명 외장', '透明外壳')}</Badge><Badge>{L(zh, '단면', '剖面')}</Badge><span className="text-muted-foreground">{L(zh, '분해 ━━○ · 이름표', '分解 ━━○ · 标签')}</span></div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><span className="text-muted-foreground">{L(zh, '“수면 모드 위주로”', '“以睡眠模式为主”')}</span><Btn primary>{L(zh, 'AI 로 투어 쓰기', '用AI编写导览')}</Btn><Btn>{L(zh, '기본 투어로', '恢复默认导览')}</Btn></div></Mark>
+      <Mark n={5} className="mt-1.5"><div className="space-y-0.5 p-1"><div>{L(zh, 'Q. 밝기는 어떻게 바꿔요?', 'Q. 亮度怎么调？')}</div><div className="text-muted-foreground">{L(zh, '다이얼을 돌리면 제어 기판이 LED 판 밝기를 바꿉니다. · 근거: 다이얼', '转动旋钮，控制板改变LED板亮度。· 依据：旋钮')}</div></div></Mark>
+      <Mark n={6} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn>{L(zh, 'HTML 파일', 'HTML文件')}</Btn><Btn>{L(zh, '투어 영상', '导览视频')}</Btn></div></Mark>
     </Frame>
   );
 }

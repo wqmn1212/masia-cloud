@@ -14,6 +14,8 @@
     "check:circuit-sim": "node scripts/check-circuit-sim.mjs",
     "check:devkit": "node scripts/check-devkit.mjs",
     "check:proto-card": "node scripts/check-proto-card.mjs",
+    "check:pcb-art": "node scripts/check-pcb-art.mjs",
+    "check:teardown": "node --import ./scripts/fnmock/register.mjs scripts/check-teardown.mjs",
     "check:concept-edit": "node --import ./scripts/fnmock/register.mjs scripts/check-concept-edit.mjs",
     "check:cad": "node scripts/check-cad.mjs",
     "check:hw": "node scripts/check-hw.mjs",
