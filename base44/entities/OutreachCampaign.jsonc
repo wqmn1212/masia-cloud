@@ -1,0 +1,251 @@
+{
+  "name": "OutreachCampaign",
+  "type": "object",
+  "description": "콜드메일 캠페인: 고객사 찾기 조건·제안·보낸 사람 정보·회사소개서·후속 메일 틀·발송 한도",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "소속 팀 ID"
+    },
+    "name": {
+      "type": "string",
+      "description": "캠페인 이름"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "ACTIVE",
+        "PAUSED",
+        "DONE"
+      ],
+      "default": "DRAFT",
+      "description": "준비·진행·일시정지·끝"
+    },
+    "target": {
+      "type": "string",
+      "description": "찾을 고객사 (업종·제품·규모 등)"
+    },
+    "region": {
+      "type": "string",
+      "description": "지역"
+    },
+    "exclude": {
+      "type": "string",
+      "description": "제외할 회사·조건"
+    },
+    "offer": {
+      "type": "string",
+      "description": "우리가 제안하는 것"
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "ko",
+        "en",
+        "zh"
+      ],
+      "default": "ko"
+    },
+    "sender": {
+      "type": "object",
+      "description": "보낸 사람 (법정 표시: 회사·연락처·주소)",
+      "properties": {
+        "company": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        }
+      }
+    },
+    "brochure": {
+      "type": "object",
+      "description": "회사소개서 (비공개 파일)",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "attach",
+            "link",
+            "none"
+          ]
+        },
+        "file_uri": {
+          "type": "string"
+        },
+        "file_name": {
+          "type": "string"
+        },
+        "size": {
+          "type": "number"
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "description": "후속 메일 (최대 3통)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "after_days": {
+            "type": "number",
+            "description": "앞 메일 뒤 영업일"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "daily_limit": {
+      "type": "number",
+      "default": 20,
+      "description": "하루 최대 발송 수"
+    },
+    "ad_label": {
+      "type": "boolean",
+      "default": true,
+      "description": "제목 앞 (광고) 표시"
+    },
+    "last_run": {
+      "type": "object",
+      "description": "마지막 자동 발송 결과",
+      "properties": {
+        "at": {
+          "type": "string"
+        },
+        "sent": {
+          "type": "number"
+        },
+        "skipped": {
+          "type": "number"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "created_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

@@ -54,6 +54,24 @@ export function nextSerial(prefix, last, date = new Date()) {
   return `${prefix}-${d}-${String((m ? Number(m[1]) : 0) + 1).padStart(3, '0')}`;
 }
 
+/** 서버에 저장된 기록 중 같은 접두어·같은 날의 가장 큰 일련번호 (검사 PC 가 여러 대여도 이어서 매기게) */
+export function lastSerialOf(units, prefix, date = new Date()) {
+  const probe = nextSerial(prefix, '', date).replace(/-001$/, '');
+  let best = null, bestN = 0;
+  for (const u of units || []) {
+    const m = new RegExp(`^${probe.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-(\\d+)$`).exec(u?.serial || '');
+    if (m && Number(m[1]) > bestN) { bestN = Number(m[1]); best = u.serial; }
+  }
+  return best;
+}
+
+/** 오늘 검사한 대수 (서버 기록 기준) */
+export function todayCounts(units, date = new Date()) {
+  const d = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const today = (units || []).filter((u) => u?.inspected_date === d && u?.sheet === '출하 검사 (워크벤치)');
+  return { pass: today.filter((u) => u.verdict === 'PASS').length, fail: today.filter((u) => u.verdict === 'FAIL').length };
+}
+
 /** 양산 시리얼 기록(ProductionUnit)에 넣을 값 */
 export function unitRecord({ project, plan, serial, lot, json, results, values, inspector }) {
   const all = [...plan.auto, ...plan.press, ...plan.outputs];

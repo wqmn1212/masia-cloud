@@ -50,6 +50,7 @@
     "check:client-approvals": "node --import ./scripts/fnmock/register.mjs scripts/check-client-approvals.mjs",
     "check:proto-client": "node --import ./scripts/fnmock/register.mjs scripts/check-proto-client.mjs",
     "check:sales": "node --import ./scripts/fnmock/register.mjs scripts/check-sales.mjs",
+    "check:outreach": "node --import ./scripts/fnmock/register.mjs scripts/check-outreach.mjs",
     "check:meeting-brief": "node scripts/check-meeting-brief.mjs",
     "check:chat-import": "node scripts/check-chat-import.mjs",
     "check:instagram-publish": "node --import ./scripts/fnmock/register.mjs scripts/check-instagram-publish.mjs",
@@ -72,7 +73,8 @@
     "check:proto-concept": "node --import ./scripts/fnmock/register.mjs scripts/check-proto-concept.mjs",
     "check:concept-hull": "node scripts/check-concept-hull.mjs",
     "check:sketch-trial": "node --import ./scripts/fnmock/register.mjs scripts/check-sketch-trial.mjs",
-    "check": "node scripts/check-all.mjs"
+    "check": "node scripts/check-all.mjs",
+    "check:leadmagnet": "node --import ./scripts/fnmock/register.mjs scripts/check-leadmagnet.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.63",

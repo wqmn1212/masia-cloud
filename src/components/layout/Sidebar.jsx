@@ -4,8 +4,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import {
   LayoutDashboard, Factory, FileText, Shield, Users,
   Clock, Wrench, Package, ChevronLeft, ChevronRight, ChevronDown, Cloud, Calculator, ListChecks, Kanban,
-  ShieldCheck, ClipboardCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, Inbox, Images, BookOpen, Megaphone, CalendarOff, ScanSearch, Palette, Handshake, Ship, ScanBarcode, Cpu, CircuitBoard, Layers, Archive, Briefcase
-} from 'lucide-react';
+  ShieldCheck, ClipboardCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, Inbox, Images, BookOpen, Megaphone, CalendarOff, ScanSearch, Palette, Handshake, Ship, ScanBarcode, Cpu, CircuitBoard, Layers, Archive, Briefcase, MailPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { canAccessPath, CLIENT_MENU_OPTIONS } from '@/lib/menuPermissions';
 import { getViewCompanyId, isDemoView } from '@/lib/clientView';
@@ -29,6 +28,7 @@ const STAFF_GROUPS = [
     items: [
       { path: '/leads', icon: Inbox, labelKey: 'nav.leads' },
       { path: '/sales', icon: Briefcase, labelKey: 'nav.sales' },
+      { path: '/outreach', icon: MailPlus, labelKey: 'nav.outreach' },
       { path: '/clients', icon: Users, labelKey: 'nav.clients' },
       { path: '/quotations', icon: FileText, labelKey: 'nav.quotations' },
       { path: '/agent-quotes', icon: Package, labelKey: 'nav.agentquotes' },

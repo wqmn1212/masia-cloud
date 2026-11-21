@@ -1,0 +1,108 @@
+{
+  "name": "ConsentLog",
+  "type": "object",
+  "description": "개인정보·광고 수신 동의 기록 (고치지 않고 쌓기만 한다). 언제·어디서·어떤 문구에 동의·철회했는지와 처리 결과 통지를 남긴다",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "소속 팀 ID"
+    },
+    "email": {
+      "type": "string",
+      "description": "받는 사람 (소문자)"
+    },
+    "prospect_id": {
+      "type": "string"
+    },
+    "magnet_id": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "description": "privacy: 개인정보 수집·이용 · marketing: 광고성 정보 수신 · withdraw: 수신 철회 · reconfirm_notice: 2년 수신동의 확인 안내 · result_notice: 처리 결과 통지",
+      "enum": [
+        "privacy",
+        "marketing",
+        "withdraw",
+        "reconfirm_notice",
+        "result_notice"
+      ]
+    },
+    "granted": {
+      "type": "boolean",
+      "description": "동의 여부"
+    },
+    "source": {
+      "type": "string",
+      "description": "경로 (예: landing:checklist, meta:<form>, csv)"
+    },
+    "text": {
+      "type": "string",
+      "description": "그때 보여 준 동의 문구"
+    },
+    "at": {
+      "type": "string",
+      "description": "시각 (ISO)"
+    },
+    "ip_hash": {
+      "type": "string",
+      "description": "접속 주소 해시 (원래 값은 남기지 않음)"
+    },
+    "user_agent": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "email",
+    "kind",
+    "at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "data.account_tier": "server_only"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.account_tier": "server_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "server_only"
+      }
+    }
+  }
+}

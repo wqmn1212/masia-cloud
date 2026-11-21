@@ -149,3 +149,13 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.5);
 }
+/* 터치 화면(태블릿 미팅 모드 등)에서 작업 화면의 누르는 대상을 40px 이상으로 */
+@media (pointer: coarse) {
+  .touch-roomy button,
+  .touch-roomy select,
+  .touch-roomy [role='tab'],
+  .touch-roomy input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']) {
+    min-height: 40px;
+  }
+  .touch-roomy input[type='range'] { height: 32px; }
+}

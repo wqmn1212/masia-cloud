@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useLeaveGuard } from '@/lib/useLeaveGuard';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Loader2, Save, Workflow, Sparkles, Box, ListChecks, CircuitBoard, Bluetooth, FlaskConical, Check, Activity, Presentation } from 'lucide-react';
@@ -48,6 +49,7 @@ export default function PrototypeDevelop() {
   const { data: circuits = [] } = useQuery({ queryKey: ['circuitDesigns', 'project', projectId], queryFn: () => base44.entities.CircuitDesign.filter({ project_id: projectId }, '-updated_date', 20), enabled: !!projectId });
   const [dev, setDev] = useState(null);
   const [dirty, setDirty] = useState(false);
+  useLeaveGuard(dirty, { message: '아직 저장되지 않은 변경이 있습니다 (몇 초 뒤 자동 저장됩니다). 지금 떠나면 마지막 변경이 빠집니다. 떠날까요?' });
   const [saving, setSaving] = useState(false);
   const step = STEPS.some((s) => s.key === params.get('step')) ? params.get('step') : 'concept';
   const cadTab = params.get('cad') === 'solidcraft' ? 'solidcraft' : 'mold';
@@ -110,7 +112,7 @@ export default function PrototypeDevelop() {
   const props = { project, concept, concepts, circuits, dev: view, change, user, dirty, onSaved: () => qc.invalidateQueries({ queryKey: protoKeys.project(projectId) }) };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-5">
+    <div className="touch-roomy max-w-7xl mx-auto space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <Link to={`/prototypes/${project.id}`} className="inline-flex items-center gap-1 text-label text-muted-foreground hover:text-foreground"><ArrowLeft className="w-4 h-4" />{project.title}</Link>

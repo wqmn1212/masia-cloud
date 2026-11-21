@@ -165,6 +165,17 @@ export function SalesMock({ zh }) {
   );
 }
 
+export function OutreachMock({ zh }) {
+  return (
+    <Frame title={L(zh, '콜드메일 자동화 · 국내 조명 브랜드', '开发信自动化 · 国内照明品牌')} badge={Ex(zh)}>
+      <Mark n={1}><div className="grid grid-cols-3 gap-1 p-1"><Field label={L(zh, '찾을 고객사', '目标客户')} value={L(zh, '조명·소형 가전 브랜드', '照明·小家电品牌')} /><Field label={L(zh, '보낸 사람', '发件人')} value={L(zh, '이지스 · 02-123-4567', 'Aegis · 02-123-4567')} /><Field label={L(zh, '회사소개서', '公司介绍')} value={L(zh, '링크 (비공개)', '链接（非公开）')} /></div></Mark>
+      <Mark n={2} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Btn primary>{L(zh, 'AI 로 고객사 찾기', 'AI寻找客户')}</Btn><span>{L(zh, '루멘랩', 'Lumenlab')}</span><Badge>{L(zh, '주소 필요', '需要邮箱')}</Badge><span className="text-muted-foreground">{L(zh, '9월 충전식 랜턴 출시', '9月推出充电式提灯')}</span></div></Mark>
+      <Mark n={3} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><span>{L(zh, '보낼 근거: 수신 동의를 받음', '发送依据：已同意接收')}</span><Btn>{L(zh, 'AI 로 초안 쓰기', 'AI撰写草稿')}</Btn><Btn primary>{L(zh, '확인했고 보내기 승인', '已确认，批准发送')}</Btn></div></Mark>
+      <Mark n={4} className="mt-1.5"><div className="flex flex-wrap items-center gap-1 p-1"><Badge>{L(zh, '자동 발송 중', '自动发送中')}</Badge><span>{L(zh, '하루 20통 · 후속 2통 · 회신 1 · 소개서 열람 2', '每日20封 · 跟进2封 · 回复1 · 已查看介绍2')}</span></div></Mark>
+    </Frame>
+  );
+}
+
 export function ClientRequestStaffMock({ zh }) {
   return (
     <Frame title={L(zh, '고객 자료 요청 · 디자인 전달 자료', '客户资料请求 · 设计交接资料')} badge={Ex(zh)}>

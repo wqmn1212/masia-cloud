@@ -10,7 +10,7 @@ export const STAGES = [
 ];
 export const ACTIVE = ['TARGET', 'SENT', 'REPLIED', 'MEETING', 'QUOTE'];
 export const stageOf = (k) => STAGES.find((s) => s.key === k) || STAGES[0];
-export const SOURCES = { cold_email: '콜드메일', referral: '소개', exhibition: '전시회', inbound: '문의', other: '기타' };
+export const SOURCES = { cold_email: '콜드메일', referral: '소개', exhibition: '전시회', inbound: '문의', lead_magnet: '자료 신청', meta_lead: '인스타·페북 광고', other: '기타' };
 export const TOUCH_KINDS = { email: '메일', call: '전화', meeting: '미팅', message: '메신저', note: '메모' };
 
 /** 한국 날짜 YYYY-MM-DD */

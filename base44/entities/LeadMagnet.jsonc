@@ -1,0 +1,271 @@
+{
+  "name": "LeadMagnet",
+  "type": "object",
+  "description": "자료 신청 페이지: 무료 자료(체크리스트·진단 리포트)를 미끼로 이메일과 수신 동의를 받는 공개 페이지. 신청하면 자료를 보내고, 광고 수신에 동의한 사람은 연결한 캠페인으로 후속 메일을 받는다",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "소속 팀 ID"
+    },
+    "slug": {
+      "type": "string",
+      "description": "공개 주소 /free/<slug> (영문 소문자·숫자·-)"
+    },
+    "status": {
+      "type": "string",
+      "description": "준비·공개·마감",
+      "enum": [
+        "DRAFT",
+        "LIVE",
+        "CLOSED"
+      ],
+      "default": "DRAFT"
+    },
+    "kind": {
+      "type": "string",
+      "description": "file: 파일(체크리스트 PDF 등) · report: 아이디어를 받아 AI 양산 진단 리포트",
+      "enum": [
+        "file",
+        "report"
+      ],
+      "default": "file"
+    },
+    "title": {
+      "type": "string",
+      "description": "페이지 제목"
+    },
+    "subtitle": {
+      "type": "string",
+      "description": "부제"
+    },
+    "bullets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "받는 것 (3~5줄)"
+    },
+    "button_label": {
+      "type": "string",
+      "description": "신청 버튼 글자"
+    },
+    "file": {
+      "type": "object",
+      "description": "보낼 자료 (비공개 저장)",
+      "properties": {
+        "file_uri": {
+          "type": "string"
+        },
+        "file_name": {
+          "type": "string"
+        },
+        "size": {
+          "type": "number"
+        }
+      }
+    },
+    "campaign_id": {
+      "type": "string",
+      "description": "광고 수신에 동의한 신청자를 넣을 콜드메일 캠페인 (후속 메일)"
+    },
+    "ask": {
+      "type": "object",
+      "description": "더 받을 칸",
+      "properties": {
+        "company": {
+          "type": "boolean",
+          "description": "회사명"
+        },
+        "phone": {
+          "type": "boolean",
+          "description": "전화"
+        },
+        "idea": {
+          "type": "boolean",
+          "description": "만들고 싶은 제품 (report 는 항상)"
+        }
+      }
+    },
+    "operator": {
+      "type": "object",
+      "description": "개인정보 처리자·보낸 사람 (동의 문구·메일 아래 표시)",
+      "properties": {
+        "company": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "privacy_url": {
+          "type": "string",
+          "description": "개인정보 처리방침 주소"
+        }
+      }
+    },
+    "retention_months": {
+      "type": "number",
+      "description": "개인정보 보유 기간 (개월, 기본 24)"
+    },
+    "thanks": {
+      "type": "string",
+      "description": "신청 뒤 보여 줄 말"
+    },
+    "notify_email": {
+      "type": "string",
+      "description": "신청이 오면 알릴 직원 이메일"
+    },
+    "meta": {
+      "type": "object",
+      "description": "인스타그램·페이스북 리드 광고 연결",
+      "properties": {
+        "form_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "marketing_key": {
+          "type": "string",
+          "description": "광고 수신 동의 체크박스 key (비우면 체크박스 문구에 광고·마케팅이 들어간 것)"
+        },
+        "send_material": {
+          "type": "boolean",
+          "description": "가져온 신청자에게 자료 메일도 보내기"
+        },
+        "last_pull_at": {
+          "type": "string"
+        },
+        "last_error": {
+          "type": "string"
+        },
+        "pulled": {
+          "type": "number"
+        }
+      }
+    },
+    "stats": {
+      "type": "object",
+      "properties": {
+        "views": {
+          "type": "number"
+        },
+        "signups": {
+          "type": "number"
+        },
+        "opt_ins": {
+          "type": "number"
+        },
+        "opened": {
+          "type": "number"
+        }
+      }
+    },
+    "created_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "slug",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}

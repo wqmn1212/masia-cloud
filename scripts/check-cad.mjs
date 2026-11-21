@@ -93,6 +93,15 @@ const preview = { overall_mm: { x: 150, y: 190, z: 72 }, parts: [
 const g = guessFromConcept(preview);
 check('컨셉(Ø150 원판 + 받침대)에서 원형 조명 템플릿·치수 추정', g.template === 'round_lamp' && g.params.dia === 150 && g.params.thick === 28 && g.params.base_w === 66 && g.params.base_d === 70 && g.params.base_h === 36 && g.params.gap === 4 && g.params.pivot_h === 18, JSON.stringify(g));
 check('컨셉이 없으면 사각 하우징으로 시작', guessFromConcept(null).template === 'box');
+{
+  // 야간투시경처럼 상자 몸통에 렌즈 링·눈컵(작은 세운 원통)이 붙은 제품은 원형 조명이 아니다
+  const nv = guessFromConcept({ overall_mm: { x: 128, y: 72, z: 181 }, parts: [
+    { id: 'body', name: '본체 하우징', layer: 'SHELL', shape: 'rounded_box', size: { x: 128, y: 72, z: 120 }, position: { x: 0, y: 36, z: 0 } },
+    { id: 'ring', name: '초점 링', layer: 'SHELL', shape: 'cylinder', size: { x: 56, y: 14, z: 56 }, position: { x: -30, y: 36, z: 80 }, rotation_deg: { x: 90, y: 0, z: 0 } },
+    { id: 'cup', name: '눈컵', layer: 'SHELL', shape: 'cylinder', size: { x: 42, y: 14, z: 42 }, position: { x: 30, y: 36, z: -80 }, rotation_deg: { x: 90, y: 0, z: 0 } },
+  ] });
+  check('렌즈 링·눈컵이 있는 상자형 제품은 사각 하우징으로 (원형 조명 오판 방지)', nv.template === 'box' && nv.params.width === 128 && nv.params.depth === 181 && nv.params.height === 72, JSON.stringify(nv));
+}
 const narrow = build('round_lamp', { bezel: 7 });
 check('테두리가 좁아 보스가 발광창에 걸리면 보스를 빼고 필요한 폭을 알려 준다', narrow.notes.some((n) => /보스를 뺐습니다/.test(n) && /mm 이상/.test(n)));
 

@@ -1,0 +1,131 @@
+{
+  "name": "EmailSuppression",
+  "type": "object",
+  "description": "수신거부 명단: 여기 있는 주소로는 어떤 캠페인도 보내지 않는다",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "소속 팀 ID"
+    },
+    "email": {
+      "type": "string",
+      "description": "보내지 않을 주소 (소문자)"
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "unsubscribe",
+        "bounce",
+        "manual"
+      ],
+      "description": "수신거부·반송·직접 추가"
+    },
+    "prospect_id": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string"
+    },
+    "lifted_at": {
+      "type": "string",
+      "description": "본인이 다시 수신 동의해서 풀린 시각 (풀린 줄은 명단에서 빠진다)"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "email"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "data.account_tier": "master"
+      }
+    }
+  }
+}
