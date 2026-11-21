@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = new URL('../src/', import.meta.url).pathname;
-const MARKETING = /components\/(landing|cloud|pricing|portfolio)\/|pages\/(Landing|Cloud|Pricing|About|PortfolioDetail|PortfolioList)\.jsx$/;
+const MARKETING = /components\/(landing|cloud|pricing|portfolio)\/|pages\/(Landing|Cloud|Pricing|About|PortfolioDetail|PortfolioList|LeadMagnetPublic)\.jsx$/;
 const MOCK = /Mocks?[A-Z]?\.jsx$|mockKit\.jsx$|GuideMocks\.jsx$/;
 const RULES = [
   { name: '원색 팔레트 → 의미 색 토큰', re: /(?<![\w-])(?:[a-z0-9]+:)*(?:text|bg|border|ring|divide|from|to|via|fill|stroke)-(?:red|rose|pink|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|slate|gray|zinc|neutral|stone)-\d{2,3}(?![\w-])/g },

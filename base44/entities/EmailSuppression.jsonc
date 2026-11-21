@@ -25,6 +25,10 @@
     },
     "note": {
       "type": "string"
+    },
+    "lifted_at": {
+      "type": "string",
+      "description": "본인이 다시 수신 동의해서 풀린 시각 (풀린 줄은 명단에서 빠진다)"
     }
   },
   "required": [

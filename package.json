@@ -73,7 +73,8 @@
     "check:proto-concept": "node --import ./scripts/fnmock/register.mjs scripts/check-proto-concept.mjs",
     "check:concept-hull": "node scripts/check-concept-hull.mjs",
     "check:sketch-trial": "node --import ./scripts/fnmock/register.mjs scripts/check-sketch-trial.mjs",
-    "check": "node scripts/check-all.mjs"
+    "check": "node scripts/check-all.mjs",
+    "check:leadmagnet": "node --import ./scripts/fnmock/register.mjs scripts/check-leadmagnet.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.63",

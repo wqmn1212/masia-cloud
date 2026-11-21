@@ -1,0 +1,47 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "20 10 * * 1-5",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "lead_reconfirm",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "reconfirm": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "leadMagnet",
+            "args": {
+              "action": "reconfirm"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "수신동의 확인 안내",
+            "description": "광고 수신 동의 2년이 다가온 신청자에게 동의 사실과 수신거부 방법을 알림"
+          }
+        }
+      }
+    ]
+  },
+  "name": "광고 수신동의 2년 확인 안내",
+  "description": "평일 10:20 에 광고 수신 동의 후 23개월이 지난 신청자에게 동의 확인 안내를 보냅니다 (정보통신망법 시행령 제62조의3)"
+}

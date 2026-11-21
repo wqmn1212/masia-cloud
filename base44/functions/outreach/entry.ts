@@ -4,7 +4,9 @@ import { sentPatch } from '../../shared/salesMail.ts';
 import {
   BASIS, LIVE, validEmail, normEmail, kst, inWindow, adSubject, footer, render, dueStep, canSend, approvable, statusAfterEdit,
   mimeMail, cleanCampaign, startProblems, DISCOVER_SCHEMA, discoverPrompt, DRAFT_SCHEMA, draftPrompt, cleanCompanies, newToken,
+  gmailSend, gmailToken, activeSuppressed,
 } from '../../shared/outreach.ts';
+import { withdrawMail } from '../../shared/leadMagnet.ts';
 
 // 콜드메일 자동화 (연결된 Gmail 로 보낸다)
 //  직원:   save_campaign {campaign}            캠페인 저장 (시작은 보낸 사람 정보·제안·소개서가 있어야)
@@ -19,17 +21,9 @@ import {
 //  공개:   unsubscribe {token}                 수신거부 (로그인 없음)
 //          brochure {token}                    회사소개서 열기 (로그인 없음) — 처음 연 시각을 기록
 const STAFF = ['master', 'service', 'sub'];
-const GMAIL = 'https://gmail.googleapis.com/gmail/v1/users/me';
 const MAX_ATTACH = 4 * 1024 * 1024; // 넘으면 링크로
 const json = (b: unknown, status = 200) => Response.json(b, { status });
 const clip = (s: unknown, n: number) => String(s ?? '').trim().slice(0, n);
-
-async function gmailSend(token: string, raw: string) {
-  const res = await fetch(`${GMAIL}/messages/send`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ raw }), signal: AbortSignal.timeout(30000) });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) { const e: any = new Error(data?.error?.message || `Gmail ${res.status}`); e.status = res.status; throw e; }
-  return data;
-}
 
 function b64(buf: ArrayBuffer) {
   const bytes = new Uint8Array(buf); let bin = '';
@@ -54,13 +48,25 @@ export default async function (req: Request) {
       const c = p.campaign_id ? await svc.entities.OutreachCampaign.get(p.campaign_id).catch(() => null) : null;
       if (action === 'unsubscribe') {
         const email = normEmail(p.email);
+        let fresh = false;
         if (email) {
-          const had = await svc.entities.EmailSuppression.filter({ tenant_id: p.tenant_id, email }, '-created_date', 1);
-          if (!had.length) await svc.entities.EmailSuppression.create({ tenant_id: p.tenant_id, email, reason: 'unsubscribe', prospect_id: p.id });
+          const had = activeSuppressed(await svc.entities.EmailSuppression.filter({ tenant_id: p.tenant_id, email }, '-created_date', 20));
+          if (!had.has(email)) { fresh = true; await svc.entities.EmailSuppression.create({ tenant_id: p.tenant_id, email, reason: 'unsubscribe', prospect_id: p.id }); }
         }
-        if (p.outreach?.status !== 'UNSUBSCRIBED') {
+        if (fresh || p.outreach?.status !== 'UNSUBSCRIBED') {
+          // 철회 기록 + 처리 결과 통지 (정보통신망법 제50조 ⑧) — 통지 실패는 수신거부를 막지 않는다
+          const senderCo = c?.sender?.company || (p.outreach?.magnet_id ? (await svc.entities.LeadMagnet.get(p.outreach.magnet_id).catch(() => null))?.operator?.company : '') || '';
+          await svc.entities.ConsentLog.create({ tenant_id: p.tenant_id, email, prospect_id: p.id, kind: 'withdraw', granted: false, source: 'unsubscribe_link', text: '수신거부 링크', at: nowIso }).catch(() => null);
+          const tok = email ? await gmailToken(svc) : '';
+          if (tok && senderCo) {
+            const m = withdrawMail(senderCo, { nowIso });
+            try {
+              await gmailSend(tok, mimeMail({ to: email, subject: m.subject, body: m.text, html: m.html }));
+              await svc.entities.ConsentLog.create({ tenant_id: p.tenant_id, email, prospect_id: p.id, kind: 'result_notice', granted: false, source: 'unsubscribe_link', text: m.text, at: nowIso }).catch(() => null);
+            } catch { /* 통지 실패 허용 */ }
+          }
           await svc.entities.SalesProspect.update(p.id, {
-            outreach: { ...(p.outreach || {}), status: 'UNSUBSCRIBED' },
+            outreach: { ...(p.outreach || {}), status: 'UNSUBSCRIBED', consent: { ...(p.outreach?.consent || {}), marketing: false, withdrawn_at: nowIso } },
             touches: [...(p.touches || []), { at: nowIso, kind: 'email', direction: 'in', note: '수신거부 (링크)', by: p.contact_name || p.company || '', stage: p.stage, auto: true }],
             ...(['TARGET', 'SENT'].includes(p.stage) ? { stage: 'LOST', lost_reason: '수신거부' } : {}),
           });
@@ -87,7 +93,7 @@ export default async function (req: Request) {
     const by = me ? (me.full_name || me.email || '') : '자동 발송';
     const loadProspect = async (id: unknown) => { const p = typeof id === 'string' && id ? await svc.entities.SalesProspect.get(id).catch(() => null) : null; return p && own(p.tenant_id) ? p : null; };
     const loadCampaign = async (id: unknown) => { const c = typeof id === 'string' && id ? await svc.entities.OutreachCampaign.get(id).catch(() => null) : null; return c && own(c.tenant_id) ? c : null; };
-    const suppressedOf = async (tenant: string) => new Set((await svc.entities.EmailSuppression.filter({ tenant_id: tenant }, '-created_date', 5000)).map((s: any) => normEmail(s.email)));
+    const suppressedOf = async (tenant: string) => activeSuppressed(await svc.entities.EmailSuppression.filter({ tenant_id: tenant }, '-created_date', 5000));
 
     if (action === 'save_campaign') {
       const input = body.campaign || {};
@@ -192,8 +198,7 @@ export default async function (req: Request) {
 
     if (action === 'run') {
       if (!inWindow(now)) return json({ sent: 0, skipped: 0, note: '보내는 시간(평일 9~18시, 한국 시간)이 아니어서 보내지 않았습니다' });
-      let token = '';
-      try { token = (await svc.connectors.getConnection('gmail')).accessToken; } catch { /* 아래 */ }
+      const token = await gmailToken(svc);
       if (!token) return json({ error: 'Gmail 이 연결되어 있지 않습니다', code: 'not_connected' }, 409);
       const campaigns = body.campaign_id
         ? [await loadCampaign(body.campaign_id)].filter(Boolean)

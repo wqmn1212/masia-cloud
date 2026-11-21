@@ -44,6 +44,8 @@
         "referral",
         "exhibition",
         "inbound",
+        "lead_magnet",
+        "meta_lead",
         "other"
       ],
       "default": "cold_email"
@@ -105,6 +107,10 @@
       "type": "string",
       "description": "콜드메일 캠페인 ID"
     },
+    "material_token": {
+      "type": "string",
+      "description": "신청한 자료 받기 링크용 토큰 (/m/<토큰>, 신청할 때마다 새로)"
+    },
     "outreach_token": {
       "type": "string",
       "description": "수신거부·회사소개서 링크용 토큰"
@@ -125,7 +131,22 @@
         "approved_at": { "type": "string" },
         "last_sent_at": { "type": "string" },
         "brochure_opened_at": { "type": "string" },
-        "error": { "type": "string" }
+        "error": { "type": "string" },
+        "magnet_id": { "type": "string", "description": "신청한 자료 신청 페이지" },
+        "material_sent_at": { "type": "string", "description": "신청한 자료를 보낸 시각" },
+        "material_opened_at": { "type": "string", "description": "자료를 처음 연 시각" },
+        "consent": {
+          "type": "object",
+          "description": "동의 기록 요약 (자세한 것은 ConsentLog)",
+          "properties": {
+            "privacy_at": { "type": "string" },
+            "marketing": { "type": "boolean" },
+            "marketing_at": { "type": "string" },
+            "source": { "type": "string" },
+            "reconfirm_sent_at": { "type": "string", "description": "마지막 2년 수신동의 확인 안내" },
+            "withdrawn_at": { "type": "string" }
+          }
+        }
       }
     },
     "created_by_name": {

@@ -52,6 +52,7 @@ const Leads = lazy(() => import('@/pages/Leads'));
 const SalesPipeline = lazy(() => import('@/pages/SalesPipeline'));
 const Outreach = lazy(() => import('@/pages/Outreach'));
 const OutreachPublic = lazy(() => import('@/pages/OutreachPublic'));
+const LeadMagnetPublic = lazy(() => import('@/pages/LeadMagnetPublic'));
 const ClientPortalDashboard = lazy(() => import('@/pages/ClientPortalDashboard'));
 const ClientBoard = lazy(() => import('@/pages/ClientBoard'));
 const ClientDocuments = lazy(() => import('@/pages/ClientDocuments'));
@@ -101,7 +102,9 @@ const AuthenticatedApp = () => {
   // 개발 미팅 공유 링크 — 고객이 계정 없이 링크 + PIN으로 연다
   if (location.pathname.startsWith('/m/')) return <Suspense fallback={<Spinner />}><MeetingShare /></Suspense>;
   // 콜드메일의 수신거부·회사소개서 링크 — 받는 사람이 계정 없이 연다
-  if (/^\/(u|b)\/[0-9a-f]{20,}$/.test(location.pathname)) return <Suspense fallback={<Spinner />}><OutreachPublic /></Suspense>;
+  if (/^\/(u|b|d)\/[0-9a-f]{20,}$/.test(location.pathname)) return <Suspense fallback={<Spinner />}><OutreachPublic /></Suspense>;
+  // 무료 자료 신청 페이지 — 광고·카드뉴스·QR 에서 계정 없이 연다
+  if (/^\/free\/[a-z0-9-]{1,40}\/?$/.test(location.pathname)) return <Suspense fallback={<Spinner />}><LeadMagnetPublic /></Suspense>;
   // 실시간 디자인 리뷰 — 팀원·고객사 계정은 로그인으로, 초대받은 사람은 이메일 링크로, 그 밖은 링크 + PIN 으로 연다 (권한은 서버가 본다)
   if (location.pathname.startsWith('/design/')) return <Suspense fallback={<Spinner />}><DesignReview /></Suspense>;
   // 물류비 계산기는 고객 전용 — 예전 공개 주소는 고객 포털로 보낸다 (로그인 필요)

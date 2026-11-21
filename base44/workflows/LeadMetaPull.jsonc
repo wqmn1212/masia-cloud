@@ -1,0 +1,47 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "15 8-21 * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "lead_meta_pull",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "pull_leads": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "leadMagnet",
+            "args": {
+              "action": "meta_pull_all"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "리드 광고 신청자 가져오기",
+            "description": "리드 양식 ID 를 넣은 자료 신청 페이지마다 새 신청자를 가져와 동의 기록·영업 대상으로 넣음"
+          }
+        }
+      }
+    ]
+  },
+  "name": "인스타·페북 리드 가져오기",
+  "description": "매일 8~21시 매시 15분에 인스타그램·페이스북 리드 광고 신청자를 가져옵니다 (META_LEAD_TOKEN 이 있을 때)"
+}

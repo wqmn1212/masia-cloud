@@ -125,8 +125,8 @@ const header = (s: string) => (/^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${b64(s
 const one = (s: unknown) => String(s ?? '').replace(/[\r\n]+/g, ' ').trim();
 const wrap = (b: string) => (b.match(/.{1,76}/g) || []).join('\r\n');
 
-/** attachment.data 는 base64 (줄바꿈 없음) */
-export function mimeMail({ to, subject, body, replyTo = '', attachment = null, unsubUrl = '' }: { to: string; subject: string; body: string; replyTo?: string; attachment?: { name: string; type: string; data: string } | null; unsubUrl?: string }) {
+/** attachment.data 는 base64 (줄바꿈 없음). html 을 주면 글자·HTML 두 가지로 (메일 앱이 고른다) */
+export function mimeMail({ to, subject, body, html = '', replyTo = '', attachment = null, unsubUrl = '' }: { to: string; subject: string; body: string; html?: string; replyTo?: string; attachment?: { name: string; type: string; data: string } | null; unsubUrl?: string }) {
   const head = [
     `To: ${one(to)}`,
     ...(replyTo ? [`Reply-To: ${one(replyTo)}`] : []),
@@ -135,6 +135,15 @@ export function mimeMail({ to, subject, body, replyTo = '', attachment = null, u
     'MIME-Version: 1.0',
   ];
   const text = wrap(b64(String(body || '').replace(/\r?\n/g, '\r\n')));
+  if (html && !attachment) {
+    const alt = `aegis_alt_${Math.random().toString(36).slice(2)}`;
+    return b64url([
+      ...head, `Content-Type: multipart/alternative; boundary="${alt}"`, '',
+      `--${alt}`, 'Content-Type: text/plain; charset="UTF-8"', 'Content-Transfer-Encoding: base64', '', text,
+      `--${alt}`, 'Content-Type: text/html; charset="UTF-8"', 'Content-Transfer-Encoding: base64', '', wrap(b64(html)),
+      `--${alt}--`, '',
+    ].join('\r\n'));
+  }
   if (!attachment) return b64url([...head, 'Content-Type: text/plain; charset="UTF-8"', 'Content-Transfer-Encoding: base64', '', text].join('\r\n'));
   const boundary = `aegis_${Math.random().toString(36).slice(2)}`;
   return b64url([
@@ -242,3 +251,17 @@ export function cleanCompanies(list: any[], known: string[]) {
 }
 
 export const newToken = () => Array.from(crypto.getRandomValues(new Uint8Array(18)), (b) => b.toString(16).padStart(2, '0')).join('');
+
+// ---------- Gmail 보내기 (연결된 Gmail) ----------
+const GMAIL = 'https://gmail.googleapis.com/gmail/v1/users/me';
+export async function gmailSend(token: string, raw: string) {
+  const res = await fetch(`${GMAIL}/messages/send`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ raw }), signal: AbortSignal.timeout(30000) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { const e: any = new Error(data?.error?.message || `Gmail ${res.status}`); e.status = res.status; throw e; }
+  return data;
+}
+export async function gmailToken(svc: any) {
+  try { return (await svc.connectors.getConnection('gmail')).accessToken || ''; } catch { return ''; }
+}
+/** 수신거부 명단 (재동의로 풀린 것은 뺀다) */
+export const activeSuppressed = (rows: any[]) => new Set((rows || []).filter((s: any) => !s.lifted_at).map((s: any) => normEmail(s.email)));

@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/use-toast';
 import { BASIS, SENDABLE, STATUS, STATUS_ORDER, EMPTY_CAMPAIGN, callOutreach, previewMail } from '@/lib/outreachApi';
+import LeadMagnetsPanel from '@/components/outreach/LeadMagnetsPanel';
 
 const sel = 'h-9 w-full rounded-md border bg-background px-2 text-label';
 const when = (iso) => (iso ? new Date(iso).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '');
@@ -212,6 +213,7 @@ function ProspectEditor({ p, campaign, onClose, onChanged }) {
 export default function Outreach() {
   useAuth();
   const qc = useQueryClient();
+  const [tab, setTab] = useState(() => (new URLSearchParams(window.location.search).get('tab') === 'leads' ? 'leads' : 'cold'));
   const [campaignId, setCampaignId] = useState(() => new URLSearchParams(window.location.search).get('c') || '');
   const [editing, setEditing] = useState(null); // 'new' | campaign
   const [openId, setOpenId] = useState(null);
@@ -275,15 +277,19 @@ export default function Outreach() {
         <div>
           <p className="flex items-center gap-1.5 text-caption font-semibold text-primary"><MailPlus className="h-4 w-4" />영업</p>
           <h1 className="text-h2 font-bold">콜드메일 자동화</h1>
-          <p className="text-caption text-muted-foreground">AI 가 고객사를 찾고 맞춤 메일을 씁니다. 사람이 확인하고 승인하면 회사소개서와 함께 보내고, 회신이 없으면 후속 메일까지 보냅니다.</p>
+          <p className="text-caption text-muted-foreground">{tab === 'leads' ? '무료 자료로 이메일과 수신 동의를 받고, 동의한 사람에게 후속 메일을 이어서 보냅니다.' : 'AI 가 고객사를 찾고 맞춤 메일을 씁니다. 사람이 확인하고 승인하면 회사소개서와 함께 보내고, 회신이 없으면 후속 메일까지 보냅니다.'}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div role="tablist" className="flex rounded-lg border bg-card p-1 text-label">
+          {[['cold', '콜드메일'], ['leads', '자료 신청 페이지']].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`rounded-md px-3 py-1.5 ${tab === k ? 'bg-primary text-primary-foreground font-semibold' : 'text-muted-foreground hover:bg-secondary'}`}>{l}</button>)}
+        </div>
+        {tab === 'cold' && <div className="flex flex-wrap items-center gap-2">
           <span className={`rounded-full px-2.5 py-1 text-micro font-semibold ${gmail?.can_send ? 'bg-success/15 text-success-text' : 'bg-destructive/10 text-destructive'}`}>{gmail?.can_send ? `Gmail 연결됨${gmail.email ? ` · ${gmail.email}` : ''}` : gmail?.connected ? 'Gmail 보내기 권한 없음' : 'Gmail 연결 필요'}</span>
           {campaigns.length > 0 && <select aria-label="캠페인" className="h-9 rounded-md border bg-background px-2 text-label" value={campaign?.id || ''} onChange={(e) => { setCampaignId(e.target.value); setEditing(null); setPicked([]); }}>{campaigns.map((c) => <option key={c.id} value={c.id}>{c.name} · {({ DRAFT: '준비', ACTIVE: '진행 중', PAUSED: '일시정지', DONE: '끝' })[c.status]}</option>)}</select>}
           <Button variant="outline" onClick={() => setEditing('new')}><Plus className="h-4 w-4" />새 캠페인</Button>
-        </div>
+        </div>}
       </div>
 
+      {tab === 'leads' ? <LeadMagnetsPanel campaigns={campaigns} /> : <>
       <LawNote />
 
       {(editing === 'new' || (!campaign && !isLoading)) && (
@@ -347,7 +353,8 @@ export default function Outreach() {
           )}
         </>
       )}
-      {open && campaign && <ProspectEditor key={open.id} p={open} campaign={campaign} onClose={() => setOpenId(null)} onChanged={(p) => setOne(p)} />}
+      </>}
+      {tab === 'cold' && open && campaign && <ProspectEditor key={open.id} p={open} campaign={campaign} onClose={() => setOpenId(null)} onChanged={(p) => setOne(p)} />}
     </div>
   );
 }

@@ -3,22 +3,24 @@ import { Loader2, MailX, FileText } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 
-// 콜드메일 받는 사람이 계정 없이 여는 화면: /u/<토큰> 수신거부, /b/<토큰> 회사소개서
+// 콜드메일 받는 사람이 계정 없이 여는 화면: /u/<토큰> 수신거부, /b/<토큰> 회사소개서, /d/<토큰> 신청한 자료 받기
 const call = async (body) => {
-  try { return (await base44.functions.invoke('outreach', body)).data; }
+  try { return (await base44.functions.invoke(body.action === 'material' ? 'leadMagnet' : 'outreach', body)).data; }
   catch (e) { const d = e?.response?.data; throw new Error(d?.error || e.message); }
 };
 
 export default function OutreachPublic() {
   const [, kind, token] = window.location.pathname.split('/');
-  const [state, setState] = useState({ busy: kind === 'b', done: false, error: '', data: null });
+  const file = kind === 'b' || kind === 'd';
+  const what = kind === 'd' ? '자료' : '회사소개서';
+  const [state, setState] = useState({ busy: file, done: false, error: '', data: null });
 
   useEffect(() => {
-    if (kind !== 'b') return;
-    call({ action: 'brochure', token })
+    if (!file) return;
+    call({ action: kind === 'd' ? 'material' : 'brochure', token })
       .then((d) => { setState({ busy: false, done: true, error: '', data: d }); window.location.replace(d.url); })
       .catch((e) => setState({ busy: false, done: false, error: e.message, data: null }));
-  }, [kind, token]);
+  }, [file, kind, token]);
 
   const unsubscribe = async () => {
     setState((s) => ({ ...s, busy: true }));
@@ -49,8 +51,8 @@ export default function OutreachPublic() {
         ) : (
           <>
             <FileText className="mx-auto h-8 w-8 text-muted-foreground" />
-            {state.busy ? <p className="flex items-center justify-center gap-2 text-body"><Loader2 className="h-4 w-4 animate-spin" />회사소개서를 여는 중…</p>
-              : state.done ? <p className="text-body">회사소개서가 열리지 않으면 <a className="text-primary underline" href={state.data?.url}>여기</a>를 누르세요.</p> : null}
+            {state.busy ? <p className="flex items-center justify-center gap-2 text-body"><Loader2 className="h-4 w-4 animate-spin" />{what}를 여는 중…</p>
+              : state.done ? <p className="text-body">{what}가 열리지 않으면 <a className="text-primary underline" href={state.data?.url}>여기</a>를 누르세요.</p> : null}
           </>
         )}
         {state.error && <p className="text-caption text-destructive">{state.error === '링크를 찾을 수 없습니다' ? '링크가 맞지 않거나 만료되었습니다.' : state.error}</p>}
