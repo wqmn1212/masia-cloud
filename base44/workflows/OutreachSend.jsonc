@@ -1,0 +1,47 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "40 9,11,14,16 * * 1-5",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "outreach_send",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_due": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "outreach",
+            "args": {
+              "action": "run"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "콜드메일 보내기",
+            "description": "승인된 첫 메일과 때가 된 후속 메일을 보냄 (평일 9~18시, 하루 한도 안)"
+          }
+        }
+      }
+    ]
+  },
+  "name": "콜드메일 자동 발송",
+  "description": "평일 9:40·11:40·14:40·16:40 에 진행 중인 콜드메일 캠페인의 첫 메일·후속 메일을 보냅니다. 회신·수신거부한 대상은 건너뜁니다"
+}

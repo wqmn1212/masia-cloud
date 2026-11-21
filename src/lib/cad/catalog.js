@@ -145,7 +145,12 @@ export function guessFromConcept(preview) {
     const hint = preview.cad_hint?.template === 'sphere_lamp' ? preview.cad_hint.params || {} : {};
     return { template: 'sphere_lamp', params: cleanParams('sphere_lamp', { ...p, ...hint }) };
   }
-  const disc = shells.find((p) => p.shape === 'cylinder' && Math.abs((p.rotation_deg?.x || 0)) === 90 && p.size.y < p.size.x * 0.45);
+  // 원판형 조명: 세운 원판이 제품의 주 외장일 때만 (렌즈 링·눈컵·다이얼 같은 작은 원통은 제외)
+  const ov = preview?.overall_mm;
+  const span = ov ? Math.max(ov.x || 0, ov.y || 0) : Math.max(0, ...shells.map((p) => Math.max(p.size.x, p.size.y)));
+  const disc = shells
+    .filter((p) => p.shape === 'cylinder' && Math.abs((p.rotation_deg?.x || 0)) === 90 && p.size.y < p.size.x * 0.45 && p.size.x >= span * 0.6)
+    .sort((a, b) => b.size.x - a.size.x)[0];
   if (disc) {
     const base = shells.filter((p) => p !== disc && p.position.y < disc.position.y).sort((a, b) => b.size.x * b.size.z - a.size.x * a.size.z)[0];
     const axle = parts.find((p) => /축|axle|hinge|힌지/i.test(p.name) && p.layer === 'INTERNAL' && p.shape === 'cylinder');

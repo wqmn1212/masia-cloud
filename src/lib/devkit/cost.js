@@ -19,6 +19,27 @@ const PART_PRICE = [
   [/EC11|PEC09/, 650], [/DC-005|잭/, 160], [/B\dB-|XH|PH/, 55], [/부저|buzzer/i, 160], [/NTC/, 18], [/CR1220|CR2032/, 110], [/100uF/, 35],
 ];
 export const partPrice = (c) => { const t = `${c.value} ${c.part?.value || ''} ${c.part?.search || ''}`; const hit = PART_PRICE.find(([re]) => re.test(t)); return hit ? hit[1] : 50; };
+/** 단가표에 있는 부품만 값, 모르면 null (모르는 부품을 50원으로 채우지 않기 위해) */
+// 설계 부품표에는 부품 번호가 분명한 항목만 쓴다 (‘LED’, ‘uF’ 같은 넓은 규칙은 ‘마이크로 OLED’ 를 8원으로 잡는 식의 오판을 낸다)
+const GENERIC = new Set(['^R|Ω|k$', 'uF|nF|pF', 'uH', 'LED', 'DC-005|잭', 'B\\dB-|XH|PH', '부저|buzzer', '100uF', '32\\.768', 'NTC']);
+const PART_NO_PRICE = PART_PRICE.filter(([re]) => !GENERIC.has(re.source));
+export const knownPartPrice = (partNo) => { const t = String(partNo || '').trim(); if (!t) return null; const hit = PART_NO_PRICE.find(([re]) => re.test(t)); return hit ? hit[1] : null; };
+export const bomKey = (l) => String(l?.part_no || l?.name || l?.ref || '').trim();
+
+/**
+ * 승인된 설계 버전의 부품표(lines: {ref, name, part_no, qty})로 부품비를 계산한다.
+ * prices: { [bomKey]: 원 } — 화면에서 넣은 단가. 없으면 단가표에서 찾고, 그래도 없으면 '단가 없음' 으로 센다.
+ */
+export function designBomCost(lines, prices = {}) {
+  const rows = (lines || []).filter((l) => l && (l.name || l.part_no)).map((l) => {
+    const key = bomKey(l); const qty = Number(l.qty) > 0 ? Number(l.qty) : 1;
+    const typed = Number(prices?.[key]);
+    const unit = Number.isFinite(typed) && typed > 0 ? typed : knownPartPrice(l.part_no);
+    return { key, ref: l.ref || '', name: l.name || l.part_no, part_no: l.part_no || '', qty, unit, source: Number.isFinite(typed) && typed > 0 ? 'typed' : unit != null ? 'table' : 'none', total: unit != null ? unit * qty : 0 };
+  });
+  const unpriced = rows.filter((r) => r.unit == null);
+  return { rows, total: Math.round(rows.reduce((n, r) => n + r.total, 0)), priced: rows.length - unpriced.length, unpriced: unpriced.map((r) => r.name) };
+}
 
 /**
  * moldSummary: dev.mold_design.summary ({ parts: [{name, material, mold, weight, size, slides, hi}] })
@@ -28,7 +49,7 @@ export const partPrice = (c) => { const t = `${c.value} ${c.part?.value || ''} $
  * quotes (dev.cost_quotes): 공장 견적으로 추정치를 바꾼다.
  *   { factory, date, currency: 'KRW' | 'CNY' | 'USD', fx (통화 1 단위 = 원), parts: { [부품 이름]: { mold, unit, cavities } } }
  */
-export function estimateCost({ moldSummary, hwPkg, settings = {}, quotes = null }) {
+export function estimateCost({ moldSummary, hwPkg, settings = {}, quotes = null, designBom = null, bomPrices = null }) {
   const fx = quotes && quotes.currency && quotes.currency !== 'KRW' ? Number(quotes.fx) || 0 : 1;
   const qOf = (name) => { const q = quotes?.parts?.[name]; return q && fx > 0 ? q : null; };
   const S = { ...COST_DEFAULTS, ...settings };
@@ -58,9 +79,13 @@ export function estimateCost({ moldSummary, hwPkg, settings = {}, quotes = null 
   });
   const tooling = moldRows.reduce((n, r) => n + r.mold, 0);
   const setup = boards.reduce((n, b) => n + b.setup, 0);
-  const unit = moldRows.reduce((n, r) => n + r.unit, 0) + boards.reduce((n, b) => n + b.pcb + b.smt + b.parts, 0) + S.assembly_krw + S.packaging_krw;
+  // 부품비 기준: 승인된 설계 부품표가 있으면 그것(실제 제품 부품), 없으면 워크벤치 범용 회로
+  const design = designBom?.length ? designBomCost(designBom, bomPrices || {}) : null;
+  const partsBasis = design ? 'design' : 'generic';
+  const partsCost = design ? design.total : boards.reduce((n, b) => n + b.parts, 0);
+  const unit = moldRows.reduce((n, r) => n + r.unit, 0) + boards.reduce((n, b) => n + b.pcb + b.smt, 0) + partsCost + S.assembly_krw + S.packaging_krw;
   const byQty = S.qtys.map((q) => ({ qty: q, unit, tooling_per_unit: Math.round((tooling + setup) / q), total_per_unit: Math.round(unit + (tooling + setup) / q), total: Math.round(unit * q + tooling + setup) }));
   const quoted = moldRows.filter((r) => r.source.mold === 'quote').length;
   const estTooling = moldRows.reduce((n, r) => n + r.est.mold, 0);
-  return { quote: quotes && quoted ? { factory: quotes.factory || '', date: quotes.date || '', quoted, of: moldRows.length, tooling_diff: tooling - estTooling } : null, moldRows, boards, tooling, setup, unit, byQty, settings: S, missing: [...(!molded.length ? ['사출 부품 (3D 도면 → 금형용 설계를 한 번 열어 계산)'] : []), ...(!boards.length ? ['기판 (회로 설계 단계)'] : [])] };
+  return { partsBasis, design, partsCost, quote: quotes && quoted ? { factory: quotes.factory || '', date: quotes.date || '', quoted, of: moldRows.length, tooling_diff: tooling - estTooling } : null, moldRows, boards, tooling, setup, unit, byQty, settings: S, missing: [...(!molded.length ? ['사출 부품 (3D 도면 → 금형용 설계를 한 번 열어 계산)'] : []), ...(!boards.length ? ['기판 (회로 설계 단계)'] : []), ...(design?.unpriced.length ? [`단가 없는 부품 ${design.unpriced.length}개 (0원으로 빠짐)`] : [])] };
 }

@@ -15,6 +15,7 @@ export const KIND_LABEL = { gnd: '접지', power: '전원', hv: '고전압', sig
 export function DrcPanel({ list, onFocus }) {
   const [sev, setSev] = useState('all');
   const [cat, setCat] = useState('all');
+  const [openUnrouted, setOpenUnrouted] = useState(false);
   const cats = [...new Set(list.map((d) => d.cat))];
   const shown = list.filter((d) => (sev === 'all' || d.sev === sev) && (cat === 'all' || d.cat === cat));
   // 미연결은 넷마다 하나로 묶어 보여 준다 (많으면 목록이 묻힌다)
@@ -37,19 +38,36 @@ export function DrcPanel({ list, onFocus }) {
           {cats.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
-      {grouped.length === 0 ? <p className="text-caption text-muted-foreground">걸린 것이 없습니다.</p> : (
-        <ul className="max-h-[52vh] space-y-1 overflow-y-auto pr-1">{grouped.slice(0, 400).map((d) => {
+      {grouped.length === 0 ? <p className="text-caption text-muted-foreground">걸린 것이 없습니다.</p> : (() => {
+        // 제조·전기 문제를 먼저, 미연결(배선 전이면 당연히 많다)은 한 줄로 접어 맨 아래에
+        const main = grouped.filter((d) => d.code !== 'unrouted');
+        const wires = grouped.filter((d) => d.code === 'unrouted');
+        const spots = wires.reduce((n, d) => n + (d.count || 1), 0);
+        const showWires = openUnrouted || main.length === 0;
+        const Row = (d) => {
           const [l, cls, Icon] = SEV[d.sev];
           return (
             <li key={d.id}>
-              <button type="button" onClick={() => d.at && onFocus(d)} className="flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left text-caption hover:bg-secondary">
+              <button type="button" onClick={() => d.at && onFocus(d)} className="flex w-full items-start gap-2 rounded-lg px-2 py-2 text-left text-caption hover:bg-secondary">
                 <Icon className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${cls}`} aria-label={l} />
                 <span className="min-w-0 flex-1"><span className="font-medium">{d.title}{d.count > 1 ? ` 외 ${d.count - 1}곳` : ''}</span><span className="block text-micro text-muted-foreground">{d.cat} · {d.detail}</span></span>
               </button>
             </li>
           );
-        })}</ul>
-      )}
+        };
+        return (
+          <ul className="max-h-[52vh] space-y-1 overflow-y-auto pr-1">
+            {main.slice(0, 400).map(Row)}
+            {wires.length > 0 && main.length > 0 && (
+              <li><button type="button" aria-expanded={showWires} onClick={() => setOpenUnrouted((v) => !v)} className="flex w-full items-center justify-between gap-2 rounded-lg border border-dashed px-2 py-2 text-left text-caption hover:bg-secondary">
+                <span><span className="font-medium">미연결 넷 {wires.length}개 · {spots}곳</span><span className="block text-micro text-muted-foreground">배선을 마치기 전이면 정상입니다</span></span>
+                <span className="text-micro text-primary">{showWires ? '접기' : '펼치기'}</span>
+              </button></li>
+            )}
+            {showWires && wires.slice(0, 400).map(Row)}
+          </ul>
+        );
+      })()}
     </div>
   );
 }

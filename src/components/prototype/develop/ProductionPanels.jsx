@@ -9,7 +9,7 @@ import { estimateCost } from '@/lib/devkit/cost';
 import { snapshotOf, diffDesign, impactOf, canApproveEco, ecoTasks, ecoNotice } from '@/lib/devkit/freeze';
 import { base44 } from '@/api/base44Client';
 import { noteProtoToCard } from '@/lib/protoCardApi';
-import { uploadProtoFile, addProtoFiles } from '@/lib/prototypeApi';
+import { uploadProtoFile, addProtoFiles, useProtoVersions } from '@/lib/prototypeApi';
 import { actorName } from '@/lib/prototypeApi';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProtoClient } from '@/components/prototype/develop/ClientSharePanel';
@@ -17,7 +17,19 @@ import { useProtoClient } from '@/components/prototype/develop/ClientSharePanel'
 const won = (v) => `${Math.round(v).toLocaleString('ko-KR')}원`;
 
 // 수량별 원가 추정: 금형용 설계 요약(사출 부품) + 회로(기판·부품) → 금형비·개당 원가
+/** 원가 기준이 될 설계 버전: 승인본 → 현재 버전 → 가장 최근 순 */
+export function pickCostVersion(project, versions) {
+  const list = versions || [];
+  return list.find((v) => v.status === 'APPROVED') || list.find((v) => v.id === project?.current_version_id) || list[0] || null;
+}
+export function useCostVersion(project) {
+  const { data: versions } = useProtoVersions(project?.id);
+  return pickCostVersion(project, versions);
+}
+
 export function CostCard({ project, dev, change }) {
+  const version = useCostVersion(project);
+  const [bomOpen, setBomOpen] = useState(false);
   const [hwPkg, setHwPkg] = useState(null);
   const [assembly, setAssembly] = useState(1500);
   useEffect(() => {
@@ -27,7 +39,8 @@ export function CostCard({ project, dev, change }) {
     return () => { alive = false; };
   }, [JSON.stringify([dev.features, dev.mcu, dev.supply_v, dev.mold_design?.template, dev.mold_design?.params, dev.hw])]); // eslint-disable-line react-hooks/exhaustive-deps
   const quotes = dev.cost_quotes || null;
-  const est = useMemo(() => estimateCost({ moldSummary: dev.mold_design?.summary, hwPkg, settings: { assembly_krw: assembly }, quotes }), [dev.mold_design?.summary, hwPkg, assembly, quotes]);
+  const est = useMemo(() => estimateCost({ moldSummary: dev.mold_design?.summary, hwPkg, settings: { assembly_krw: assembly }, quotes, designBom: version?.bom, bomPrices: dev.cost_parts }), [dev.mold_design?.summary, hwPkg, assembly, quotes, version?.bom, dev.cost_parts]);
+  const setPrice = (key, v) => change?.((d) => ({ cost_parts: { ...(d.cost_parts || {}), [key]: v === '' ? '' : Number(v) } }));
   const [qOpen, setQOpen] = useState(false);
   const [reading, setReading] = useState(false);
   const setQ = (patch) => change?.((d) => ({ cost_quotes: { currency: 'CNY', fx: 195, parts: {}, ...(d.cost_quotes || {}), ...patch } }));
@@ -49,6 +62,9 @@ export function CostCard({ project, dev, change }) {
   };
   return (
     <Card title="수량별 원가 추정" icon={Calculator} tag="초기 감 잡기">
+      {est.partsBasis === 'design'
+        ? <p className="rounded-lg bg-secondary px-3 py-2 text-caption">부품비는 <b>설계 v{version.version_no}{version.status === 'APPROVED' ? ' (승인본)' : ''} 부품표 {est.design.rows.length}종</b> 기준입니다 — 단가 있는 부품 {est.design.priced}종, 합 {won(est.design.total)}.{est.design.unpriced.length > 0 && <span className="text-warning-text"> 단가 없는 {est.design.unpriced.length}종은 0원으로 빠져 있어 실제보다 낮습니다.</span>}</p>
+        : <p className="rounded-lg bg-warning/10 px-3 py-2 text-caption text-warning-text">설계 부품표가 없어 워크벤치 기능에서 만든 <b>범용 회로</b> 부품으로 계산했습니다. 실제 제품의 메인 칩·센서·디스플레이 가격은 빠져 있습니다 — 견적에 쓰지 마세요.</p>}
       {est.missing.length > 0 && <p className="text-caption text-warning-text">아직 빠진 것: {est.missing.join(', ')}</p>}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[520px] text-caption">
@@ -63,10 +79,36 @@ export function CostCard({ project, dev, change }) {
         </div>
         <div className="space-y-1">
           <p className="text-caption font-semibold">기판 (준비비 합 {won(est.setup)})</p>
-          {est.boards.map((b) => <p key={b.name} className="text-micro text-muted-foreground tabular-nums">{b.name} · {b.area_cm2} cm² · 부품 {b.parts_count}개 → 기판 {won(b.pcb)} + 실장 {won(b.smt)} + 부품 {won(b.parts)}</p>)}
+          {est.boards.map((b) => <p key={b.name} className="text-micro text-muted-foreground tabular-nums">{b.name} · {b.area_cm2} cm² · 부품 {b.parts_count}개 → 기판 {won(b.pcb)} + 실장 {won(b.smt)}{est.partsBasis === 'generic' ? ` + 부품 ${won(b.parts)}` : ''}</p>)}
+          {est.partsBasis === 'design' && <p className="text-micro text-muted-foreground tabular-nums">부품 (설계 부품표) {won(est.partsCost)}</p>}
           <label className="flex items-center gap-2 text-micro">조립 인건비 (개당) <Input aria-label="조립 인건비" type="number" value={assembly} onChange={(e) => setAssembly(Number(e.target.value) || 0)} className="h-7 w-24 text-micro" /> 원 · 포장 {won(est.settings.packaging_krw)}</label>
         </div>
       </div>
+      {change && est.design && (
+        <div className="rounded-lg border p-3 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-caption font-semibold">부품 단가 (설계 부품표)</p>
+            <span className="text-micro text-muted-foreground">{est.design.priced}/{est.design.rows.length}종 단가 있음</span>
+            <Button size="sm" variant="outline" className="ml-auto h-7" onClick={() => setBomOpen((v) => !v)}>{bomOpen ? '접기' : '단가 넣기'}</Button>
+          </div>
+          {bomOpen && (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[520px] text-caption">
+                <thead className="text-left text-muted-foreground"><tr><th className="py-1 pr-2 font-medium">기호</th><th className="py-1 pr-2 font-medium">부품</th><th className="py-1 pr-2 text-right font-medium">수량</th><th className="py-1 pr-2 font-medium">개당 단가 (원)</th><th className="py-1 text-right font-medium">합계</th></tr></thead>
+                <tbody>{est.design.rows.map((r) => (
+                  <tr key={r.key + r.ref} className="border-t tabular-nums">
+                    <td className="py-1 pr-2">{r.ref}</td>
+                    <td className="py-1 pr-2">{r.name}{r.part_no ? <span className="text-muted-foreground"> · {r.part_no}</span> : null}</td>
+                    <td className="py-1 pr-2 text-right">{r.qty}</td>
+                    <td className="py-1 pr-2"><Input aria-label={`${r.name} 단가`} type="number" min="0" value={dev.cost_parts?.[r.key] ?? ''} placeholder={r.source === 'table' ? `단가표 ${r.unit}` : '단가 없음'} onChange={(e) => setPrice(r.key, e.target.value)} className={`h-7 w-28 text-micro ${r.unit == null ? 'border-warning' : ''}`} /></td>
+                    <td className="py-1 text-right">{r.unit == null ? '—' : won(r.total)}</td>
+                  </tr>))}</tbody>
+              </table>
+              <p className="mt-1 text-micro text-muted-foreground">공급처 견적(1천 개 기준)을 넣으세요. 값은 자동 저장되고, 설계 버전이 바뀌어도 같은 부품 번호의 단가는 유지됩니다.</p>
+            </div>
+          )}
+        </div>
+      )}
       {change && est.moldRows.length > 0 && (
         <div className="rounded-lg border p-3 space-y-2">
           <div className="flex flex-wrap items-center gap-2">

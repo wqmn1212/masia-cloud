@@ -9,11 +9,13 @@ import { toast } from '@/components/ui/use-toast';
 import { meetingSteps, meetingReport, certChecklist } from '@/lib/devkit/meetingReport';
 import { estimateCost } from '@/lib/devkit/cost';
 import { errorText, uploadProtoFile, addProtoFiles } from '@/lib/prototypeApi';
+import { useCostVersion } from '@/components/prototype/develop/ProductionPanels';
 
 const stamp = () => new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
 
 // 미팅 모드: 단계 진행 막대 + 다음 단계 + 참석자·결정·할 일 메모 → 미팅 결과 요약 / 인증 준비 자료 (내려받기 + 시제품 파일에 저장)
 export default function MeetingBar({ project, dev, change, concept, circuits, step, go, steps, user, onSaved, onClose }) {
+  const costVersion = useCostVersion(project);
   const [busy, setBusy] = useState('');
   const m = dev.meeting || {};
   const setM = (patch) => change((d) => ({ meeting: { ...(d.meeting || {}), ...patch } }));
@@ -30,7 +32,7 @@ export default function MeetingBar({ project, dev, change, concept, circuits, st
     try {
       const hw = await hwPkg().catch(() => null);
       const text = kind === 'report'
-        ? meetingReport(project, dev, { concept, circuits, hw, cost: estimateCost({ moldSummary: dev.mold_design?.summary, hwPkg: hw, quotes: dev.cost_quotes }), ...m })
+        ? meetingReport(project, dev, { concept, circuits, hw, cost: estimateCost({ moldSummary: dev.mold_design?.summary, hwPkg: hw, quotes: dev.cost_quotes, designBom: costVersion?.bom, bomPrices: dev.cost_parts }), ...m })
         : certChecklist(project, dev, { hw });
       const name = `${dev.device_name || 'project'}-${kind === 'report' ? 'meeting' : 'kc-cert-prep'}-${stamp()}.md`;
       const { downloadText } = await import('@/lib/devkit/conceptExport');

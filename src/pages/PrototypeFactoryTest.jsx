@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { useProtoProject, actorName, errorText } from '@/lib/prototypeApi';
 import { serialSupported, SerialMonitor, flashBinary, localEpoch } from '@/lib/devkit/flasher';
-import { factoryPlan, parseSelftest, judgeAuto, verdictOf, nextSerial, unitRecord } from '@/lib/devkit/factoryTest';
+import { factoryPlan, parseSelftest, judgeAuto, verdictOf, nextSerial, unitRecord, lastSerialOf, todayCounts } from '@/lib/devkit/factoryTest';
 
 const mem = (k, v) => { try { if (v === undefined) return localStorage.getItem(k) || ''; localStorage.setItem(k, v); } catch { /* 저장소 없음 */ } return v; };
 
@@ -38,7 +38,18 @@ export default function PrototypeFactoryTest() {
   const monRef = useRef(null);
   monRef.current = mon;
   useEffect(() => () => { monRef.current?.close(); }, []);
-  useEffect(() => { if (project && !serial) setSerial(nextSerial(prefix, mem(`ftLast-${projectId}`))); }, [project]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 일련번호·오늘 집계는 서버 기록 기준: 검사 PC 가 여러 대여도 번호가 겹치지 않고, 새로고침해도 수가 유지된다
+  const loadUnits = async () => {
+    if (!project?.card_id) return [];
+    return base44.entities.ProductionUnit.filter({ card_id: project.card_id }, '-created_date', 500).catch(() => []);
+  };
+  const serverNext = async (pfx) => {
+    const units = await loadUnits();
+    setCount(todayCounts(units));
+    // 서버 기록과 이 PC 의 마지막 번호 중 큰 것 다음 (서버 조회가 실패해도 이 PC 에서는 이어진다)
+    return nextSerial(pfx, lastSerialOf([...units, { serial: mem(`ftLast-${projectId}`) }], pfx));
+  };
+  useEffect(() => { if (project && !serial) serverNext(prefix).then(setSerial); }, [project]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onLine = (l) => {
     setLog((x) => [...x.slice(-60), l]);
@@ -99,11 +110,16 @@ export default function PrototypeFactoryTest() {
     if (!serial.trim()) { toast({ title: T('일련번호를 넣으세요', '请输入序列号') }); return; }
     setBusy('save');
     try {
+      const dup = await base44.entities.ProductionUnit.filter({ card_id: project.card_id, serial: serial.trim() }, '-created_date', 1).catch(() => []);
+      if (dup.length) {
+        const next = await serverNext(prefix);
+        toast({ title: T(`${serial} 은 이미 저장된 번호입니다`, `${serial} 已存在`), description: T(`다음 번호 ${next} 로 바꿨습니다. 확인 후 다시 저장하세요.`, `已改为 ${next}，请确认后再保存。`), variant: 'destructive' });
+        setSerial(next); setBusy(''); return;
+      }
       await base44.entities.ProductionUnit.create(unitRecord({ project, plan, serial: serial.trim(), lot, json, results, values, inspector: actorName(user) }));
       mem(`ftLast-${projectId}`, serial.trim()); mem(`ftPrefix-${projectId}`, prefix); mem(`ftLot-${projectId}`, lot);
-      setCount((c) => ({ pass: c.pass + (verdict === 'PASS' ? 1 : 0), fail: c.fail + (verdict === 'FAIL' ? 1 : 0) }));
       toast({ title: T(`${serial} 저장 (${verdict})`, `${serial} 已保存（${verdict}）`) });
-      setSerial(nextSerial(prefix, serial.trim()));
+      setSerial(await serverNext(prefix));
       reset();
     } catch (e) { toast({ title: errorText(e), variant: 'destructive' }); }
     setBusy('');
@@ -174,7 +190,7 @@ export default function PrototypeFactoryTest() {
       <section className={`rounded-xl border-2 p-4 space-y-3 ${verdict === 'PASS' ? 'border-success bg-success/10' : verdict === 'FAIL' ? 'border-destructive bg-destructive/10' : 'bg-card'}`} aria-live="polite">
         <p className={`text-center text-4xl font-black tracking-tight ${verdict === 'PASS' ? 'text-success-text' : verdict === 'FAIL' ? 'text-destructive' : 'text-muted-foreground'}`}>{verdict === 'PASS' ? T('합격', '合格') : verdict === 'FAIL' ? T('불합격', '不合格') : T('검사 중', '检验中')}</p>
         <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1.4fr_auto_auto]">
-          <Input aria-label={T('일련번호 접두어', '序列号前缀')} value={prefix} onChange={(e) => { const v = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase(); setPrefix(v); setSerial(nextSerial(v || 'SN', mem(`ftLast-${projectId}`))); }} placeholder={T('접두어', '前缀')} />
+          <Input aria-label={T('일련번호 접두어', '序列号前缀')} value={prefix} onChange={(e) => { const v = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase(); setPrefix(v); setSerial(nextSerial(v || 'SN', '')); }} onBlur={() => serverNext(prefix || 'SN').then(setSerial)} placeholder={T('접두어', '前缀')} />
           <Input aria-label={T('로트', '批次')} value={lot} onChange={(e) => setLot(e.target.value)} placeholder={T('로트', '批次')} />
           <Input aria-label={T('일련번호', '序列号')} value={serial} onChange={(e) => setSerial(e.target.value)} className="font-mono" />
           <Button onClick={save} disabled={verdict === 'INCOMPLETE' || !!busy}>{busy === 'save' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}{T('기록 저장 · 다음', '保存记录 · 下一台')}</Button>

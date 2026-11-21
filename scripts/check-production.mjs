@@ -32,6 +32,16 @@ check(`원가: 사출 ${est.moldRows.length}개 금형비 합 ${est.tooling.toLo
 check('원가: 슬라이드 4개 받침대 금형이 슬라이드 없는 같은 크기보다 비싸다', (() => { const a = estimateCost({ moldSummary: { parts: [{ ...summary.parts[2], slides: 0 }] } }).tooling; const b = estimateCost({ moldSummary: { parts: [summary.parts[2]] } }).tooling; return b - a >= 4 * 800000; })());
 check('원가: 수량이 늘면 개당 합계(금형비 나눔)가 줄어든다', est.byQty.every((r, i, a) => i === 0 || r.total_per_unit < a[i - 1].total_per_unit) && est.byQty[0].unit === est.byQty[3].unit);
 check('원가: 사출 요약이 없으면 무엇이 빠졌는지 알려 준다', estimateCost({ moldSummary: null, hwPkg: hw }).missing.length === 1);
+{
+  // 승인된 설계 부품표가 있으면 범용 회로가 아니라 그 부품으로 부품비를 계산하고, 단가 없는 부품은 50원으로 채우지 않는다
+  const bom = [{ ref: 'U1', name: '영상 처리 SoC', part_no: 'RV1126', qty: 1 }, { ref: 'U2', name: 'MCU 모듈', part_no: 'ESP32-S3-WROOM-1', qty: 2 }, { ref: 'D1', name: '마이크로 OLED', part_no: 'ECX336', qty: 2 }];
+  const d = estimateCost({ moldSummary: summary, hwPkg: hw, designBom: bom, bomPrices: { RV1126: 52000 } });
+  check('원가: 설계 부품표 기준 — 넣은 단가 + 단가표 (52,000 + 4,600×2)', d.partsBasis === 'design' && d.partsCost === 52000 + 4600 * 2, JSON.stringify(d.design));
+  check('원가: 단가 없는 부품은 0원으로 빼고 이름과 개수를 알려 준다', d.design.unpriced.length === 1 && d.design.unpriced[0] === '마이크로 OLED' && d.missing.some((m) => /단가 없는 부품 1개/.test(m)));
+  const g = estimateCost({ moldSummary: summary, hwPkg: hw });
+  check('원가: 설계 부품표가 없으면 범용 회로 기준임을 표시', g.partsBasis === 'generic' && g.design === null);
+  check('원가: 개당 생산비 = 사출 + 기판·실장 + 부품 + 조립·포장', d.unit === d.moldRows.reduce((n, r) => n + r.unit, 0) + d.boards.reduce((n, b) => n + b.pcb + b.smt, 0) + d.partsCost + d.settings.assembly_krw + d.settings.packaging_krw);
+}
 
 // 2. 설계 확정·변경
 const snap = snapshotOf(devM);
@@ -91,7 +101,7 @@ check('인증 자료: 무선 시험 모드 명령(rftest 0·19·39·off), 사용
 
 // 7. 출하 검사
 {
-  const { factoryPlan, parseSelftest, judgeAuto, verdictOf, nextSerial, unitRecord } = await import('../src/lib/devkit/factoryTest.js');
+  const { factoryPlan, parseSelftest, judgeAuto, verdictOf, nextSerial, unitRecord, lastSerialOf, todayCounts } = await import('../src/lib/devkit/factoryTest.js');
   const plan = factoryPlan(devM);
   check(`출하 검사 계획: 자동 ${plan.auto.length} · 누르기 ${plan.press.length} · 출력 ${plan.outputs.length} (시계·온도 2개·버튼·다이얼·조명 2개 포함, 글은 한·중)`, plan.auto.some((a) => a.id === 'rtc') && plan.auto.filter((a) => /°C/.test(a.label[0])).length === 2 && plan.press.length === 2 && plan.outputs.filter((o) => o.kind === 'light').length === 2 && [...plan.auto, ...plan.press, ...plan.outputs].every((x) => x.label[0] && x.label[1] && x.label[1] !== x.label[0]));
   const good = { selftest: 1, name: plan.device_name, fw: '0.2.0', mac: 'aa:bb:cc:dd:ee:ff', chip: 'ESP32-S3', rtc: 1 };
@@ -106,6 +116,8 @@ check('인증 자료: 무선 시험 모드 명령(rftest 0·19·39·off), 사용
   check('출하 검사 판정: 전부 통과 PASS, 하나 불량 FAIL, 덜 하면 INCOMPLETE', verdictOf(plan, all) === 'PASS' && verdictOf(plan, { ...all, [plan.outputs[0].id]: false }) === 'FAIL' && verdictOf(plan, { [plan.auto[0].id]: true }) === 'INCOMPLETE');
   const d = new Date(2026, 10, 15);
   check('일련번호: SN-261115-001 → 002, 날이 바뀌면 001 부터', nextSerial('SN', '', d) === 'SN-261115-001' && nextSerial('SN', 'SN-261115-001', d) === 'SN-261115-002' && nextSerial('SN', 'SN-261114-037', d) === 'SN-261115-001');
+  check('일련번호: 검사 PC 가 여러 대면 서버 기록의 가장 큰 번호 다음 (다른 접두어·다른 날은 무시)', nextSerial('SN', lastSerialOf([{ serial: 'SN-261115-003' }, { serial: 'SN-261115-012' }, { serial: 'SN-261114-099' }, { serial: 'QA-261115-500' }, { serial: null }], 'SN', d), d) === 'SN-261115-013');
+  check('오늘 합격·불합격 수는 서버 기록의 오늘 것만', JSON.stringify(todayCounts([{ inspected_date: '2026-11-15', sheet: '출하 검사 (워크벤치)', verdict: 'PASS' }, { inspected_date: '2026-11-15', sheet: '출하 검사 (워크벤치)', verdict: 'FAIL' }, { inspected_date: '2026-11-14', sheet: '출하 검사 (워크벤치)', verdict: 'PASS' }, { inspected_date: '2026-11-15', sheet: '수입 검사', verdict: 'PASS' }], d)) === '{"pass":1,"fail":1}');
   const rec = unitRecord({ project: { tenant_id: 't', card_id: 'c' }, plan, serial: 'SN-261115-001', lot: 'L1', json: good, results: { ...all, [plan.outputs[0].id]: false }, values: {}, inspector: '검사자' });
   check('출하 검사 기록: 양산 시리얼 형식(카드·일련번호·판정·불합격 항목·MAC)', rec.card_id === 'c' && rec.serial === 'SN-261115-001' && rec.verdict === 'FAIL' && rec.failed_items.length === 1 && rec.checks.mac === 'aa:bb:cc:dd:ee:ff' && /불합격/.test(rec.fail_note));
 }

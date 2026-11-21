@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useLeaveGuard } from '@/lib/useLeaveGuard';
 import { Move, RotateCw, Maximize2, Undo2, Redo2, Copy, FlipHorizontal2, Trash2, Save, X, Loader2, Sparkles, Layers, MousePointerClick } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,6 +79,7 @@ export default function ConceptEditor({ conceptId, version, preview, locks, init
   const [error, setError] = useState('');
   const diff = useMemo(() => diffParts(base, draft), [base, draft]);
   const dirty = diff.count > 0;
+  useLeaveGuard(dirty, { back: true, message: '저장하지 않은 3D 편집이 있습니다. 떠나면 사라집니다 (‘새 버전으로 저장’을 먼저 누르세요). 떠날까요?' });
   const size = useMemo(() => sceneBounds(bodyParts(draft)).size, [draft]); // 본체 크기 (케이블 등 기타 제외, 요구 치수와 같은 기준)
   const one = selected.length === 1 ? draft.find((p) => p.id === selected[0]) : null;
 
@@ -134,7 +136,7 @@ export default function ConceptEditor({ conceptId, version, preview, locks, init
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-      <div className="relative min-h-[460px] overflow-hidden rounded-2xl border bg-gradient-to-b from-secondary to-card lg:min-h-[640px]">
+      <div className="relative min-h-[460px] overflow-hidden rounded-2xl border bg-gradient-to-b from-secondary to-card lg:sticky lg:top-16 lg:h-[max(540px,min(calc(100vh-6rem),840px))] lg:self-start">
         <ConceptEditCanvas parts={draft} selected={selected} mode={mode} xray={xray} onSelect={select} onTransform={(id, patch) => commit(updatePart(draft, id, patch))} />
         <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5">
           <div className="flex rounded-lg border bg-card/90 p-0.5 backdrop-blur" role="radiogroup" aria-label="손잡이">

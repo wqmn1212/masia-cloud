@@ -101,6 +101,33 @@
       "type": "string",
       "format": "date-time"
     },
+    "campaign_id": {
+      "type": "string",
+      "description": "콜드메일 캠페인 ID"
+    },
+    "outreach_token": {
+      "type": "string",
+      "description": "수신거부·회사소개서 링크용 토큰"
+    },
+    "outreach": {
+      "type": "object",
+      "description": "콜드메일 진행: 상태·단계·보낼 근거·주소 출처·초안·발송 기록",
+      "properties": {
+        "status": { "type": "string", "enum": ["CANDIDATE", "READY", "DRAFTED", "APPROVED", "SENDING", "DONE", "REPLIED", "UNSUBSCRIBED", "STOPPED"] },
+        "step": { "type": "number" },
+        "consent_basis": { "type": "string", "enum": ["opt_in", "customer", "inquiry", "overseas", "none"] },
+        "email_source": { "type": "string" },
+        "fit_reason": { "type": "string" },
+        "contact_page": { "type": "string" },
+        "region": { "type": "string" },
+        "draft": { "type": "object", "properties": { "subject": { "type": "string" }, "body": { "type": "string" } } },
+        "approved_by": { "type": "string" },
+        "approved_at": { "type": "string" },
+        "last_sent_at": { "type": "string" },
+        "brochure_opened_at": { "type": "string" },
+        "error": { "type": "string" }
+      }
+    },
     "created_by_name": {
       "type": "string"
     }

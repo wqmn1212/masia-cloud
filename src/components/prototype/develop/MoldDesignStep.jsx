@@ -75,7 +75,10 @@ export default function MoldDesignStep({ project, concept, dev, change, user, on
     const next = guess.template === key ? guess.params : defaultParams(key);
     setTpl(key); setParams(next); persist(key, next); setSel(null); setTilt(0);
   };
-  const fromConcept = () => { const g = guessFromConcept(concept?.preview); setTpl(g.template); setParams(g.params); persist(g.template, g.params); };
+  const fromConcept = () => {
+    const g = guessFromConcept(concept?.preview); setTpl(g.template); setParams(g.params); persist(g.template, g.params);
+    toast({ title: `컨셉에서 추정한 형태: ${TEMPLATES[g.template]?.label || g.template}`, description: '컨셉과 맞지 않으면 위 ‘제품 형태’ 목록에서 바꾸세요. 치수는 그대로 옮겨집니다.' });
+  };
 
   // 치수가 바뀌면 0.6초 뒤 다시 만든다 → 간섭 검사 → 사출 부품 금형 점검 (뒤에서 차례로)
   const key = JSON.stringify([tpl, params]);

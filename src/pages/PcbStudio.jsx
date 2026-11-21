@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLeaveGuard } from '@/lib/useLeaveGuard';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CircuitBoard, Upload, Download, Save, Loader2, Undo2, Redo2, MousePointer2, Spline, CircleDot, Maximize, FileText, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,8 @@ export default function PcbStudio() {
   const { data: project } = useProtoProject(projectId);
   const [name, setName] = useState('');
   const [board, setBoard] = useState(null);
+  const [cleanBoard, setCleanBoard] = useState(null); // 마지막으로 열거나 내보내거나 저장한 기판
+  useLeaveGuard(!!board && board !== cleanBoard, { back: true, message: '고친 기판을 아직 내려받거나 시제품에 저장하지 않았습니다. 떠나면 사라집니다. 떠날까요?' });
   const [choices, setChoices] = useState([]);
   const [loading, setLoading] = useState('');
   const [error, setError] = useState('');
@@ -82,7 +85,7 @@ export default function PcbStudio() {
   const open = useCallback((text, n) => {
     try {
       const b = parseBoard(text);
-      setBoard(b); setName(n); setChoices([]); setError(''); setSelected(null); setSim(null); setHighlightNet(null);
+      setBoard(b); setCleanBoard(b); setName(n); setChoices([]); setError(''); setSelected(null); setSim(null); setHighlightNet(null);
       hist.current = { past: [], future: [] };
       setRules({ ...guessNetRules(b), ...(loadRules(n) || {}) });
       setActiveLayer(b.copper[0] || 'F.Cu');
@@ -178,7 +181,7 @@ export default function PcbStudio() {
 
   const download = (data, n, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type })); a.download = n; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); };
   const outName = () => name.replace(/\.kicad_pcb$/i, '').replace(/[^\w.-]+/g, '_') || 'board';
-  const exportPcb = () => download(toKicadText(board), `${outName()}-edited.kicad_pcb`, 'text/plain');
+  const exportPcb = () => { download(toKicadText(board), `${outName()}-edited.kicad_pcb`, 'text/plain'); setCleanBoard(board); };
   const report = () => reportText(name, board, drc, rules, profile, simFresh ? sim : null);
   const saveToProject = async () => {
     setBusy('save');
@@ -189,6 +192,7 @@ export default function PcbStudio() {
       const repF = await uploadProtoFile(new File([report()], `${outName()}-review-${stamp()}.md`, { type: 'text/markdown' }), user, { category: 'PCB', note: 'PCB 아트웍 검토 보고서' });
       files.push(repF);
       await addProtoFiles(projectId, files);
+      setCleanBoard(board);
       toast({ title: '기판과 검토 보고서를 시제품 파일에 저장했습니다' });
     } catch (e) { toast({ title: errorText(e), variant: 'destructive' }); }
     setBusy('');
@@ -207,7 +211,7 @@ export default function PcbStudio() {
   const needW = selNet && rules[selNet]?.i ? widthForCurrent(rules[selNet].i) : 0;
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-3">
+    <div className="touch-roomy mx-auto max-w-[1600px] space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           {project && <Link to={`/prototypes/${project.id}/develop?step=circuit`} className="inline-flex items-center gap-1 text-label text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />{project.title}</Link>}
