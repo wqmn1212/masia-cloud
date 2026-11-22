@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { setupStage } from '@/lib/stage3d';
 import { Play, Pause, SkipBack, SkipForward, Box, Layers, Scissors, Tag, Move3d, Info, Sparkles, Loader2, RotateCcw, FileDown, Video, Square, ListOrdered } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createTeardown } from '@/lib/teardown/engine';
@@ -46,7 +48,7 @@ export default function TeardownView({ parts, savedTour, dev, title, overall, co
     if (!host || !parts?.length) return undefined;
     let t;
     try {
-      t = createTeardown(host, { THREE, OrbitControls, RoundedBoxGeometry }, { parts, tour, title, onChange: setSt, onProgress: setProgress });
+      t = createTeardown(host, { THREE, OrbitControls, RoundedBoxGeometry, RoomEnvironment, stage: setupStage }, { parts, tour, title, onChange: setSt, onProgress: setProgress });
     } catch (e) { setError(e.message || '3D 를 열지 못했습니다'); return undefined; }
     api.current = t;
     setSt(t.getState());
@@ -91,7 +93,7 @@ export default function TeardownView({ parts, savedTour, dev, title, overall, co
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
       <div className="min-w-0 space-y-3">
-        <div className="relative h-[420px] overflow-hidden rounded-2xl border bg-gradient-to-b from-secondary to-card sm:h-[560px]">
+        <div className="relative h-[420px] overflow-hidden rounded-2xl border stage-bg sm:h-[560px]">
           <div ref={hostRef} className="absolute inset-0 cursor-grab active:cursor-grabbing" data-testid="teardown-stage" />
           <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-1.5">
             {Object.entries(VIEW_LABEL).map(([k, l]) => <Chip key={k} active={st.view === k} onClick={() => api.current?.setView(k)} icon={VIEW_ICON[k]}>{l}</Chip>)}

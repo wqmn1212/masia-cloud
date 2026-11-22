@@ -159,3 +159,8 @@
   }
   .touch-roomy input[type='range'] { height: 32px; }
 }
+
+/* 3D 작업대 무대 배경 (테마와 상관없이 같은 스튜디오 빛 — 바닥 매트가 이 색으로 녹아든다) */
+.stage-bg {
+  background: radial-gradient(120% 80% at 50% 0%, #fbf7f0 0%, #eef0f3 45%, #dde3ea 100%);
+}

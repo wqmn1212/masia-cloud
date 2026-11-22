@@ -53,6 +53,7 @@ const SalesPipeline = lazy(() => import('@/pages/SalesPipeline'));
 const Outreach = lazy(() => import('@/pages/Outreach'));
 const OutreachPublic = lazy(() => import('@/pages/OutreachPublic'));
 const LeadMagnetPublic = lazy(() => import('@/pages/LeadMagnetPublic'));
+const Showroom = lazy(() => import('@/pages/Showroom'));
 const ClientPortalDashboard = lazy(() => import('@/pages/ClientPortalDashboard'));
 const ClientBoard = lazy(() => import('@/pages/ClientBoard'));
 const ClientDocuments = lazy(() => import('@/pages/ClientDocuments'));
@@ -105,6 +106,8 @@ const AuthenticatedApp = () => {
   if (/^\/(u|b|d)\/[0-9a-f]{20,}$/.test(location.pathname)) return <Suspense fallback={<Spinner />}><OutreachPublic /></Suspense>;
   // 무료 자료 신청 페이지 — 광고·카드뉴스·QR 에서 계정 없이 연다
   if (/^\/free\/[a-z0-9-]{1,40}\/?$/.test(location.pathname)) return <Suspense fallback={<Spinner />}><LeadMagnetPublic /></Suspense>;
+  // 공개 3D 쇼룸 (예시 제품 돌려 보기·분해·작동 원리) — 인스타 광고·프로필에서 계정 없이 연다
+  if (/^\/showroom(\/[a-z0-9-]{1,40})?\/?$/.test(location.pathname)) return <Suspense fallback={<Spinner />}><Showroom /></Suspense>;
   // 실시간 디자인 리뷰 — 팀원·고객사 계정은 로그인으로, 초대받은 사람은 이메일 링크로, 그 밖은 링크 + PIN 으로 연다 (권한은 서버가 본다)
   if (location.pathname.startsWith('/design/')) return <Suspense fallback={<Spinner />}><DesignReview /></Suspense>;
   // 물류비 계산기는 고객 전용 — 예전 공개 주소는 고객 포털로 보낸다 (로그인 필요)

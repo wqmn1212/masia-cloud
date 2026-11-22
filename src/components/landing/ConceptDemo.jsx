@@ -34,7 +34,7 @@ export default function ConceptDemo({ lang }) {
 
   return (
     <figure className="min-w-0">
-      <div ref={host} className="relative h-[340px] sm:h-[420px] overflow-hidden rounded-[14px] border border-landing-line bg-gradient-to-b from-landing-page to-white">
+      <div ref={host} className="relative h-[340px] sm:h-[420px] overflow-hidden rounded-[14px] border border-landing-line stage-bg">
         {!webgl ? placeholder(tx(capabilities.demoFallback, lang)) : visible ? (
           <Guard fallback={placeholder(tx(capabilities.demoFallback, lang))}>
             <Suspense fallback={placeholder(tx(capabilities.demoLoading, lang))}>
@@ -48,7 +48,8 @@ export default function ConceptDemo({ lang }) {
         </div>
       </div>
       <figcaption className="mt-3 text-[13px] leading-[1.6] text-landing-ink3">
-        {tx(capabilities.demoCaption, lang)} <span className="text-landing-muted2">{tx(capabilities.demoNote, lang)}</span>
+        {tx(capabilities.demoCaption, lang)} <span className="text-landing-muted2">{tx(capabilities.demoNote, lang)}</span>{' '}
+        <a href="/showroom" className="font-semibold text-landing-brand hover:underline">{tx(['3D 쇼룸에서 예시 제품 분해해 보기 →', 'Take apart example products in the 3D showroom →', '在3D展厅拆解示例产品 →'], lang)}</a>
       </figcaption>
     </figure>
   );

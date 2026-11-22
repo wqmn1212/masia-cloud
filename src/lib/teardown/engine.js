@@ -2,7 +2,8 @@
 // 그래서 앱 화면과 '오프라인 HTML 내보내기'가 같은 파일을 그대로 쓴다 (내보내기는 이 원본을 HTML 안에 넣는다).
 //
 // createTeardown(host, { THREE, OrbitControls, RoundedBoxGeometry }, { parts, tour, title, loop, onChange, onProgress, onEnd })
-//  → { play, pause, toggle, goto, next, prev, show, setView, setExplode, setLabels, getState, capture, record, destroy }
+//  → { play, pause, toggle, goto, next, prev, show, setView, setExplode, setLabels, setSpin, getState, capture, record, destroy }
+//  opts.idleSpin: 재생하지 않을 때도 천천히 돈다
 // 단계 모양은 tour.js 참고: { title, caption, focus, explode, view, camera, flows, actions, dur }
 
 const FLOW_COLOR = { power: '#f59e0b', signal: '#0ea5e9', light: '#facc15', air: '#22d3ee', heat: '#ef4444', sound: '#a78bfa', water: '#3b82f6' };
@@ -36,7 +37,8 @@ export function createTeardown(host, lib, opts = {}) {
   host.appendChild(overlay);
 
   const scene = new THREE.Scene();
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a93a6, 1.2));
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x8a93a6, 1.2);
+  scene.add(hemi);
   const key = new THREE.DirectionalLight(0xffffff, 1.8);
   key.position.set(1, 1.6, 1.2);
   const fill = new THREE.DirectionalLight(0xffffff, 0.6);
@@ -151,6 +153,17 @@ export function createTeardown(host, lib, opts = {}) {
   ground.scale.setScalar(radius * 2.4);
   scene.add(ground);
 
+  // 작업대 무대 (lib.stage 가 있을 때): 스튜디오 반사·커팅 매트·실제 그림자. 없으면 예전처럼 은은한 원 그림자
+  let stage = null;
+  if (lib.stage) {
+    try {
+      stage = lib.stage(THREE, { scene, renderer, center, radius, minY: box.min.y, RoomEnvironment: lib.RoomEnvironment });
+      stage.shadowCasters(items.map((it) => it.mesh));
+      hemi.intensity = 0.5; key.intensity = 0.9; fill.intensity = 0.35;
+      ground.material.opacity = 0.55;
+    } catch { stage = null; }
+  }
+
   // 흐름 입자 텍스처 (둥근 빛)
   const dotTex = (() => {
     const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -176,6 +189,7 @@ export function createTeardown(host, lib, opts = {}) {
   // ── 상태
   const st = { index: -1, step: null, playing: false, elapsed: 0, view: 'solid', explode: 0, labels: 'focus', adhoc: false, ended: false };
   let explodeNow = 0;
+  let spin = !!opts.idleSpin; // 멈춰 있을 때도 천천히 돌기 (쇼룸)
   let tween = null;
   let flows = [];
   let glows = [];
@@ -417,7 +431,7 @@ export function createTeardown(host, lib, opts = {}) {
       camera.position.copy(controls.target).add(d);
       if (tween.t >= 1) tween = null;
     }
-    controls.autoRotate = st.playing && !tween;
+    controls.autoRotate = !tween && (st.playing || spin);
     // 분해·투명·강조
     explodeNow += (st.explode - explodeNow) * Math.min(1, dt * 4);
     const fs = focusSet();
@@ -464,6 +478,8 @@ export function createTeardown(host, lib, opts = {}) {
       g.rotateY(g.userData.kind === 'spin' ? -(time * 3) % (Math.PI * 2) : Math.sin(time * 1.6) * 0.8);
     });
     stepFlows(time);
+    // 분해로 아래로 벌어진 부품이 매트에 묻히지 않게 바닥을 같이 내린다
+    if (stage && items.length) stage.setFloorY(box.min.y + Math.min(0, exploded.min.y - box.min.y) * explodeNow);
     controls.update();
     renderer.render(scene, camera);
     const w = host.clientWidth; const h = host.clientHeight;
@@ -472,14 +488,22 @@ export function createTeardown(host, lib, opts = {}) {
     raf = requestAnimationFrame(frame);
   };
 
+  // insets: 화면 위·아래를 덮는 패널 높이(px). 제품을 가려지지 않는 가운데 띠에 맞춘다 (쇼룸)
+  let insets = { top: 0, bottom: 0 };
   const resize = () => {
     const w = Math.max(host.clientWidth, 1); const h = Math.max(host.clientHeight, 1);
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    // 세로로 좁은 화면(휴대폰)에서는 조금 물러나 전체가 보이게
-    camera.fov = w / h < 0.8 ? 42 : 32;
+    const visH = Math.max(h - insets.top - insets.bottom, h * 0.35);
+    const a = w / visH;
+    // 세로로 좁은 띠(휴대폰)에서는 가로 시야가 좁아지지 않게 세로 시야를 넓힌다 (전체가 보이게)
+    const fovVis = a < 1 ? Math.min(66, 2 * Math.atan(0.29 / a)) : (32 * Math.PI) / 180;
+    camera.fov = Math.min(100, (2 * Math.atan(Math.tan(fovVis / 2) * (h / visH)) * 180) / Math.PI);
+    const shift = (insets.bottom - insets.top) / 2;
+    if (shift) camera.setViewOffset(w, h, 0, shift, w, h); else camera.clearViewOffset();
     camera.updateProjectionMatrix();
   };
+  const setInsets = (v) => { insets = { top: Math.max(0, Number(v?.top) || 0), bottom: Math.max(0, Number(v?.bottom) || 0) }; resize(); };
   resize();
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
   ro?.observe(host);
@@ -610,6 +634,7 @@ export function createTeardown(host, lib, opts = {}) {
     clearFlows(); clearActions(); clearLabels();
     scene.traverse((o) => { o.geometry?.dispose(); if (o.material) { o.material.map?.dispose(); o.material.dispose(); } });
     dotTex.dispose(); shadowTex.dispose();
+    stage?.dispose();
     renderer.dispose();
     renderer.forceContextLoss?.();
     renderer.domElement.remove();
@@ -620,5 +645,5 @@ export function createTeardown(host, lib, opts = {}) {
   else applyStep(null, { fly: false });
   frame();
 
-  return { play, pause, toggle: () => (st.playing ? pause() : play()), goto, next: () => goto(st.index + 1), prev: () => goto(st.index - 1), show, setView, setExplode, setLabels, setTour, getState, capture, record, stopRecording: () => recorder?.stop(), canvas: renderer.domElement, destroy };
+  return { play, pause, toggle: () => (st.playing ? pause() : play()), goto, next: () => goto(st.index + 1), prev: () => goto(st.index - 1), show, setView, setExplode, setLabels, setTour, setSpin: (v) => { spin = !!v; }, setInsets, getState, capture, record, stopRecording: () => recorder?.stop(), canvas: renderer.domElement, destroy };
 }

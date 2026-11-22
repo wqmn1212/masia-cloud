@@ -83,7 +83,7 @@ export default function CadStep({ project, concept, dev, change, user, onSaved }
         <Card title="외장 기본 치수" icon={Box} tag="파라메트릭"
           actions={concept && <Button size="sm" variant="ghost" onClick={() => change({ cad: null })}><RotateCcw className="w-4 h-4" />컨셉 치수로</Button>}>
           <div className="grid gap-4 md:grid-cols-[1fr_240px]">
-            <div className="relative h-[280px] overflow-hidden rounded-xl border bg-gradient-to-b from-secondary to-card">
+            <div className="relative h-[280px] overflow-hidden rounded-xl border stage-bg">
               {parts.length
                 ? <ConceptCanvas parts={parts} autoRotate overall={concept.preview.overall_mm} />
                 : <p className="absolute inset-0 flex items-center justify-center px-6 text-center text-caption text-muted-foreground">컨셉이 없으면 오른쪽에 치수를 직접 넣어 시작하세요.</p>}

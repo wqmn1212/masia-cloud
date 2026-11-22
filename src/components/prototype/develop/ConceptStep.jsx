@@ -20,7 +20,7 @@ export default function ConceptStep({ project, concept, concepts, onNext }) {
         actions={<Button size="sm" variant="outline" asChild><Link to={`/prototypes/${project.id}/concept`}>컨셉 스튜디오 열기</Link></Button>}>
         {concept ? (
           <>
-            <div className="relative h-[360px] overflow-hidden rounded-xl border bg-gradient-to-b from-secondary to-card">
+            <div className="relative h-[360px] overflow-hidden rounded-xl border stage-bg">
               <ConceptCanvas parts={concept.preview.parts} autoRotate overall={concept.preview.overall_mm} />
             </div>
             <p className="text-body">{concept.preview.summary || concept.title}</p>
