@@ -3,17 +3,27 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { ArrowRight, Box, ChevronDown, ChevronUp, Layers, Pause, Play, RotateCw, Scissors, Split } from 'lucide-react';
+import { ArrowRight, Box, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Layers, Pause, Play, Plug, Power, RotateCcw, RotateCw, Scissors, Split, X } from 'lucide-react';
 import { createTeardown } from '@/lib/teardown/engine';
 import { buildDefaultTour } from '@/lib/teardown/tour';
 import { setupStage, onAccent } from '@/lib/stage3d';
 import { PRODUCTS, productBySlug } from '@/lib/showroom/products';
+import { evaluate, liveStep, impactOf, removableParts } from '@/lib/showroom/workCheck';
+import { createSim, stepSim, setInput } from '@/lib/devkit/deviceSim';
+import { isOutput } from '@/lib/devkit/features';
 import '@/components/landing/landingMinimal.css';
 
 // 공개 3D 쇼룸 (/showroom/<제품>) — 인스타 광고·프로필에서 계정 없이 연다.
 // 화면 대부분을 3D 에 쓰고, 위 정보 카드·아래 조작판은 접을 수 있다. 버튼 색은 제품 강조색을 따른다.
 const VIEWS = [['solid', '실물', Box], ['glass', '투명', Layers], ['section', '단면', Scissors]];
 const contactHref = (slug) => `/?ref=showroom_${slug}#contact`;
+const MODES = [['tour', '둘러보기'], ['parts', '부품 하나씩'], ['work', '작동해 보기']];
+const LAYER = { SHELL: '외장', UI: '조작부', INTERNAL: '내부 부품', PCB: '기판·전원', OTHER: '기타' };
+const short = (s) => String(s || '').split(/\s[(—-]/)[0].trim() || String(s || '');
+const lvl = (f, v) => (!(Number(v) > 0) ? '꺼짐' : ['relay', 'display'].includes(f.kind) ? '켜짐' : `${Math.round(v)}%`);
+// 버튼 기능 중 실제로 무언가를 켜는 것만 (규칙이 있는 버튼)
+const pressables = (p) => p.features.filter((f) => f.kind === 'button' && (p.rules || []).some((r) => r.type === 'event' && r.src === f.id));
+const freshSim = (p) => { const s = createSim({ features: p.features, rules: p.rules, supply_v: p.supplyV }, { source: 'usb', usb_plugged: true }); stepSim(s, 0.5); return s; };
 
 export default function Showroom() {
   const slugFromPath = window.location.pathname.split('/')[2] || '';
@@ -33,6 +43,16 @@ export default function Showroom() {
   const [dockOpen, setDockOpen] = useState(true);
   const [failed, setFailed] = useState(false);
   const [started, setStarted] = useState(false);
+  const [mode, setMode] = useState('tour');
+  const [partIdx, setPartIdx] = useState(0);
+  const [removed, setRemoved] = useState([]);
+  const [out, setOut] = useState({});
+  const [note, setNote] = useState('');
+  const simRef = useRef(null);
+  const stRef = useRef(st); stRef.current = st;
+  const check = useMemo(() => evaluate(product, removed), [product, removed]);
+  const canRemove = useMemo(() => removableParts(product), [product]);
+  const part = product.parts[Math.min(partIdx, product.parts.length - 1)];
   const accent = product.accent;
   const ink = onAccent(accent);
 
@@ -51,8 +71,61 @@ export default function Showroom() {
     setSt(t.getState());
     setSpin(true);
     setStarted(false);
+    setMode('tour'); setPartIdx(0); setRemoved([]); setOut({}); setNote('');
+    simRef.current = freshSim(product);
     return () => { api.current = null; t.destroy(); };
   }, [product, tour]);
+
+  // 뺀 부품은 3D 에서 사라진다 (모든 모드 공통)
+  useEffect(() => { api.current?.setHidden(removed); }, [removed]);
+
+  // 작동해 보기: 가상 시제품을 돌리고, 켜진 것만 3D 에 (전원·제어가 없으면 모두 꺼진 채로)
+  const alive = check.power.ok && check.control.ok;
+  useEffect(() => {
+    if (mode !== 'work') return undefined;
+    if (!alive) simRef.current = freshSim(product);
+    const tick = () => {
+      const s = simRef.current; if (!s) return;
+      stepSim(s, 0.1);
+      const o = alive ? { ...s.out } : {};
+      setOut((prev) => (JSON.stringify(prev) === JSON.stringify(o) ? prev : o));
+    };
+    tick();
+    const id = setInterval(tick, 100);
+    return () => clearInterval(id);
+  }, [mode, alive, product]);
+  useEffect(() => {
+    if (mode !== 'work') return;
+    api.current?.live({ ...liveStep(product, check, out, removed), view: 'glass', explode: 0 });
+  }, [mode, out, check, removed, product]);
+
+  // 부품 하나씩: 그 부품을 강조하고 카메라를 가까이 (내부 부품은 투명 보기로)
+  const showPart = (i) => {
+    const n = product.parts.length;
+    const k = ((i % n) + n) % n;
+    setPartIdx(k);
+    const p = product.parts[k];
+    api.current?.show({ id: `part-${p.id}`, title: '', caption: '', focus: [p.id], explode: stRef.current.explode, view: p.layer === 'SHELL' || p.layer === 'UI' ? 'solid' : 'glass', flows: [], actions: [] });
+  };
+  const switchMode = (m) => {
+    if (m === mode) return;
+    setMode(m); setNote('');
+    if (window.innerWidth < 640) setInfoOpen(false);
+    if (m === 'parts') showPart(partIdx);
+    else if (m === 'work') api.current?.show({ id: 'work', title: '', caption: '', focus: [], view: 'glass', explode: 0, flows: [], actions: [] });
+    else if (m === 'tour') { const cur = stRef.current; api.current?.live({ id: 'idle', title: '', caption: '', focus: [], flows: [], actions: [], view: cur.view, explode: cur.explode }); }
+  };
+  const toggleRemoved = (id) => setRemoved((r) => (r.includes(id) ? r.filter((x) => x !== id) : [...r, id]));
+  const press = (f) => {
+    if (!check.power.ok) { setNote(check.power.reason); return; }
+    if (!check.control.ok) { setNote(check.control.reason); return; }
+    if (!check.features[f.id]?.ok) { setNote(check.features[f.id].reason); return; }
+    setNote('');
+    const s = simRef.current;
+    setInput(s, { pressed: { ...s.input.pressed, [f.id]: true } }); stepSim(s, 0.05);
+    setInput(s, { pressed: { ...s.input.pressed, [f.id]: false } }); stepSim(s, 0.05);
+    setOut({ ...s.out });
+  };
 
   // 위 카드·아래 조작판이 덮는 만큼 3D 를 가운데 띠로 (패널 크기가 바뀌면 다시)
   function fitInsets() {
@@ -78,7 +151,7 @@ export default function Showroom() {
   // 분해·조립: 카메라도 그 범위에 맞춰 따라간다
   const toggleExplode = () => api.current?.show({ id: 'explode', title: '', caption: '', focus: [], explode: st.explode > 0.5 ? 0 : 1, view: st.view, flows: [], actions: [] });
   const toggleSpin = () => { const v = !spin; setSpin(v); api.current?.setSpin(v); };
-  const step = started && (st.playing || st.index >= 0) ? st.step : null;
+  const step = mode === 'tour' && started && (st.playing || st.index >= 0) ? st.step : null;
   const playTour = () => { setStarted(true); api.current?.toggle(); };
 
   return (
@@ -93,7 +166,7 @@ export default function Showroom() {
           <a href="/" className="text-[20px] font-extrabold tracking-[-0.8px] text-landing-ink">AEGIS <span className="text-[13px] font-semibold tracking-normal text-landing-muted">3D 쇼룸</span></a>
           <a href={contactHref(product.slug)} className="rounded-full bg-white/80 px-3.5 py-2 text-[13px] font-bold text-landing-ink shadow-sm backdrop-blur">문의하기</a>
         </div>
-        <section className="pointer-events-auto mx-auto max-w-[960px] rounded-[20px] border border-white/70 bg-white/80 shadow-[0_10px_30px_rgba(23,23,25,.08)] backdrop-blur-md sm:max-w-[440px] sm:ml-0">
+        <section className={`pointer-events-auto mx-auto max-w-[960px] rounded-[20px] border border-white/70 bg-white/80 shadow-[0_10px_30px_rgba(23,23,25,.08)] backdrop-blur-md sm:ml-0 sm:max-w-[440px] ${mode === 'tour' ? '' : 'max-sm:hidden'}`}>
           <button type="button" onClick={() => setInfoOpen((v) => !v)} aria-expanded={infoOpen} className="flex w-full items-start justify-between gap-3 px-5 pb-3 pt-4 text-left">
             <span className="min-w-0">
               <span className="block text-[12.5px] font-semibold text-landing-muted">가상 예시 · {product.category}</span>
@@ -138,6 +211,15 @@ export default function Showroom() {
             </button>
           </div>
           {dockOpen && (
+            <div className="grid grid-cols-3 rounded-[16px] bg-white/85 p-1 shadow-sm backdrop-blur" role="tablist">
+              {MODES.map(([k, l]) => (
+                <button key={k} type="button" role="tab" aria-selected={mode === k} onClick={() => switchMode(k)} className={`rounded-[12px] px-2 py-2.5 text-[14px] font-bold ${mode === k ? 'shadow-sm' : 'text-landing-ink3'}`} style={mode === k ? { background: accent, color: ink } : undefined}>{l}</button>
+              ))}
+            </div>
+          )}
+          {dockOpen && mode === 'parts' && part && <PartCard product={product} part={part} index={partIdx} removed={removed} accent={accent} onPrev={() => showPart(partIdx - 1)} onNext={() => showPart(partIdx + 1)} onToggle={() => toggleRemoved(part.id)} canRemove={canRemove.some((x) => x.id === part.id)} />}
+          {dockOpen && mode === 'work' && <WorkPanel product={product} check={check} out={out} removed={removed} canRemove={canRemove} note={note} accent={accent} ink={ink} onPress={press} onToggle={toggleRemoved} onReset={() => { setRemoved([]); setNote(''); }} />}
+          {dockOpen && mode === 'tour' && (
             <>
               <div className="grid gap-2 sm:grid-cols-[auto_1fr]">
                 <div className="grid grid-cols-3 rounded-[16px] bg-white/85 p-1 shadow-sm backdrop-blur">
@@ -170,9 +252,115 @@ export default function Showroom() {
               </div>
             </>
           )}
+          {removed.length > 0 && mode !== 'work' && (
+            <p className="text-center text-[12px] font-semibold text-landing-ink3">뺀 부품 {removed.length}개 · <button type="button" className="underline" onClick={() => setRemoved([])}>모두 다시 넣기</button></p>
+          )}
           <p className="text-center text-[11px] text-landing-muted">가상 예시 제품 · 3D 는 개념 시각화 · 끌어서 돌리기</p>
         </div>
       </div>
     </div>
+  );
+}
+
+// 부품 하나씩: 번호 · 이름 · 하는 일 · 재질 + 이 부품을 빼면 멈추는 기능
+function PartCard({ product, part, index, removed, accent, onPrev, onNext, onToggle, canRemove }) {
+  const out = removed.includes(part.id);
+  const hit = useMemo(() => (out ? [] : impactOf(product, removed, part.id)), [product, removed, part.id, out]);
+  const n = product.parts.length;
+  return (
+    <section className="rounded-[18px] bg-white/90 p-4 shadow-sm backdrop-blur" aria-live="polite">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-[12px] font-semibold tracking-[.14em] text-landing-muted">PART {String(index + 1).padStart(2, '0')} / {String(n).padStart(2, '0')}</span>
+        <span className="rounded-full px-2.5 py-0.5 text-[12px] font-bold" style={{ background: `${accent}1A`, color: accent }}>{LAYER[part.layer] || part.layer}</span>
+      </div>
+      <h2 className="mt-1.5 text-[19px] font-extrabold leading-snug tracking-[-0.4px]">{part.name}{out && <span className="ml-2 align-middle text-[12px] font-bold text-red-600">빠져 있음</span>}</h2>
+      {part.role && <p className="mt-1 text-[14px] leading-[1.55] text-landing-ink3">{part.role}</p>}
+      {part.material && <p className="mt-1 text-[12.5px] text-landing-muted">재질 · {part.material}</p>}
+      <div className="mt-2.5 rounded-[12px] bg-landing-page px-3 py-2 text-[13px] leading-[1.5]">
+        {out ? <span className="text-landing-ink3">이 부품을 뺀 상태입니다. ‘작동해 보기’에서 무엇이 멈췄는지 볼 수 있어요.</span>
+          : !canRemove ? <span className="text-landing-ink3">빼도 작동은 같습니다 (외장·구조 부품)</span>
+            : hit.length ? <><b className="text-landing-ink">빼면 멈추는 기능</b><span className="mt-0.5 block text-landing-ink3">{hit.map((f) => f.name).join(' · ')}</span></>
+              : <span className="text-landing-ink3">지금은 빼도 멈추는 기능이 없습니다 (다른 부품이 대신함)</span>}
+      </div>
+      <div className="mt-3 grid grid-cols-[48px_1fr_48px] gap-2">
+        <button type="button" onClick={onPrev} aria-label="이전 부품" className="inline-flex h-11 items-center justify-center rounded-[12px] bg-landing-page text-landing-ink"><ChevronLeft className="h-5 w-5" /></button>
+        <button type="button" onClick={onToggle} disabled={!canRemove && !out} className="inline-flex h-11 items-center justify-center gap-1.5 rounded-[12px] border text-[14px] font-bold disabled:opacity-40" style={{ borderColor: out ? accent : '#E5E7EB', color: out ? accent : '#171719' }}>
+          {out ? <><RotateCcw className="h-4 w-4" />다시 넣기</> : <><X className="h-4 w-4" />이 부품 빼 보기</>}
+        </button>
+        <button type="button" onClick={onNext} aria-label="다음 부품" className="inline-flex h-11 items-center justify-center rounded-[12px] bg-landing-page text-landing-ink"><ChevronRight className="h-5 w-5" /></button>
+      </div>
+    </section>
+  );
+}
+
+// 전원 표시: '배터리 2개 · USB-C' 처럼 짧게
+const powerText = (via) => {
+  const bat = via.filter((v) => /배터리|battery/i.test(v)).length;
+  const rest = [...new Set(via.filter((v) => !/배터리|battery/i.test(v)).map((v) => (/USB-C/i.test(v) ? 'USB-C' : v)))];
+  return [bat ? `배터리${bat > 1 ? ` ${bat}개` : ''}` : '', ...rest].filter(Boolean).join(' · ');
+};
+
+// 작동해 보기: 버튼을 눌러 보고, 부품을 빼 보면 무엇이 왜 안 되는지가 바로 바뀐다
+function WorkPanel({ product, check, out, removed, canRemove, note, accent, ink, onPress, onToggle, onReset }) {
+  const buttons = pressables(product);
+  const outputs = product.features.filter((f) => isOutput(f.kind));
+  const okFns = check.functions.filter((f) => f.ok);
+  // 안 되는 기능은 이유가 같은 것끼리 묶는다 (센서 하나가 빠지면 여러 기능이 같은 이유로 멈춘다)
+  const groups = [];
+  check.functions.filter((f) => !f.ok).forEach((f) => {
+    const g = groups.find((x) => x.reason === f.reasons[0]);
+    if (g) g.names.push(f.name); else groups.push({ reason: f.reasons[0], names: [f.name] });
+  });
+  const head = !check.power.ok ? check.power.reason : !check.control.ok ? check.control.reason : '';
+  const running = (f) => { const def = product.functions.find((x) => x.id === f.id); return !!def?.feature && Number(out[def.feature]) > 0; };
+  return (
+    <section className="space-y-2 rounded-[18px] bg-white/90 p-3 shadow-sm backdrop-blur">
+      <div className={`flex items-start gap-2 rounded-[12px] px-3 py-2 text-[13px] leading-[1.45] ${head ? 'bg-red-50 text-red-700' : 'bg-landing-page text-landing-ink3'}`}>
+        {head ? <Power className="mt-[2px] h-4 w-4 shrink-0" /> : <Plug className="mt-[2px] h-4 w-4 shrink-0" style={{ color: accent }} />}
+        <span>{head || <>전원 <b className="text-landing-ink">{powerText(check.power.via)}</b>{outputs.map((f) => <span key={f.id}> · {short(f.name)} <b className="text-landing-ink">{removed.includes(f.part_id) ? '빠짐' : lvl(f, out[f.id])}</b></span>)}</>}</span>
+      </div>
+      <div className="flex gap-2">
+        {buttons.map((f) => {
+          const ok = check.power.ok && check.control.ok && check.features[f.id]?.ok;
+          return (
+            <button key={f.id} type="button" onClick={() => onPress(f)} title={`${f.name} 누르기`} className={`inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[12px] px-2 text-[14px] font-bold shadow-sm ${ok ? '' : 'opacity-45'}`} style={ok ? { background: accent, color: ink } : { background: '#E5E7EB', color: '#6B7280' }}>
+              <Power className="h-4 w-4 shrink-0" /><span className="truncate">{short(f.name)}</span>
+            </button>
+          );
+        })}
+      </div>
+      {note && <p role="status" className="px-1 text-[12.5px] font-semibold text-red-600">{note}</p>}
+      <div>
+        <p className="px-1 pb-1 text-[12px] font-bold text-landing-muted">부품 빼 보기 <span className="font-medium">· 눌러서 빼고 다시 눌러 넣기</span>{removed.length > 0 && <button type="button" onClick={onReset} className="ml-2 underline">모두 넣기</button>}</p>
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] sm:flex-wrap">
+          {canRemove.map((p) => {
+            const off = removed.includes(p.id);
+            return (
+              <button key={p.id} type="button" onClick={() => onToggle(p.id)} aria-pressed={off} className={`shrink-0 rounded-full border px-3 py-1.5 text-[12.5px] font-semibold ${off ? 'border-red-300 bg-red-50 text-red-700 line-through' : 'border-landing-line2 bg-white text-landing-ink2'}`}>
+                {short(p.name)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="max-h-[24vh] space-y-1.5 overflow-y-auto sm:max-h-[220px]">
+        <p className="px-1 text-[12px] font-bold text-landing-muted">기능 {okFns.length} / {check.functions.length} 작동{okFns.some(running) && <span className="font-medium"> · 진한 색 = 지금 작동 중</span>}</p>
+        {groups.map((g) => (
+          <div key={g.reason} className="flex items-start gap-2 rounded-[10px] bg-red-50 px-2.5 py-1.5 text-[13px] leading-[1.45]">
+            <X className="mt-[2px] h-4 w-4 shrink-0 text-red-600" />
+            <span className="min-w-0"><b className="text-red-700">{g.names.join(' · ')}</b><span className="block text-red-700/90">{g.reason}</span></span>
+          </div>
+        ))}
+        {okFns.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {okFns.map((f) => (
+              <span key={f.id} title={f.desc} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12.5px] font-semibold" style={running(f) ? { background: accent, color: ink } : { background: '#F4F5F7', color: '#33363D' }}>
+                <Check className="h-3.5 w-3.5" />{f.name}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

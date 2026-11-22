@@ -340,7 +340,7 @@ export function createTeardown(host, lib, opts = {}) {
     if (st.labels === 'off') return;
     const fs = focusSet();
     const pick = st.labels === 'all' || !fs.size ? (st.labels === 'all' ? items : []) : items.filter((it) => fs.has(it.id));
-    pick.slice(0, 14).forEach((it) => {
+    pick.filter((it) => it.mesh.visible).slice(0, 14).forEach((it) => {
       const el = document.createElement('div');
       el.style.cssText = 'position:absolute;left:0;top:0;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:3px;transition:opacity .25s;opacity:0;will-change:transform';
       const pill = document.createElement('span');
@@ -523,6 +523,11 @@ export function createTeardown(host, lib, opts = {}) {
   const play = () => { if (!tour.steps.length) return; if (st.index < 0 || st.adhoc || st.ended) goto(st.ended ? 0 : Math.max(0, st.index), { play: true }); else { st.playing = true; emit(); } };
   const pause = () => { st.playing = false; emit(); };
   const show = (step) => { st.playing = false; st.adhoc = true; st.index = -1; applyStep(step); emit(); };
+  // 카메라는 그대로 두고 동작·흐름만 바꾼다 (직접 작동해 보기)
+  const live = (step) => { st.playing = false; st.adhoc = true; st.index = -1; applyStep(step, { fly: false }); emit(); };
+  // 뺀 부품은 보이지 않게 (부품 빼 보기)
+  let hidden = new Set();
+  const setHidden = (ids) => { hidden = new Set(ids || []); items.forEach((it) => { it.mesh.visible = !hidden.has(it.id); }); makeLabels(); };
   // 보기 방식 바꾸기: 지금 단계는 그대로 두고 보기만 바꾼다 (단면은 조립 상태에서 자른다)
   const setView = (v) => {
     const keep = st.explode;
@@ -645,5 +650,5 @@ export function createTeardown(host, lib, opts = {}) {
   else applyStep(null, { fly: false });
   frame();
 
-  return { play, pause, toggle: () => (st.playing ? pause() : play()), goto, next: () => goto(st.index + 1), prev: () => goto(st.index - 1), show, setView, setExplode, setLabels, setTour, setSpin: (v) => { spin = !!v; }, setInsets, getState, capture, record, stopRecording: () => recorder?.stop(), canvas: renderer.domElement, destroy };
+  return { play, pause, toggle: () => (st.playing ? pause() : play()), goto, next: () => goto(st.index + 1), prev: () => goto(st.index - 1), show, setView, setExplode, setLabels, setTour, setSpin: (v) => { spin = !!v; }, setInsets, live, setHidden, getState, capture, record, stopRecording: () => recorder?.stop(), canvas: renderer.domElement, destroy };
 }
