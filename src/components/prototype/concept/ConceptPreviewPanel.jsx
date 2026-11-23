@@ -81,7 +81,7 @@ export default function ConceptPreviewPanel({ preview, version, conceptId, onCha
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
-      <div className="relative min-h-[420px] overflow-hidden rounded-2xl border bg-gradient-to-b from-secondary to-card lg:sticky lg:top-16 lg:h-[max(520px,min(calc(100vh-6rem),820px))] lg:self-start">
+      <div className="relative min-h-[420px] overflow-hidden rounded-2xl border stage-bg lg:sticky lg:top-16 lg:h-[max(520px,min(calc(100vh-6rem),820px))] lg:self-start">
         {show3d
           ? <ConceptCanvas key={view} parts={preview.parts} xray={xray} explode={!isHull && explode} autoRotate={spin && !highlightId} highlightId={highlightId}
               hull={isHull ? hull : null} overall={preview.overall_mm} onHull={setHullInfo} apiRef={canvasApi} />

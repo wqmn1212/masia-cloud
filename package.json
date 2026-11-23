@@ -74,7 +74,8 @@
     "check:concept-hull": "node scripts/check-concept-hull.mjs",
     "check:sketch-trial": "node --import ./scripts/fnmock/register.mjs scripts/check-sketch-trial.mjs",
     "check": "node scripts/check-all.mjs",
-    "check:leadmagnet": "node --import ./scripts/fnmock/register.mjs scripts/check-leadmagnet.mjs"
+    "check:leadmagnet": "node --import ./scripts/fnmock/register.mjs scripts/check-leadmagnet.mjs",
+    "check:showroom": "node --import ./scripts/alias/register.mjs scripts/check-showroom.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.63",

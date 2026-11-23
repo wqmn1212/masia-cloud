@@ -1,13 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { setupStage } from '@/lib/stage3d';
 import { buildConceptGroup, disposeGroup, stepView } from '@/lib/conceptScene';
 import { measureHull, buildHullScene } from '@/lib/conceptHullScene';
 
 // 컨셉 3D 프리뷰 캔버스 — 화면에 하나만 띄우고, 떠날 때 WebGL 컨텍스트를 반납한다
 // hull(시안 정면·측면 주소)이 있으면 시안 윤곽으로 만든 외형을 보여 주고, 없거나 실패하면 부품 3D 를 보여 준다.
 // apiRef: { capture() } — 지금 보이는 3D 화면을 밝은 배경의 PNG(data URL)로 (3D 화면 기준 렌더에 쓴다)
-export default function ConceptCanvas({ parts, xray, explode, autoRotate, highlightId, hull, overall, onHull, apiRef }) {
+// stage: 작업대 무대 (스튜디오 조명·커팅 매트·그림자). 렌더 기준 이미지 캡처 때는 매트를 숨긴다
+export default function ConceptCanvas({ parts, xray, explode, autoRotate, highlightId, hull, overall, onHull, apiRef, stage = true }) {
   const hostRef = useRef(null);
   const state = useRef({});
   state.current = { xray, explode, autoRotate, highlightId };
@@ -19,20 +22,20 @@ export default function ConceptCanvas({ parts, xray, explode, autoRotate, highli
     if (!host || !parts?.length) return undefined;
     let cancelled = false;
     let stop = () => {};
-    const start = (built) => { if (!cancelled) stop = mount(host, built, state, apiRef); else built.dispose?.(); };
+    const start = (built) => { if (!cancelled) stop = mount(host, built, state, apiRef, stage); else built.dispose?.(); };
     if (hull) {
       measureHull(hull, overall)
         .then((m) => { if (cancelled) return; const b = buildHullScene(m, parts, overall); onHullRef.current?.({ size: b.size, warning: m.sideWarn }); start(b); })
         .catch((e) => { if (!cancelled) onHullRef.current?.({ error: e.message || '외형을 만들지 못했습니다.' }); });
     } else start(buildConceptGroup(parts));
     return () => { cancelled = true; stop(); };
-  }, [parts, hull?.front, hull?.side]);
+  }, [parts, hull?.front, hull?.side, stage]);
 
   return <div ref={hostRef} className="absolute inset-0 touch-none cursor-grab active:cursor-grabbing" />;
 }
 
 /** 장면을 캔버스에 올리고 돌려 보게 한다. 정리 함수를 돌려준다 */
-function mount(host, built, state, apiRef) {
+function mount(host, built, state, apiRef, useStage) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   host.appendChild(renderer.domElement);
@@ -46,6 +49,17 @@ function mount(host, built, state, apiRef) {
   scene.add(key, fill);
 
   scene.add(built.group);
+  let stage = null;
+  let floorY0 = 0;
+  if (useStage) {
+    try {
+      const bb = new THREE.Box3().setFromObject(built.group);
+      floorY0 = bb.min.y;
+      stage = setupStage(THREE, { scene, renderer, center: built.center, radius: built.radius, minY: bb.min.y, RoomEnvironment });
+      stage.shadowCasters([built.group]);
+      scene.children.forEach((o) => { if (o.isHemisphereLight) o.intensity = 0.5; else if (o.isDirectionalLight && !o.castShadow) o.intensity *= 0.5; });
+    } catch { stage = null; }
+  }
   const camera = new THREE.PerspectiveCamera(32, 1, built.radius / 100, built.radius * 60);
   camera.position.copy(built.center).add(new THREE.Vector3(1, 0.7, 1.25).normalize().multiplyScalar(built.radius * 3.8));
   const controls = new OrbitControls(camera, renderer.domElement);
@@ -69,7 +83,10 @@ function mount(host, built, state, apiRef) {
   if (apiRef) {
     apiRef.current = {
       capture: () => {
+        const floorWas = stage?.floor?.visible;
+        if (stage?.floor) stage.floor.visible = false; // 렌더 기준 이미지에는 매트를 넣지 않는다
         renderer.render(scene, camera);
+        if (stage?.floor) stage.floor.visible = floorWas;
         const src = renderer.domElement;
         const k = Math.min(1, 1280 / Math.max(src.width, src.height));
         const c = document.createElement('canvas'); c.width = Math.round(src.width * k); c.height = Math.round(src.height * k);
@@ -98,6 +115,7 @@ function mount(host, built, state, apiRef) {
       dir.setLength(len + (r * 3.8 - len) * 0.12);
       camera.position.copy(controls.target).add(dir);
       controls.maxDistance = Math.max(controls.maxDistance, r * 12);
+      if (stage) stage.setFloorY(Math.min(floorY0, new THREE.Box3().setFromObject(built.group).min.y));
     }
     controls.autoRotate = !!state.current.autoRotate;
     stepView(built.items, state.current);
@@ -115,6 +133,7 @@ function mount(host, built, state, apiRef) {
     controls.dispose();
     disposeGroup(built.group);
     built.dispose?.();
+    stage?.dispose();
     renderer.dispose();
     renderer.forceContextLoss();
     renderer.domElement.remove();
