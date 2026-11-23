@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { ArrowRight, Box, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Layers, Pause, Play, Plug, Power, RotateCcw, RotateCw, Scissors, Split, X } from 'lucide-react';
+import { ArrowRight, Box, Check, ClipboardCheck, Clock, Wrench, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Layers, Pause, Play, Plug, Power, RotateCcw, RotateCw, Scissors, Split, X } from 'lucide-react';
 import { createTeardown } from '@/lib/teardown/engine';
 import { buildDefaultTour } from '@/lib/teardown/tour';
 import { setupStage, onAccent } from '@/lib/stage3d';
@@ -11,13 +11,14 @@ import { PRODUCTS, productBySlug } from '@/lib/showroom/products';
 import { evaluate, liveStep, impactOf, removableParts } from '@/lib/showroom/workCheck';
 import { createSim, stepSim, setInput } from '@/lib/devkit/deviceSim';
 import { isOutput } from '@/lib/devkit/features';
+import { assemblySteps, buildAt, checklist, totalSec, fmtSec } from '@/lib/showroom/assembly';
 import '@/components/landing/landingMinimal.css';
 
 // 공개 3D 쇼룸 (/showroom/<제품>) — 인스타 광고·프로필에서 계정 없이 연다.
 // 화면 대부분을 3D 에 쓰고, 위 정보 카드·아래 조작판은 접을 수 있다. 버튼 색은 제품 강조색을 따른다.
 const VIEWS = [['solid', '실물', Box], ['glass', '투명', Layers], ['section', '단면', Scissors]];
 const contactHref = (slug) => `/?ref=showroom_${slug}#contact`;
-const MODES = [['tour', '둘러보기'], ['parts', '부품 하나씩'], ['work', '작동해 보기']];
+const MODES = [['tour', '둘러보기'], ['parts', '부품'], ['build', '조립 순서'], ['work', '작동해 보기']];
 const LAYER = { SHELL: '외장', UI: '조작부', INTERNAL: '내부 부품', PCB: '기판·전원', OTHER: '기타' };
 const short = (s) => String(s || '').split(/\s[(—-]/)[0].trim() || String(s || '');
 const lvl = (f, v) => (!(Number(v) > 0) ? '꺼짐' : ['relay', 'display'].includes(f.kind) ? '켜짐' : `${Math.round(v)}%`);
@@ -53,6 +54,9 @@ export default function Showroom() {
   const check = useMemo(() => evaluate(product, removed), [product, removed]);
   const canRemove = useMemo(() => removableParts(product), [product]);
   const part = product.parts[Math.min(partIdx, product.parts.length - 1)];
+  const steps = useMemo(() => assemblySteps(product), [product]);
+  const [buildIdx, setBuildIdx] = useState(0);
+  const [buildPlay, setBuildPlay] = useState(false);
   const accent = product.accent;
   const ink = onAccent(accent);
 
@@ -71,7 +75,7 @@ export default function Showroom() {
     setSt(t.getState());
     setSpin(true);
     setStarted(false);
-    setMode('tour'); setPartIdx(0); setRemoved([]); setOut({}); setNote('');
+    setMode('tour'); setPartIdx(0); setRemoved([]); setOut({}); setNote(''); setBuildIdx(0); setBuildPlay(false);
     simRef.current = freshSim(product);
     return () => { api.current = null; t.destroy(); };
   }, [product, tour]);
@@ -107,10 +111,28 @@ export default function Showroom() {
     const p = product.parts[k];
     api.current?.show({ id: `part-${p.id}`, title: '', caption: '', focus: [p.id], explode: stRef.current.explode, view: p.layer === 'SHELL' || p.layer === 'UI' ? 'solid' : 'glass', flows: [], actions: [] });
   };
+  // 조립 순서: 앞 단계까지 조립된 상태에서 이번 단계 부품이 제자리로 들어간다 (0단계는 부품을 펼쳐 놓은 상태)
+  const showBuild = (i) => {
+    const k = Math.max(0, Math.min(steps.length - 1, i));
+    setBuildIdx(k);
+    const b = buildAt(product, steps, k);
+    api.current?.setBuild({ shown: b.shown, enter: b.enter, from: b.from });
+    api.current?.show({ id: `build-${k}`, title: '', caption: '', focus: b.enter, frame: 'all', explode: b.explode, view: 'solid', flows: [], actions: [], camera: { zoom: b.explode ? 0.78 : 0.88 } });
+  };
+  useEffect(() => {
+    if (!buildPlay || mode !== 'build') return undefined;
+    if (buildIdx >= steps.length - 1) { setBuildPlay(false); return undefined; }
+    const id = setTimeout(() => showBuild(buildIdx + 1), 4200);
+    return () => clearTimeout(id);
+  }, [buildPlay, buildIdx, mode, steps]);
   const switchMode = (m) => {
     if (m === mode) return;
-    setMode(m); setNote('');
-    if (window.innerWidth < 640) setInfoOpen(false);
+    setMode(m); setNote(''); setBuildPlay(false);
+    // 조립 순서에서는 이름표 대신 카드에 부품 목록이 나온다 (이름표가 위로 쌓여 가려지지 않게)
+    api.current?.setLabels(m === 'build' ? 'off' : 'focus');
+    if (m !== 'build') api.current?.setBuild(null);
+    if (m === 'build') showBuild(buildIdx);
+    if (m !== 'tour') setInfoOpen(false); // 아래 조작판이 길어지므로 정보 카드는 접는다 (넓은 화면에서도 겹치지 않게)
     if (m === 'parts') showPart(partIdx);
     else if (m === 'work') api.current?.show({ id: 'work', title: '', caption: '', focus: [], view: 'glass', explode: 0, flows: [], actions: [] });
     else if (m === 'tour') { const cur = stRef.current; api.current?.live({ id: 'idle', title: '', caption: '', focus: [], flows: [], actions: [], view: cur.view, explode: cur.explode }); }
@@ -211,12 +233,13 @@ export default function Showroom() {
             </button>
           </div>
           {dockOpen && (
-            <div className="grid grid-cols-3 rounded-[16px] bg-white/85 p-1 shadow-sm backdrop-blur" role="tablist">
+            <div className="grid grid-cols-4 rounded-[16px] bg-white/85 p-1 shadow-sm backdrop-blur" role="tablist">
               {MODES.map(([k, l]) => (
-                <button key={k} type="button" role="tab" aria-selected={mode === k} onClick={() => switchMode(k)} className={`rounded-[12px] px-2 py-2.5 text-[14px] font-bold ${mode === k ? 'shadow-sm' : 'text-landing-ink3'}`} style={mode === k ? { background: accent, color: ink } : undefined}>{l}</button>
+                <button key={k} type="button" role="tab" aria-selected={mode === k} onClick={() => switchMode(k)} className={`whitespace-nowrap rounded-[12px] px-1 py-2.5 text-[13.5px] font-bold sm:text-[14px] ${mode === k ? 'shadow-sm' : 'text-landing-ink3'}`} style={mode === k ? { background: accent, color: ink } : undefined}>{l}</button>
               ))}
             </div>
           )}
+          {dockOpen && mode === 'build' && <BuildCard product={product} steps={steps} index={buildIdx} accent={accent} ink={ink} playing={buildPlay} onGo={showBuild} onPlay={() => { if (buildIdx >= steps.length - 1) showBuild(0); setBuildPlay((v) => !v); }} onDemo={() => switchMode('work')} />}
           {dockOpen && mode === 'parts' && part && <PartCard product={product} part={part} index={partIdx} removed={removed} accent={accent} onPrev={() => showPart(partIdx - 1)} onNext={() => showPart(partIdx + 1)} onToggle={() => toggleRemoved(part.id)} canRemove={canRemove.some((x) => x.id === part.id)} />}
           {dockOpen && mode === 'work' && <WorkPanel product={product} check={check} out={out} removed={removed} canRemove={canRemove} note={note} accent={accent} ink={ink} onPress={press} onToggle={toggleRemoved} onReset={() => { setRemoved([]); setNote(''); }} />}
           {dockOpen && mode === 'tour' && (
@@ -359,6 +382,77 @@ function WorkPanel({ product, check, out, removed, canRemove, note, accent, ink,
               </span>
             ))}
           </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// 조립 순서 카드: 단계 띠(01 부품 확인 · 02 …) + 이번 단계의 부품·체결·작업·검사·표준 시간 (작업 지시서 형식)
+function BuildCard({ product, steps, index, accent, ink, playing, onGo, onPlay, onDemo }) {
+  const s = steps[index];
+  const byId = useMemo(() => new Map(product.parts.map((p) => [p.id, p])), [product]);
+  const need = s.prep ? checklist(product.parts) : checklist(s.parts.map((id) => byId.get(id)).filter(Boolean));
+  const [got, setGot] = useState({});
+  const stripRef = useRef(null);
+  useEffect(() => { stripRef.current?.querySelector(`[data-i="${index}"]`)?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); }, [index]);
+  useEffect(() => { setGot({}); }, [product]);
+  const next = steps[index + 1];
+  return (
+    <section className="rounded-[18px] bg-white/90 shadow-sm backdrop-blur" aria-live="polite">
+      <div ref={stripRef} className="flex gap-1.5 overflow-x-auto border-b border-landing-line px-3 py-2 [scrollbar-width:none]">
+        {steps.map((x, i) => (
+          <button key={i} type="button" data-i={i} onClick={() => onGo(i)} aria-current={i === index} className={`flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-semibold ${i === index ? '' : i < index ? 'bg-landing-page text-landing-ink3' : 'text-landing-muted'}`} style={i === index ? { background: accent, color: ink } : undefined}>
+            <span className="font-mono text-[11px]">{String(i + 1).padStart(2, '0')}</span>{x.title}
+          </button>
+        ))}
+      </div>
+      <div className="max-h-[34vh] space-y-2.5 overflow-y-auto px-4 pb-1 pt-3 sm:max-h-[300px]">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-mono text-[12px] font-semibold tracking-[.14em] text-landing-muted">STEP {String(index + 1).padStart(2, '0')} / {String(steps.length).padStart(2, '0')}</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-landing-page px-2.5 py-0.5 text-[12px] font-semibold text-landing-ink3"><Clock className="h-3.5 w-3.5" />약 {fmtSec(s.sec)}</span>
+        </div>
+        <h2 className="text-[19px] font-extrabold leading-snug tracking-[-0.4px]">{s.title}</h2>
+        {s.prep && <p className="text-[13.5px] leading-[1.55] text-landing-ink3">총 {steps.length}단계 · 표준 작업 시간 약 {fmtSec(totalSec(steps))} (예시). 단계마다 들어가는 부품이 3D 에서 제자리로 들어갑니다.</p>}
+        {need.length > 0 && (
+          <div>
+            <p className="pb-1 text-[12px] font-bold text-landing-muted">{s.prep ? `부품 목록 ${Object.values(got).filter(Boolean).length} / ${need.length}` : '이번에 쓰는 부품'}</p>
+            <ul className={s.prep ? 'grid gap-1 sm:grid-cols-2' : 'flex flex-wrap gap-1.5'}>
+              {need.map((g) => (
+                <li key={g.name}>
+                  {s.prep ? (
+                    <label className="flex cursor-pointer items-center gap-2 rounded-[10px] bg-landing-page px-2.5 py-1.5 text-[13px]">
+                      <input type="checkbox" className="h-4 w-4" style={{ accentColor: accent }} checked={!!got[g.name]} onChange={(e) => setGot((x) => ({ ...x, [g.name]: e.target.checked }))} />
+                      <span className="rounded-[6px] px-1.5 py-px font-mono text-[11.5px] font-bold" style={{ background: `${accent}1A`, color: accent }}>{g.n}×</span>
+                      <span className={got[g.name] ? 'text-landing-muted line-through' : 'text-landing-ink2'}>{g.name}</span>
+                    </label>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-landing-page px-2.5 py-1 text-[13px] text-landing-ink2"><span className="font-mono text-[11.5px] font-bold" style={{ color: accent }}>{g.n}×</span>{g.name}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {(s.hw?.length > 0 || s.tool) && (
+          <p className="flex items-start gap-1.5 text-[13px] leading-[1.5] text-landing-ink3"><Wrench className="mt-[2px] h-4 w-4 shrink-0 text-landing-muted" /><span>{[...(s.hw || []), s.tool].filter(Boolean).join(' · ')}</span></p>
+        )}
+        <ol className="space-y-1">
+          {s.how.map((h, i) => (
+            <li key={i} className="flex gap-2 text-[13.5px] leading-[1.5] text-landing-ink2">
+              <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-bold" style={{ background: `${accent}1A`, color: accent }}>{i + 1}</span>{h}
+            </li>
+          ))}
+        </ol>
+        <p className="flex items-start gap-1.5 rounded-[10px] bg-landing-page px-2.5 py-1.5 text-[13px] leading-[1.5]"><ClipboardCheck className="mt-[2px] h-4 w-4 shrink-0" style={{ color: accent }} /><span><b className="text-landing-ink">검사</b> <span className="text-landing-ink3">{s.check}</span></span></p>
+      </div>
+      <div className="grid grid-cols-[44px_44px_1fr] gap-2 p-3 pt-2">
+        <button type="button" onClick={() => onGo(index - 1)} disabled={index === 0} aria-label="이전 단계" className="inline-flex h-11 items-center justify-center rounded-[12px] bg-landing-page text-landing-ink disabled:opacity-40"><ChevronLeft className="h-5 w-5" /></button>
+        <button type="button" onClick={onPlay} aria-label={playing ? '자동 재생 멈춤' : '처음부터 자동 재생'} className="inline-flex h-11 items-center justify-center rounded-[12px] bg-landing-page text-landing-ink">{playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
+        {next ? (
+          <button type="button" onClick={() => onGo(index + 1)} className="inline-flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-[12px] px-3 text-[14.5px] font-bold" style={{ background: accent, color: ink }}><span className="truncate">다음: {next.title}</span><ChevronRight className="h-5 w-5 shrink-0" /></button>
+        ) : (
+          <button type="button" onClick={onDemo} className="inline-flex h-11 items-center justify-center gap-1.5 rounded-[12px] px-3 text-[14.5px] font-bold" style={{ background: accent, color: ink }}><Power className="h-4 w-4" />다 만들었으면 작동해 보기</button>
         )}
       </div>
     </section>

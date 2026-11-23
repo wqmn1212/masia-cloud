@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { PRODUCTS, productBySlug } from '../src/lib/showroom/products.js';
 import { evaluate, liveStep, impactOf, removableParts, powerParts, controlParts } from '../src/lib/showroom/workCheck.js';
 import { createSim, stepSim, setInput } from '../src/lib/devkit/deviceSim.js';
+import { assemblySteps, buildAt, checklist, totalSec, fmtSec } from '../src/lib/showroom/assembly.js';
 
 const press = (s, id) => { setInput(s, { pressed: { [id]: true } }); stepSim(s, 0.05); setInput(s, { pressed: { [id]: false } }); stepSim(s, 0.05); };
 const fn = (c, id) => c.functions.find((f) => f.id === id);
@@ -154,4 +155,30 @@ for (const p of PRODUCTS) {
   assert.ok(live.flows.some((f) => f.to === 'i_oledL'));
 }
 
-console.log(`✓ 쇼룸 검산 통과 (제품 ${PRODUCTS.length}개 · 부품 빼 보기 · 버튼 작동 · 3D 흐름)`);
+// 조립 순서: 모든 부품이 정확히 한 단계에 한 번, 앞 단계 부품은 계속 보이고 뒤 단계 부품은 안 보인다
+for (const p of PRODUCTS) {
+  const steps = assemblySteps(p);
+  assert.ok(steps[0].prep, `${p.slug}: 0단계는 부품 확인`);
+  const used = steps.flatMap((s) => s.parts);
+  const ids = p.parts.map((x) => x.id);
+  assert.deepEqual([...used].sort(), [...ids].sort(), `${p.slug}: 모든 부품이 한 번씩 (빠짐: ${ids.filter((i) => !used.includes(i))}, 중복·없는 id: ${used.filter((i, k) => used.indexOf(i) !== k || !ids.includes(i))})`);
+  steps.forEach((s, i) => {
+    assert.ok(s.title && s.how?.length && s.check && s.sec > 0, `${p.slug} ${i}단계: 제목·작업·검사·시간`);
+    const b = buildAt(p, steps, i);
+    if (s.prep) { assert.equal(b.explode, 1); assert.equal(b.shown.length, ids.length); return; }
+    s.parts.forEach((id) => assert.ok(b.shown.includes(id) && b.enter.includes(id)));
+    steps.slice(0, i).flatMap((x) => x.parts).forEach((id) => assert.ok(b.shown.includes(id), `${p.slug} ${i}단계: 앞 단계 ${id} 가 보여야`));
+    if (s.parts.length) steps.slice(i + 1).flatMap((x) => x.parts).forEach((id) => assert.ok(!b.shown.includes(id), `${p.slug} ${i}단계: 뒤 단계 ${id} 는 아직`));
+    assert.ok(['up', 'down', 'front', 'back', 'left', 'right'].includes(b.from));
+  });
+  assert.ok(steps.at(-1).demo, `${p.slug}: 마지막은 작동 검사`);
+  assert.ok(totalSec(steps) > 60);
+}
+{
+  const nv = checklist(productBySlug('night-vision').parts);
+  assert.equal(nv.find((x) => x.name === '고무 그립').n, 2, '왼쪽·오른쪽은 묶음');
+  assert.equal(nv.find((x) => x.name === '배터리 18650 3,500 mAh').n, 2, '(1)·(2) 묶음');
+  assert.equal(fmtSec(270), '4분 30초'); assert.equal(fmtSec(45), '45초'); assert.equal(fmtSec(120), '2분');
+}
+
+console.log(`✓ 쇼룸 검산 통과 (제품 ${PRODUCTS.length}개 · 부품 빼 보기 · 버튼 작동 · 3D 흐름 · 조립 순서)`);

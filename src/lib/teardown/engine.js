@@ -189,6 +189,7 @@ export function createTeardown(host, lib, opts = {}) {
   // ── 상태
   const st = { index: -1, step: null, playing: false, elapsed: 0, view: 'solid', explode: 0, labels: 'focus', adhoc: false, ended: false };
   let explodeNow = 0;
+  let build = null; let buildK = 0; // 조립 순서 (setBuild)
   let spin = !!opts.idleSpin; // 멈춰 있을 때도 천천히 돌기 (쇼룸)
   let tween = null;
   let flows = [];
@@ -204,7 +205,7 @@ export function createTeardown(host, lib, opts = {}) {
   // 단계의 카메라: 초점 부품을 감싸는 범위 + 방향(지정 또는 초점 쪽)
   const cameraFor = (step) => {
     const ex = Number(step?.explode) || 0;
-    const ids = step?.focus?.length ? step.focus : null;
+    const ids = step?.frame !== 'all' && step?.focus?.length ? step.focus : null;
     let c; let r;
     if (ids && ids.length < items.length) {
       const b = new THREE.Box3();
@@ -434,12 +435,19 @@ export function createTeardown(host, lib, opts = {}) {
     controls.autoRotate = !tween && (st.playing || spin);
     // 분해·투명·강조
     explodeNow += (st.explode - explodeNow) * Math.min(1, dt * 4);
+    // 조립 순서: 이번 단계 부품이 떨어진 곳에서 제자리로 들어간다 (잠깐 멈춤 → 들어감 → 끼운 채로 잠깐, 반복)
+    if (build) {
+      build.t += dt;
+      const ph = build.t % 3.4;
+      buildK = ph < 0.6 ? 1 : ph < 1.8 ? 1 - ease((ph - 0.6) / 1.2) : 0;
+    } else buildK = 0;
     const fs = focusSet();
     const view = st.view;
     items.forEach((it) => {
       const act = actionOf(it);
       const focused = !fs.size || fs.has(it.id);
       it.mesh.position.copy(it.home).addScaledVector(it.explode, explodeNow);
+      if (build && buildK > 0.001 && build.enter.has(it.id)) it.mesh.position.addScaledVector(build.from, buildK);
       it.mesh.quaternion.copy(it.quat);
       // 동작별 움직임
       const t = time + it.phase;
@@ -451,7 +459,7 @@ export function createTeardown(host, lib, opts = {}) {
       let target = it.baseOpacity;
       if (view === 'glass') target = it.layer === 'SHELL' ? (fs.has(it.id) ? 0.35 : 0.07) : focused ? it.baseOpacity : 0.12;
       else if (view === 'section') target = focused ? it.baseOpacity : 0.4;
-      else if (!focused) target = Math.min(it.baseOpacity, 0.18);
+      else if (!focused) target = Math.min(it.baseOpacity, build ? 0.55 : 0.18); // 조립 순서: 이미 끼운 부품은 반쯤 보이게
       it.opacity += (target - it.opacity) * Math.min(1, dt * 5);
       it.material.opacity = it.opacity;
       it.material.depthWrite = it.opacity > 0.9;
@@ -527,7 +535,14 @@ export function createTeardown(host, lib, opts = {}) {
   const live = (step) => { st.playing = false; st.adhoc = true; st.index = -1; applyStep(step, { fly: false }); emit(); };
   // 뺀 부품은 보이지 않게 (부품 빼 보기)
   let hidden = new Set();
-  const setHidden = (ids) => { hidden = new Set(ids || []); items.forEach((it) => { it.mesh.visible = !hidden.has(it.id); }); makeLabels(); };
+  const applyVisible = () => { items.forEach((it) => { it.mesh.visible = !hidden.has(it.id) && (!build || build.shown.has(it.id)); }); makeLabels(); };
+  const setHidden = (ids) => { hidden = new Set(ids || []); applyVisible(); };
+  // 조립 순서: shown = 지금까지 조립된 부품(이번 단계 포함), enter = 이번 단계 부품, from = 들어오는 쪽 ('up'·'down'·'front'·'back'·'left'·'right')
+  const FROM = { up: [0, 1, 0], down: [0, -1, 0], front: [0, 0, 1], back: [0, 0, -1], left: [-1, 0, 0], right: [1, 0, 0] };
+  const setBuild = (b) => {
+    build = b ? { shown: new Set(b.shown || []), enter: new Set(b.enter || []), from: new THREE.Vector3(...(FROM[b.from] || FROM.up)).multiplyScalar(radius * 0.55), t: 0 } : null;
+    applyVisible();
+  };
   // 보기 방식 바꾸기: 지금 단계는 그대로 두고 보기만 바꾼다 (단면은 조립 상태에서 자른다)
   const setView = (v) => {
     const keep = st.explode;
@@ -650,5 +665,5 @@ export function createTeardown(host, lib, opts = {}) {
   else applyStep(null, { fly: false });
   frame();
 
-  return { play, pause, toggle: () => (st.playing ? pause() : play()), goto, next: () => goto(st.index + 1), prev: () => goto(st.index - 1), show, setView, setExplode, setLabels, setTour, setSpin: (v) => { spin = !!v; }, setInsets, live, setHidden, getState, capture, record, stopRecording: () => recorder?.stop(), canvas: renderer.domElement, destroy };
+  return { play, pause, toggle: () => (st.playing ? pause() : play()), goto, next: () => goto(st.index + 1), prev: () => goto(st.index - 1), show, setView, setExplode, setLabels, setTour, setSpin: (v) => { spin = !!v; }, setInsets, live, setHidden, setBuild, getState, capture, record, stopRecording: () => recorder?.stop(), canvas: renderer.domElement, destroy };
 }
