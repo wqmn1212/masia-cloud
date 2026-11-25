@@ -15,6 +15,7 @@ export const TEAM_MENU_OPTIONS = [
   { path: '/artcraft', label: 'ArtCraft' },
   { path: '/financial-report', label: '재무 리포트' },
   { path: '/task-board', label: '업무 보드' },
+  { path: '/groups', label: '프로젝트 그룹' },
   { path: '/assistant', label: 'AI 업무 비서' },
   { path: '/file-center', label: '파일 센터' },
   { path: '/settlement', label: '정산 관리' },

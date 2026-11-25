@@ -44,6 +44,8 @@ const Assistant = lazy(() => import('@/pages/Assistant'));
 const FileCenter = lazy(() => import('@/pages/FileCenter'));
 const Contracts = lazy(() => import('@/pages/Contracts'));
 const Decisions = lazy(() => import('@/pages/Decisions'));
+const CardGroups = lazy(() => import('@/pages/CardGroups'));
+const CardGroupDetail = lazy(() => import('@/pages/CardGroupDetail'));
 const BomExtractor = lazy(() => import('@/pages/BomExtractor'));
 const MoldReview = lazy(() => import('@/pages/MoldReview'));
 const Agreements = lazy(() => import('@/pages/Agreements'));
@@ -191,6 +193,8 @@ const AuthenticatedApp = () => {
         <Route path="/file-center" element={<FileCenter />} />
         <Route path="/contracts" element={<Contracts />} />
         <Route path="/decisions" element={<Decisions />} />
+        <Route path="/groups" element={<CardGroups />} />
+        <Route path="/groups/:groupId" element={<CardGroupDetail />} />
         <Route path="/bom-extractor" element={<BomExtractor />} />
         <Route path="/mold-review" element={<MoldReview />} />
         <Route path="/prototypes" element={<Prototypes />} />
