@@ -4,7 +4,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import {
   LayoutDashboard, Factory, FileText, Shield, Users,
   Clock, Wrench, Package, ChevronLeft, ChevronRight, ChevronDown, Cloud, Calculator, ListChecks, Kanban,
-  ShieldCheck, ClipboardCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, Inbox, Images, BookOpen, Megaphone, CalendarOff, ScanSearch, Palette, Handshake, Ship, ScanBarcode, Cpu, CircuitBoard, Layers, Archive, Briefcase, MailPlus } from 'lucide-react';
+  ShieldCheck, ClipboardCheck, UserCog, BarChart3, KeyRound, Bot, FolderOpen, FileSignature, BookMarked, Boxes, Inbox, Images, BookOpen, Megaphone, CalendarOff, ScanSearch, Palette, Handshake, Ship, ScanBarcode, FolderKanban, Cpu, CircuitBoard, Layers, Archive, Briefcase, MailPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { canAccessPath, CLIENT_MENU_OPTIONS } from '@/lib/menuPermissions';
 import { getViewCompanyId, isDemoView } from '@/lib/clientView';
@@ -19,6 +19,7 @@ const STAFF_GROUPS = [
       { path: '/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
       { path: '/my-work', icon: ListChecks, labelKey: 'nav.myWork' },
       { path: '/task-board', icon: Kanban, labelKey: 'nav.taskboard' },
+      { path: '/groups', icon: FolderKanban, labelKey: 'nav.groups' },
       { path: '/admin-inbox', icon: ClipboardCheck, labelKey: 'nav.adminInbox', tiers: ['master', 'service'] },
       { path: '/assistant', icon: Bot, labelKey: 'nav.assistant' },
     ],

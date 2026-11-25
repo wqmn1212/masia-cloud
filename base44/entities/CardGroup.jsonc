@@ -1,0 +1,164 @@
+{
+  "name": "CardGroup",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "소속 팀 ID (데이터 격리 키)"
+    },
+    "name": {
+      "type": "string",
+      "description": "그룹 이름 (예: N30 미샤 RF써마 프로)"
+    },
+    "description": {
+      "type": "string",
+      "description": "그룹 설명"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "고객사 Company ID"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "card_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "묶은 TaskCard ID 목록"
+    },
+    "main_card_id": {
+      "type": "string",
+      "description": "대표 카드 (회의록·파일을 주로 쌓는 카드)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "ARCHIVED"
+      ],
+      "default": "ACTIVE"
+    },
+    "created_by_name": {
+      "type": "string"
+    },
+    "updated_by_name": {
+      "type": "string",
+      "description": "마지막으로 고친 사람"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.tenant_id": "{{user.data.tenant_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.account_tier": "master"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "sub"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "data.account_tier": "service"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "data.account_tier": "sub"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.account_tier": "master"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.tenant_id": "{{user.data.tenant_id}}"
+            },
+            {
+              "user_condition": {
+                "data.account_tier": "service"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
