@@ -8,9 +8,9 @@ import { partsBounds, distanceMm, angleDeg, fmtMeasure } from '@/lib/measure3d';
 
 const MODES = [['ORBIT', '회전', Rotate3D], ['DIST', '거리', Ruler], ['ANGLE', '각도', Triangle]];
 const HINTS = {
-  ORBIT: '드래그로 회전, 휠로 확대합니다. 오른쪽 목록의 눈 아이콘으로 부품을 보이고 숨깁니다.',
-  DIST: '거리 측정: 모델 위에서 두 점을 차례로 찍습니다.',
-  ANGLE: '각도 측정: 세 점을 찍습니다. 두 번째 점이 꼭짓점입니다.',
+  ORBIT: '왼쪽 드래그 회전 · 오른쪽 드래그 화면 이동 · 휠 확대/축소. 회전 중심은 보이는 부품들의 중심입니다.',
+  DIST: '거리 측정: 모델 위를 왼쪽 클릭으로 두 점 찍기 (드래그하면 회전, 오른쪽 드래그는 이동, 휠은 확대).',
+  ANGLE: '각도 측정: 왼쪽 클릭으로 세 점 찍기, 두 번째 점이 꼭짓점 (드래그 회전·오른쪽 드래그 이동·휠 확대).',
 };
 const HOME = { rotX: 0.5, rotY: 0.8, zoom: 1 };
 

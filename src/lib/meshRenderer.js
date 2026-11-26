@@ -56,9 +56,9 @@ export function renderMeshToDataURL(mesh, size = 56) {
 }
 
 /** 부품별 표시·숨김을 쓰는 장면을 한 프레임으로 굽는다 (3D 검토용). */
-export function renderSceneFrame(scene, radius, { size = 900, zoom = 1 } = {}) {
+export function renderSceneFrame(scene, radius, { size = 900, zoom = 1, camera = null } = {}) {
   const r = getRenderer(size);
-  r.render(scene, viewCamera(radius, zoom));
+  r.render(scene, camera || viewCamera(radius, zoom));
   return r.domElement.toDataURL('image/png');
 }
 

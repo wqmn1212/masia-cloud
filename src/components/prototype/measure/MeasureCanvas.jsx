@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { buildPartsScene, disposePartsScene, pickLocalPoint, projectLocal } from '@/lib/measure3d';
+import { buildPartsScene, disposePartsScene, pickLocalPoint, projectLocal, applyView, viewSpan } from '@/lib/measure3d';
 import { renderSceneFrame } from '@/lib/meshRenderer';
 
 // 3D 검토 무대: 회전·확대 + 클릭한 지점을 모델 좌표로 돌려주고, 찍은 점·측정선을 프레임 위에 겹쳐 그린다.
@@ -9,6 +9,19 @@ export default function MeasureCanvas({ parts, bounds, visible, selectedPart, vi
   const [frame, setFrame] = useState('');
   const [tick, setTick] = useState(0);
   const [miss, setMiss] = useState('');
+  const boxRef = useRef(null);
+
+  // 휠 확대·축소 — 페이지가 같이 스크롤되지 않게 passive 가 아닌 리스너로 막는다
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return undefined;
+    const onWheel = (e) => {
+      e.preventDefault();
+      setView((v) => ({ ...v, zoom: Math.min(12, Math.max(0.3, v.zoom * (e.deltaY < 0 ? 1.1 : 0.9))) }));
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [setView]);
 
   useEffect(() => {
     if (!parts?.length) return undefined;
@@ -22,9 +35,8 @@ export default function MeasureCanvas({ parts, bounds, visible, selectedPart, vi
     const built = builtRef.current;
     if (!built) return undefined;
     const id = requestAnimationFrame(() => {
-      built.root.rotation.set(view.rotX, view.rotY, 0);
-      built.root.updateMatrixWorld(true);
-      setFrame(renderSceneFrame(built.scene, built.radius, { size: 900, zoom: view.zoom }));
+      const camera = applyView(built.root, view);
+      setFrame(renderSceneFrame(built.scene, built.radius, { size: 900, camera }));
     });
     return () => cancelAnimationFrame(id);
   }, [view, tick]);
@@ -35,7 +47,13 @@ export default function MeasureCanvas({ parts, bounds, visible, selectedPart, vi
   const overlayLines = overlays.map((pts) => pts.map(screenOf).filter((s) => s && s.visible));
 
   const pointerDown = (e) => {
-    dragRef.current = { x: e.clientX, y: e.clientY, moved: 0, rotX: view.rotX, rotY: view.rotY };
+    // 왼쪽 드래그 = 회전, 오른쪽(또는 가운데) 드래그 = 카메라 이동, 왼쪽 클릭(움직임 없음) = 점 찍기
+    const pan = e.button === 2 || e.button === 1;
+    dragRef.current = {
+      x: e.clientX, y: e.clientY, moved: 0, pan,
+      width: e.currentTarget.getBoundingClientRect().width || 1,
+      rotX: view.rotX, rotY: view.rotY, panX: view.panX || 0, panY: view.panY || 0,
+    };
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
@@ -45,13 +63,18 @@ export default function MeasureCanvas({ parts, bounds, visible, selectedPart, vi
     const dx = e.clientX - d.x;
     const dy = e.clientY - d.y;
     d.moved = Math.max(d.moved, Math.hypot(dx, dy));
-    setView((v) => ({ ...v, rotX: d.rotX + dy * 0.01, rotY: d.rotY + dx * 0.01 }));
+    if (d.pan) {
+      const span = viewSpan(builtRef.current?.radius || 1, view.zoom) / d.width;
+      setView((v) => ({ ...v, panX: d.panX - dx * span, panY: d.panY + dy * span }));
+    } else {
+      setView((v) => ({ ...v, rotX: d.rotX + dy * 0.01, rotY: d.rotY + dx * 0.01 }));
+    }
   };
 
   const pointerUp = (e) => {
     const d = dragRef.current;
     dragRef.current = null;
-    if (!d || d.moved > 6 || !picking) return;
+    if (!d || d.pan || d.moved > 6 || !picking) return;
     const scene = builtRef.current;
     if (!scene) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -76,7 +99,8 @@ export default function MeasureCanvas({ parts, bounds, visible, selectedPart, vi
       onPointerMove={pointerMove}
       onPointerUp={pointerUp}
       onPointerCancel={() => { dragRef.current = null; }}
-      onWheel={(e) => setView((v) => ({ ...v, zoom: Math.min(6, Math.max(0.3, v.zoom * (e.deltaY < 0 ? 1.1 : 0.9))) }))}
+      onContextMenu={(e) => e.preventDefault()}
+      ref={boxRef}
     >
       {frame
         ? <img src={frame} alt="3D 모델" className="pointer-events-none h-full w-full object-contain" draggable={false} />

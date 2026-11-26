@@ -3,13 +3,42 @@
 import * as THREE from 'three';
 
 /** 뷰어와 같은 시점의 카메라 — 프레임을 굽는 쪽(meshRenderer)과 클릭 지점을 계산하는 쪽이 같은 값을 쓴다. */
-export function viewCamera(radius, zoom = 1) {
+export function viewCamera(radius, zoom = 1, panX = 0, panY = 0) {
   const r = Math.max(radius, 1e-3);
   const camera = new THREE.PerspectiveCamera(38, 1, r / 100, r * 30);
-  camera.position.set(0, 0, (r * 3) / Math.max(zoom, 0.2));
-  camera.lookAt(0, 0, 0);
+  camera.position.set(panX, panY, (r * 3) / Math.max(zoom, 0.2));
+  camera.lookAt(panX, panY, 0);
   camera.updateMatrixWorld();
   return camera;
+}
+
+/** 화면 1픽셀 비율당 움직일 거리 — 오른쪽 드래그(카메라 이동)용. 보이는 화면 높이(월드 단위)를 돌려준다 */
+export function viewSpan(radius, zoom = 1) {
+  const d = (Math.max(radius, 1e-3) * 3) / Math.max(zoom, 0.2);
+  return 2 * d * Math.tan((19 * Math.PI) / 180);
+}
+
+/** 회전·이동을 장면에 적용 — 회전 중심은 보이는 부품들의 중심(root.userData.pivot) */
+export function applyView(root, view) {
+  const pivot = root.userData.pivot || new THREE.Vector3();
+  root.rotation.set(view.rotX, view.rotY, 0);
+  root.position.set(0, 0, 0);
+  root.updateMatrixWorld(true);
+  const offset = pivot.clone().applyEuler(root.rotation);
+  root.position.set(-offset.x, -offset.y, -offset.z);
+  root.updateMatrixWorld(true);
+  return viewCamera(root.userData.radius || 1, view.zoom, view.panX || 0, view.panY || 0);
+}
+
+/** 보이는 부품만의 중심(모델 좌표) — 숨긴 부품은 회전 중심에서 뺀다 */
+function visiblePivot(meshes) {
+  const box = new THREE.Box3();
+  meshes.forEach((m) => {
+    if (!m.visible) return;
+    m.geometry.computeBoundingBox();
+    box.union(m.geometry.boundingBox);
+  });
+  return box.isEmpty() ? new THREE.Vector3() : box.getCenter(new THREE.Vector3());
 }
 
 const PALETTE = [0x9fb2cc, 0xbfc9d8, 0x8fa3bf, 0xc9d1dd, 0xa9b8cd, 0xb6c2d4];
@@ -82,6 +111,8 @@ export function buildPartsScene(parts, visible = [], selected = -1, bounds = nul
     root.add(mesh);
     return mesh;
   });
+  root.userData.pivot = visiblePivot(meshes);
+  root.userData.radius = box.radius;
   scene.add(root);
   return { scene, root, meshes, radius: box.radius, size: box.size };
 }
@@ -94,10 +125,8 @@ export function disposePartsScene(built) {
 }
 
 /** 화면 좌표(0~1)에서 보이는 부품을 찍어 모델 좌표(mm)를 돌려준다 */
-export function pickLocalPoint({ root, radius, view, nx, ny }) {
-  const camera = viewCamera(radius, view.zoom);
-  root.rotation.set(view.rotX, view.rotY, 0);
-  root.updateMatrixWorld(true);
+export function pickLocalPoint({ root, view, nx, ny }) {
+  const camera = applyView(root, view);
   const raycaster = new THREE.Raycaster();
   raycaster.setFromCamera(new THREE.Vector2(nx * 2 - 1, -(ny * 2 - 1)), camera);
   const targets = root.children.filter((m) => m.visible);
@@ -108,10 +137,8 @@ export function pickLocalPoint({ root, radius, view, nx, ny }) {
 }
 
 /** 모델 좌표를 화면 좌표(0~1)로 — 마커·측정선을 프레임 위에 겹쳐 그린다 */
-export function projectLocal({ root, radius, view, point }) {
-  const camera = viewCamera(radius, view.zoom);
-  root.rotation.set(view.rotX, view.rotY, 0);
-  root.updateMatrixWorld(true);
+export function projectLocal({ root, view, point }) {
+  const camera = applyView(root, view);
   const world = root.localToWorld(new THREE.Vector3(point.x, point.y, point.z));
   const depth = world.clone().applyMatrix4(camera.matrixWorldInverse).z;
   world.project(camera);
