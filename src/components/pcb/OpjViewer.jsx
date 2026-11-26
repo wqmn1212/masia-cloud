@@ -5,7 +5,7 @@ import { useLeaveGuard } from '@/lib/useLeaveGuard';
 import { parseOpj, encodeNativeText, downloadNativeFile } from '@/lib/pcbArt/opj';
 import OpjTreeNode from '@/components/pcb/OpjTreeNode';
 import OpjProperties from '@/components/pcb/OpjProperties';
-import OpjSource from '@/components/pcb/OpjSource';
+import SourceViewer from '@/components/pcb/SourceViewer';
 
 export default function OpjViewer({ file, files, onSave, onDirtyChange }) {
   const [text, setText] = useState(file.text), [clean, setClean] = useState(file.text);
@@ -35,7 +35,7 @@ export default function OpjViewer({ file, files, onSave, onDirtyChange }) {
         <section className="rounded-xl border bg-card p-4"><h2 className="mb-2 text-label font-semibold">프로젝트 구조</h2><ul className="max-h-[60vh] overflow-auto text-caption"><OpjTreeNode node={parsed.root} selected={node.id} onSelect={setSelected} /></ul></section>
         <OpjProperties key={node.id} node={node} text={text} onChange={setText} files={files} />
       </div>
-      <OpjSource text={text} />
+      <SourceViewer title="프로젝트 원문" text={text} />
     </div>
   );
 }

@@ -18,7 +18,9 @@ import { takeHandoff } from '@/lib/pcbArt/handoff';
 import { useQueryClient } from '@tanstack/react-query';
 import { protoKeys } from '@/lib/prototypeApi';
 import { inspectNativePcb } from '@/lib/pcbArt/opj';
+import { isPadsText } from '@/lib/pcbArt/pads';
 import OpjViewer from '@/components/pcb/OpjViewer';
+import PadsViewer from '@/components/pcb/PadsViewer';
 import UnsupportedPcbFile from '@/components/pcb/UnsupportedPcbFile';
 
 const TABS = [['drc', '검사'], ['nets', '넷 설정'], ['sim', '시뮬레이션'], ['props', '선택'], ['z0', '임피던스']];
@@ -112,8 +114,9 @@ export default function PcbStudio() {
     }
     const file = inspectNativePcb(data, n);
     if (file.kind === 'kicad') { open(file.text, n); return; }
+    const kind = file.text && isPadsText(file.text) ? 'pads' : file.kind;
     setBoard(null); setCleanBoard(null); setChoices([]); setSelected(null); setSim(null);
-    setNativeFile({ ...file, openId: crypto.randomUUID() }); setNativeDirty(false); setName(n); setError('');
+    setNativeFile({ ...file, kind, openId: crypto.randomUUID() }); setNativeDirty(false); setName(n); setError('');
     hist.current = { past: [], future: [] };
   }, [open]);
 
@@ -217,11 +220,12 @@ export default function PcbStudio() {
     } catch (e) { toast({ title: errorText(e), variant: 'destructive' }); }
     setBusy('');
   };
-  const saveNativeToProject = async (bytes, filename) => {
-    const file = await uploadProtoFile(new File([bytes], filename, { type: 'application/octet-stream' }), user, { category: 'PCB', note: 'OPJ 프로젝트 속성·참조 경로 수정본 (원본 유지)' });
+  const saveNativeToProject = async (bytes, filename, kind) => {
+    const note = kind === 'pads' ? 'PADS ASCII 기록 수정본 (원본 유지)' : 'OPJ 프로젝트 속성·참조 경로 수정본 (원본 유지)';
+    const file = await uploadProtoFile(new File([bytes], filename, { type: 'application/octet-stream' }), user, { category: 'PCB', note });
     await addProtoFiles(projectId, [file]);
     await qc.invalidateQueries({ queryKey: protoKeys.project(projectId) });
-    toast({ title: 'OPJ 수정본을 새 파일로 저장했습니다' });
+    toast({ title: `${kind === 'pads' ? 'PADS' : 'OPJ'} 수정본을 새 파일로 저장했습니다` });
   };
   const pickFile = async (e) => {
     const f = e.target.files?.[0];
@@ -246,7 +250,7 @@ export default function PcbStudio() {
           <h1 className="mt-0.5 text-2xl font-bold tracking-tight">{name || '기판을 열어 보고 · 고치고 · 검사하고 · 시뮬레이션'}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <input ref={fileRef} type="file" accept=".kicad_pcb,.pcb,.opj,.zip" className="hidden" onChange={pickFile} />
+          <input ref={fileRef} type="file" accept=".kicad_pcb,.pcb,.asc,.opj,.zip" className="hidden" onChange={pickFile} />
           <Button variant="outline" onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4" />기판 파일 열기</Button>
           {board && <Button variant="outline" onClick={exportPcb}><Download className="h-4 w-4" />수정본 {boardExtension}</Button>}
           {board && <Button variant="outline" onClick={() => download(report(), `${outName()}-review.md`, 'text/markdown')}><FileText className="h-4 w-4" />검토 보고서</Button>}
@@ -262,15 +266,17 @@ export default function PcbStudio() {
           {choices.map((c) => <Button key={c.name} size="sm" variant="outline" onClick={() => { if ((nativeDirty || (board && board !== cleanBoard)) && !window.confirm('수정 내용을 저장하지 않고 다른 파일을 열까요?')) return; openBytes(c.bytes, c.name.split('/').pop()).catch(e => setError(e.message)); }}>{c.name}</Button>)}
         </div>
       )}
-      {nativeFile?.kind === 'opj' && <OpjViewer key={nativeFile.openId} file={nativeFile} files={project?.files || []} onSave={projectId ? saveNativeToProject : null} onDirtyChange={setNativeDirty} />}
+      {nativeFile?.kind === 'opj' && <OpjViewer key={nativeFile.openId} file={nativeFile} files={project?.files || []} onSave={projectId ? (b, n) => saveNativeToProject(b, n, 'opj') : null} onDirtyChange={setNativeDirty} />}
+      {nativeFile?.kind === 'pads' && <PadsViewer key={nativeFile.openId} file={nativeFile} onSave={projectId ? (b, n) => saveNativeToProject(b, n, 'pads') : null} onDirtyChange={setNativeDirty} />}
       {nativeFile?.kind === 'unsupported' && <UnsupportedPcbFile file={nativeFile} />}
       {!board && !nativeFile && !loading && choices.length === 0 && (
         <div className="rounded-2xl border bg-card p-6 text-body">
           <p className="font-semibold">기판 파일을 여세요</p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-caption text-muted-foreground">
             <li>KiCad 기판(.kicad_pcb): 확대·부품 확인·아트웍 수정·다운로드. OrCAD 프로젝트(.opj): 구조·참조 경로 확인·속성 수정·동일 형식 다운로드.</li>
-            <li>.pcb도 선택할 수 있지만 제작 프로그램별 형식 확인이 필요합니다. 미지원 형식은 회로 편집을 제공하지 않으며 원본만 다운로드할 수 있습니다.</li>
-            <li>zip 안의 .kicad_pcb, .pcb, .opj도 목록에서 골라 열 수 있습니다.</li>
+            <li>PADS ASCII(.asc): 구역·부품·배선 기록을 표로 확인·수정하고 같은 ASCII 형식으로 내려받습니다.</li>
+            <li>PADS Layout의 .pcb는 바이너리라 브라우저에서 열 수 없습니다. PADS에서 File → Export → ASCII(.asc)로 내보낸 파일을 올려 주세요.</li>
+            <li>zip 안의 .kicad_pcb, .pcb, .asc, .opj도 목록에서 골라 열 수 있습니다.</li>
             <li>시제품 워크벤치 “회로 설계” 단계에서 “아트웍 스튜디오에서 열기” 를 누르면 워크벤치 설계로 만든 기판이 바로 열립니다</li>
             <li>거버(Gerber)만 있는 기판은 아직 열 수 없습니다 — 설계 업체에 KiCad 파일이나 IPC-2581 을 요청하세요</li>
           </ul>

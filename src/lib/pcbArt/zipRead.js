@@ -36,7 +36,7 @@ export async function boardsFromZip(bytes, depth = 0) {
   if (bytes.byteLength > 40 * 1024 * 1024) throw new Error('40MB 이하 압축 자료만 열 수 있습니다.');
   const found = [];
   for (const e of listZip(bytes)) {
-    if (/\.(kicad_pcb|pcb|opj)$/i.test(e.name)) {
+    if (/\.(kicad_pcb|pcb|asc|opj)$/i.test(e.name)) {
       const data = await e.read();
       if (data.byteLength > 40 * 1024 * 1024) throw new Error(`${e.name}: 40MB 이하 파일만 열 수 있습니다.`);
       found.push({ name: e.name, bytes: data });

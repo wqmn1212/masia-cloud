@@ -52,7 +52,11 @@ export function inspectNativePcb(bytes, name) {
   if (b[0] === 255 && b[1] === 254) { encoding = 'utf-16le'; bom = b.slice(0, 2); }
   else if (b[0] === 254 && b[1] === 255) { encoding = 'utf-16be'; bom = b.slice(0, 2); }
   else if (b[0] === 239 && b[1] === 187 && b[2] === 191) bom = b.slice(0, 3);
-  try { text = new TextDecoder(encoding, { fatal: true }).decode(b.subarray(bom.length)); } catch { /* Unknown encoding is read-only; never re-encode it silently. */ }
+  try { text = new TextDecoder(encoding, { fatal: true }).decode(b.subarray(bom.length)); }
+  catch {
+    // ANSI(CP949·CP1252 등) 파일: 1바이트 = 1글자로 읽어 원래 바이트를 그대로 되돌려 쓴다
+    if (encoding === 'utf-8') { encoding = 'latin1'; let s = ''; for (const byte of b.subarray(bom.length)) s += String.fromCharCode(byte); text = s; }
+  }
   const readable = text !== null && !/[\x00-\x08\x0e-\x1f]/.test(text);
   const base = { bytes: b, name, encoding, bom, text: readable ? text : null };
   if (readable && /^\s*\(kicad_pcb\b/.test(text)) return { ...base, kind: 'kicad' };
@@ -60,13 +64,23 @@ export function inspectNativePcb(bytes, name) {
     try { parseOpj(text); return { ...base, kind: 'opj' }; }
     catch (e) { return { ...base, kind: 'unsupported', reason: e.message }; }
   }
-  return { ...base, kind: 'unsupported', reason: /\.opj$/i.test(name) ? '이 파일은 지원하는 텍스트 OrCAD 프로젝트가 아니거나 문자 인코딩을 확인할 수 없습니다.' : '이 PCB 형식의 회로 표시·편집·원본 형식 저장은 아직 지원하지 않습니다. 제작 프로그램과 버전 확인이 필요합니다.' };
+  const reason = /\.opj$/i.test(name)
+    ? '이 파일은 지원하는 텍스트 OrCAD 프로젝트가 아니거나 문자 인코딩을 확인할 수 없습니다.'
+    : /\.pcb$/i.test(name)
+      ? 'PADS Layout의 .pcb는 바이너리 형식이라 브라우저에서 열 수 없습니다. PADS에서 File → Export → ASCII(.asc)로 내보낸 파일을 올려 주세요.'
+    : /\.asc$/i.test(name)
+      ? '이 파일은 PADS ASCII(!PADS- 헤더) 형식이 아니거나 문자 인코딩을 확인할 수 없습니다. PADS에서 File → Export → ASCII(.asc)로 다시 내보내 주세요.'
+      : '지원하지 않는 형식입니다. PADS ASCII(.asc), OrCAD 프로젝트(.opj), KiCad 기판(.kicad_pcb)을 열 수 있습니다.';
+  return { ...base, kind: 'unsupported', reason };
 }
 
 export function encodeNativeText(file, text) {
   let body;
   if (file.encoding === 'utf-8') body = new TextEncoder().encode(text);
-  else {
+  else if (file.encoding === 'latin1') {
+    body = new Uint8Array(text.length);
+    for (let i = 0; i < text.length; i++) body[i] = text.charCodeAt(i) & 0xff;
+  } else {
     body = new Uint8Array(text.length * 2);
     const view = new DataView(body.buffer);
     for (let i = 0; i < text.length; i++) view.setUint16(i * 2, text.charCodeAt(i), file.encoding === 'utf-16le');
