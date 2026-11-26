@@ -12,6 +12,7 @@ import BomSaveBar from '@/components/bom/BomSaveBar';
 import BomPartViewer from '@/components/bom/BomPartViewer';
 import BomEstimatePanel from '@/components/bom/BomEstimatePanel';
 import BomSaveDialog from '@/components/bom/BomSaveDialog';
+import BomAssemblyViewer from '@/components/bom/BomAssemblyViewer';
 
 const PHASE_LABEL = {
   parsing: 'STEP 형상 읽는 중...',
@@ -163,6 +164,7 @@ export default function BomExtractor() {
               {sourceFile?.name} · {parts.length}개 부품 · 파싱 {(elapsedMs / 1000).toFixed(1)}초
             </p>
           )}
+          <BomAssemblyViewer parts={parts} />
           <BomPartTable parts={parts} onPartChange={handlePartChange} onViewPart={setViewIndex} />
           <BomEstimatePanel parts={parts} unconfirmedCount={unconfirmedCount} />
           <BomSaveBar
