@@ -48,6 +48,9 @@ export default function BomAssemblyViewer({ parts }) {
       unit: angle ? 'deg' : 'mm',
       value: angle ? angleDeg(next[0], next[1], next[2]) : distanceMm(next[0], next[1]),
       points: next,
+      design: '',
+      tolerance: angle ? '1' : '0.5',
+      fix: '',
       partNames: [...new Set(next.map((p) => meshParts[p.part]?.part_name).filter(Boolean))],
     }, ...prev]);
     setActiveId(id);
@@ -104,12 +107,13 @@ export default function BomAssemblyViewer({ parts }) {
             onSelect={setSelected}
           />
         </div>
-        <div className="max-h-[360px] space-y-2 overflow-y-auto rounded-xl border bg-card p-3">
-          <p className="px-1 text-caption font-semibold text-muted-foreground">측정 {rows.length ? `(${rows.length})` : ''}</p>
+        <div className="max-h-[560px] space-y-2 overflow-y-auto rounded-xl border bg-card p-3">
+          <p className="px-1 text-caption font-semibold text-muted-foreground">측정·설계치 비교 {rows.length ? `(${rows.length})` : ''}</p>
           <BomMeasureList
             rows={rows}
             selectedId={activeId}
             onSelect={setActiveId}
+            onChange={(next) => setRows((prev) => prev.map((r) => (r.id === next.id ? next : r)))}
             onDelete={(id) => setRows((prev) => prev.filter((r) => r.id !== id))}
           />
         </div>

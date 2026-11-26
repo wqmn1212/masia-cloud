@@ -1,22 +1,22 @@
 import React from 'react';
-import { Trash2 } from 'lucide-react';
-import { fmtMeasure } from '@/lib/measure3d';
+import BomMeasureRow from '@/components/bom/BomMeasureRow';
 
 // 이 화면에서 잰 측정 목록 (저장하지 않는 임시 기록) — 누르면 도면 위에 다시 표시
-export default function BomMeasureList({ rows, selectedId, onSelect, onDelete }) {
-  if (!rows.length) return <p className="px-1 text-caption text-muted-foreground">아직 측정한 값이 없습니다.</p>;
+export default function BomMeasureList({ rows, selectedId, onSelect, onChange, onDelete }) {
+  if (!rows.length) return <p className="px-1 text-caption text-muted-foreground">거리·각도 모드에서 모델 위를 찍으면 측정이 여기에 쌓입니다.</p>;
+  const diffCount = rows.filter((r) => r.design !== '' && Math.abs(r.value - Number(r.design)) > (Number(r.tolerance) || 0)).length;
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
+      {diffCount > 0 && <p className="px-1 text-caption text-destructive">설계치와 다른 측정 {diffCount}건</p>}
       {rows.map((r) => (
-        <div key={r.id} className={`flex items-center gap-2 rounded-lg px-2 py-1.5 ${selectedId === r.id ? 'bg-primary/10' : 'hover:bg-muted'}`}>
-          <button type="button" onClick={() => onSelect(selectedId === r.id ? '' : r.id)} className="min-w-0 flex-1 text-left">
-            <span className="block text-body font-semibold">{fmtMeasure(r.value, r.unit)}</span>
-            <span className="block truncate text-micro text-muted-foreground">{r.label}{r.partNames.length ? ` · ${r.partNames.join(', ')}` : ''}</span>
-          </button>
-          <button type="button" onClick={() => onDelete(r.id)} className="rounded p-1 text-muted-foreground hover:text-destructive" title="삭제">
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
+        <BomMeasureRow
+          key={r.id}
+          row={r}
+          active={selectedId === r.id}
+          onSelect={() => onSelect(selectedId === r.id ? '' : r.id)}
+          onChange={onChange}
+          onDelete={() => onDelete(r.id)}
+        />
       ))}
     </div>
   );
