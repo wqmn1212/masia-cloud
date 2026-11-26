@@ -31,12 +31,17 @@ export function listZip(bytes) {
 }
 
 /** zip 안의 기판 파일들 (안쪽 zip 한 겹까지) → [{ name, text }] */
-export async function boardsFromZip(bytes) {
+export async function boardsFromZip(bytes, depth = 0) {
+  if (depth > 1) return [];
+  if (bytes.byteLength > 40 * 1024 * 1024) throw new Error('40MB 이하 압축 자료만 열 수 있습니다.');
   const found = [];
   for (const e of listZip(bytes)) {
-    if (/\.kicad_pcb$/i.test(e.name)) found.push({ name: e.name, text: new TextDecoder().decode(await e.read()) });
-    else if (/\.zip$/i.test(e.name) && !/gerber/i.test(e.name)) {
-      try { for (const x of await boardsFromZip(await e.read())) found.push({ name: `${e.name}/${x.name}`, text: x.text }); } catch { /* 안쪽 zip 을 못 읽으면 건너뛴다 */ }
+    if (/\.(kicad_pcb|pcb|opj)$/i.test(e.name)) {
+      const data = await e.read();
+      if (data.byteLength > 40 * 1024 * 1024) throw new Error(`${e.name}: 40MB 이하 파일만 열 수 있습니다.`);
+      found.push({ name: e.name, bytes: data });
+    } else if (/\.zip$/i.test(e.name) && !/gerber/i.test(e.name)) {
+      for (const x of await boardsFromZip(await e.read(), depth + 1)) found.push({ ...x, name: `${e.name}/${x.name}` });
     }
   }
   return found;

@@ -15,6 +15,11 @@ import { runDrc, guessNetRules, drcCounts, FAB_PROFILES } from '@/lib/pcbArt/drc
 import { widthForCurrent } from '@/lib/pcbArt/ipc';
 import { boardsFromZip } from '@/lib/pcbArt/zipRead';
 import { takeHandoff } from '@/lib/pcbArt/handoff';
+import { useQueryClient } from '@tanstack/react-query';
+import { protoKeys } from '@/lib/prototypeApi';
+import { inspectNativePcb } from '@/lib/pcbArt/opj';
+import OpjViewer from '@/components/pcb/OpjViewer';
+import UnsupportedPcbFile from '@/components/pcb/UnsupportedPcbFile';
 
 const TABS = [['drc', '검사'], ['nets', '넷 설정'], ['sim', '시뮬레이션'], ['props', '선택'], ['z0', '임피던스']];
 const LAYER_TOGGLES = [['F.Cu', '앞 동박'], ['B.Cu', '뒤 동박'], ['zones', '동박면'], ['F.SilkS', '앞 실크'], ['B.SilkS', '뒤 실크'], ['ratsnest', '미연결선'], ['drc', '검사 표시'], ['refs', '부품 이름']];
@@ -56,6 +61,9 @@ export default function PcbStudio() {
   const projectId = params.get('project');
   const { user } = useAuth();
   const { data: project } = useProtoProject(projectId);
+  const qc = useQueryClient();
+  const [nativeFile, setNativeFile] = useState(null);
+  const [nativeDirty, setNativeDirty] = useState(false);
   const [name, setName] = useState('');
   const [board, setBoard] = useState(null);
   const [cleanBoard, setCleanBoard] = useState(null); // 마지막으로 열거나 내보내거나 저장한 기판
@@ -85,18 +93,29 @@ export default function PcbStudio() {
   const open = useCallback((text, n) => {
     try {
       const b = parseBoard(text);
+      setNativeFile(null); setNativeDirty(false);
       setBoard(b); setCleanBoard(b); setName(n); setChoices([]); setError(''); setSelected(null); setSim(null); setHighlightNet(null);
       hist.current = { past: [], future: [] };
       setRules({ ...guessNetRules(b), ...(loadRules(n) || {}) });
       setActiveLayer(b.copper[0] || 'F.Cu');
     } catch (e) { setError(`기판을 읽지 못했습니다: ${e.message}`); }
   }, []);
-  const openList = useCallback((list) => { if (!list.length) setError('zip 안에 .kicad_pcb 기판 파일이 없습니다.'); else if (list.length === 1) open(list[0].text, list[0].name.split('/').pop()); else setChoices(list); }, [open]);
   const openBytes = useCallback(async (bytes, n) => {
-    const head = new Uint8Array(bytes.slice(0, 2));
-    if (head[0] === 0x50 && head[1] === 0x4b) openList(await boardsFromZip(new Uint8Array(bytes)));
-    else open(new TextDecoder().decode(bytes), n);
-  }, [open, openList]);
+    const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    if (data.length > 40 * 1024 * 1024) throw new Error('40MB 이하 파일만 열 수 있습니다.');
+    if (data[0] === 0x50 && data[1] === 0x4b) {
+      const list = await boardsFromZip(data);
+      if (!list.length) setError('zip 안에 .kicad_pcb, .pcb 또는 .opj 파일이 없습니다.');
+      else if (list.length === 1) await openBytes(list[0].bytes, list[0].name.split('/').pop());
+      else { setChoices(list); setError(''); }
+      return;
+    }
+    const file = inspectNativePcb(data, n);
+    if (file.kind === 'kicad') { open(file.text, n); return; }
+    setBoard(null); setCleanBoard(null); setChoices([]); setSelected(null); setSim(null);
+    setNativeFile({ ...file, openId: crypto.randomUUID() }); setNativeDirty(false); setName(n); setError('');
+    hist.current = { past: [], future: [] };
+  }, [open]);
 
   useEffect(() => {
     const go = async () => {
@@ -129,7 +148,7 @@ export default function PcbStudio() {
       }
     };
     go();
-  }, [projectId, project?.id]);
+  }, [projectId, project?.id, params.get('file'), params.get('board'), params.get('from')]);
 
   // 편집 (되돌리기 가능)
   const commit = (next) => { hist.current.past.push(board); if (hist.current.past.length > 80) hist.current.past.shift(); hist.current.future = []; setBoard(next); };
@@ -180,14 +199,15 @@ export default function PcbStudio() {
   }, []);
 
   const download = (data, n, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type })); a.download = n; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); };
-  const outName = () => name.replace(/\.kicad_pcb$/i, '').replace(/[^\w.-]+/g, '_') || 'board';
-  const exportPcb = () => { download(toKicadText(board), `${outName()}-edited.kicad_pcb`, 'text/plain'); setCleanBoard(board); };
+  const outName = () => name.replace(/\.(kicad_pcb|pcb)$/i, '').replace(/[^\w.-]+/g, '_') || 'board';
+  const boardExtension = /\.pcb$/i.test(name) ? '.pcb' : '.kicad_pcb';
+  const exportPcb = () => { download(toKicadText(board), `${outName()}-edited${boardExtension}`, 'text/plain'); setCleanBoard(board); };
   const report = () => reportText(name, board, drc, rules, profile, simFresh ? sim : null);
   const saveToProject = async () => {
     setBusy('save');
     try {
       const files = [];
-      const pcbF = await uploadProtoFile(new File([toKicadText(board)], `${outName()}-${stamp()}.kicad_pcb`, { type: 'text/plain' }), user, { category: 'PCB', note: `PCB 아트웍 스튜디오에서 저장 (오류 ${counts.error} · 주의 ${counts.warn})${board.fillsStale ? ' — 동박면은 KiCad 에서 다시 채우기(B)' : ''}` });
+      const pcbF = await uploadProtoFile(new File([toKicadText(board)], `${outName()}-${stamp()}${boardExtension}`, { type: 'text/plain' }), user, { category: 'PCB', note: `PCB 아트웍 스튜디오에서 저장 (오류 ${counts.error} · 주의 ${counts.warn})${board.fillsStale ? ' — 동박면은 KiCad 에서 다시 채우기(B)' : ''}` });
       files.push(pcbF);
       const repF = await uploadProtoFile(new File([report()], `${outName()}-review-${stamp()}.md`, { type: 'text/markdown' }), user, { category: 'PCB', note: 'PCB 아트웍 검토 보고서' });
       files.push(repF);
@@ -197,10 +217,17 @@ export default function PcbStudio() {
     } catch (e) { toast({ title: errorText(e), variant: 'destructive' }); }
     setBusy('');
   };
+  const saveNativeToProject = async (bytes, filename) => {
+    const file = await uploadProtoFile(new File([bytes], filename, { type: 'application/octet-stream' }), user, { category: 'PCB', note: 'OPJ 프로젝트 속성·참조 경로 수정본 (원본 유지)' });
+    await addProtoFiles(projectId, [file]);
+    await qc.invalidateQueries({ queryKey: protoKeys.project(projectId) });
+    toast({ title: 'OPJ 수정본을 새 파일로 저장했습니다' });
+  };
   const pickFile = async (e) => {
     const f = e.target.files?.[0];
     e.target.value = '';
     if (!f) return;
+    if ((nativeDirty || (board && board !== cleanBoard)) && !window.confirm('아직 저장하지 않은 수정 내용이 있습니다. 다른 파일을 열까요?')) return;
     if (f.size > 40 * 1024 * 1024) { setError('40MB 이하 파일만 열 수 있습니다.'); return; }
     setLoading('파일을 읽는 중…');
     try { await openBytes(await f.arrayBuffer(), f.name); } catch (er) { setError(er.message); }
@@ -219,9 +246,9 @@ export default function PcbStudio() {
           <h1 className="mt-0.5 text-2xl font-bold tracking-tight">{name || '기판을 열어 보고 · 고치고 · 검사하고 · 시뮬레이션'}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <input ref={fileRef} type="file" accept=".kicad_pcb,.zip" className="hidden" onChange={pickFile} />
+          <input ref={fileRef} type="file" accept=".kicad_pcb,.pcb,.opj,.zip" className="hidden" onChange={pickFile} />
           <Button variant="outline" onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4" />기판 파일 열기</Button>
-          {board && <Button variant="outline" onClick={exportPcb}><Download className="h-4 w-4" />.kicad_pcb</Button>}
+          {board && <Button variant="outline" onClick={exportPcb}><Download className="h-4 w-4" />수정본 {boardExtension}</Button>}
           {board && <Button variant="outline" onClick={() => download(report(), `${outName()}-review.md`, 'text/markdown')}><FileText className="h-4 w-4" />검토 보고서</Button>}
           {board && projectId && <Button onClick={saveToProject} disabled={!!busy}>{busy === 'save' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}시제품 파일에 저장</Button>}
         </div>
@@ -232,14 +259,18 @@ export default function PcbStudio() {
       {choices.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3">
           <span className="text-caption text-muted-foreground">zip 안의 기판:</span>
-          {choices.map((c) => <Button key={c.name} size="sm" variant="outline" onClick={() => open(c.text, c.name.split('/').pop())}>{c.name}</Button>)}
+          {choices.map((c) => <Button key={c.name} size="sm" variant="outline" onClick={() => { if ((nativeDirty || (board && board !== cleanBoard)) && !window.confirm('수정 내용을 저장하지 않고 다른 파일을 열까요?')) return; openBytes(c.bytes, c.name.split('/').pop()).catch(e => setError(e.message)); }}>{c.name}</Button>)}
         </div>
       )}
-      {!board && !loading && (
+      {nativeFile?.kind === 'opj' && <OpjViewer key={nativeFile.openId} file={nativeFile} files={project?.files || []} onSave={projectId ? saveNativeToProject : null} onDirtyChange={setNativeDirty} />}
+      {nativeFile?.kind === 'unsupported' && <UnsupportedPcbFile file={nativeFile} />}
+      {!board && !nativeFile && !loading && choices.length === 0 && (
         <div className="rounded-2xl border bg-card p-6 text-body">
           <p className="font-semibold">기판 파일을 여세요</p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-caption text-muted-foreground">
-            <li>KiCad 기판 파일(.kicad_pcb) 또는 그것이 든 zip (워크벤치 “자동 배선하고 제조 파일 만들기” 결과 zip 도 됩니다)</li>
+            <li>KiCad 기판(.kicad_pcb): 확대·부품 확인·아트웍 수정·다운로드. OrCAD 프로젝트(.opj): 구조·참조 경로 확인·속성 수정·동일 형식 다운로드.</li>
+            <li>.pcb도 선택할 수 있지만 제작 프로그램별 형식 확인이 필요합니다. 미지원 형식은 회로 편집을 제공하지 않으며 원본만 다운로드할 수 있습니다.</li>
+            <li>zip 안의 .kicad_pcb, .pcb, .opj도 목록에서 골라 열 수 있습니다.</li>
             <li>시제품 워크벤치 “회로 설계” 단계에서 “아트웍 스튜디오에서 열기” 를 누르면 워크벤치 설계로 만든 기판이 바로 열립니다</li>
             <li>거버(Gerber)만 있는 기판은 아직 열 수 없습니다 — 설계 업체에 KiCad 파일이나 IPC-2581 을 요청하세요</li>
           </ul>
