@@ -3,6 +3,7 @@
 // 하나의 렌더러를 재사용해 썸네일은 PNG 로 굽고, 뷰어는 같은 렌더러로 프레임을 그린다.
 
 import * as THREE from 'three';
+import { viewCamera } from '@/lib/measure3d';
 
 let renderer = null;
 
@@ -52,6 +53,13 @@ export function renderMeshToDataURL(mesh, size = 56) {
   const url = r.domElement.toDataURL('image/png');
   disposeScene(built);
   return url;
+}
+
+/** 부품별 표시·숨김을 쓰는 장면을 한 프레임으로 굽는다 (3D 검토용). */
+export function renderSceneFrame(scene, radius, { size = 900, zoom = 1 } = {}) {
+  const r = getRenderer(size);
+  r.render(scene, viewCamera(radius, zoom));
+  return r.domElement.toDataURL('image/png');
 }
 
 /** (뷰어) 이미 만들어 둔 scene 을 회전·줌 값으로 한 프레임 렌더링한다 (뷰어용). */
